@@ -3,11 +3,13 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/dictyBase/modware-import/internal/cli/stockcenter"
 	"github.com/dictyBase/modware-import/internal/datasource/s3"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 )
 
@@ -30,6 +32,24 @@ or through a file that is kept in a particular bucket of a S3 server.`,
 		}
 		return nil
 	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		d, _ := cmd.Flags().GetBool("doc")
+		if d {
+			dir, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			docDir := filepath.Join(dir, "docs")
+			if err := os.MkdirAll(docDir, 0700); err != nil {
+				return err
+			}
+			if err := doc.GenMarkdownTree(cmd, docDir); err != nil {
+				return err
+			}
+			fmt.Printf("created markdown docs in %s\n", docDir)
+		}
+		return nil
+	},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -43,12 +63,12 @@ func Execute() {
 
 func init() {
 	RootCmd.AddCommand(stockcenter.StockCenterCmd)
+	RootCmd.Flags().Bool("doc", false, "generate markdown documentation")
 	RootCmd.PersistentFlags().String(
 		"input-source",
 		"bucket",
 		"source of the file, could be one of bucket or folder",
 	)
-	RootCmd.MarkPersistentFlagRequired("input-source")
 	RootCmd.PersistentFlags().StringP(
 		"log-level",
 		"",
