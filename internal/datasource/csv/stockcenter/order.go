@@ -34,7 +34,7 @@ type csvOrderReader struct {
 func NewCsvStockOrderReader(r io.Reader) StockOrderReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
-	return &csvOrderReader{&csource.CsvReader{Reader: r}}
+	return &csvOrderReader{&csource.CsvReader{Reader: cr}}
 }
 
 //Value gets a new StockOrder instance
@@ -49,6 +49,6 @@ func (or *csvOrderReader) Value() (*StockOrder, error) {
 	}
 	so.CreatedAt = created
 	so.User = or.Record[1]
-	so.Items = or.Record[2]
+	so.Items = or.Record[2:]
 	return so, nil
 }
