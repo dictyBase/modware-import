@@ -30,6 +30,7 @@ type csvStrainReader struct {
 func NewCsvStrainReader(r io.Reader) StrainReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
+	cr.Comma = '\t'
 	return &csvStrainReader{&csource.CsvReader{Reader: cr}}
 }
 
