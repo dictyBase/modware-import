@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
+	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
 )
 
 const orderDateLayout = "2006-01-02 15:04:05"
@@ -26,48 +27,28 @@ type StockOrderReader interface {
 }
 
 type csvOrderReader struct {
-	r      *csv.Reader
-	record []string
-	err    error
+	*csource.CsvReader
 }
 
 //NewCsvStockOrderReader is to get an instance of order reader
 func NewCsvStockOrderReader(r io.Reader) StockOrderReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
-	return &CsvOrderReader{r: cr}
-}
-
-//Next is to read next row of order data
-func (csv *csvOrderReader) Next() bool {
-	csv.err = nil
-	record, err := csv.r.Read()
-	if err == io.EOF {
-		return false
-	}
-	if err != nil {
-		csv.err = err
-		return true
-	}
-	if len(csv.record) > 1 {
-		csv.record = nil
-	}
-	csv.record = append(csv.record, record...)
-	return true
+	return &csvOrderReader{&csource.CsvReader{Reader: r}}
 }
 
 //Value gets a new StockOrder instance
-func (csv *csvOrderReader) Value() (*StockOrder, error) {
+func (or *csvOrderReader) Value() (*StockOrder, error) {
 	so := new(StockOrder)
-	if csv.err != nil {
-		return so, nil
+	if or.Err != nil {
+		return so, or.Err
 	}
-	created, err := time.Parse(orderDateLayout, csv.record[0])
+	created, err := time.Parse(orderDateLayout, or.Record[0])
 	if err != nil {
 		return so, fmt.Errorf("error in parsing order data %s", err)
 	}
 	so.CreatedAt = created
-	so.User = csv.record[1]
-	so.Items = csv.record[2:]
+	so.User = or.Record[1]
+	so.Items = or.Record[2]
 	return so, nil
 }
