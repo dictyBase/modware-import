@@ -57,9 +57,9 @@ func (ci *csvInventoryReader) Value() (*Inventory, error) {
 	inv.VialColor = ci.Record[2]
 	vc, _ := strconv.ParseInt(ci.Record[3], 10, 64)
 	inv.VialsCount = vc
-	inv.StoredType = ci.record[4]
-	inv.StoredOn = StoredOn
-	inv.PublicComment = ci.record[6]
+	inv.StoredType = ci.Record[4]
+	inv.StoredOn = storedOn
+	inv.PublicComment = ci.Record[6]
 	if len(ci.Record) >= 8 {
 		inv.PrivateComment = ci.Record[7]
 	}
