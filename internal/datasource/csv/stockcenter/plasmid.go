@@ -50,7 +50,7 @@ type PlasmidGene struct {
 }
 
 //PlasmidGene is the defined interface for reading the data
-type PlasmidGenbankReader interface {
+type PlasmidGeneReader interface {
 	datasource.IteratorWithoutValue
 	Value() (*PlasmidGene, error)
 }
