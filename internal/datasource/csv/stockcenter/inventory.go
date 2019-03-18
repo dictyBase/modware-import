@@ -18,7 +18,7 @@ type StrainInventory struct {
 	PrivateComment   string
 	PublicComment    string
 	StoredOn         time.Time
-	StoredType       string
+	StoredAs         string
 	VialsCount       int64
 	VialColor        string
 	PhysicalLocation string
@@ -52,16 +52,16 @@ func (sir *csvStrainInventoryReader) Value() (*StrainInventory, error) {
 	if err != nil {
 		return inv, err
 	}
+	inv.StoredOn = storedOn
 	inv.Id = sir.Record[0]
 	inv.PhysicalLocation = sir.Record[1]
 	inv.VialColor = sir.Record[2]
 	vc, _ := strconv.ParseInt(sir.Record[3], 10, 64)
 	inv.VialsCount = vc
-	inv.StoredType = sir.Record[4]
-	inv.StoredOn = storedOn
-	inv.PublicComment = sir.Record[6]
+	inv.StoredAs = sir.Record[4]
+	inv.PrivateComment = sir.Record[6]
 	if len(sir.Record) >= 8 {
-		inv.PrivateComment = sir.Record[7]
+		inv.PublicComment = sir.Record[7]
 	}
 	return inv, nil
 }
