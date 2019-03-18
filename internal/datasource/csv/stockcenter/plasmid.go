@@ -8,37 +8,37 @@ import (
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
 )
 
-//Inventory is the container for strain inventory
-type Plasmid struct {
+//PlasmidGenbank is the container for genbank link for plasmid
+type PlasmidGenbank struct {
 	Id      string
-	Plasmid string
+	Genbank string
 }
 
-//PlasmidReader is the defined interface for reading the data
-type PlasmidReader interface {
+//PlasmidGenbankReader is the defined interface for reading the data
+type PlasmidGenbankReader interface {
 	datasource.IteratorWithoutValue
-	Value() (*Plasmid, error)
+	Value() (*PlasmidGenbank, error)
 }
 
-type csvPlasmidReader struct {
+type csvPlasmidGenbankReader struct {
 	*csource.CsvReader
 }
 
-//NewPlasmidReader is to get an instance of PlasmidReader
-func NewPlasmidReader(r io.Reader) PlasmidReader {
+//NewPlasmidReader is to get an instance of PlasmidGenbankReader
+func NewPlasmidGenbankReader(r io.Reader) PlasmidGenbankReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
-	return &csvPlasmidReader{&csource.CsvReader{Reader: cr}}
+	return &csvPlasmidGenbankReader{&csource.CsvReader{Reader: cr}}
 }
 
-//Value gets a new Inventory instance
-func (pr *csvPlasmidReader) Value() (*Plasmid, error) {
-	p := new(Plasmid)
-	if pr.Err != nil {
-		return p, pr.Err
+//Value gets a new PlasmidGenbank instance
+func (pgr *csvPlasmidGenbankReader) Value() (*PlasmidGenbank, error) {
+	g := new(PlasmidGenbank)
+	if pgr.Err != nil {
+		return g, pgr.Err
 	}
-	p.Id = pr.Record[0]
-	p.Plasmid = pr.Record[1]
-	return p, nil
+	g.Id = pgr.Record[0]
+	g.Genbank = pgr.Record[1]
+	return g, nil
 }
