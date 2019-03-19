@@ -28,7 +28,7 @@ type StrainReader interface {
 
 type csvStrainReader struct {
 	*csource.CsvReader
-	lookup StrainAnnotatorLookup
+	lookup StockAnnotatorLookup
 }
 
 //NewCsvStrainReader is to get an instance of strain reader
@@ -52,7 +52,7 @@ func (sr *csvStrainReader) Value() (*Strain, error) {
 	s.Descriptor = sr.Record[1]
 	s.Species = sr.Record[2]
 	s.Summary = sr.Record[3]
-	user, c, u, ok := sr.lookup.StrainAnnotator(sr.Record[0])
+	user, c, u, ok := sr.lookup.StockAnnotator(sr.Record[0])
 	if ok {
 		s.User = user
 		s.CreatedOn = c
