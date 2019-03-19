@@ -8,33 +8,33 @@ import (
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
 )
 
-//StrainPublication is the container for strain
-type StrainPub struct {
+//StockPub is the container for stock and its associated publication
+type StockPub struct {
 	Id    string
 	PubId string
 }
 
-//StrainPubReader is the defined interface for reading the data
-type StrainPubReader interface {
+//StockPubReader is the defined interface for reading the data
+type StockPubReader interface {
 	datasource.IteratorWithoutValue
-	Value() (*StrainPub, error)
+	Value() (*StockPub, error)
 }
 
-type csvStrainPubReader struct {
+type csvStockPubReader struct {
 	*csource.CsvReader
 }
 
-//NewStrainPubReader is to get an instance of StrainPubReader
-func NewStrainPubReader(r io.Reader) StrainPubReader {
+//NewStockPubReader is to get an instance of StockPubReader
+func NewStockPubReader(r io.Reader) StockPubReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
-	return &csvStrainPubReader{&csource.CsvReader{Reader: cr}}
+	return &csvStockPubReader{&csource.CsvReader{Reader: cr}}
 }
 
-//Value gets a new StrainProp instance
-func (spr *csvStrainPubReader) Value() (*StrainPub, error) {
-	pub := new(StrainPub)
+//Value gets a new StockProp instance
+func (spr *csvStockPubReader) Value() (*StockPub, error) {
+	pub := new(StockPub)
 	if spr.Err != nil {
 		return pub, spr.Err
 	}
