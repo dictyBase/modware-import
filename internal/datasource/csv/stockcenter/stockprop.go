@@ -26,7 +26,7 @@ type csvStockPropReader struct {
 }
 
 //NewStockPropReader is to get an instance of StrainPropReader
-func NewStockPropReader(r io.Reader) StrainPropReader {
+func NewStockPropReader(r io.Reader) StockPropReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
