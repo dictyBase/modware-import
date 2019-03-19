@@ -32,7 +32,7 @@ type csvStrainReader struct {
 }
 
 //NewCsvStrainReader is to get an instance of strain reader
-func NewCsvStrainReader(r io.Reader, al StrainAnnotatorLookup) StrainReader {
+func NewCsvStrainReader(r io.Reader, al StockAnnotatorLookup) StrainReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'

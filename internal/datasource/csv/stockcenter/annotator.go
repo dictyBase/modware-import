@@ -25,16 +25,16 @@ var annMap = map[string]string{
 	"CGM_DDB_KERRY":  "ksheppard@northwestern.edu",
 }
 
-// StrainAnnotatorLookup is an interface for retrieving strain annotator
-type StrainAnnotatorLookup interface {
-	StrainAnnotator(id string) (string, time.Time, time.Time, bool)
+// StockAnnotatorLookup is an interface for retrieving stock annotator
+type StockAnnotatorLookup interface {
+	StockAnnotator(id string) (string, time.Time, time.Time, bool)
 }
 
 type saLookup struct {
 	smap *hashmap.Map
 }
 
-func NewStrainAnnotatorLookup(r io.Reader) (StrainAnnotatorLookup, error) {
+func NewStockAnnotatorLookup(r io.Reader) (StockAnnotatorLookup, error) {
 	l := new(saLookup)
 	m := hashmap.New()
 	uar := csv.NewReader(r)
@@ -56,7 +56,7 @@ func NewStrainAnnotatorLookup(r io.Reader) (StrainAnnotatorLookup, error) {
 	return l, nil
 }
 
-func (l *saLookup) StrainAnnotator(id string) (string, time.Time, time.Time, bool) {
+func (l *saLookup) StockAnnotator(id string) (string, time.Time, time.Time, bool) {
 	var c, u time.Time
 	v, ok := l.smap.Get(id)
 	if !ok {
