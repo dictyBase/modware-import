@@ -19,6 +19,8 @@ github.com/dictyBase/apihelpers v0.0.0-20181218160245-dce81474776f h1:OK7SIEJdVW
 github.com/dictyBase/apihelpers v0.0.0-20181218160245-dce81474776f/go.mod h1:WMCcrIvQoc3UBfA643QFDQufK2a+7mYGgkGxVFWfJus=
 github.com/dictyBase/go-genproto v0.0.0-20190225231732-662920fc4435 h1:YQqLUFXJVTfZxrHuyhW/B1imp+Kq+hKHUW8Rdd5ec4Y=
 github.com/dictyBase/go-genproto v0.0.0-20190225231732-662920fc4435/go.mod h1:uvt0ErfvhRMAzfRo4y/99/XVhM1EduGOLxTZ9SYetRY=
+github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f h1:4iSwwwVRNLZDA1mc+RuuIU1lFHoUp/7MVDbsLC8tNiY=
+github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f/go.mod h1:tgtpNvmqm9PKRUngOmENSKnBkJ0ftd5urirHjleEh+k=
 github.com/emirpasic/gods v1.12.0 h1:QAUIPSaCu4G+POclxeqb3F+WPpdKqFGlw36+yOzGlrg=
 github.com/emirpasic/gods v1.12.0/go.mod h1:YfzfFFoVP/catgzJb4IKIqXjX78Ha8FMSDh3ymbK86o=
 github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=

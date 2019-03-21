@@ -5,6 +5,7 @@ require (
 	github.com/cpuguy83/go-md2man v0.0.0-20180619205630-691ee98543af // indirect
 	github.com/dictyBase/apihelpers v0.0.0-20181218160245-dce81474776f
 	github.com/dictyBase/go-genproto v0.0.0-20190225231732-662920fc4435
+	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f // indirect
 	github.com/emirpasic/gods v1.12.0
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/garyburd/redigo v1.6.0 // indirect
