@@ -7,10 +7,12 @@ import (
 )
 
 const (
-	ORDER_CLIENT_KEY      = "order-client"
-	STOCK_CLIENT_KEY      = "stock-client"
-	PLASMID_ID_MAP_READER = "plasmid-id-map-input"
-	ORDER_READER          = "order-input"
+	ORDER_CLIENT_KEY        = "order-client"
+	STOCK_CLIENT_KEY        = "stock-client"
+	PLASMID_ID_MAP_READER   = "plasmid-id-map-input"
+	ORDER_READER            = "order-input"
+	STRAIN_READER           = "strain-input"
+	STRAIN_ANNOTATOR_READER = "strain-annotator-input"
 )
 
 var sv = viper.New()
