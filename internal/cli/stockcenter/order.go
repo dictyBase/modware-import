@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/order"
+	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	minio "github.com/minio/minio-go"
@@ -16,26 +17,24 @@ import (
 
 // OrderCmd is for loading stockcenter order data
 var OrderCmd = &cobra.Command{
-	Use:   "order",
-	Short: "load stockcenter order data",
-	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("i am order")
-	},
-	PreRunE: setPreRun,
+	Use:     "order",
+	Short:   "load stockcenter order data",
+	Args:    cobra.NoArgs,
+	RunE:    loader.LoadOrder,
+	PreRunE: setOrderPreRun,
 }
 
-func setPreRun(cmd *cobra.Command, args []string) error {
-	if err := setAPIClient(); err != nil {
+func setOrderPreRun(cmd *cobra.Command, args []string) error {
+	if err := setOrderAPIClient(); err != nil {
 		return err
 	}
-	if err := setInputReader(); err != nil {
+	if err := setOrderInputReader(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func setAPIClient() error {
+func setOrderAPIClient() error {
 	conn, err := grpc.Dial(
 		fmt.Sprintf("%s:%s", viper.GetString("order-grpc-host"), viper.GetString("order-grpc-port")),
 		grpc.WithInsecure(),
@@ -49,7 +48,7 @@ func setAPIClient() error {
 	return nil
 }
 
-func setInputReader() error {
+func setOrderInputReader() error {
 	switch viper.GetString("input-source") {
 	case "folder":
 		pr, err := os.Open(viper.GetString("plasmid-map-input"))
