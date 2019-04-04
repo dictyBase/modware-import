@@ -27,6 +27,10 @@ func SetReader(key string, r io.Reader) {
 	v.Set(key, r)
 }
 
+func SetWriter(key string, w io.Writer) {
+	v.Set(key, w)
+}
+
 func GetLogger() *logrus.Entry {
 	l, _ := v.Get(LOGRUS_KEY).(*logrus.Entry)
 	return l
@@ -35,6 +39,11 @@ func GetLogger() *logrus.Entry {
 func GetS3Client() *minio.Client {
 	s3c, _ := v.Get(MINIO_KEY).(*minio.Client)
 	return s3c
+}
+
+func GetWriter(key string) io.Writer {
+	w, _ := v.Get(key).(io.Writer)
+	return w
 }
 
 func GetReader(key string) io.Reader {
