@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/dictyBase/modware-import/internal/cli/stockcenter"
 	"github.com/dictyBase/modware-import/internal/datasource/s3"
+	"github.com/dictyBase/modware-import/internal/logger"
 	"github.com/dictyBase/modware-import/internal/registry"
+	"github.com/minio/minio-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
@@ -29,6 +32,29 @@ or through a file that is kept in a particular bucket of a S3 server.`,
 				return fmt.Errorf("error in getting instance of s3 client %s", err)
 			}
 			registry.SetS3Client(client)
+		}
+		l, err := logger.NewLogger(cmd)
+		if err != nil {
+			return err
+		}
+		registry.SetLogger(l)
+		return nil
+	},
+	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		name := fmt.Sprintf("%s-%s.log", cmd.CalledAs(), time.Now().Format("20060102-150405"))
+		bucket, _ := cmd.Flags().GetString("log-file-bucket-path")
+		_, err := registry.GetS3Client().FPutObject(
+			bucket,
+			name,
+			registry.GetValue(registry.LOG_FILE_KEY),
+			minio.PutObjectOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"error in uploading file %s with object name %s",
+				registry.GetValue(registry.LOG_FILE_KEY),
+				name,
+			)
 		}
 		return nil
 	},
@@ -80,6 +106,16 @@ func init() {
 		"",
 		"json",
 		"format of the logging out, either of json or text",
+	)
+	RootCmd.PersistentFlags().String(
+		"log-file",
+		"",
+		"file for log output other than standard output, written to a temp folder by default",
+	)
+	RootCmd.PersistentFlags().String(
+		"log-file-bucket-path",
+		"dictybase/import/log",
+		"S3 bucket path where log file will be stored",
 	)
 	RootCmd.PersistentFlags().StringP(
 		"s3-server",
