@@ -16,6 +16,10 @@ const (
 
 var v = viper.New()
 
+func SetValue(key, value string) {
+	v.Set(key, value)
+}
+
 func SetLogger(l *logrus.Entry) {
 	v.Set(LOGRUS_KEY, l)
 }
@@ -50,4 +54,9 @@ func GetWriter(key string) io.Writer {
 func GetReader(key string) io.Reader {
 	r, _ := v.Get(key).(io.Reader)
 	return r
+}
+
+func GetValue(key string) string {
+	val, _ := v.Get(key).(string)
+	return val
 }
