@@ -2,7 +2,6 @@ package logger
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 
@@ -53,22 +52,22 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 		)
 	}
 	// set hook to write to local file
-	var w io.Writer
+	var fname string
 	if cmd.Flags().Lookup("log-file") == nil {
 		f, err := ioutil.TempFile(os.TempDir(), "loader")
 		if err != nil {
 			return e, fmt.Errorf("error in creating temp file for logging %s", err)
 		}
-		w = f
+		fname = f.Name()
 	} else {
 		n, _ := cmd.Flags().GetString("log-file")
 		file, err := os.Create(n)
 		if err != nil {
 			return e, fmt.Errorf("error in creating temp file for logging %s", err)
 		}
-		w = file
+		fname = n
 	}
-	logger.Hooks.Add(lfshook.NewHook(w, lfmt))
-	registry.SetWriter(registry.LOG_FILE_KEY, w)
+	logger.Hooks.Add(lfshook.NewHook(fname, lfmt))
+	registry.SetValue(registry.LOG_FILE_KEY, fname)
 	return logrus.NewEntry(logger), nil
 }
