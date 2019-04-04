@@ -68,7 +68,7 @@ require (
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/pkg/profile v1.3.0 // indirect
 	github.com/pmylund/go-cache v2.1.0+incompatible // indirect
-	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
+	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/rogpeppe/go-internal v1.2.2 // indirect
 	github.com/rogpeppe/godef v1.1.1 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect

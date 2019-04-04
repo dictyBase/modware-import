@@ -61,10 +61,6 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 		fname = f.Name()
 	} else {
 		n, _ := cmd.Flags().GetString("log-file")
-		file, err := os.Create(n)
-		if err != nil {
-			return e, fmt.Errorf("error in creating temp file for logging %s", err)
-		}
 		fname = n
 	}
 	logger.Hooks.Add(lfshook.NewHook(fname, lfmt))
