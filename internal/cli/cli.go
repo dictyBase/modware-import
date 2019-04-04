@@ -7,6 +7,7 @@ import (
 
 	"github.com/dictyBase/modware-import/internal/cli/stockcenter"
 	"github.com/dictyBase/modware-import/internal/datasource/s3"
+	"github.com/dictyBase/modware-import/internal/logger"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -30,6 +31,11 @@ or through a file that is kept in a particular bucket of a S3 server.`,
 			}
 			registry.SetS3Client(client)
 		}
+		l, err := logger.NewLogger(cmd)
+		if err != nil {
+			return err
+		}
+		registry.SetLogger(l)
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -80,6 +86,11 @@ func init() {
 		"",
 		"json",
 		"format of the logging out, either of json or text",
+	)
+	RootCmd.PersistentFlags().String(
+		"log-file",
+		"",
+		"file for log output other than standard output, written to a temp folder by default",
 	)
 	RootCmd.PersistentFlags().StringP(
 		"s3-server",

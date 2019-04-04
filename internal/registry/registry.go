@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	LOGRUS_KEY = "logrus"
-	MINIO_KEY  = "minio"
+	LOGRUS_KEY   = "logrus"
+	MINIO_KEY    = "minio"
+	LOG_FILE_KEY = "log_file"
 )
 
 var v = viper.New()

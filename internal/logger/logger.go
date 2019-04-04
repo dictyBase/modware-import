@@ -2,8 +2,12 @@ package logger
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 
+	"github.com/dictyBase/modware-import/internal/registry"
+	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -13,21 +17,23 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	logger := logrus.New()
 	logger.SetOutput(os.Stderr)
 	format, _ := cmd.Flags().GetString("log-format")
+	var lfmt logrus.Formatter
 	switch format {
 	case "text":
-		logger.SetFormatter(&logrus.TextFormatter{
+		lfmt = &logrus.TextFormatter{
 			TimestampFormat: "02/Jan/2006:15:04:05",
-		})
+		}
 	case "json":
-		logger.SetFormatter(&logrus.JSONFormatter{
+		lfmt = &logrus.JSONFormatter{
 			TimestampFormat: "02/Jan/2006:15:04:05",
-		})
+		}
 	default:
 		return e, fmt.Errorf(
 			"only json and text are supported %s log format is not supported",
 			format,
 		)
 	}
+	logger.SetFormatter(lfmt)
 	level, _ := cmd.Flags().GetString("log-level")
 	switch level {
 	case "debug":
@@ -46,5 +52,23 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 			level,
 		)
 	}
+	// set hook to write to local file
+	var w io.Writer
+	if cmd.Flags().Lookup("log-file") == nil {
+		f, err := ioutil.TempFile(os.TempDir(), "loader")
+		if err != nil {
+			return e, fmt.Errorf("error in creating temp file for logging %s", err)
+		}
+		w = f
+	} else {
+		n, _ := cmd.Flags().GetString("log-file")
+		file, err := os.Create(n)
+		if err != nil {
+			return e, fmt.Errorf("error in creating temp file for logging %s", err)
+		}
+		w = file
+	}
+	logger.Hooks.Add(lfshook.NewHook(w, lfmt))
+	registry.SetWriter(registry.LOG_FILE_KEY, w)
 	return logrus.NewEntry(logger), nil
 }
