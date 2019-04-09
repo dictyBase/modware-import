@@ -42,7 +42,7 @@ func GetStockAPIClient() stock.StockServiceClient {
 	return sc
 }
 
-func GetAnnotationClient() annotation.TaggedAnnotationServiceClient {
+func GetAnnotationAPIClient() annotation.TaggedAnnotationServiceClient {
 	ac, _ := sv.Get(ANNOTATION_CLIENT_KEY).(annotation.TaggedAnnotationServiceClient)
 	return ac
 }
