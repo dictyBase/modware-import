@@ -17,6 +17,8 @@ const (
 	STRAIN_ANNOTATOR_READER = "strain-annotator-input"
 	PHENO_READER            = "pheno-input"
 	GENO_READER             = "geno-input"
+	DEFAULT_USER            = "dictybase@northwestern.edu"
+	DICTY_ANNO_ONTOLOGY     = "dicty_annotation"
 )
 
 var sv = viper.New()

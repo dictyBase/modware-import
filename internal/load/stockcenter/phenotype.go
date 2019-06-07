@@ -15,13 +15,12 @@ import (
 )
 
 const (
-	phenoOntology     = "Dicty Phenotypes"
-	envOntology       = "Dicty Environment"
-	assayOntology     = "Dictyostellium Assay"
-	dictyAnnoOntology = "dicty_annotation"
-	user              = "dictybase@northwestern.edu"
-	literatureTag     = "literature_tag"
-	noteTag           = "public note"
+	phenoOntology = "Dicty Phenotypes"
+	envOntology   = "Dicty Environment"
+	assayOntology = "Dictyostellium Assay"
+	user          = "dictybase@northwestern.edu"
+	literatureTag = "literature_tag"
+	noteTag       = "public note"
 )
 
 func LoadPheno(cmd *cobra.Command, args []string) error {
@@ -73,20 +72,20 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			ids = append(ids, to.Data.Id)
-			tl, err := findOrCreateAnno(client, literatureTag, sid, dictyAnnoOntology, ph.LiteratureId)
+			tl, err := findOrCreateAnno(client, literatureTag, sid, regs.DICTY_ANNO_ONTOLOGY, ph.LiteratureId)
 			if err != nil {
 				return err
 			}
 			ids = append(ids, tl.Data.Id)
 			if len(ph.Note) > 1 {
-				tn, err := findOrCreateAnno(client, noteTag, sid, dictyAnnoOntology, ph.Note)
+				tn, err := findOrCreateAnno(client, noteTag, sid, regs.DICTY_ANNO_ONTOLOGY, ph.Note)
 				if err != nil {
 					return err
 				}
 				ids = append(ids, tn.Data.Id)
 			}
 			if len(ph.Assay) > 1 {
-				ta, err := findOrCreateAnno(client, ph.Assay, sid, dictyAnnoOntology, "novalue")
+				ta, err := findOrCreateAnno(client, ph.Assay, sid, regs.DICTY_ANNO_ONTOLOGY, "novalue")
 				if err != nil {
 					return err
 				}
