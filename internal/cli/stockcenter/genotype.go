@@ -12,33 +12,33 @@ import (
 	"github.com/spf13/viper"
 )
 
-// PhenoCmd is for loading stockcenter phenotype data
+// PhenoCmd is for loading stockcenter genotype data
 var PhenoCmd = &cobra.Command{
-	Use:     "phenotype",
-	Short:   "load stockcenter phenotype data",
+	Use:     "genotype",
+	Short:   "load stockcenter genotype data",
 	Args:    cobra.NoArgs,
-	RunE:    loader.LoadPheno,
-	PreRunE: setPhenoPreRun,
+	RunE:    loader.LoadGeno,
+	PreRunE: setGenoPreRun,
 }
 
-func setPhenoPreRun(cmd *cobra.Command, args []string) error {
+func setGenoPreRun(cmd *cobra.Command, args []string) error {
 	if err := setAnnoAPIClient(); err != nil {
 		return err
 	}
-	if err := setPhenoInputReader(); err != nil {
+	if err := setGenoInputReader(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func setPhenoInputReader() error {
+func setGenoInputReader() error {
 	switch viper.GetString("input-source") {
 	case "folder":
 		pr, err := os.Open(viper.GetString("input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
 		}
-		registry.SetReader(regsc.PHENO_READER, pr)
+		registry.SetReader(regsc.GENO_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
@@ -53,7 +53,7 @@ func setPhenoInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.PHENO_READER, ar)
+		registry.SetReader(regsc.GENO_READER, ar)
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
 	}
@@ -61,24 +61,24 @@ func setPhenoInputReader() error {
 }
 
 func init() {
-	PhenoCmd.Flags().String(
+	GenoCmd.Flags().String(
 		"annotation-grpc-host",
 		"annotation-api",
 		"grpc host address for annotation service",
 	)
 	viper.BindEnv("annotation-grpc-host", "ANNOTATION_API_SERVICE_HOST")
-	PhenoCmd.Flags().String(
+	GenoCmd.Flags().String(
 		"annotation-grpc-port",
 		"",
 		"grpc port for annotation service",
 	)
 	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
-	PhenoCmd.MarkFlagRequired("annotation-grpc-port")
-	PhenoCmd.Flags().StringP(
+	GenoCmd.MarkFlagRequired("annotation-grpc-port")
+	GenoCmd.Flags().StringP(
 		"input",
 		"i",
 		"",
-		"csv file with strain data",
+		"csv file with genotype data",
 	)
-	viper.BindPFlags(PhenoCmd.Flags())
+	viper.BindPFlags(GenoCmd.Flags())
 }

@@ -16,6 +16,7 @@ const (
 	STRAIN_READER           = "strain-input"
 	STRAIN_ANNOTATOR_READER = "strain-annotator-input"
 	PHENO_READER            = "pheno-input"
+	GENO_READER             = "geno-input"
 )
 
 var sv = viper.New()
