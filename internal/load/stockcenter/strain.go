@@ -35,21 +35,19 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			if grpc.Code(err) == codes.NotFound {
 				// create new strain entry
-				nstr, err := client.LoadStock(
+				nstr, err := client.LoadStrain(
 					context.Background(),
-					&pb.ExistingStock{
-						Data: &pb.ExistingStock_Data{
+					&pb.ExistingStrain{
+						Data: &pb.ExistingStrain_Data{
 							Type: "strain",
 							Id:   strain.Id,
-							Attributes: &pb.ExistingStockAttributes{
+							Attributes: &pb.ExistingStrainAttributes{
 								CreatedAt: aphgrpc.TimestampProto(strain.CreatedOn),
 								UpdatedAt: aphgrpc.TimestampProto(strain.UpdatedOn),
 								CreatedBy: strain.User,
 								Summary:   strain.Summary,
-								StrainProperties: &pb.StrainProperties{
-									Species: strain.Species,
-									Label:   strain.Descriptor,
-								},
+								Species:   strain.Species,
+								Label:     strain.Descriptor,
 							},
 						},
 					})
@@ -71,9 +69,7 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 					Attributes: &pb.StrainUpdateAttributes{
 						UpdatedBy: strain.User,
 						Summary:   strain.Summary,
-						StrainProperties: &pb.StrainUpdateProperties{
-							Label: strain.Descriptor,
-						},
+						Label:     strain.Descriptor,
 					},
 				},
 			})

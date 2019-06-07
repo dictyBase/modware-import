@@ -41,6 +41,12 @@ or through a file that is kept in a particular bucket of a S3 server.`,
 		return nil
 	},
 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		if len(viper.GetString("access-key")) <= 0 {
+			return nil
+		}
+		if len(viper.GetString("secret-key")) <= 0 {
+			return nil
+		}
 		name := fmt.Sprintf("%s-%s.log", cmd.CalledAs(), time.Now().Format("20060102-150405"))
 		bucket, _ := cmd.Flags().GetString("log-file-bucket-path")
 		_, err := registry.GetS3Client().FPutObject(

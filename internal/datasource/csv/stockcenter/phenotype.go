@@ -11,7 +11,7 @@ import (
 
 //Phenotype is the container for strain phenotype
 type Phenotype struct {
-	Id           string
+	StrainId     string
 	Observation  string
 	Environment  string
 	Assay        string
@@ -43,7 +43,7 @@ func (cp *csvPhenotypeReader) Value() (*Phenotype, error) {
 	if cp.Err != nil {
 		return p, cp.Err
 	}
-	p.Id = cp.Record[0]
+	p.StrainId = cp.Record[0]
 	p.Observation = cp.Record[1]
 	if len(cp.Record[2]) > 0 {
 		p.Environment = cp.Record[2]
