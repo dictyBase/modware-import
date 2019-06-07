@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"google.golang.org/grpc"
-
-	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
@@ -25,26 +22,12 @@ var PhenoCmd = &cobra.Command{
 }
 
 func setPhenoPreRun(cmd *cobra.Command, args []string) error {
-	if err := setPhenoAPIClient(); err != nil {
+	if err := setAnnoAPIClient(); err != nil {
 		return err
 	}
 	if err := setPhenoInputReader(); err != nil {
 		return err
 	}
-	return nil
-}
-
-func setPhenoAPIClient() error {
-	conn, err := grpc.Dial(
-		fmt.Sprintf("%s:%s", viper.GetString("annotation-grpc-host"), viper.GetString("annotation-grpc-port")),
-		grpc.WithInsecure(),
-	)
-	if err != nil {
-		return fmt.Errorf("error in connecting to annotation grpc api server %s", err)
-	}
-	regsc.SetAnnotationAPIClient(
-		annotation.NewTaggedAnnotationServiceClient(conn),
-	)
 	return nil
 }
 
