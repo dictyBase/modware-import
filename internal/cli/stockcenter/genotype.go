@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// PhenoCmd is for loading stockcenter genotype data
-var PhenoCmd = &cobra.Command{
+// GenoCmd is for loading stockcenter genotype data
+var GenoCmd = &cobra.Command{
 	Use:     "genotype",
 	Short:   "load stockcenter genotype data",
 	Args:    cobra.NoArgs,
