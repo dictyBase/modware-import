@@ -14,7 +14,7 @@ const invDateLayout = "02-JAN-06"
 
 //StrainInventory is the container for strain inventory
 type StrainInventory struct {
-	Id               string
+	StrainId         string
 	PrivateComment   string
 	PublicComment    string
 	StoredOn         time.Time
@@ -53,7 +53,7 @@ func (sir *csvStrainInventoryReader) Value() (*StrainInventory, error) {
 		return inv, err
 	}
 	inv.StoredOn = storedOn
-	inv.Id = sir.Record[0]
+	inv.StrainId = sir.Record[0]
 	inv.PhysicalLocation = sir.Record[1]
 	inv.VialColor = sir.Record[2]
 	vc, _ := strconv.ParseInt(sir.Record[3], 10, 64)
