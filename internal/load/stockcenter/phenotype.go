@@ -20,12 +20,16 @@ const (
 	assayOntology     = "Dictyostellium Assay"
 	dictyAnnoOntology = "dicty_annotation"
 	user              = "dictybase@northwestern.edu"
+	literatureTag     = "literature_tag"
+	noteTag           = "public note"
 )
 
 func LoadPheno(cmd *cobra.Command, args []string) error {
-	pr := stockcenter.NewPhenotypeReader(regs.PHENO_READER)
+	pr := stockcenter.NewPhenotypeReader(registry.GetReader(regs.PHENO_READER))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
+	// group all phenotypes by their ids
+	stPheno := make(map[string][]*stockcenter.Phenotype)
 	for pr.Next() {
 		pheno, err := pr.Value()
 		if err != nil {
@@ -34,49 +38,111 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 				err,
 			)
 		}
+		stPheno[pheno.StrainId] = append(stPheno[pheno.StrainId], pheno)
 	}
-	exObsAnno, err := client.GetEntryAnnotation(
-		context.Background(),
-		&pb.EntryAnnotationRequest{
-			Tag:      pheno.Observation,
-			EntryId:  pheno.Id,
-			Ontology: phenoOntology,
-		})
-	if err != nil {
-		if grpc.Code(err) == codes.NotFound {
-			// create new entry
-			nObsAnno, err := client.CreateAnnotation(
+	phcount := 0
+	for sid, phgrp := range stPheno {
+		gc, err := client.ListAnnotationGroups(
+			context.Background(),
+			&pb.ListGroupParameters{
+				Limit:  20,
+				Filter: fmt.Sprintf("entry_id==%s", sid),
+			})
+		if err != nil {
+			if grpc.Code(err) == codes.NotFound {
+				logger.Infof("no phenotype group found for id %s", sid)
+				continue
+			}
+			return err
+		}
+		// fetch and remove all phenotype(groups) for every strains
+		for _, g := range gc.Data {
+			_, err := client.DeleteAnnotationGroup(
 				context.Background(),
-				&pb.NewTaggedAnnotation{
-					Data: &pb.NewTaggedAnnotation_Data{
-						Type: "annotation",
-						Attributes: &pb.NewTaggedAnnotationAttributes{
-							Value:     "none",
-							CreatedBy: user,
-							Tag:       pheno.Observation,
-							EntryId:   pheno.Id,
-							Ontology:  phenoOntology,
-						},
-					},
-				},
+				&pb.GroupEntryId{GroupId: g.Group.GroupId},
 			)
 			if err != nil {
-				return fmt.Errorf(
-					"error in creating phenotype observation %s for id %s %s",
-					pheno.Observation,
-					pheno.Id,
-					err,
-				)
+				return err
 			}
-		} else {
-			return fmt.Errorf(
-				"error in finding phenotype observation %s for id %s %s",
-				pheno.Observation,
-				pheno.Id,
-				err,
-			)
+			logger.Debugf("removing group %s for strain id %s", g.Group.GroupId, sid)
 		}
+		for _, ph := range phgrp {
+			var ids []string
+			to, err := findOrCreateAnno(client, ph.Observation, sid, phenoOntology, "novalue")
+			if err != nil {
+				return err
+			}
+			ids = append(ids, to.Data.Id)
+			tl, err := findOrCreateAnno(client, literatureTag, sid, dictyAnnoOntology, ph.LiteratureId)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, tl.Data.Id)
+			if len(ph.Note) > 1 {
+				tn, err := findOrCreateAnno(client, noteTag, sid, dictyAnnoOntology, ph.Note)
+				if err != nil {
+					return err
+				}
+				ids = append(ids, tn.Data.Id)
+			}
+			if len(ph.Assay) > 1 {
+				ta, err := findOrCreateAnno(client, ph.Assay, sid, dictyAnnoOntology, "novalue")
+				if err != nil {
+					return err
+				}
+				ids = append(ids, ta.Data.Id)
+			}
+			if len(ph.Environment) > 1 {
+				te, err := findOrCreateAnno(client, ph.Environment, sid, envOntology, "novalue")
+				if err != nil {
+					return err
+				}
+				ids = append(ids, te.Data.Id)
+			}
+			_, err = client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
+			if err != nil {
+				return err
+			}
+			phcount++
+		}
+		logger.Debugf("created %d phenotypes for %s strain", len(phgrp), sid)
 	}
-
+	logger.Infof("created %d phenotypes", phcount)
 	return nil
+}
+
+func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
+	ta, err := client.GetEntryAnnotation(
+		context.Background(),
+		&pb.EntryAnnotationRequest{
+			Tag:      tag,
+			EntryId:  id,
+			Ontology: ontology,
+		})
+	switch {
+	case err == nil:
+		return ta, nil
+	case grpc.Code(err) == codes.NotFound:
+		return client.CreateAnnotation(
+			context.Background(),
+			&pb.NewTaggedAnnotation{
+				Data: &pb.NewTaggedAnnotation_Data{
+					Attributes: &pb.NewTaggedAnnotationAttributes{
+						Value:     value,
+						CreatedBy: user,
+						Tag:       tag,
+						EntryId:   id,
+						Ontology:  ontology,
+					},
+				},
+			},
+		)
+
+	}
+	return ta, fmt.Errorf(
+		"error in finding annotation %s for id %s %s",
+		tag,
+		id,
+		err,
+	)
 }
