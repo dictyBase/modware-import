@@ -27,8 +27,7 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 	pr := stockcenter.NewPhenotypeReader(registry.GetReader(regs.PHENO_READER))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
-	// group all phenotypes by their ids
-	stPheno := make(map[string][]*stockcenter.Phenotype)
+	phcount := 0
 	for pr.Next() {
 		pheno, err := pr.Value()
 		if err != nil {
@@ -37,74 +36,50 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 				err,
 			)
 		}
-		stPheno[pheno.StrainId] = append(stPheno[pheno.StrainId], pheno)
-	}
-	phcount := 0
-	for sid, phgrp := range stPheno {
 		gc, err := client.ListAnnotationGroups(
 			context.Background(),
 			&pb.ListGroupParameters{
-				Limit:  20,
-				Filter: fmt.Sprintf("entry_id==%s", sid),
+				Filter: fmt.Sprintf(
+					"entry_id==%s;tag==%s;ontology==%s",
+					pheno.StrainId,
+					pheno.Observation,
+					phenoOntology,
+				),
 			})
 		if err != nil {
-			if grpc.Code(err) == codes.NotFound {
-				logger.Infof("no phenotype group found for id %s", sid)
-				continue
+			if grpc.Code(err) != codes.NotFound { // error in lookup
+				return err
 			}
+			// no phenotype group found, create or find all individual annotations and phenotype
+			if err := handlePhenotype(client, pheno, pheno.StrainId); err != nil {
+				return err
+			}
+			logger.Debugf("created phenotypes for %s strain", pheno.StrainId)
+			phcount++
+			continue
+		}
+		if len(gc.Data) > 1 {
+			return fmt.Errorf(
+				"data constraint issue, got multiple phenotype groups for %s %s %s",
+				pheno.StrainId,
+				pheno.Observation,
+				phenoOntology,
+			)
+		}
+		// delete phenotype group
+		_, err = client.DeleteAnnotationGroup(
+			context.Background(),
+			&pb.GroupEntryId{GroupId: gc.Data[0].Group.GroupId},
+		)
+		if err != nil {
 			return err
 		}
-		// fetch and remove all phenotype(groups) for every strains
-		for _, g := range gc.Data {
-			_, err := client.DeleteAnnotationGroup(
-				context.Background(),
-				&pb.GroupEntryId{GroupId: g.Group.GroupId},
-			)
-			if err != nil {
-				return err
-			}
-			logger.Debugf("removing group %s for strain id %s", g.Group.GroupId, sid)
+		//create or find all individual annotations and phenotype
+		if err := handlePhenotype(client, pheno, pheno.StrainId); err != nil {
+			return err
 		}
-		for _, ph := range phgrp {
-			var ids []string
-			to, err := findOrCreateAnno(client, ph.Observation, sid, phenoOntology, "novalue")
-			if err != nil {
-				return err
-			}
-			ids = append(ids, to.Data.Id)
-			tl, err := findOrCreateAnno(client, literatureTag, sid, regs.DICTY_ANNO_ONTOLOGY, ph.LiteratureId)
-			if err != nil {
-				return err
-			}
-			ids = append(ids, tl.Data.Id)
-			if len(ph.Note) > 1 {
-				tn, err := findOrCreateAnno(client, noteTag, sid, regs.DICTY_ANNO_ONTOLOGY, ph.Note)
-				if err != nil {
-					return err
-				}
-				ids = append(ids, tn.Data.Id)
-			}
-			if len(ph.Assay) > 1 {
-				ta, err := findOrCreateAnno(client, ph.Assay, sid, regs.DICTY_ANNO_ONTOLOGY, "novalue")
-				if err != nil {
-					return err
-				}
-				ids = append(ids, ta.Data.Id)
-			}
-			if len(ph.Environment) > 1 {
-				te, err := findOrCreateAnno(client, ph.Environment, sid, envOntology, "novalue")
-				if err != nil {
-					return err
-				}
-				ids = append(ids, te.Data.Id)
-			}
-			_, err = client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
-			if err != nil {
-				return err
-			}
-			phcount++
-		}
-		logger.Debugf("created %d phenotypes for %s strain", len(phgrp), sid)
+		logger.Debugf("flush and loaded phenotypes for %s strain", pheno.StrainId)
+		phcount++
 	}
 	logger.Infof("created %d phenotypes", phcount)
 	return nil
@@ -144,4 +119,41 @@ func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology
 		id,
 		err,
 	)
+}
+
+func handlePhenotype(client pb.TaggedAnnotationServiceClient, ph *stockcenter.Phenotype, sid string) error {
+	var ids []string
+	to, err := findOrCreateAnno(client, ph.Observation, sid, phenoOntology, "novalue")
+	if err != nil {
+		return err
+	}
+	ids = append(ids, to.Data.Id)
+	tl, err := findOrCreateAnno(client, literatureTag, sid, regs.DICTY_ANNO_ONTOLOGY, ph.LiteratureId)
+	if err != nil {
+		return err
+	}
+	ids = append(ids, tl.Data.Id)
+	if len(ph.Note) > 1 {
+		tn, err := findOrCreateAnno(client, noteTag, sid, regs.DICTY_ANNO_ONTOLOGY, ph.Note)
+		if err != nil {
+			return err
+		}
+		ids = append(ids, tn.Data.Id)
+	}
+	if len(ph.Assay) > 1 {
+		ta, err := findOrCreateAnno(client, ph.Assay, sid, regs.DICTY_ANNO_ONTOLOGY, "novalue")
+		if err != nil {
+			return err
+		}
+		ids = append(ids, ta.Data.Id)
+	}
+	if len(ph.Environment) > 1 {
+		te, err := findOrCreateAnno(client, ph.Environment, sid, envOntology, "novalue")
+		if err != nil {
+			return err
+		}
+		ids = append(ids, te.Data.Id)
+	}
+	_, err = client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
+	return err
 }
