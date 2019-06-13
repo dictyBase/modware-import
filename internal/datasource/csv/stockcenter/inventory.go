@@ -3,7 +3,6 @@ package stockcenter
 import (
 	"encoding/csv"
 	"io"
-	"strconv"
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
@@ -19,7 +18,7 @@ type StrainInventory struct {
 	PublicComment    string
 	StoredOn         time.Time
 	StoredAs         string
-	VialsCount       int64
+	VialsCount       string
 	VialColor        string
 	PhysicalLocation string
 }
@@ -56,8 +55,7 @@ func (sir *csvStrainInventoryReader) Value() (*StrainInventory, error) {
 	inv.StrainId = sir.Record[0]
 	inv.PhysicalLocation = sir.Record[1]
 	inv.VialColor = sir.Record[2]
-	vc, _ := strconv.ParseInt(sir.Record[3], 10, 64)
-	inv.VialsCount = vc
+	inv.VialsCount = sir.Record[3]
 	inv.StoredAs = sir.Record[4]
 	inv.PrivateComment = sir.Record[6]
 	if len(sir.Record) >= 8 {

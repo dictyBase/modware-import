@@ -141,7 +141,7 @@ func handlePhenotype(client pb.TaggedAnnotationServiceClient, ph *stockcenter.Ph
 		ids = append(ids, tn.Data.Id)
 	}
 	if len(ph.Assay) > 1 {
-		ta, err := findOrCreateAnno(client, ph.Assay, sid, regs.DICTY_ANNO_ONTOLOGY, "novalue")
+		ta, err := findOrCreateAnno(client, ph.Assay, sid, assayOntology, "novalue")
 		if err != nil {
 			return err
 		}
