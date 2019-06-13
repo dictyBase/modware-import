@@ -37,6 +37,8 @@ github.com/dictyBase/apihelpers v0.0.0-20190606002341-93c3bfd61731/go.mod h1:EVg
 github.com/dictyBase/go-genproto v0.0.0-20190419013406-7b67707bd07a/go.mod h1:uvt0ErfvhRMAzfRo4y/99/XVhM1EduGOLxTZ9SYetRY=
 github.com/dictyBase/go-genproto v0.0.0-20190604204343-b736a45b1756 h1:N5cYGUXxIWnKGKjPwUZLaCp0UVEfwfaDA7lkM/h+5OA=
 github.com/dictyBase/go-genproto v0.0.0-20190604204343-b736a45b1756/go.mod h1:uvt0ErfvhRMAzfRo4y/99/XVhM1EduGOLxTZ9SYetRY=
+github.com/dictyBase/go-genproto v0.0.0-20190608110615-02f4ede4f72a h1:HMThZFTcSuan5JmUcbb8kZl4ME4T/PdMwxhucfn3+Hw=
+github.com/dictyBase/go-genproto v0.0.0-20190608110615-02f4ede4f72a/go.mod h1:uvt0ErfvhRMAzfRo4y/99/XVhM1EduGOLxTZ9SYetRY=
 github.com/dictyBase/go-middlewares v0.0.0-20180704154106-0fd6848b3e92/go.mod h1:DPbz2QP7K7kHh9pCuStlQ6qDEwYyUiWNS6WGCdgb3Nk=
 github.com/dictyBase/modware v0.0.0-20170217231152-2cb30c5dad06/go.mod h1:5UIC4wA98D3LXkV8EzGJtmxx+S1iMq54JfGvtpLVykQ=
 github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f h1:4iSwwwVRNLZDA1mc+RuuIU1lFHoUp/7MVDbsLC8tNiY=

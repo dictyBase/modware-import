@@ -2,7 +2,7 @@ module github.com/dictyBase/modware-import
 
 require (
 	github.com/dictyBase/apihelpers v0.0.0-20190606002341-93c3bfd61731
-	github.com/dictyBase/go-genproto v0.0.0-20190604204343-b736a45b1756
+	github.com/dictyBase/go-genproto v0.0.0-20190608110615-02f4ede4f72a
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.12.0
 	github.com/golang/protobuf v1.3.1
