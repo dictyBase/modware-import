@@ -18,7 +18,7 @@ var StockCenterCmd = &cobra.Command{
 }
 
 func init() {
-	StockCenterCmd.AddCommand(OrderCmd, PhenoCmd, GenoCmd)
+	StockCenterCmd.AddCommand(OrderCmd, PhenoCmd, GenoCmd, StrainPropCmd)
 	StockCenterCmd.PersistentFlags().String(
 		"s3-bucket-path",
 		"dictybase/import/stockcenter",
