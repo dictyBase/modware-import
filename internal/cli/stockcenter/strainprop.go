@@ -38,7 +38,7 @@ func setStrainPropInputReader() error {
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
 		}
-		registry.SetReader(regsc.INV_READER, pr)
+		registry.SetReader(regsc.STRAINPROP_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
@@ -53,7 +53,7 @@ func setStrainPropInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.INV_READER, ar)
+		registry.SetReader(regsc.STRAINPROP_READER, ar)
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
 	}
