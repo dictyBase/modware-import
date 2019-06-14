@@ -110,6 +110,6 @@ func handleInventory(client pb.TaggedAnnotationServiceClient, inv *stockcenter.S
 			ids = append(ids, t.Data.Id)
 		}
 	}
-	_, err = client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
+	_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
 	return err
 }

@@ -100,6 +100,6 @@ func handlePhenotype(client pb.TaggedAnnotationServiceClient, ph *stockcenter.Ph
 		}
 		ids = append(ids, t.Data.Id)
 	}
-	_, err = client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
+	_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
 	return err
 }
