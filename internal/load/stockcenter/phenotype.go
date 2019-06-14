@@ -18,7 +18,6 @@ const (
 	phenoOntology = "Dicty Phenotypes"
 	envOntology   = "Dicty Environment"
 	assayOntology = "Dictyostellium Assay"
-	user          = "dictybase@northwestern.edu"
 	literatureTag = "literature_tag"
 	noteTag       = "public note"
 )
@@ -51,7 +50,7 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			// no phenotype group found, create or find all individual annotations and phenotype
-			if err := handlePhenotype(client, pheno, pheno.StrainId); err != nil {
+			if err := handlePhenotype(client, pheno); err != nil {
 				return err
 			}
 			logger.Debugf("created phenotypes for %s strain", pheno.StrainId)
@@ -75,7 +74,7 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		//create or find all individual annotations and phenotype
-		if err := handlePhenotype(client, pheno, pheno.StrainId); err != nil {
+		if err := handlePhenotype(client, pheno); err != nil {
 			return err
 		}
 		logger.Debugf("flush and loaded phenotypes for %s strain", pheno.StrainId)
@@ -85,74 +84,21 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
-	ta, err := client.GetEntryAnnotation(
-		context.Background(),
-		&pb.EntryAnnotationRequest{
-			Tag:      tag,
-			EntryId:  id,
-			Ontology: ontology,
-		})
-	switch {
-	case err == nil:
-		return ta, nil
-	case grpc.Code(err) == codes.NotFound:
-		return client.CreateAnnotation(
-			context.Background(),
-			&pb.NewTaggedAnnotation{
-				Data: &pb.NewTaggedAnnotation_Data{
-					Attributes: &pb.NewTaggedAnnotationAttributes{
-						Value:     value,
-						CreatedBy: user,
-						Tag:       tag,
-						EntryId:   id,
-						Ontology:  ontology,
-					},
-				},
-			},
-		)
-
-	}
-	return ta, fmt.Errorf(
-		"error in finding annotation %s for id %s %s",
-		tag,
-		id,
-		err,
-	)
-}
-
-func handlePhenotype(client pb.TaggedAnnotationServiceClient, ph *stockcenter.Phenotype, sid string) error {
+func handlePhenotype(client pb.TaggedAnnotationServiceClient, ph *stockcenter.Phenotype) error {
 	var ids []string
-	to, err := findOrCreateAnno(client, ph.Observation, sid, phenoOntology, "novalue")
-	if err != nil {
-		return err
+	phenMap := map[string][]string{
+		ph.Observation: []string{phenoOntology, "novalue"},
+		ph.Assay:       []string{assayOntology, "novalue"},
+		ph.Environment: []string{envOntology, "novalue"},
+		literatureTag:  []string{regs.DICTY_ANNO_ONTOLOGY, ph.LiteratureId},
+		noteTag:        []string{regs.DICTY_ANNO_ONTOLOGY, ph.Note},
 	}
-	ids = append(ids, to.Data.Id)
-	tl, err := findOrCreateAnno(client, literatureTag, sid, regs.DICTY_ANNO_ONTOLOGY, ph.LiteratureId)
-	if err != nil {
-		return err
-	}
-	ids = append(ids, tl.Data.Id)
-	if len(ph.Note) > 1 {
-		tn, err := findOrCreateAnno(client, noteTag, sid, regs.DICTY_ANNO_ONTOLOGY, ph.Note)
+	for t, s := range phenMap {
+		t, err := findOrCreateAnno(client, t, ph.StrainId, s[0], s[1])
 		if err != nil {
 			return err
 		}
-		ids = append(ids, tn.Data.Id)
-	}
-	if len(ph.Assay) > 1 {
-		ta, err := findOrCreateAnno(client, ph.Assay, sid, assayOntology, "novalue")
-		if err != nil {
-			return err
-		}
-		ids = append(ids, ta.Data.Id)
-	}
-	if len(ph.Environment) > 1 {
-		te, err := findOrCreateAnno(client, ph.Environment, sid, envOntology, "novalue")
-		if err != nil {
-			return err
-		}
-		ids = append(ids, te.Data.Id)
+		ids = append(ids, t.Data.Id)
 	}
 	_, err = client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
 	return err
