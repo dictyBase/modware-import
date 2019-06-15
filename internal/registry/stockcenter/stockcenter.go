@@ -8,18 +8,21 @@ import (
 )
 
 const (
-	ORDER_CLIENT_KEY        = "order-client"
-	STOCK_CLIENT_KEY        = "stock-client"
-	ANNOTATION_CLIENT_KEY   = "annotation-client"
-	PLASMID_ID_MAP_READER   = "plasmid-id-map-input"
-	ORDER_READER            = "order-input"
-	STRAIN_READER           = "strain-input"
-	STRAIN_ANNOTATOR_READER = "strain-annotator-input"
-	PHENO_READER            = "pheno-input"
-	GENO_READER             = "geno-input"
-	INV_READER              = "inv-input"
-	DEFAULT_USER            = "dictybase@northwestern.edu"
-	DICTY_ANNO_ONTOLOGY     = "dicty_annotation"
+	ORDER_CLIENT_KEY           = "order-client"
+	STOCK_CLIENT_KEY           = "stock-client"
+	ANNOTATION_CLIENT_KEY      = "annotation-client"
+	PLASMID_ID_MAP_READER      = "plasmid-id-map-input"
+	ORDER_READER               = "order-input"
+	STRAIN_READER              = "strain-input"
+	STRAIN_ANNOTATOR_READER    = "strain-annotator-input"
+	PHENO_READER               = "pheno-input"
+	GENO_READER                = "geno-input"
+	INV_READER                 = "inv-input"
+	STRAINPROP_READER          = "strainprop-input"
+	DEFAULT_USER               = "dictybase@northwestern.edu"
+	DICTY_ANNO_ONTOLOGY        = "dicty_annotation"
+	DICTY_MUTAGENESIS_ONTOLOGY = "Dd Mutagenesis Method"
+	DICTY_GENETICMOD_ONTOLOGY  = "genetic modification"
 )
 
 var sv = viper.New()
