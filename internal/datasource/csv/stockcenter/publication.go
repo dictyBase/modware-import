@@ -3,42 +3,55 @@ package stockcenter
 import (
 	"encoding/csv"
 	"io"
+	"strings"
 
-	"github.com/dictyBase/modware-import/internal/datasource"
-	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
+	"github.com/emirpasic/gods/maps/hashmap"
 )
 
-//StockPub is the container for stock and its associated publication
-type StockPub struct {
-	Id    string
-	PubId string
+//StockPubLookup is an interface for retrieving publication
+//linked to a stock record
+type StockPubLookup interface {
+	//StockPub looks up a stock identifier and returns a slice
+	//with a list of publication identifiers
+	StockPub(id string) []string
 }
 
-//StockPubReader is the defined interface for reading the data
-type StockPubReader interface {
-	datasource.IteratorWithoutValue
-	Value() (*StockPub, error)
+type saPubLookup struct {
+	smap *hashmap.Map
 }
 
-type csvStockPubReader struct {
-	*csource.CsvReader
-}
-
-//NewStockPubReader is to get an instance of StockPubReader
-func NewStockPubReader(r io.Reader) StockPubReader {
-	cr := csv.NewReader(r)
-	cr.FieldsPerRecord = -1
-	cr.Comma = '\t'
-	return &csvStockPubReader{&csource.CsvReader{Reader: cr}}
-}
-
-//Value gets a new StockProp instance
-func (spr *csvStockPubReader) Value() (*StockPub, error) {
-	pub := new(StockPub)
-	if spr.Err != nil {
-		return pub, spr.Err
+//NewStockPubLookup returns an StockPubLookup implementing struct
+func NewStockPubLookup(r io.Reader) (StockPubLookup, error) {
+	l := new(saPubLookup)
+	m := hashmap.New()
+	spr := csv.NewReader(r)
+	spr.FieldsPerRecord = -1
+	for {
+		record, err := spr.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return l, err
+		}
+		if strings.HasPrefix(record[1], "d") {
+			continue
+		}
+		if v, ok := m.Get(record[0]); ok {
+			s := v.([]string)
+			m.Put(record[0], append(s, record[1]))
+			continue
+		}
+		m.Put(record[0], []string{record[1]})
 	}
-	pub.Id = spr.Record[0]
-	pub.PubId = spr.Record[1]
-	return pub, nil
+	l.smap = m
+	return l, nil
+}
+
+func (sl *saPubLookup) StockPub(id string) []string {
+	if v, ok := sl.smap.Get(id); ok {
+		s := v.([]string)
+		return s
+	}
+	return []string{""}
 }

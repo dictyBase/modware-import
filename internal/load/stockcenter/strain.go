@@ -20,9 +20,14 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("error in opening annotation source %s", err)
 	}
+	pl, err := source.NewStockPubLookup(registry.GetReader(regs.STRAIN_PUB_READER))
+	if err != nil {
+		return fmt.Errorf("error in opening publication source %s", err)
+	}
 	sr := source.NewCsvStrainReader(
 		registry.GetReader(regs.STRAIN_READER),
 		al,
+		pl,
 	)
 	logger := registry.GetLogger()
 	client := regs.GetStockAPIClient()
@@ -35,20 +40,26 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			if grpc.Code(err) == codes.NotFound {
 				// create new strain entry
+				attr := &pb.ExistingStrainAttributes{
+					CreatedAt: aphgrpc.TimestampProto(strain.CreatedOn),
+					UpdatedAt: aphgrpc.TimestampProto(strain.UpdatedOn),
+					CreatedBy: strain.User,
+					Summary:   strain.Summary,
+					Species:   strain.Species,
+					Label:     strain.Descriptor,
+				}
+				if len(strain.Publications) > 0 {
+					attr.Publications = strain.Publications
+				} else {
+					logger.Warnf("strain %s has no publication entry", strain.Id)
+				}
 				nstr, err := client.LoadStrain(
 					context.Background(),
 					&pb.ExistingStrain{
 						Data: &pb.ExistingStrain_Data{
-							Type: "strain",
-							Id:   strain.Id,
-							Attributes: &pb.ExistingStrainAttributes{
-								CreatedAt: aphgrpc.TimestampProto(strain.CreatedOn),
-								UpdatedAt: aphgrpc.TimestampProto(strain.UpdatedOn),
-								CreatedBy: strain.User,
-								Summary:   strain.Summary,
-								Species:   strain.Species,
-								Label:     strain.Descriptor,
-							},
+							Type:       "strain",
+							Id:         strain.Id,
+							Attributes: attr,
 						},
 					})
 				if err != nil {
@@ -60,17 +71,23 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("error in finding strain %s %s", strain.Id, err)
 		}
 		// update strains
+		attr := &pb.StrainUpdateAttributes{
+			UpdatedBy: strain.User,
+			Summary:   strain.Summary,
+			Label:     strain.Descriptor,
+		}
+		if len(strain.Publications) > 0 {
+			attr.Publications = strain.Publications
+		} else {
+			logger.Warnf("strain %s has no publication entry", strain.Id)
+		}
 		ustr, err := client.UpdateStrain(
 			context.Background(),
 			&pb.StrainUpdate{
 				Data: &pb.StrainUpdate_Data{
-					Type: "strain",
-					Id:   strain.Id,
-					Attributes: &pb.StrainUpdateAttributes{
-						UpdatedBy: strain.User,
-						Summary:   strain.Summary,
-						Label:     strain.Descriptor,
-					},
+					Type:       "strain",
+					Id:         strain.Id,
+					Attributes: attr,
 				},
 			})
 		if err != nil {
