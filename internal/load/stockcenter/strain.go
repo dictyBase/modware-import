@@ -24,10 +24,15 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("error in opening publication source %s", err)
 	}
+	gl, err := source.NewStrainGeneLookp(registry.GetReader(regs.STRAIN_GENE_READER))
+	if err != nil {
+		return fmt.Errorf("error in opening gene source %s", err)
+	}
 	sr := source.NewCsvStrainReader(
 		registry.GetReader(regs.STRAIN_READER),
 		al,
 		pl,
+		gl,
 	)
 	logger := registry.GetLogger()
 	client := regs.GetStockAPIClient()
@@ -52,6 +57,9 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 					attr.Publications = strain.Publications
 				} else {
 					logger.Warnf("strain %s has no publication entry", strain.Id)
+				}
+				if len(strain.Genes) > 0 {
+					attr.Genes = strain.Genes
 				}
 				nstr, err := client.LoadStrain(
 					context.Background(),
@@ -80,6 +88,9 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 			attr.Publications = strain.Publications
 		} else {
 			logger.Warnf("strain %s has no publication entry", strain.Id)
+		}
+		if len(strain.Genes) > 0 {
+			attr.Genes = strain.Genes
 		}
 		ustr, err := client.UpdateStrain(
 			context.Background(),
