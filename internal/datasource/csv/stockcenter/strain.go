@@ -61,6 +61,6 @@ func (sr *csvStrainReader) Value() (*Strain, error) {
 		s.CreatedOn = c
 		s.UpdatedOn = u
 	}
-	s.Publications = append(s.Publication, sr.plookup.StockPub(sr.Record[0]))
+	s.Publications = append(s.Publications, sr.plookup.StockPub(sr.Record[0])...)
 	return s, nil
 }
