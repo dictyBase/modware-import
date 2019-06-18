@@ -55,11 +55,16 @@ func setStrainInputReader() error {
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-annotator-input"), err)
 		}
-		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
+		pr, err := os.Open(viper.GetString("strain-pub-input"))
+		if err != nil {
+			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-pub-input"), err)
+		}
 		sr, err := os.Open(viper.GetString("input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
 		}
+		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
+		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
 		registry.SetReader(regsc.STRAIN_READER, sr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
@@ -75,7 +80,19 @@ func setStrainInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
+		pr, err := registry.GetS3Client().GetObject(
+			viper.GetString("s3-bucket-path"),
+			viper.GetString("strain-pub-input"),
+			minio.GetObjectOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"error in getting file %s from bucket %s %s",
+				viper.GetString("strain-pub-input"),
+				viper.GetString("s3-bucket-path"),
+				err,
+			)
+		}
 		sr, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
 			viper.GetString("input"),
@@ -89,6 +106,8 @@ func setStrainInputReader() error {
 				err,
 			)
 		}
+		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
+		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
 		registry.SetReader(regsc.STRAIN_READER, sr)
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
@@ -115,6 +134,12 @@ func init() {
 		"a",
 		"",
 		"csv file that provides mapping among strain identifier, annotator and annotation timestamp",
+	)
+	StrainCmd.Flags().StringP(
+		"strain-pub-input",
+		"p",
+		"",
+		"csv file that maps strains to publication identifiers",
 	)
 	StrainCmd.Flags().StringP(
 		"input",
