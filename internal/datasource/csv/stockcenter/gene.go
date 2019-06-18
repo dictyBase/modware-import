@@ -4,41 +4,50 @@ import (
 	"encoding/csv"
 	"io"
 
-	"github.com/dictyBase/modware-import/internal/datasource"
-	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
+	"github.com/emirpasic/gods/maps/hashmap"
 )
 
-//StrainGene is the container for strain and gene data
-type StrainGene struct {
-	Id     string
-	GeneId string
+//StrainGeneLookup is an interface for retrieving gene mapped to
+//a strain
+type StrainGeneLookup interface {
+	//StrainGene looks up a strain identifier and returns a slice
+	//with a list of gene identifiers
+	StrainGene(id string) []string
 }
 
-//StrainGeneReader is the defined interface for reading the strain and gene data
-type StrainGeneReader interface {
-	datasource.IteratorWithoutValue
-	Value() (*StrainGene, error)
+type saGeneLookup struct {
+	smap *hashmap.Map
 }
 
-type csvStrainGeneReader struct {
-	*csource.CsvReader
-}
-
-//NewCsvStrainGeneReader is to get an instance of StrainGeneReader
-func NewCsvStrainGeneReader(r io.Reader) StrainGeneReader {
-	cr := csv.NewReader(r)
-	cr.FieldsPerRecord = -1
-	cr.Comma = '\t'
-	return &csvStrainGeneReader{&csource.CsvReader{Reader: cr}}
-}
-
-//Value gets a new StrainGene instance
-func (sgr *csvStrainGeneReader) Value() (*StrainGene, error) {
-	sg := new(StrainGene)
-	if sgr.Err != nil {
-		return sg, sgr.Err
+//NewStrainGeneLookp returns an StrainGeneLookup implementing struct
+func NewStrainGeneLookp(r io.Reader) (StrainGeneLookup, error) {
+	l := new(saGeneLookup)
+	m := hashmap.New()
+	sgr := csv.NewReader(r)
+	sgr.FieldsPerRecord = -1
+	for {
+		record, err := sgr.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return l, err
+		}
+		if v, ok := m.Get(record[0]); ok {
+			s := v.([]string)
+			m.Put(record[0], append(s, record[1]))
+			continue
+		}
+		m.Put(record[0], []string{record[1]})
 	}
-	sg.Id = sgr.Record[0]
-	sg.GeneId = sgr.Record[1]
-	return sg, nil
+	l.smap = m
+	return l, nil
+}
+
+func (sl *saGeneLookup) StrainGene(id string) []string {
+	if v, ok := sl.smap.Get(id); ok {
+		s := v.([]string)
+		return s
+	}
+	return []string{""}
 }
