@@ -16,6 +16,7 @@ const (
 	STRAIN_READER              = "strain-input"
 	STRAIN_ANNOTATOR_READER    = "strain-annotator-input"
 	STRAIN_PUB_READER          = "strain-pub-input"
+	STRAIN_GENE_READER         = "strain-gene-input"
 	PHENO_READER               = "pheno-input"
 	GENO_READER                = "geno-input"
 	INV_READER                 = "inv-input"
