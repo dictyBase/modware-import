@@ -1,23 +1,25 @@
-## import stockcenter order
+## import stockcenter strain
 
-load stockcenter order data
+load stockcenter strain data
 
 ### Synopsis
 
-load stockcenter order data
+load stockcenter strain data
 
 ```
-import stockcenter order [flags]
+import stockcenter strain [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help                       help for order
-  -i, --input string               csv file with order data
-      --order-grpc-host string     grpc host address for order service (default "order-api")
-      --order-grpc-port string     grpc port for order service
-      --plasmid-map-input string   csv file that provides mapping between plamid name and identifier in their first two columns
+  -h, --help                            help for strain
+  -i, --input string                    csv file with strain data
+      --stock-grpc-host string          grpc host address for stock service (default "stock-api")
+      --stock-grpc-port string          grpc port for stock service
+  -a, --strain-annotator-input string   csv file that provides mapping among strain identifier, annotator and annotation timestamp
+  -g, --strain-gene-input string        csv file that maps strains to gene identifiers
+  -p, --strain-pub-input string         csv file that maps strains to publication identifiers
 ```
 
 ### Options inherited from parent commands
