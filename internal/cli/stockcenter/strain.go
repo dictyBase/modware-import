@@ -59,12 +59,17 @@ func setStrainInputReader() error {
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-pub-input"), err)
 		}
+		gr, err := os.Open(viper.GetString("strain-gene-input"))
+		if err != nil {
+			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-gene-input"), err)
+		}
 		sr, err := os.Open(viper.GetString("input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
 		}
 		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
 		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
+		registry.SetReader(regsc.STRAIN_GENE_READER, gr)
 		registry.SetReader(regsc.STRAIN_READER, sr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
@@ -76,6 +81,19 @@ func setStrainInputReader() error {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
 				viper.GetString("strain-annotator-input"),
+				viper.GetString("s3-bucket-path"),
+				err,
+			)
+		}
+		gr, err := registry.GetS3Client().GetObject(
+			viper.GetString("s3-bucket-path"),
+			viper.GetString("strain-gene-input"),
+			minio.GetObjectOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"error in getting file %s from bucket %s %s",
+				viper.GetString("strain-gene-input"),
 				viper.GetString("s3-bucket-path"),
 				err,
 			)
@@ -108,6 +126,7 @@ func setStrainInputReader() error {
 		}
 		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
 		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
+		registry.SetReader(regsc.STRAIN_GENE_READER, gr)
 		registry.SetReader(regsc.STRAIN_READER, sr)
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
@@ -134,6 +153,12 @@ func init() {
 		"a",
 		"",
 		"csv file that provides mapping among strain identifier, annotator and annotation timestamp",
+	)
+	StrainCmd.Flags().StringP(
+		"strain-gene-input",
+		"g",
+		"",
+		"csv file that maps strains to gene identifiers",
 	)
 	StrainCmd.Flags().StringP(
 		"strain-pub-input",
