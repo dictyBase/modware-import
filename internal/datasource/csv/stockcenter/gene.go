@@ -7,20 +7,20 @@ import (
 	"github.com/emirpasic/gods/maps/hashmap"
 )
 
-//StrainGeneLookup is an interface for retrieving gene mapped to
-//a strain
-type StrainGeneLookup interface {
-	//StrainGene looks up a strain identifier and returns a slice
+//StockGeneLookup is an interface for retrieving gene mapped to
+//a stock entry
+type StockGeneLookup interface {
+	//StockGene looks up a stock identifier and returns a slice
 	//with a list of gene identifiers
-	StrainGene(id string) []string
+	StockGene(id string) []string
 }
 
 type saGeneLookup struct {
 	smap *hashmap.Map
 }
 
-//NewStrainGeneLookp returns an StrainGeneLookup implementing struct
-func NewStrainGeneLookp(r io.Reader) (StrainGeneLookup, error) {
+//NewStockGeneLookp returns a struct implementing StockGeneLookup interface
+func NewStockGeneLookp(r io.Reader) (StockGeneLookup, error) {
 	l := new(saGeneLookup)
 	m := hashmap.New()
 	sgr := csv.NewReader(r)
@@ -44,7 +44,7 @@ func NewStrainGeneLookp(r io.Reader) (StrainGeneLookup, error) {
 	return l, nil
 }
 
-func (sl *saGeneLookup) StrainGene(id string) []string {
+func (sl *saGeneLookup) StockGene(id string) []string {
 	if v, ok := sl.smap.Get(id); ok {
 		s := v.([]string)
 		return s
