@@ -24,6 +24,7 @@ func init() {
 		GenoCmd,
 		StrainPropCmd,
 		StrainCmd,
+		StrainCharCmd,
 	)
 	StockCenterCmd.PersistentFlags().String(
 		"s3-bucket-path",
