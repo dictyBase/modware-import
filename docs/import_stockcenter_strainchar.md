@@ -1,13 +1,13 @@
-## import stockcenter genotype
+## import stockcenter strainchar
 
-load stockcenter genotype data
+load stockcenter strain characteristics data
 
 ### Synopsis
 
-load stockcenter genotype data
+load stockcenter strain characteristics data
 
 ```
-import stockcenter genotype [flags]
+import stockcenter strainchar [flags]
 ```
 
 ### Options
@@ -15,8 +15,8 @@ import stockcenter genotype [flags]
 ```
       --annotation-grpc-host string   grpc host address for annotation service (default "annotation-api")
       --annotation-grpc-port string   grpc port for annotation service
-  -h, --help                          help for genotype
-  -i, --input string                  csv file with genotype data
+  -h, --help                          help for strainchar
+  -i, --input string                  csv file with strain characteristics data
 ```
 
 ### Options inherited from parent commands
