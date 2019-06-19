@@ -24,7 +24,7 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("error in opening publication source %s", err)
 	}
-	gl, err := source.NewStrainGeneLookp(registry.GetReader(regs.STRAIN_GENE_READER))
+	gl, err := source.NewStockGeneLookp(registry.GetReader(regs.STRAIN_GENE_READER))
 	if err != nil {
 		return fmt.Errorf("error in opening gene source %s", err)
 	}

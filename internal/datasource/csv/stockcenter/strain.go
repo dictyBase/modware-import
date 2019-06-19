@@ -64,7 +64,7 @@ func (sr *csvStrainReader) Value() (*Strain, error) {
 		s.CreatedOn = c
 		s.UpdatedOn = u
 	}
-	s.Publications = append(s.Publications, sr.plookup.StockPub(s.Id...))
+	s.Publications = append(s.Publications, sr.plookup.StockPub(s.Id)...)
 	s.Genes = append(s.Genes, sr.glookup.StockGene(s.Id)...)
 	return s, nil
 }
