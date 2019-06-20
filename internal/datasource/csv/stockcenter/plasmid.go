@@ -2,7 +2,9 @@ package stockcenter
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
@@ -90,6 +92,9 @@ func (plr *csvPlasmidReader) Value() (*Plasmid, error) {
 	}
 	p.Id = plr.Record[0]
 	p.Name = plr.Record[1]
+	if !strings.HasPrefix(plr.Record[1], "p") {
+		p.Name = fmt.Sprintf("p%s", p.Name)
+	}
 	p.Summary = plr.Record[2]
 	user, c, u, ok := plr.alookup.StockAnnotator(plr.Record[0])
 	if ok {
