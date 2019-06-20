@@ -2,7 +2,9 @@ package stockcenter
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
@@ -44,49 +46,16 @@ func (pgr *csvPlasmidGenbankReader) Value() (*PlasmidGenbank, error) {
 	return g, nil
 }
 
-//PlasmidGene is the container for plasmid and gene identifier links
-type PlasmidGene struct {
-	Id     string
-	GeneId string
-}
-
-//PlasmidGene is the defined interface for reading the data
-type PlasmidGeneReader interface {
-	datasource.IteratorWithoutValue
-	Value() (*PlasmidGene, error)
-}
-
-type csvPlasmidGeneReader struct {
-	*csource.CsvReader
-}
-
-//NewPlasmidGeneReader is to get an instance of PlasmidGeneReader
-func NewPlasmidGeneReader(r io.Reader) PlasmidGeneReader {
-	cr := csv.NewReader(r)
-	cr.FieldsPerRecord = -1
-	cr.Comma = '\t'
-	return &csvPlasmidGeneReader{&csource.CsvReader{Reader: cr}}
-}
-
-//Value gets a new PlasmidGene instance
-func (pger *csvPlasmidGeneReader) Value() (*PlasmidGene, error) {
-	gene := new(PlasmidGene)
-	if pger.Err != nil {
-		return gene, pger.Err
-	}
-	gene.Id = pger.Record[0]
-	gene.GeneId = pger.Record[1]
-	return gene, nil
-}
-
 //Plasmid is the container for plasmid data
 type Plasmid struct {
-	Id        string
-	Summary   string
-	User      string
-	CreatedOn time.Time
-	UpdatedOn time.Time
-	Name      string
+	Id           string
+	Summary      string
+	User         string
+	CreatedOn    time.Time
+	UpdatedOn    time.Time
+	Name         string
+	Publications []string
+	Genes        []string
 }
 
 //PlasmidReader is the defined interface for reading the plasmid data
@@ -97,7 +66,22 @@ type PlasmidReader interface {
 
 type csvPlasmidReader struct {
 	*csource.CsvReader
-	lookup StockAnnotatorLookup
+	alookup StockAnnotatorLookup
+	plookup StockPubLookup
+	glookup StockGeneLookup
+}
+
+//NewCsvPlasmidReader is to get an instance of PlasmidReader instance
+func NewCsvPlasmidReader(r io.Reader, al StockAnnotatorLookup, pl StockPubLookup, gl StockGeneLookup) PlasmidReader {
+	cr := csv.NewReader(r)
+	cr.FieldsPerRecord = -1
+	cr.Comma = '\t'
+	return &csvPlasmidReader{
+		CsvReader: &csource.CsvReader{Reader: cr},
+		alookup:   al,
+		plookup:   pl,
+		glookup:   gl,
+	}
 }
 
 //Value gets a new Plasmid instance
@@ -108,12 +92,17 @@ func (plr *csvPlasmidReader) Value() (*Plasmid, error) {
 	}
 	p.Id = plr.Record[0]
 	p.Name = plr.Record[1]
+	if !strings.HasPrefix(plr.Record[1], "p") {
+		p.Name = fmt.Sprintf("p%s", p.Name)
+	}
 	p.Summary = plr.Record[2]
-	user, c, u, ok := plr.lookup.StockAnnotator(plr.Record[0])
+	user, c, u, ok := plr.alookup.StockAnnotator(plr.Record[0])
 	if ok {
 		p.User = user
 		p.CreatedOn = c
 		p.UpdatedOn = u
 	}
+	p.Publications = append(p.Publications, plr.plookup.StockPub(p.Id)...)
+	p.Genes = append(p.Genes, plr.glookup.StockGene(p.Id)...)
 	return p, nil
 }

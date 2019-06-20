@@ -33,6 +33,7 @@ subcommand for stockcenter data loading
 * [import stockcenter genotype](import_stockcenter_genotype.md)	 - load stockcenter genotype data
 * [import stockcenter order](import_stockcenter_order.md)	 - load stockcenter order data
 * [import stockcenter phenotype](import_stockcenter_phenotype.md)	 - load stockcenter phenotype data
+* [import stockcenter plasmid](import_stockcenter_plasmid.md)	 - load stockcenter plasmid data
 * [import stockcenter strain](import_stockcenter_strain.md)	 - load stockcenter strain data
 * [import stockcenter strainchar](import_stockcenter_strainchar.md)	 - load stockcenter strain characteristics data
 * [import stockcenter strainprop](import_stockcenter_strainprop.md)	 - load stockcenter strain properties data

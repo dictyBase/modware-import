@@ -32,11 +32,11 @@ type csvStrainReader struct {
 	*csource.CsvReader
 	lookup  StockAnnotatorLookup
 	plookup StockPubLookup
-	glookup StrainGeneLookup
+	glookup StockGeneLookup
 }
 
 //NewCsvStrainReader is to get an instance of strain reader
-func NewCsvStrainReader(r io.Reader, al StockAnnotatorLookup, pl StockPubLookup, gl StrainGeneLookup) StrainReader {
+func NewCsvStrainReader(r io.Reader, al StockAnnotatorLookup, pl StockPubLookup, gl StockGeneLookup) StrainReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
@@ -64,7 +64,7 @@ func (sr *csvStrainReader) Value() (*Strain, error) {
 		s.CreatedOn = c
 		s.UpdatedOn = u
 	}
-	s.Publications = append(s.Publications, sr.plookup.StockPub(sr.Record[0])...)
-	s.Genes = append(s.Genes, sr.glookup.StrainGene(sr.Record[0])...)
+	s.Publications = append(s.Publications, sr.plookup.StockPub(s.Id)...)
+	s.Genes = append(s.Genes, sr.glookup.StockGene(s.Id)...)
 	return s, nil
 }
