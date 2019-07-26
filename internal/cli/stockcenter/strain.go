@@ -63,9 +63,9 @@ func setStrainInputReader() error {
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-gene-input"), err)
 		}
-		sr, err := os.Open(viper.GetString("input"))
+		sr, err := os.Open(viper.GetString("strain-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
+			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-input"), err)
 		}
 		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
 		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
@@ -113,13 +113,13 @@ func setStrainInputReader() error {
 		}
 		sr, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
-			viper.GetString("input"),
+			viper.GetString("strain-input"),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
-				viper.GetString("input"),
+				viper.GetString("strain-input"),
 				viper.GetString("s3-bucket-path"),
 				err,
 			)
@@ -147,7 +147,6 @@ func init() {
 		"grpc port for stock service",
 	)
 	viper.BindEnv("stock-grpc-port", "STOCK_API_SERVICE_PORT")
-	StrainCmd.MarkFlagRequired("stock-grpc-port")
 	StrainCmd.Flags().StringP(
 		"strain-annotator-input",
 		"a",
@@ -167,7 +166,7 @@ func init() {
 		"csv file that maps strains to publication identifiers",
 	)
 	StrainCmd.Flags().StringP(
-		"input",
+		"strain-input",
 		"i",
 		"",
 		"csv file with strain data",

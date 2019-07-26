@@ -63,9 +63,9 @@ func setPlasmidInputReader() error {
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-gene-input"), err)
 		}
-		sr, err := os.Open(viper.GetString("input"))
+		sr, err := os.Open(viper.GetString("plasmid-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
+			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-input"), err)
 		}
 		registry.SetReader(regsc.PLASMID_ANNOTATOR_READER, ar)
 		registry.SetReader(regsc.PLASMID_PUB_READER, pr)
@@ -113,13 +113,13 @@ func setPlasmidInputReader() error {
 		}
 		sr, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
-			viper.GetString("input"),
+			viper.GetString("plasmid-input"),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
-				viper.GetString("input"),
+				viper.GetString("plasmid-input"),
 				viper.GetString("s3-bucket-path"),
 				err,
 			)
@@ -147,7 +147,6 @@ func init() {
 		"grpc port for stock service",
 	)
 	viper.BindEnv("stock-grpc-port", "STOCK_API_SERVICE_PORT")
-	PlasmidCmd.MarkFlagRequired("stock-grpc-port")
 	PlasmidCmd.Flags().StringP(
 		"plasmid-annotator-input",
 		"a",
@@ -167,7 +166,7 @@ func init() {
 		"csv file that maps plasmids to publication identifiers",
 	)
 	PlasmidCmd.Flags().StringP(
-		"input",
+		"plasmid-input",
 		"i",
 		"",
 		"csv file with plasmid data",
