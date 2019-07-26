@@ -34,21 +34,21 @@ func setStrainCharPreRun(cmd *cobra.Command, args []string) error {
 func setStrainCharInputReader() error {
 	switch viper.GetString("input-source") {
 	case "folder":
-		pr, err := os.Open(viper.GetString("input"))
+		pr, err := os.Open(viper.GetString("strainchar-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
+			return fmt.Errorf("error in opening file %s %s", viper.GetString("strainchar-input"), err)
 		}
 		registry.SetReader(regsc.STRAINCHAR_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
-			viper.GetString("input"),
+			viper.GetString("strainchar-input"),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
-				viper.GetString("input"),
+				viper.GetString("strainchar-input"),
 				viper.GetString("s3-bucket-path"),
 				err,
 			)
@@ -73,9 +73,8 @@ func init() {
 		"grpc port for annotation service",
 	)
 	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
-	StrainCharCmd.MarkFlagRequired("annotation-grpc-port")
 	StrainCharCmd.Flags().StringP(
-		"input",
+		"strainchar-input",
 		"i",
 		"",
 		"csv file with strain characteristics data",

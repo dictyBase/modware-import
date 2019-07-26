@@ -34,21 +34,21 @@ func setPhenoPreRun(cmd *cobra.Command, args []string) error {
 func setPhenoInputReader() error {
 	switch viper.GetString("input-source") {
 	case "folder":
-		pr, err := os.Open(viper.GetString("input"))
+		pr, err := os.Open(viper.GetString("phenotype-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
+			return fmt.Errorf("error in opening file %s %s", viper.GetString("phenotype-input"), err)
 		}
 		registry.SetReader(regsc.PHENO_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
-			viper.GetString("input"),
+			viper.GetString("phenotype-input"),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
-				viper.GetString("input"),
+				viper.GetString("phenotype-input"),
 				viper.GetString("s3-bucket-path"),
 				err,
 			)
@@ -73,9 +73,8 @@ func init() {
 		"grpc port for annotation service",
 	)
 	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
-	PhenoCmd.MarkFlagRequired("annotation-grpc-port")
 	PhenoCmd.Flags().StringP(
-		"input",
+		"phenotype-input",
 		"i",
 		"",
 		"csv file with strain data",

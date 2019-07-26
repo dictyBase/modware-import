@@ -34,21 +34,21 @@ func setGenoPreRun(cmd *cobra.Command, args []string) error {
 func setGenoInputReader() error {
 	switch viper.GetString("input-source") {
 	case "folder":
-		pr, err := os.Open(viper.GetString("input"))
+		pr, err := os.Open(viper.GetString("genotype-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
+			return fmt.Errorf("error in opening file %s %s", viper.GetString("genotype-input"), err)
 		}
 		registry.SetReader(regsc.GENO_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
-			viper.GetString("input"),
+			viper.GetString("genotype-input"),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
-				viper.GetString("input"),
+				viper.GetString("genotype-input"),
 				viper.GetString("s3-bucket-path"),
 				err,
 			)
@@ -73,9 +73,8 @@ func init() {
 		"grpc port for annotation service",
 	)
 	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
-	GenoCmd.MarkFlagRequired("annotation-grpc-port")
 	GenoCmd.Flags().StringP(
-		"input",
+		"genotype-input",
 		"i",
 		"",
 		"csv file with genotype data",

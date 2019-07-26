@@ -34,21 +34,21 @@ func setStrainPropPreRun(cmd *cobra.Command, args []string) error {
 func setStrainPropInputReader() error {
 	switch viper.GetString("input-source") {
 	case "folder":
-		pr, err := os.Open(viper.GetString("input"))
+		pr, err := os.Open(viper.GetString("strainprop-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
+			return fmt.Errorf("error in opening file %s %s", viper.GetString("strainprop-input"), err)
 		}
 		registry.SetReader(regsc.STRAINPROP_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
-			viper.GetString("input"),
+			viper.GetString("strainprop-input"),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
-				viper.GetString("input"),
+				viper.GetString("strainprop-input"),
 				viper.GetString("s3-bucket-path"),
 				err,
 			)
@@ -73,9 +73,8 @@ func init() {
 		"grpc port for annotation service",
 	)
 	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
-	StrainPropCmd.MarkFlagRequired("annotation-grpc-port")
 	StrainPropCmd.Flags().StringP(
-		"input",
+		"strainprop-input",
 		"i",
 		"",
 		"csv file with strain property data",

@@ -56,9 +56,9 @@ func setOrderInputReader() error {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-map-input"), err)
 		}
 		registry.SetReader(regsc.PLASMID_ID_MAP_READER, pr)
-		or, err := os.Open(viper.GetString("input"))
+		or, err := os.Open(viper.GetString("order-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("input"), err)
+			return fmt.Errorf("error in opening file %s %s", viper.GetString("order-input"), err)
 		}
 		registry.SetReader(regsc.ORDER_READER, or)
 	case "bucket":
@@ -78,13 +78,13 @@ func setOrderInputReader() error {
 		registry.SetReader(regsc.PLASMID_ID_MAP_READER, pr)
 		or, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
-			viper.GetString("input"),
+			viper.GetString("order-input"),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
-				viper.GetString("input"),
+				viper.GetString("order-input"),
 				viper.GetString("s3-bucket-path"),
 				err,
 			)
@@ -109,7 +109,6 @@ func init() {
 		"grpc port for order service",
 	)
 	viper.BindEnv("order-grpc-port", "ORDER_API_SERVICE_PORT")
-	OrderCmd.MarkFlagRequired("order-grpc-port")
 	OrderCmd.Flags().StringP(
 		"plasmid-map-input",
 		"",
@@ -117,7 +116,7 @@ func init() {
 		"csv file that provides mapping between plamid name and identifier in their first two columns",
 	)
 	OrderCmd.Flags().StringP(
-		"input",
+		"order-input",
 		"i",
 		"",
 		"csv file with order data",
