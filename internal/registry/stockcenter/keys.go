@@ -23,4 +23,5 @@ const (
 	DICTY_ANNO_ONTOLOGY        = "dicty_annotation"
 	DICTY_MUTAGENESIS_ONTOLOGY = "Dd Mutagenesis Method"
 	DICTY_GENETICMOD_ONTOLOGY  = "genetic modification"
+	READFILE_READER            = "readfile-input"
 )
