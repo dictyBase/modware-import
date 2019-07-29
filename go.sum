@@ -35,8 +35,6 @@ github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8
 github.com/dictyBase/apihelpers v0.0.0-20190606002341-93c3bfd61731 h1:uymyM7AV8JVJMTw+yAjCWGAuddpFPHi0w7uwUvklUeo=
 github.com/dictyBase/apihelpers v0.0.0-20190606002341-93c3bfd61731/go.mod h1:EVg9rZKZCl1l+5bAbL1Dfv+0BvXcGj+1tOw5gbohnxI=
 github.com/dictyBase/go-genproto v0.0.0-20190419013406-7b67707bd07a/go.mod h1:uvt0ErfvhRMAzfRo4y/99/XVhM1EduGOLxTZ9SYetRY=
-github.com/dictyBase/go-genproto v0.0.0-20190604204343-b736a45b1756 h1:N5cYGUXxIWnKGKjPwUZLaCp0UVEfwfaDA7lkM/h+5OA=
-github.com/dictyBase/go-genproto v0.0.0-20190604204343-b736a45b1756/go.mod h1:uvt0ErfvhRMAzfRo4y/99/XVhM1EduGOLxTZ9SYetRY=
 github.com/dictyBase/go-genproto v0.0.0-20190608110615-02f4ede4f72a h1:HMThZFTcSuan5JmUcbb8kZl4ME4T/PdMwxhucfn3+Hw=
 github.com/dictyBase/go-genproto v0.0.0-20190608110615-02f4ede4f72a/go.mod h1:uvt0ErfvhRMAzfRo4y/99/XVhM1EduGOLxTZ9SYetRY=
 github.com/dictyBase/go-middlewares v0.0.0-20180704154106-0fd6848b3e92/go.mod h1:DPbz2QP7K7kHh9pCuStlQ6qDEwYyUiWNS6WGCdgb3Nk=
