@@ -33,11 +33,11 @@ spec:
           valueFrom:
             secretKeyRef:
                name: dictybase-configuration
-               key: secretkey
+               key: minio.secretkey
         env:
         - name: ACCESS_KEY
           valueFrom:
             secretKeyRef:
                name: dictybase-configuration
-               key: accesskey
+               key: minio.accesskey
       restartPolicy: Never

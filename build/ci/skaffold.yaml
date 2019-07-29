@@ -9,3 +9,12 @@ build:
           docker:
             dockerfile: build/package/Dockerfile
     local: {}
+deploy:
+    helm:
+        releases: 
+        - name: modware-importer
+          chartPath: deployments/charts/modware-import
+          namespace : dictybase
+          setValueTemplates:
+              image.tag: "{{.IMAGE_TAG}}"
+        
