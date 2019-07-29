@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "modware-import.fullname" . }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  template:
+    metadata:
+      name: {{ template "modware-import.fullname" . }}
+      labels:
+        app: {{ template "modware-import.fullname" . }}
+    spec:
+      containers:
+      - name: {{ template "modware-import.fullname" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        args: [
+          "stockcenter",
+          "strain",
+          "--access-key", $(ACCESS_KEY),
+          "--secret-key", $(SECRET_KEY),
+          "--log-level", "debug",
+          "-a", "strain_user_annotations.csv",
+          "-g", "strain_genes.tsv",
+          "-i", "strain_strain.tsv",
+          "-p", "strain_publications.tsv",
+        ]
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+               name: dictybase-configuration
+               key: secretkey
+        env:
+        - name: ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+               name: dictybase-configuration
+               key: accesskey
+      restartPolicy: Never
