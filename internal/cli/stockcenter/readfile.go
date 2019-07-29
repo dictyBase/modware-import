@@ -1,6 +1,7 @@
 package stockcenter
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -18,6 +19,25 @@ var ReadFileCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	RunE:    LoadReadFile,
 	PreRunE: setReadFilePreRun,
+}
+
+// LoadReadFile reads at least first 10 lines of the file
+func LoadReadFile(cmd *cobra.Command, args []string) error {
+	r := registry.GetReader(regsc.READFILE_READER)
+	logger := registry.GetLogger()
+	scanner := bufio.NewScanner(r)
+	count := 1
+	for scanner.Scan() {
+		logger.Info(scanner.Text())
+		count++
+		if count > 10 {
+			break
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error in reading file %s", err)
+	}
+	return nil
 }
 
 func setReadFilePreRun(cmd *cobra.Command, args []string) error {
