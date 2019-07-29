@@ -5,15 +5,7 @@ build:
         envTemplate:
             template: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
     artifacts:
-        - image: dictybase/modware-annotation
-          kaniko:
+        - image: dictybase/modware-import
+          docker:
             dockerfile: build/package/Dockerfile
-            buildContext:
-              localDir: {}
-            cache: 
-                repo: dictybase/modanno-cache
-    cluster:
-        namespace: kaniko
-        pullSecretName: docker-secret
-        dockerConfig:
-            secretName: docker-secret
+    local: {}
