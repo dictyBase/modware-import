@@ -73,8 +73,12 @@ func setStrainInputReader() error {
 		registry.SetReader(regsc.STRAIN_READER, sr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("strain-annotator-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("strain-annotator-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
@@ -86,8 +90,12 @@ func setStrainInputReader() error {
 			)
 		}
 		gr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("strain-gene-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("strain-gene-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
@@ -99,8 +107,12 @@ func setStrainInputReader() error {
 			)
 		}
 		pr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("strain-pub-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("strain-pub-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
@@ -112,8 +124,12 @@ func setStrainInputReader() error {
 			)
 		}
 		sr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("strain-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("strain-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
