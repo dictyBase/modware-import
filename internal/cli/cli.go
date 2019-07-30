@@ -119,9 +119,14 @@ func init() {
 		"file for log output other than standard output, written to a temp folder by default",
 	)
 	RootCmd.PersistentFlags().String(
+		"log-file-bucket",
+		"dictybase",
+		"S3 bucket for log file",
+	)
+	RootCmd.PersistentFlags().String(
 		"log-file-bucket-path",
-		"dictybase/import/log",
-		"S3 bucket path where log file will be stored",
+		"import/log",
+		"S3 path inside the bucket for storing log file",
 	)
 	RootCmd.PersistentFlags().StringP(
 		"s3-server",
