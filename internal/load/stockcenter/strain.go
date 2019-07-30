@@ -39,7 +39,8 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 	for sr.Next() {
 		strain, err := sr.Value()
 		if err != nil {
-			return fmt.Errorf("error in reading strain value from datasource %s", err)
+			logger.Errorf("error in reading strain value from datasource %s", err)
+			continue
 		}
 		if len(strain.User) == 0 {
 			logger.Errorf("strain %s does not have a user assignment, skipping the load", strain.Id)
