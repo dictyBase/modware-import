@@ -41,6 +41,10 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("error in reading strain value from datasource %s", err)
 		}
+		if len(strain.User) == 0 {
+			logger.Errorf("strain %s does not have a user assignment, skipping the load", strain.Id)
+			continue
+		}
 		_, err = client.GetStrain(context.Background(), &pb.StockId{Id: strain.Id})
 		if err != nil {
 			if grpc.Code(err) == codes.NotFound {
