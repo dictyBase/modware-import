@@ -48,10 +48,13 @@ or through a file that is kept in a particular bucket of a S3 server.`,
 			return nil
 		}
 		name := fmt.Sprintf("%s-%s.log", cmd.CalledAs(), time.Now().Format("20060102-150405"))
-		bucket, _ := cmd.Flags().GetString("log-file-bucket-path")
 		_, err := registry.GetS3Client().FPutObject(
-			bucket,
-			name,
+			viper.GetString("log-file-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("log-file-bucket-path"),
+				name,
+			),
 			registry.GetValue(registry.LOG_FILE_KEY),
 			minio.PutObjectOptions{},
 		)
@@ -119,9 +122,14 @@ func init() {
 		"file for log output other than standard output, written to a temp folder by default",
 	)
 	RootCmd.PersistentFlags().String(
+		"log-file-bucket",
+		"dictybase",
+		"S3 bucket for log file",
+	)
+	RootCmd.PersistentFlags().String(
 		"log-file-bucket-path",
-		"dictybase/import/log",
-		"S3 bucket path where log file will be stored",
+		"import/log",
+		"S3 path inside the bucket for storing log file",
 	)
 	RootCmd.PersistentFlags().StringP(
 		"s3-server",

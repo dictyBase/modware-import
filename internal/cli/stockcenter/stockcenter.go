@@ -26,11 +26,17 @@ func init() {
 		StrainCmd,
 		StrainCharCmd,
 		PlasmidCmd,
+		ReadFileCmd,
+	)
+	StockCenterCmd.PersistentFlags().String(
+		"s3-bucket",
+		"dictybase",
+		"S3 bucket for input files",
 	)
 	StockCenterCmd.PersistentFlags().String(
 		"s3-bucket-path",
-		"dictybase/import/stockcenter",
-		"S3 bucket path where all stockcenter data will be kept",
+		"import/stockcenter",
+		"path inside S3 bucket for input files",
 	)
 	viper.BindPFlags(StockCenterCmd.PersistentFlags())
 }

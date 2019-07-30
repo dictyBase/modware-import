@@ -52,16 +52,13 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 		)
 	}
 	// set hook to write to local file
-	var fname string
-	if cmd.Flags().Lookup("log-file") == nil {
+	fname, _ := cmd.Flags().GetString("log-file")
+	if len(fname) <= 0 {
 		f, err := ioutil.TempFile(os.TempDir(), "loader")
 		if err != nil {
 			return e, fmt.Errorf("error in creating temp file for logging %s", err)
 		}
 		fname = f.Name()
-	} else {
-		n, _ := cmd.Flags().GetString("log-file")
-		fname = n
 	}
 	logger.Hooks.Add(lfshook.NewHook(fname, lfmt))
 	registry.SetValue(registry.LOG_FILE_KEY, fname)

@@ -34,7 +34,6 @@ spec:
             secretKeyRef:
                name: dictybase-configuration
                key: minio.secretkey
-        env:
         - name: ACCESS_KEY
           valueFrom:
             secretKeyRef:

@@ -1,6 +1,7 @@
 package stockcenter
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -20,6 +21,25 @@ var ReadFileCmd = &cobra.Command{
 	PreRunE: setReadFilePreRun,
 }
 
+// LoadReadFile reads at least first 10 lines of the file
+func LoadReadFile(cmd *cobra.Command, args []string) error {
+	r := registry.GetReader(regsc.READFILE_READER)
+	logger := registry.GetLogger()
+	scanner := bufio.NewScanner(r)
+	count := 1
+	for scanner.Scan() {
+		logger.Info(scanner.Text())
+		count++
+		if count > 10 {
+			break
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error in reading file %s", err)
+	}
+	return nil
+}
+
 func setReadFilePreRun(cmd *cobra.Command, args []string) error {
 	if err := setReadFileInputReader(); err != nil {
 		return err
@@ -37,8 +57,12 @@ func setReadFileInputReader() error {
 		registry.SetReader(regsc.READFILE_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("readfile-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("readfile-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
