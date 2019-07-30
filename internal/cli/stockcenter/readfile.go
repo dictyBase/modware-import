@@ -57,8 +57,12 @@ func setReadFileInputReader() error {
 		registry.SetReader(regsc.READFILE_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("readfile-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("readfile-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
