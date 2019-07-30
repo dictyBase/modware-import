@@ -53,6 +53,7 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 					CreatedAt: aphgrpc.TimestampProto(strain.CreatedOn),
 					UpdatedAt: aphgrpc.TimestampProto(strain.UpdatedOn),
 					CreatedBy: strain.User,
+					UpdatedBy: strain.User,
 					Summary:   strain.Summary,
 					Species:   strain.Species,
 					Label:     strain.Descriptor,
