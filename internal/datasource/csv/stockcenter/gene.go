@@ -1,8 +1,10 @@
 package stockcenter
 
 import (
-	"encoding/csv"
+	"bufio"
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/emirpasic/gods/maps/hashmap"
 )
@@ -23,15 +25,11 @@ type saGeneLookup struct {
 func NewStockGeneLookp(r io.Reader) (StockGeneLookup, error) {
 	l := new(saGeneLookup)
 	m := hashmap.New()
-	sgr := csv.NewReader(r)
-	sgr.FieldsPerRecord = -1
-	for {
-		record, err := sgr.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return l, err
+	sgr := bufio.NewScanner(r)
+	for sgr.Scan() {
+		record := strings.Split(sgr.Text(), "\t")
+		if len(record) != 2 {
+			return l, fmt.Errorf("does not expected record in line %s", sgr.Text())
 		}
 		if v, ok := m.Get(record[0]); ok {
 			s := v.([]string)
@@ -39,6 +37,9 @@ func NewStockGeneLookp(r io.Reader) (StockGeneLookup, error) {
 			continue
 		}
 		m.Put(record[0], []string{record[1]})
+	}
+	if err := sgr.Err(); err != nil {
+		return l, fmt.Errorf("error in scanning %s", err)
 	}
 	l.smap = m
 	return l, nil
