@@ -3,9 +3,11 @@ LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
 RUN apk add --no-cache git build-base
 RUN mkdir -p /modware-import
 WORKDIR /modware-import
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download
 ADD cmd cmd
 ADD internal internal
-COPY go.mod go.sum ./
 RUN go build -o app cmd/import/main.go
 
 FROM alpine:3.9
