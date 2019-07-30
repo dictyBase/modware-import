@@ -1,7 +1,8 @@
 package stockcenter
 
 import (
-	"encoding/csv"
+	"bufio"
+	"fmt"
 	"io"
 	"strings"
 
@@ -24,15 +25,11 @@ type saPubLookup struct {
 func NewStockPubLookup(r io.Reader) (StockPubLookup, error) {
 	l := new(saPubLookup)
 	m := hashmap.New()
-	spr := csv.NewReader(r)
-	spr.FieldsPerRecord = -1
-	for {
-		record, err := spr.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return l, err
+	spr := bufio.NewScanner(r)
+	for spr.Scan() {
+		record := strings.Split(spr.Text(), "\t")
+		if len(record) != 2 {
+			return l, fmt.Errorf("does not expected record in line %s", spr.Text())
 		}
 		if strings.HasPrefix(record[1], "d") {
 			continue
@@ -43,6 +40,9 @@ func NewStockPubLookup(r io.Reader) (StockPubLookup, error) {
 			continue
 		}
 		m.Put(record[0], []string{record[1]})
+	}
+	if err := spr.Err(); err != nil {
+		return l, fmt.Errorf("error in scanning %s", err)
 	}
 	l.smap = m
 	return l, nil
