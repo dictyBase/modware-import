@@ -4,6 +4,22 @@
 
 image:
   repository: dictybase/modware-import
-  tag: lastest
+  tag: latest
   pullPolicy: IfNotPresent
 
+# data to be loaded
+load:
+  - command: stockcenter
+    group:
+      - plasmid
+    #- name: strain
+    #- name: order
+  #- command: genome
+    #group:
+      #-
+
+
+
+# verbosity of log
+log:
+  level: debug
