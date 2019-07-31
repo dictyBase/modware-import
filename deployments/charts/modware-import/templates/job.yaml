@@ -14,11 +14,42 @@ spec:
         app: {{ template "modware-import.fullname" . }}
     spec:
       containers:
-      - name: {{ template "modware-import.fullname" . }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+      {{- range $loader := .Values.load }}
+      {{- range $loader.group }}
+      {{- if eq $loader.command "stockcenter" }}
+      {{- if eq . "plasmid" }}
+      - name: {{ randAlpha 10 | printf "%s-%s-%s" $.Release.Name . | trimSuffix "-" | lower }}
+        image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+        imagePullPolicy: {{ $.Values.image.pullPolicy }}
         args: [
-          "stockcenter",
+          "{{ $loader.command }}",
+          "plasmid",
+          "--access-key", $(ACCESS_KEY),
+          "--secret-key", $(SECRET_KEY),
+          "--log-level", "debug",
+          "-a", "plasmid_user_annotations.csv",
+          "-g", "plasmid_genes.tsv",
+          "-i", "plasmid_plasmid.tsv",
+          "-p", "plasmid_publications.tsv",
+        ]
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+               name: dictybase-configuration
+               key: minio.secretkey
+        - name: ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+               name: dictybase-configuration
+               key: minio.accesskey
+      {{- end }}
+      {{- if eq . "strain" }}
+      - name: {{ randAlpha 10 | printf "%s-%s-%s" $.Release.Name . | trimSuffix "-" | lower }}
+        image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+        imagePullPolicy: "{{ $.Values.image.pullPolicy }}"
+        args: [
+          "{{ $loader.command }}",
           "strain",
           "--access-key", $(ACCESS_KEY),
           "--secret-key", $(SECRET_KEY),
@@ -39,4 +70,8 @@ spec:
             secretKeyRef:
                name: dictybase-configuration
                key: minio.accesskey
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
       restartPolicy: Never

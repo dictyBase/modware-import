@@ -39,7 +39,12 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 	for sr.Next() {
 		strain, err := sr.Value()
 		if err != nil {
-			return fmt.Errorf("error in reading strain value from datasource %s", err)
+			logger.Errorf("error in reading strain value from datasource %s", err)
+			continue
+		}
+		if len(strain.User) == 0 {
+			logger.Errorf("strain %s does not have a user assignment, skipping the load", strain.Id)
+			continue
 		}
 		_, err = client.GetStrain(context.Background(), &pb.StockId{Id: strain.Id})
 		if err != nil {
@@ -49,6 +54,7 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 					CreatedAt: aphgrpc.TimestampProto(strain.CreatedOn),
 					UpdatedAt: aphgrpc.TimestampProto(strain.UpdatedOn),
 					CreatedBy: strain.User,
+					UpdatedBy: strain.User,
 					Summary:   strain.Summary,
 					Species:   strain.Species,
 					Label:     strain.Descriptor,

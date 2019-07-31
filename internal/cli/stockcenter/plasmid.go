@@ -73,8 +73,11 @@ func setPlasmidInputReader() error {
 		registry.SetReader(regsc.PLASMID_READER, sr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("plasmid-annotator-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf("%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("plasmid-annotator-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
@@ -86,8 +89,11 @@ func setPlasmidInputReader() error {
 			)
 		}
 		gr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("plasmid-gene-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf("%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("plasmid-gene-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
@@ -99,8 +105,11 @@ func setPlasmidInputReader() error {
 			)
 		}
 		pr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("plasmid-pub-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf("%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("plasmid-pub-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
@@ -112,8 +121,11 @@ func setPlasmidInputReader() error {
 			)
 		}
 		sr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("plasmid-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf("%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("plasmid-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
