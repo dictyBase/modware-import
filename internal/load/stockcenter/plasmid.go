@@ -37,7 +37,12 @@ func LoadPlasmid(cmd *cobra.Command, args []string) error {
 	for sr.Next() {
 		plasmid, err := sr.Value()
 		if err != nil {
-			return fmt.Errorf("error in reading strain value from datasource %s", err)
+			logger.Errorf("error in reading plasmid value from datasource %s", err)
+			continue
+		}
+		if len(plasmid.User) == 0 {
+			logger.Errorf("plasmid %s does not have a user assignment, skipping the load", plasmid.Id)
+			continue
 		}
 		_, err = client.GetPlasmid(context.Background(), &pb.StockId{Id: plasmid.Id})
 		if err != nil {
