@@ -12,8 +12,8 @@ load:
   - command: stockcenter
     group:
       - plasmid
-    #- name: strain
-    #- name: order
+      - strain
+      #- name: order
   #- command: genome
     #group:
       #-

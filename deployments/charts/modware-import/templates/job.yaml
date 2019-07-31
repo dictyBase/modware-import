@@ -26,7 +26,7 @@ spec:
           "plasmid",
           "--access-key", $(ACCESS_KEY),
           "--secret-key", $(SECRET_KEY),
-          "--log-level", "debug",
+          "--log-level", "{{ $.Values.log.level }}",
           "-a", "plasmid_user_annotations.csv",
           "-g", "plasmid_genes.tsv",
           "-i", "plasmid_plasmid.tsv",
