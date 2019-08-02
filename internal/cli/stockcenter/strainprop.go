@@ -41,8 +41,12 @@ func setStrainPropInputReader() error {
 		registry.SetReader(regsc.STRAINPROP_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("strainprop-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("strainprop-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
