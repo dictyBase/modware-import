@@ -15,50 +15,12 @@ spec:
     spec:
       containers:
       {{- range $loader := .Values.load }}
-      {{- range $loader.group }}
       {{- if eq $loader.command "stockcenter" }}
-      {{- if eq . "plasmid" }}
-      - name: {{ randAlpha 10 | printf "%s-%s-%s" $.Release.Name . | trimSuffix "-" | lower }}
-        image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
-        imagePullPolicy: {{ $.Values.image.pullPolicy }}
-        args: [
-          "{{ $loader.command }}",
-          "plasmid",
-          "--access-key", $(ACCESS_KEY),
-          "--secret-key", $(SECRET_KEY),
-          "--log-level", "{{ $.Values.log.level }}",
-          "-a", "plasmid_user_annotations.csv",
-          "-g", "plasmid_genes.tsv",
-          "-i", "plasmid_plasmid.tsv",
-          "-p", "plasmid_publications.tsv",
-        ]
-        env:
-        - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-               name: dictybase-configuration
-               key: minio.secretkey
-        - name: ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-               name: dictybase-configuration
-               key: minio.accesskey
-      {{- end }}
-      {{- if eq . "strain" }}
-      - name: {{ randAlpha 10 | printf "%s-%s-%s" $.Release.Name . | trimSuffix "-" | lower }}
+      - name: {{ randAlpha 10 | printf "%s-%s-%s" $.Release.Name "dsc" | trimSuffix "-" | lower }}
         image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
         imagePullPolicy: "{{ $.Values.image.pullPolicy }}"
-        args: [
-          "{{ $loader.command }}",
-          "strain",
-          "--access-key", $(ACCESS_KEY),
-          "--secret-key", $(SECRET_KEY),
-          "--log-level", "debug",
-          "-a", "strain_user_annotations.csv",
-          "-g", "strain_genes.tsv",
-          "-i", "strain_strain.tsv",
-          "-p", "strain_publications.tsv",
-        ]
+        command: ["/usr/local/bin/dsc-runner"]
+        args: [{{ $loader.dsc | join "," }}]
         env:
         - name: SECRET_KEY
           valueFrom:
@@ -70,8 +32,6 @@ spec:
             secretKeyRef:
                name: dictybase-configuration
                key: minio.accesskey
-      {{- end }}
-      {{- end }}
       {{- end }}
       {{- end }}
       restartPolicy: Never
