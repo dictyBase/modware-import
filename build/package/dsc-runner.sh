@@ -35,6 +35,14 @@ do
                     --log-level debug \
                     -i strain_characteristics.tsv
             ;;
+        "strainprop")
+                ${APP} stockcenter \
+                    strainprop \
+                    --access-key ${ACCESS_KEY} \
+                    --secret-key  ${SECRET_KEY} \
+                    --log-level debug \
+                    -i strain_props.tsv
+            ;;
         "*")
                 echo unknown command $scmd
             ;;
