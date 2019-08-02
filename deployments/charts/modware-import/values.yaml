@@ -10,9 +10,11 @@ image:
 # data to be loaded
 load:
   - command: stockcenter
-    group:
+    plasmid:
       - plasmid
+    strain:
       - strain
+      - characteristics
       #- name: order
   #- command: genome
     #group:
