@@ -13,7 +13,5 @@ RUN go build -o app cmd/import/main.go
 FROM alpine:3.9
 RUN apk --no-cache add ca-certificates
 COPY --from=0 /modware-import/app /usr/local/bin/
-COPY build/package/plasmid-runner.sh /usr/local/bin/plasmid-runner
-COPY build/package/strain-runner.sh /usr/local/bin/strain-runner
-RUN chmod +x /usr/local/bin/strain-runner \
-    && chmod +x /usr/local/bin/plasmid-runner
+COPY build/package/dsc-runner.sh /usr/local/bin/dsc-runner
+RUN chmod +x /usr/local/bin/dsc-runner
