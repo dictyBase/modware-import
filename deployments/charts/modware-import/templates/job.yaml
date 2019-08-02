@@ -16,10 +16,10 @@ spec:
       containers:
       {{- range $loader := .Values.load }}
       {{- if eq $loader.command "stockcenter" }}
-      - name: {{ randAlpha 10 | printf "%s-%s-%s" $.Release.Name "plasmid" | trimSuffix "-" | lower }}
+      - name: {{ randAlpha 10 | printf "%s-%s-%s" $.Release.Name "strain" | trimSuffix "-" | lower }}
         image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
-        imagePullPolicy: {{ $.Values.image.pullPolicy }}
-        command: ["/usr/local/bin/plasmid-runner", {{ $loader.plasmid | join " " }}]
+        imagePullPolicy: "{{ $.Values.image.pullPolicy }}"
+        command: ["/usr/local/bin/strain-runner", {{ $loader.strain | join " " }}]
         env:
         - name: SECRET_KEY
           valueFrom:
@@ -31,10 +31,10 @@ spec:
             secretKeyRef:
                name: dictybase-configuration
                key: minio.accesskey
-      - name: {{ randAlpha 10 | printf "%s-%s-%s" $.Release.Name "strain" | trimSuffix "-" | lower }}
+      - name: {{ randAlpha 10 | printf "%s-%s-%s" $.Release.Name "plasmid" | trimSuffix "-" | lower }}
         image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
-        imagePullPolicy: "{{ $.Values.image.pullPolicy }}"
-        command: ["/usr/local/bin/strain-runner", {{ $loader.strain | join " " }}]
+        imagePullPolicy: {{ $.Values.image.pullPolicy }}
+        command: ["/usr/local/bin/plasmid-runner", {{ $loader.plasmid | join " " }}]
         env:
         - name: SECRET_KEY
           valueFrom:
