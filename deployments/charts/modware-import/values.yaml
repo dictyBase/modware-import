@@ -11,7 +11,9 @@ image:
 load:
   - command: stockcenter
     plasmid:
+      - strain
       - plasmid
+      - characteristics
     strain:
       - strain
       - characteristics
