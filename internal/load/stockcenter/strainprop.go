@@ -31,8 +31,9 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 		}
 		var onto string
 		switch prop.Property {
-		case sysnameTag:
 		case muttypeTag:
+			onto = regs.DICTY_ANNO_ONTOLOGY
+		case sysnameTag:
 			onto = regs.DICTY_ANNO_ONTOLOGY
 		case mutmethodTag:
 			onto = regs.DICTY_MUTAGENESIS_ONTOLOGY
