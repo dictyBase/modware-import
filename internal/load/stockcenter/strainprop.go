@@ -33,11 +33,11 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 		switch prop.Property {
 		case synTag:
 		case sysnameTag:
+		case muttypeTag:
 			onto = regs.DICTY_ANNO_ONTOLOGY
 		case mutmethodTag:
 			onto = regs.DICTY_MUTAGENESIS_ONTOLOGY
-		case muttypeTag:
-			onto = regs.DICTY_GENETICMOD_ONTOLOGY
+
 		default:
 			logger.Warnf(
 				"property %s is not recognized, record is not loaded",
