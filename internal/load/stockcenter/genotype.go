@@ -75,7 +75,7 @@ func LoadGeno(cmd *cobra.Command, args []string) error {
 		ct++
 	}
 	logger.Infof(
-		"read: %d\tcreate: %d\t update: %d\t total: %d genotypes",
+		"read:%d  create:%d  update:%d total:%d genotypes",
 		rct, nct, uct, ct,
 	)
 	return nil
