@@ -41,8 +41,12 @@ func setGenoInputReader() error {
 		registry.SetReader(regsc.GENO_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("genotype-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("genotype-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
