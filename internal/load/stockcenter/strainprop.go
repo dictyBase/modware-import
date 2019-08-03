@@ -45,6 +45,7 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 			)
 			continue
 		}
+		logger.Debugf("going with onto: %s id: %s", onto, prop.Id)
 		_, err = findOrCreateAnno(client, prop.Property, prop.Id, onto, prop.Value)
 		if err != nil {
 			return err
