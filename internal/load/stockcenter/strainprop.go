@@ -31,13 +31,13 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 		}
 		var onto string
 		switch prop.Property {
-		case synTag:
 		case sysnameTag:
 		case muttypeTag:
 			onto = regs.DICTY_ANNO_ONTOLOGY
 		case mutmethodTag:
 			onto = regs.DICTY_MUTAGENESIS_ONTOLOGY
-
+		case synTag:
+			onto = regs.DICTY_ANNO_ONTOLOGY
 		default:
 			logger.Warnf(
 				"property %s is not recognized, record is not loaded",
@@ -45,7 +45,7 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 			)
 			continue
 		}
-		logger.Debugf("going with onto: %s id: %s", onto, prop.Id)
+		logger.Debugf("going with onto: %s id: %s value: %s", onto, prop.Id, prop.Value)
 		_, err = findOrCreateAnno(client, prop.Property, prop.Id, onto, prop.Value)
 		if err != nil {
 			return err
@@ -56,5 +56,6 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 		)
 		pcount++
 	}
+	logger.Infof("loaded %d strain properties", pcount)
 	return nil
 }
