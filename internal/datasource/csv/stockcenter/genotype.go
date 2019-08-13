@@ -4,6 +4,7 @@ package stockcenter
 import (
 	"encoding/csv"
 	"io"
+	"strings"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
@@ -42,6 +43,6 @@ func (gr *csvGenotypeReader) Value() (*Genotype, error) {
 	}
 	g.Id = gr.Record[1]
 	g.StrainId = gr.Record[0]
-	g.Genotype = gr.Record[2]
+	g.Genotype = strings.Replace(gr.Record[2], ", ", ",", -1)
 	return g, nil
 }
