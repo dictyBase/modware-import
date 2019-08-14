@@ -47,9 +47,15 @@ func NewStockAnnotatorLookup(r io.Reader) (StockAnnotatorLookup, error) {
 		if err != nil {
 			return l, err
 		}
+		var usr string
+		if _, ok := annMap[record[1]]; !ok {
+			usr = annMap["jf"]
+		} else {
+			usr = annMap[record[1]]
+		}
 		m.Put(
 			record[0],
-			[]string{annMap[record[1]], record[2], record[3]},
+			[]string{usr, record[2], record[3]},
 		)
 	}
 	l.smap = m
