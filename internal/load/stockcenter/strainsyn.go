@@ -49,7 +49,7 @@ func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 			&annotation.ListParameters{
 				Limit: 20,
 				Filter: fmt.Sprintf(
-					"entry_id==%s;tag==%s;ontology==%s",
+					"entry_id===%s;tag===%s;ontology===%s",
 					entryId, synTag, regs.DICTY_ANNO_ONTOLOGY,
 				)})
 		if err != nil {
@@ -69,6 +69,7 @@ func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 					return fmt.Errorf("unable to remove synonyms for %s %s", entryId, err)
 				}
 			}
+			logger.Debugf("removed %d synonyms for id %s", len(tac.Data), entryId)
 		}
 		// reload all synonyms
 		for i, p := range props {
@@ -90,7 +91,7 @@ func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("unable to load synonym %s for %s %s", p.Value, entryId, err)
 			}
 		}
-		logger.Debugf("loaded all strain synonyms for %s", entryId)
+		logger.Debugf("loaded all %d synonyms for %s", len(props), entryId)
 		pcount++
 	}
 	logger.Infof("loaded synonyms for %d strains", pcount)
