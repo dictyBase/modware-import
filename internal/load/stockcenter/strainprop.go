@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	synTag       = "synonym"
 	sysnameTag   = "systematic name"
 	mutmethodTag = "mutagenesis method"
 	muttypeTag   = "mutant type"
@@ -37,8 +36,6 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 			onto = regs.DICTY_ANNO_ONTOLOGY
 		case mutmethodTag:
 			onto = regs.DICTY_MUTAGENESIS_ONTOLOGY
-		case synTag:
-			onto = regs.DICTY_ANNO_ONTOLOGY
 		default:
 			logger.Warnf(
 				"property %s is not recognized, record is not loaded",

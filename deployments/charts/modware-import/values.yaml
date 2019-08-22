@@ -14,8 +14,9 @@ load:
       - strain
       - plasmid
       - characteristics
-      - strainprop
       - genotype
+      - strainprop
+      - strainsyn
   #- command: genome
     #group:
       #-

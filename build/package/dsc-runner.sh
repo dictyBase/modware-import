@@ -51,8 +51,16 @@ do
                     --log-level debug \
                     -i strain_genotype.tsv
             ;;
+        "strainsyn")
+                ${APP} stockcenter \
+                    strainsyn \
+                    --access-key ${ACCESS_KEY} \
+                    --secret-key  ${SECRET_KEY} \
+                    --log-level debug \
+                    -i strain_props.tsv
+            ;;
         "*")
-                echo unknown command $scmd
+                echo unknown command ${scmd}
             ;;
     esac
 done
