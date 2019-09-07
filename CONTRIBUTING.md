@@ -1,22 +1,22 @@
 # Guidelines for contribution :pencil:
-## Discussion
+## Discussion :speech_balloon:
 Although not mandatory, the contributing author could start a conversation in
 the corresponding [issue tracker][4] to discuss the intent of potential changes.
 
-## Fork and pull request
+## Fork and pull request  :twisted_rightwards_arrows:
 All contributions(enhancements or bug fix) are made via [pull request][1]. To
 do a pull request, the contributor should [fork][2] the repository under
 consideration. Then make the fixes in that repository and submit a [pull
 request][1] to the **develop** branch of the original repository. 
 
-## Unit tests
+## Unit tests :rotating_light:
 All patches from contributors are expected to pass the prescribed unit tests of
 that repository. The contributors could add additional unit tests if necessary.
 In case of failing unit tests, contributing authors are expected to update
 their pull requests to address the failures until the tests passes and the pull
 request merges successfully.
 
-## Review and accpetance
+## Review and accpetance :ok_hand:
 Every pull request will get reviewed by one of [dictyBase][3] developer. If the
 patch passes review the developer will accept it with a comment.
 
