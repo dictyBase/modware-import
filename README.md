@@ -1,5 +1,4 @@
-https://img.shields.io/github/license/dictyBase/modware-import?style=for-the-badge
+[![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](LICENSE)
 
-## modware-import
-cli application for importing dictybase data.   
-The documentation is [here](docs/import.md)
+## `modware-import`
+cli application for importing dictybase data.The documentation is [here](docs/import.md)
