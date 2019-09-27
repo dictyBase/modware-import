@@ -17,7 +17,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/dictyBase/modware-import)](https://goreportcard.com/report/github.com/dictyBase/modware-import)
 [![Technical debt](https://badgen.net/codeclimate/tech-debt/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import/trends/technical_debt)
 [![Issues](https://badgen.net/codeclimate/issues/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import/issues)
-[![Maintainability percentage](https://badgen.net/codeclimate/maintainability-percentage/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import)   
+[![Maintainability percentage](https://badgen.net/codeclimate/maintainability-percentage/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import)
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=dictyBase/modware-import)](https://dependabot.com)   
 [![Funding](https://badgen.net/badge/NIGMS/Rex%20L%20Chisholm,dictyBase/yellow?list=|)](https://projectreporter.nih.gov/project_info_description.cfm?aid=9476993)
 [![Funding](https://badgen.net/badge/NIGMS/Rex%20L%20Chisholm,DSC/yellow?list=|)](https://projectreporter.nih.gov/project_info_description.cfm?aid=9438930)
 
