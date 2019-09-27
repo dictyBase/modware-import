@@ -18,6 +18,6 @@ require (
 	golang.org/x/sys v0.0.0-20190712062909-fae7ac547cb7 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/appengine v1.6.0 // indirect
-	google.golang.org/grpc v1.21.1
+	google.golang.org/grpc v1.24.0
 	gopkg.in/stretchr/testify.v1 v1.2.2 // indirect
 )
