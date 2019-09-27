@@ -6,7 +6,7 @@ require (
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.12.0
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
-	github.com/golang/protobuf v1.3.1
+	github.com/golang/protobuf v1.3.2
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/minio/minio-go v6.0.14+incompatible
