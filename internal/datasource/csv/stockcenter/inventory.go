@@ -3,6 +3,7 @@ package stockcenter
 import (
 	"encoding/csv"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
@@ -21,6 +22,7 @@ type StrainInventory struct {
 	VialsCount       string
 	VialColor        string
 	PhysicalLocation string
+	RecordLine       string
 }
 
 //StrainInventoryReader is the defined interface for reading the data
@@ -61,6 +63,7 @@ func (sir *csvStrainInventoryReader) Value() (*StrainInventory, error) {
 	if len(sir.Record) >= 8 {
 		inv.PublicComment = sir.Record[7]
 	}
+	inv.RecordLine = strings.Join(sir.Record, "\t")
 	return inv, nil
 }
 
