@@ -31,6 +31,7 @@ func LoadInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	invcount := 0
+	invMap := make(map[string][]*stockcenter.StrainInventory)
 	for ir.Next() {
 		inv, err := ir.Value()
 		if err != nil {
@@ -39,53 +40,62 @@ func LoadInv(cmd *cobra.Command, args []string) error {
 				err,
 			)
 		}
-		gc, err := client.ListAnnotationGroups(
-			context.Background(),
-			&pb.ListGroupParameters{
-				Filter: fmt.Sprintf(
-					"entry_id==%s;tag==%s;ontology==%s;value==%s",
-					inv.StrainId,
-					locTag,
-					invOntology,
-					inv.PhysicalLocation,
-				),
-			})
-		if err != nil {
-			if grpc.Code(err) != codes.NotFound { // error in lookup
-				return err
-			}
-			// no inventory found, create or find all individual annotations and inventory
-			if err := handleInventory(client, inv); err != nil {
-				return err
-			}
-			logger.Debugf("created inventory for %s strain", inv.StrainId)
-			invcount++
+		if len(inv.PhysicalLocation) == 0 || len(inv.VialColor) == 0 {
+			logger.Warnf("skipped the record %s", inv.RecordLine)
 			continue
 		}
-		if len(gc.Data) > 1 {
-			return fmt.Errorf(
-				"data constraint issue, got multiple inventory groups for %s %s %s %s",
+		if v, ok := invMap[inv.StrainId]; ok {
+			invMap[inv.StrainId] = append(v, inv)
+		} else {
+			invMap[inv.StrainId] = []*stockcenter.StrainInventory{inv}
+		}
+	}
+	gc, err := client.ListAnnotationGroups(
+		context.Background(),
+		&pb.ListGroupParameters{
+			Filter: fmt.Sprintf(
+				"entry_id==%s;tag==%s;ontology==%s;value==%s",
 				inv.StrainId,
 				locTag,
 				invOntology,
 				inv.PhysicalLocation,
-			)
-		}
-		// delete inventory
-		_, err = client.DeleteAnnotationGroup(
-			context.Background(),
-			&pb.GroupEntryId{GroupId: gc.Data[0].Group.GroupId},
-		)
-		if err != nil {
+			),
+		})
+	if err != nil {
+		if grpc.Code(err) != codes.NotFound { // error in lookup
 			return err
 		}
-		//create or find all individual annotations and inventory
+		// no inventory found, create or find all individual annotations and inventory
 		if err := handleInventory(client, inv); err != nil {
 			return err
 		}
-		logger.Debugf("flush and loaded inventory for %s strain", inv.StrainId)
+		logger.Debugf("created inventory for %s strain", inv.StrainId)
 		invcount++
+		continue
 	}
+	if len(gc.Data) > 1 {
+		return fmt.Errorf(
+			"data constraint issue, got multiple inventory groups for %s %s %s %s",
+			inv.StrainId,
+			locTag,
+			invOntology,
+			inv.PhysicalLocation,
+		)
+	}
+	// delete inventory
+	_, err = client.DeleteAnnotationGroup(
+		context.Background(),
+		&pb.GroupEntryId{GroupId: gc.Data[0].Group.GroupId},
+	)
+	if err != nil {
+		return err
+	}
+	//create or find all individual annotations and inventory
+	if err := handleInventory(client, inv); err != nil {
+		return err
+	}
+	logger.Debugf("flush and loaded inventory for %s strain", inv.StrainId)
+	invcount++
 	logger.Infof("created %d inventory", invcount)
 	return nil
 }
