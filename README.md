@@ -1,5 +1,10 @@
 # modware-import
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](LICENSE)   
+[![Go Report Card](https://goreportcard.com/badge/github.com/dictyBase/modware-import)](https://goreportcard.com/report/github.com/dictyBase/modware-import)
+[![Technical debt](https://badgen.net/codeclimate/tech-debt/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import/trends/technical_debt)
+[![Issues](https://badgen.net/codeclimate/issues/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import/issues)
+[![Maintainability percentage](https://badgen.net/codeclimate/maintainability-percentage/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import)
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=dictyBase/modware-import)](https://dependabot.com)   
 ![GitHub repo size](https://img.shields.io/github/repo-size/dictyBase/modware-import?style=plastic)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/dictyBase/modware-import?style=plastic)
 [![Lines of Code](https://badgen.net/codeclimate/loc/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import/code)   
@@ -14,11 +19,6 @@
 ![Open PRS](https://badgen.net/github/open-prs/dictyBase/modware-import)
 ![Closed PRS](https://badgen.net/github/closed-prs/dictyBase/modware-import)
 ![Merged PRS](https://badgen.net/github/merged-prs/dictyBase/modware-import)   
-[![Go Report Card](https://goreportcard.com/badge/github.com/dictyBase/modware-import)](https://goreportcard.com/report/github.com/dictyBase/modware-import)
-[![Technical debt](https://badgen.net/codeclimate/tech-debt/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import/trends/technical_debt)
-[![Issues](https://badgen.net/codeclimate/issues/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import/issues)
-[![Maintainability percentage](https://badgen.net/codeclimate/maintainability-percentage/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import)
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=dictyBase/modware-import)](https://dependabot.com)   
 [![Funding](https://badgen.net/badge/NIGMS/Rex%20L%20Chisholm,dictyBase/yellow?list=|)](https://projectreporter.nih.gov/project_info_description.cfm?aid=9476993)
 [![Funding](https://badgen.net/badge/NIGMS/Rex%20L%20Chisholm,DSC/yellow?list=|)](https://projectreporter.nih.gov/project_info_description.cfm?aid=9438930)
 
