@@ -30,7 +30,6 @@ func LoadInv(cmd *cobra.Command, args []string) error {
 	ir := stockcenter.NewCsvStrainInventoryReader(registry.GetReader(regs.INV_READER))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
-	invcount := 0
 	invMap := make(map[string][]*stockcenter.StrainInventory)
 	for ir.Next() {
 		inv, err := ir.Value()
@@ -50,59 +49,53 @@ func LoadInv(cmd *cobra.Command, args []string) error {
 			invMap[inv.StrainId] = []*stockcenter.StrainInventory{inv}
 		}
 	}
-	gc, err := client.ListAnnotationGroups(
-		context.Background(),
-		&pb.ListGroupParameters{
-			Filter: fmt.Sprintf(
-				"entry_id==%s;tag==%s;ontology==%s;value==%s",
-				inv.StrainId,
-				locTag,
-				invOntology,
-				inv.PhysicalLocation,
-			),
-		})
-	if err != nil {
-		if grpc.Code(err) != codes.NotFound { // error in lookup
-			return err
+	for id, invSlice := range invMap {
+		gc, err := client.ListAnnotationGroups(
+			context.Background(),
+			&pb.ListGroupParameters{
+				Filter: fmt.Sprintf(
+					"entry_id==%s;tag==%s;ontology==%s",
+					id, locTag, invOntology,
+				),
+			})
+		if err != nil {
+			if grpc.Code(err) != codes.NotFound { // error in lookup
+				return err
+			}
 		}
-		// no inventory found, create or find all individual annotations and inventory
-		if err := handleInventory(client, inv); err != nil {
-			return err
+		// inventory found, remove all annotations and annotations groups
+		for _, gcd := range gc.Data {
+			// remove annotations group
+			_, err := client.DeleteAnnotationGroup(
+				context.Background(),
+				&pb.GroupEntryId{GroupId: gcd.Group.GroupId},
+			)
+			if err != nil {
+				return err
+			}
+			// remove all annotations
+			for _, gd := range gcd.Group.Data {
+				_, err := client.DeleteAnnotation(
+					context.Background(),
+					&pb.DeleteAnnotationRequest{Id: gd.Id, Purge: true},
+				)
+				if err != nil {
+					return err
+				}
+			}
 		}
-		logger.Debugf("created inventory for %s strain", inv.StrainId)
-		invcount++
-		continue
+		for _, inv := range invSlice {
+			if err := handleInventory(client, inv); err != nil {
+				return err
+			}
+		}
 	}
-	if len(gc.Data) > 1 {
-		return fmt.Errorf(
-			"data constraint issue, got multiple inventory groups for %s %s %s %s",
-			inv.StrainId,
-			locTag,
-			invOntology,
-			inv.PhysicalLocation,
-		)
-	}
-	// delete inventory
-	_, err = client.DeleteAnnotationGroup(
-		context.Background(),
-		&pb.GroupEntryId{GroupId: gc.Data[0].Group.GroupId},
-	)
-	if err != nil {
-		return err
-	}
-	//create or find all individual annotations and inventory
-	if err := handleInventory(client, inv); err != nil {
-		return err
-	}
-	logger.Debugf("flush and loaded inventory for %s strain", inv.StrainId)
-	invcount++
-	logger.Infof("created %d inventory", invcount)
 	return nil
 }
 
 func handleInventory(client pb.TaggedAnnotationServiceClient, inv *stockcenter.StrainInventory) error {
 	var ids []string
-	invMap := map[string]string{
+	m := map[string]string{
 		locTag:         inv.PhysicalLocation,
 		storedAsTag:    inv.StoredAs,
 		vialCountTag:   inv.VialsCount,
@@ -111,14 +104,15 @@ func handleInventory(client pb.TaggedAnnotationServiceClient, inv *stockcenter.S
 		pubCommentTag:  inv.PublicComment,
 		storedOnTag:    inv.StoredOn.Format(time.RFC3339Nano),
 	}
-	for t, v := range invMap {
-		if len(v) > 0 {
-			t, err := findOrCreateAnno(client, t, inv.StrainId, invOntology, v)
-			if err != nil {
-				return err
-			}
-			ids = append(ids, t.Data.Id)
+	for t, v := range m {
+		if len(v) == 0 {
+			continue
 		}
+		t, err := createAnno(client, t, inv.StrainId, invOntology, v)
+		if err != nil {
+			return err
+		}
+		ids = append(ids, t.Data.Id)
 	}
 	_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
 	return err
