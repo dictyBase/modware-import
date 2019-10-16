@@ -17,6 +17,8 @@ import (
 
 const (
 	invOntology    = "strain_inventory"
+	invTerm        = "strain_inventory"
+	invValue       = "value"
 	locTag         = "location"
 	pubCommentTag  = "public comment"
 	privCommentTag = "private comment"
@@ -88,6 +90,11 @@ func LoadInv(cmd *cobra.Command, args []string) error {
 			if err := handleInventory(client, inv); err != nil {
 				return err
 			}
+		}
+		// create an annotation to indicate the strain has inventory
+		_, err = findOrCreateAnno(client, invTerm, id, invOntology, invValue)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
