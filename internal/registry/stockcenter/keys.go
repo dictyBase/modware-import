@@ -24,4 +24,5 @@ const (
 	DICTY_MUTAGENESIS_ONTOLOGY = "Dd Mutagenesis Method"
 	DICTY_GENETICMOD_ONTOLOGY  = "genetic modification"
 	READFILE_READER            = "readfile-input"
+	STOCK_DATE_LAYOUT          = "02-JAN-06"
 )
