@@ -10,6 +10,29 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+func createAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
+	ta, err := client.CreateAnnotation(
+		context.Background(),
+		&pb.NewTaggedAnnotation{
+			Data: &pb.NewTaggedAnnotation_Data{
+				Attributes: &pb.NewTaggedAnnotationAttributes{
+					Value:     value,
+					CreatedBy: regs.DEFAULT_USER,
+					Tag:       tag,
+					EntryId:   id,
+					Ontology:  ontology,
+				},
+			},
+		},
+	)
+	return ta, fmt.Errorf(
+		"error in creating annotation %s for id %s %s",
+		tag,
+		id,
+		err,
+	)
+}
+
 func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
 	ta, err := client.GetEntryAnnotation(
 		context.Background(),
@@ -36,7 +59,6 @@ func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology
 				},
 			},
 		)
-
 	}
 	return ta, fmt.Errorf(
 		"error in finding annotation %s for id %s %s",
