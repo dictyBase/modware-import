@@ -28,7 +28,7 @@ const (
 	storedOnTag    = "storage date"
 )
 
-func LoadInv(cmd *cobra.Command, args []string) error {
+func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	ir := stockcenter.NewCsvStrainInventoryReader(registry.GetReader(regs.INV_READER))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
