@@ -39,14 +39,14 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
-		gc, err := getInventory(client, id)
+		gc, err := getInventory(id, client, logger)
 		if err != nil {
 			return err
 		}
-		if err := delExistingInventory(client, gc); err != nil {
+		if err := delExistingInventory(id, client, gc, logger); err != nil {
 			return err
 		}
-		if err := createInventory(client, invSlice); err != nil {
+		if err := createInventory(id, client, invSlice, logger); err != nil {
 			return err
 		}
 		invCount++
@@ -61,7 +61,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getInventory(client pb.TaggedAnnotationServiceClient, id string) (*pb.TaggedAnnotationGroupCollection, error) {
+func getInventory(id string, client pb.TaggedAnnotationServiceClient, logger *logrus.Entry) (*pb.TaggedAnnotationGroupCollection, error) {
 	gc, err := client.ListAnnotationGroups(
 		context.Background(),
 		&pb.ListGroupParameters{
@@ -75,10 +75,18 @@ func getInventory(client pb.TaggedAnnotationServiceClient, id string) (*pb.Tagge
 			return gc, err
 		}
 	}
+	logger.WithFields(
+		logrus.Fields{
+			"type":  "inventory",
+			"stock": "strains",
+			"event": "get",
+			"id":    id,
+		}).Debugf("retrieved inventories")
+
 	return gc, nil
 }
 
-func delExistingInventory(client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection) error {
+func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection, logger *logrus.Entry) error {
 	for _, gcd := range gc.Data {
 		// remove annotations group
 		_, err := client.DeleteAnnotationGroup(
@@ -99,6 +107,13 @@ func delExistingInventory(client pb.TaggedAnnotationServiceClient, gc *pb.Tagged
 			}
 		}
 	}
+	logger.WithFields(
+		logrus.Fields{
+			"type":  "inventory",
+			"stock": "strains",
+			"event": "delete",
+			"id":    id,
+		}).Debugf("deleted inventories")
 	return nil
 }
 
@@ -131,7 +146,7 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 	return invMap, nil
 }
 
-func createInventory(client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.StrainInventory) error {
+func createInventory(id string, client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.StrainInventory, logger *logrus.Entry) error {
 	for _, inv := range invSlice {
 		var ids []string
 		m := map[string]string{
@@ -158,5 +173,12 @@ func createInventory(client pb.TaggedAnnotationServiceClient, invSlice []*stockc
 			return err
 		}
 	}
+	logger.WithFields(
+		logrus.Fields{
+			"type":  "inventory",
+			"stock": "strains",
+			"event": "create",
+			"id":    id,
+		}).Debugf("created inventories")
 	return nil
 }
