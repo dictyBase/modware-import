@@ -16,19 +16,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	invOntology    = "strain_inventory"
-	invTerm        = "strain_inventory"
-	invValue       = "value"
-	locTag         = "location"
-	pubCommentTag  = "public comment"
-	privCommentTag = "private comment"
-	storedAsTag    = "stored as"
-	vialCountTag   = "number of vials"
-	vialColorTag   = "color"
-	storedOnTag    = "storage date"
-)
-
 func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	ir := stockcenter.NewCsvStrainInventoryReader(registry.GetReader(regs.INV_READER))
 	logger := registry.GetLogger()
@@ -67,7 +54,7 @@ func getInventory(id string, client pb.TaggedAnnotationServiceClient, logger *lo
 		&pb.ListGroupParameters{
 			Filter: fmt.Sprintf(
 				"entry_id==%s;tag==%s;ontology==%s",
-				id, locTag, invOntology,
+				id, regs.INV_LOCATION_TAG, regs.STRAIN_INV_ONTO,
 			),
 		})
 	if err != nil {
@@ -150,19 +137,19 @@ func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, i
 	for _, inv := range invSlice {
 		var ids []string
 		m := map[string]string{
-			locTag:         inv.PhysicalLocation,
-			storedAsTag:    inv.StoredAs,
-			vialCountTag:   inv.VialsCount,
-			vialColorTag:   inv.VialColor,
-			privCommentTag: inv.PrivateComment,
-			pubCommentTag:  inv.PublicComment,
-			storedOnTag:    inv.StoredOn.Format(time.RFC3339Nano),
+			regs.INV_LOCATION_TAG:     inv.PhysicalLocation,
+			regs.INV_STORED_AS_TAG:    inv.StoredAs,
+			regs.INV_VIAL_COUNT_TAG:   inv.VialsCount,
+			regs.INV_VIAL_COLOR_TAG:   inv.VialColor,
+			regs.INV_PRIV_COMMENT_TAG: inv.PrivateComment,
+			regs.INV_PUB_COMMENT_TAG:  inv.PublicComment,
+			regs.INV_STORAGE_DATE_TAG: inv.StoredOn.Format(time.RFC3339Nano),
 		}
 		for t, v := range m {
 			if len(v) == 0 {
 				continue
 			}
-			t, err := createAnno(client, t, inv.StrainId, invOntology, v)
+			t, err := createAnno(client, t, inv.StrainId, regs.STRAIN_INV_ONTO, v)
 			if err != nil {
 				return err
 			}
