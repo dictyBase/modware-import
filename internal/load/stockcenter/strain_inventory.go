@@ -46,7 +46,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 		if err := delExistingInventory(id, client, gc, logger); err != nil {
 			return err
 		}
-		if err := createInventory(id, client, invSlice, logger); err != nil {
+		if err := createStrainInventory(id, client, invSlice, logger); err != nil {
 			return err
 		}
 		invCount++
@@ -146,7 +146,7 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 	return invMap, nil
 }
 
-func createInventory(id string, client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.StrainInventory, logger *logrus.Entry) error {
+func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.StrainInventory, logger *logrus.Entry) error {
 	for _, inv := range invSlice {
 		var ids []string
 		m := map[string]string{
