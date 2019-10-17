@@ -28,6 +28,7 @@ func init() {
 		PlasmidCmd,
 		StrainSynCmd,
 		StrainInvCmd,
+		PlasmidCmd,
 	)
 	StockCenterCmd.PersistentFlags().String(
 		"s3-bucket",
