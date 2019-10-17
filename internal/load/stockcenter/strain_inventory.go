@@ -37,50 +37,64 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	client := regs.GetAnnotationAPIClient()
+	invCount := 0
 	for id, invSlice := range invMap {
-		gc, err := client.ListAnnotationGroups(
-			context.Background(),
-			&pb.ListGroupParameters{
-				Filter: fmt.Sprintf(
-					"entry_id==%s;tag==%s;ontology==%s",
-					id, locTag, invOntology,
-				),
-			})
+		gc, err := getInventory(client, id)
 		if err != nil {
-			if grpc.Code(err) != codes.NotFound { // error in lookup
-				return err
-			}
+			return err
 		}
-		// inventory found, remove all annotations and annotations groups
-		for _, gcd := range gc.Data {
-			// remove annotations group
-			_, err := client.DeleteAnnotationGroup(
+		if err := delExistingInventory(client, gc); err != nil {
+			return err
+		}
+		if err := createInventory(client, invSlice); err != nil {
+			return err
+		}
+		invCount++
+	}
+	logger.WithFields(
+		logrus.Fields{
+			"inventory": "strains",
+			"count":     invCount,
+		}).Infof("loaded inventories")
+	return nil
+}
+
+func getInventory(client pb.TaggedAnnotationServiceClient, id string) (*pb.TaggedAnnotationGroupCollection, error) {
+	gc, err := client.ListAnnotationGroups(
+		context.Background(),
+		&pb.ListGroupParameters{
+			Filter: fmt.Sprintf(
+				"entry_id==%s;tag==%s;ontology==%s",
+				id, locTag, invOntology,
+			),
+		})
+	if err != nil {
+		if grpc.Code(err) != codes.NotFound { // error in lookup
+			return gc, err
+		}
+	}
+	return gc, nil
+}
+
+func delExistingInventory(client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection) error {
+	for _, gcd := range gc.Data {
+		// remove annotations group
+		_, err := client.DeleteAnnotationGroup(
+			context.Background(),
+			&pb.GroupEntryId{GroupId: gcd.Group.GroupId},
+		)
+		if err != nil {
+			return err
+		}
+		// remove all annotations
+		for _, gd := range gcd.Group.Data {
+			_, err := client.DeleteAnnotation(
 				context.Background(),
-				&pb.GroupEntryId{GroupId: gcd.Group.GroupId},
+				&pb.DeleteAnnotationRequest{Id: gd.Id, Purge: true},
 			)
 			if err != nil {
 				return err
 			}
-			// remove all annotations
-			for _, gd := range gcd.Group.Data {
-				_, err := client.DeleteAnnotation(
-					context.Background(),
-					&pb.DeleteAnnotationRequest{Id: gd.Id, Purge: true},
-				)
-				if err != nil {
-					return err
-				}
-			}
-		}
-		for _, inv := range invSlice {
-			if err := handleInventory(client, inv); err != nil {
-				return err
-			}
-		}
-		// create an annotation to indicate the strain has inventory
-		_, err = findOrCreateAnno(client, invTerm, id, invOntology, invValue)
-		if err != nil {
-			return err
 		}
 	}
 	return nil
@@ -109,27 +123,32 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 	return invMap, nil
 }
 
-func handleInventory(client pb.TaggedAnnotationServiceClient, inv *stockcenter.StrainInventory) error {
-	var ids []string
-	m := map[string]string{
-		locTag:         inv.PhysicalLocation,
-		storedAsTag:    inv.StoredAs,
-		vialCountTag:   inv.VialsCount,
-		vialColorTag:   inv.VialColor,
-		privCommentTag: inv.PrivateComment,
-		pubCommentTag:  inv.PublicComment,
-		storedOnTag:    inv.StoredOn.Format(time.RFC3339Nano),
-	}
-	for t, v := range m {
-		if len(v) == 0 {
-			continue
+func createInventory(client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.StrainInventory) error {
+	for _, inv := range invSlice {
+		var ids []string
+		m := map[string]string{
+			locTag:         inv.PhysicalLocation,
+			storedAsTag:    inv.StoredAs,
+			vialCountTag:   inv.VialsCount,
+			vialColorTag:   inv.VialColor,
+			privCommentTag: inv.PrivateComment,
+			pubCommentTag:  inv.PublicComment,
+			storedOnTag:    inv.StoredOn.Format(time.RFC3339Nano),
 		}
-		t, err := createAnno(client, t, inv.StrainId, invOntology, v)
+		for t, v := range m {
+			if len(v) == 0 {
+				continue
+			}
+			t, err := createAnno(client, t, inv.StrainId, invOntology, v)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, t.Data.Id)
+		}
+		_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
 		if err != nil {
 			return err
 		}
-		ids = append(ids, t.Data.Id)
 	}
-	_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
-	return err
+	return nil
 }
