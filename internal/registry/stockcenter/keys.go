@@ -17,7 +17,6 @@ const (
 	STRAINCHAR_READER          = "strain-char-input"
 	PHENO_READER               = "pheno-input"
 	GENO_READER                = "geno-input"
-	INV_READER                 = "inv-input"
 	STRAINPROP_READER          = "strainprop-input"
 	DEFAULT_USER               = "dictybase@northwestern.edu"
 	DICTY_ANNO_ONTOLOGY        = "dicty_annotation"
