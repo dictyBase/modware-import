@@ -12,6 +12,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -30,27 +31,12 @@ const (
 
 func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	ir := stockcenter.NewCsvStrainInventoryReader(registry.GetReader(regs.INV_READER))
-	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
-	invMap := make(map[string][]*stockcenter.StrainInventory)
-	for ir.Next() {
-		inv, err := ir.Value()
-		if err != nil {
-			return fmt.Errorf(
-				"error in loading inventory for strain %s",
-				err,
-			)
-		}
-		if len(inv.PhysicalLocation) == 0 || len(inv.VialColor) == 0 {
-			logger.Warnf("skipped the record %s", inv.RecordLine)
-			continue
-		}
-		if v, ok := invMap[inv.StrainId]; ok {
-			invMap[inv.StrainId] = append(v, inv)
-		} else {
-			invMap[inv.StrainId] = []*stockcenter.StrainInventory{inv}
-		}
+	invMap, err := cacheInvByStrainId(ir, logger)
+	if err != nil {
+		return err
 	}
+	client := regs.GetAnnotationAPIClient()
 	for id, invSlice := range invMap {
 		gc, err := client.ListAnnotationGroups(
 			context.Background(),
@@ -98,6 +84,29 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return nil
+}
+
+func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Entry) (map[string][]*stockcenter.StrainInventory, error) {
+	invMap := make(map[string][]*stockcenter.StrainInventory)
+	for ir.Next() {
+		inv, err := ir.Value()
+		if err != nil {
+			return invMap, fmt.Errorf(
+				"error in loading inventory for strain %s",
+				err,
+			)
+		}
+		if len(inv.PhysicalLocation) == 0 || len(inv.VialColor) == 0 {
+			logger.Warnf("skipped the record %s", inv.RecordLine)
+			continue
+		}
+		if v, ok := invMap[inv.StrainId]; ok {
+			invMap[inv.StrainId] = append(v, inv)
+		} else {
+			invMap[inv.StrainId] = []*stockcenter.StrainInventory{inv}
+		}
+	}
+	return invMap, nil
 }
 
 func handleInventory(client pb.TaggedAnnotationServiceClient, inv *stockcenter.StrainInventory) error {
