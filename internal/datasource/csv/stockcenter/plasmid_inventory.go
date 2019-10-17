@@ -3,6 +3,7 @@ package stockcenter
 import (
 	"encoding/csv"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
@@ -18,6 +19,7 @@ type PlasmidInventory struct {
 	PhysicalLocation string
 	StoredAs         string
 	ObtainedAs       string
+	RecordLine       string
 }
 
 //PlasmidInventoryReader is the defined interface for reading the data
@@ -62,5 +64,6 @@ func (pir *csvPlasmidInventoryReader) Value() (*PlasmidInventory, error) {
 	if len(pir.Record[5]) > 0 {
 		inv.PrivateComment = pir.Record[5]
 	}
+	inv.RecordLine = strings.Join(pir.Record, "\t")
 	return inv, nil
 }
