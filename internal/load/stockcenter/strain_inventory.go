@@ -53,8 +53,10 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	}
 	logger.WithFields(
 		logrus.Fields{
-			"inventory": "strains",
-			"count":     invCount,
+			"type":  "inventory",
+			"stock": "strains",
+			"event": "load",
+			"count": invCount,
 		}).Infof("loaded inventories")
 	return nil
 }
@@ -111,7 +113,13 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 			)
 		}
 		if len(inv.PhysicalLocation) == 0 || len(inv.VialColor) == 0 {
-			logger.Warnf("skipped the record %s", inv.RecordLine)
+			logger.WithFields(
+				logrus.Fields{
+					"type":   "inventory",
+					"stock":  "strains",
+					"event":  "skip record",
+					"output": inv.RecordLine,
+				}).Warnf("skipped the record")
 			continue
 		}
 		if v, ok := invMap[inv.StrainId]; ok {
