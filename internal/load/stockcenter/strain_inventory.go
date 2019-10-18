@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -26,11 +23,11 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
-		gc, err := getInventory(id, client, logger)
+		gc, err := getInventory(id, client, "strain", regs.STRAIN_INV_ONTO, logger)
 		if err != nil {
 			return err
 		}
-		if err := delExistingInventory(id, client, gc, logger); err != nil {
+		if err := delExistingInventory(id, client, "strain", gc, logger); err != nil {
 			return err
 		}
 		if err := createStrainInventory(id, client, invSlice, logger); err != nil {
@@ -45,62 +42,6 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 			"event": "load",
 			"count": invCount,
 		}).Infof("loaded inventories")
-	return nil
-}
-
-func getInventory(id string, client pb.TaggedAnnotationServiceClient, logger *logrus.Entry) (*pb.TaggedAnnotationGroupCollection, error) {
-	gc, err := client.ListAnnotationGroups(
-		context.Background(),
-		&pb.ListGroupParameters{
-			Filter: fmt.Sprintf(
-				"entry_id==%s;tag==%s;ontology==%s",
-				id, regs.INV_LOCATION_TAG, regs.STRAIN_INV_ONTO,
-			),
-		})
-	if err != nil {
-		if grpc.Code(err) != codes.NotFound { // error in lookup
-			return gc, err
-		}
-	}
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "inventory",
-			"stock": "strains",
-			"event": "get",
-			"id":    id,
-		}).Debugf("retrieved inventories")
-
-	return gc, nil
-}
-
-func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection, logger *logrus.Entry) error {
-	for _, gcd := range gc.Data {
-		// remove annotations group
-		_, err := client.DeleteAnnotationGroup(
-			context.Background(),
-			&pb.GroupEntryId{GroupId: gcd.Group.GroupId},
-		)
-		if err != nil {
-			return err
-		}
-		// remove all annotations
-		for _, gd := range gcd.Group.Data {
-			_, err := client.DeleteAnnotation(
-				context.Background(),
-				&pb.DeleteAnnotationRequest{Id: gd.Id, Purge: true},
-			)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "inventory",
-			"stock": "strains",
-			"event": "delete",
-			"id":    id,
-		}).Debugf("deleted inventories")
 	return nil
 }
 
