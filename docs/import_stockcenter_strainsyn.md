@@ -1,25 +1,22 @@
-## import stockcenter plasmid
+## import stockcenter strainsyn
 
-load stockcenter plasmid data
+load stockcenter strain synonyms
 
 ### Synopsis
 
-load stockcenter plasmid data
+load stockcenter strain synonyms
 
 ```
-import stockcenter plasmid [flags]
+import stockcenter strainsyn [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help                             help for plasmid
-  -a, --plasmid-annotator-input string   csv file that provides mapping among plasmid identifier, annotator and annotation timestamp
-  -g, --plasmid-gene-input string        csv file that maps plasmids to gene identifiers
-  -i, --plasmid-input string             csv file with plasmid data
-  -p, --plasmid-pub-input string         csv file that maps plasmids to publication identifiers
-      --stock-grpc-host string           grpc host address for stock service (default "stock-api")
-      --stock-grpc-port string           grpc port for stock service
+      --annotation-grpc-host string   grpc host address for annotation service (default "annotation-api")
+      --annotation-grpc-port string   grpc port for annotation service
+  -h, --help                          help for strainsyn
+  -i, --strainprop-input string       csv file with strain synonyms data
 ```
 
 ### Options inherited from parent commands
