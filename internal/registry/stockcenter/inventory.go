@@ -13,4 +13,6 @@ const (
 	INV_VIAL_COLOR_TAG   = "color"
 	INV_STORAGE_DATE_TAG = "storage date"
 	INV_OBTAINED_AS_TAG  = "obtained as"
+	PLASMID_INV_TAG      = "plasmid inventory"
+	STRAIN_INV_TAG       = "strain_inventory"
 )
