@@ -31,8 +31,12 @@ func setInvInputReader() error {
 		registry.SetReader(regsc.INV_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("inventory-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("inventory-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
