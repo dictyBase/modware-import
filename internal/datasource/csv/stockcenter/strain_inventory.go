@@ -50,19 +50,23 @@ func (sir *csvStrainInventoryReader) Value() (*StrainInventory, error) {
 	if sir.Err != nil {
 		return inv, sir.Err
 	}
-	storedOn, err := time.Parse(registry.STOCK_DATE_LAYOUT, sir.Record[5])
-	if err != nil {
-		return inv, err
-	}
-	inv.StoredOn = storedOn
 	inv.StrainId = sir.Record[0]
 	inv.PhysicalLocation = sir.Record[1]
 	inv.VialColor = sir.Record[2]
 	inv.VialsCount = sir.Record[3]
-	inv.StoredAs = sir.Record[4]
-	inv.PrivateComment = sir.Record[6]
-	if len(sir.Record) >= 8 {
-		inv.PublicComment = sir.Record[7]
+	if len(sir.Record[5]) > 0 {
+		inv.StoredAs = sir.Record[5]
+	}
+	if len(sir.Record[6]) > 0 {
+		storedOn, err := time.Parse(registry.STOCK_DATE_LAYOUT, sir.Record[6])
+		if err != nil {
+			return inv, err
+		}
+		inv.StoredOn = storedOn
+	}
+	inv.PrivateComment = sir.Record[7]
+	if len(sir.Record) >= 9 {
+		inv.PublicComment = sir.Record[8]
 	}
 	inv.RecordLine = strings.Join(sir.Record, "\t")
 	return inv, nil

@@ -87,6 +87,9 @@ func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, i
 			regs.INV_STORAGE_DATE_TAG: inv.StoredOn.Format(time.RFC3339Nano),
 			regs.STRAIN_INV_ONTO:      regs.INV_EXIST_VALUE,
 		}
+		if !inv.StoredOn.IsZero() {
+			m[regs.INV_STORAGE_DATE_TAG] = inv.StoredOn.Format(time.RFC3339Nano)
+		}
 		for t, v := range m {
 			if len(v) == 0 {
 				continue
