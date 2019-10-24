@@ -2,6 +2,7 @@ package stockcenter
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -10,8 +11,6 @@ import (
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
 	registry "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 )
-
-const invDateLayout = "02-JAN-06"
 
 //StrainInventory is the container for strain inventory
 type StrainInventory struct {
@@ -58,11 +57,17 @@ func (sir *csvStrainInventoryReader) Value() (*StrainInventory, error) {
 		inv.StoredAs = sir.Record[5]
 	}
 	if len(sir.Record[6]) > 0 {
-		storedOn, err := time.Parse(registry.STOCK_DATE_LAYOUT, sir.Record[6])
-		if err != nil {
-			return inv, err
+		m := dateRegxp.FindStringSubmatch(sir.Record[6])
+		if m != nil {
+			storedOn, err := time.Parse(
+				registry.STOCK_DATE_LAYOUT,
+				fmt.Sprintf("%s-%s-%s", m[1], ucFirstAllLower(m[2]), m[3]),
+			)
+			if err != nil {
+				return inv, err
+			}
+			inv.StoredOn = storedOn
 		}
-		inv.StoredOn = storedOn
 	}
 	inv.PrivateComment = sir.Record[7]
 	if len(sir.Record) >= 9 {
@@ -70,4 +75,8 @@ func (sir *csvStrainInventoryReader) Value() (*StrainInventory, error) {
 	}
 	inv.RecordLine = strings.Join(sir.Record, "\t")
 	return inv, nil
+}
+
+func ucFirstAllLower(s string) string {
+	return fmt.Sprintf("%s%s", string(s[0]), strings.ToLower(s[1:]))
 }

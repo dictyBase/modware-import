@@ -342,6 +342,8 @@ gopkg.in/go-playground/validator.v9 v9.28.0/go.mod h1:+c9/zcJMFNgbLvly1L1V+PpxWd
 gopkg.in/guregu/null.v2 v2.1.2/go.mod h1:XORrx8tyS5ZDcyUboCIxQtta/Aujk/6pfWrn9Xe33mU=
 gopkg.in/ini.v1 v1.42.0 h1:7N3gPTt50s8GuLortA00n8AqRTk75qOP98+mTPpgzRk=
 gopkg.in/ini.v1 v1.42.0/go.mod h1:pNLf8WUiyNEtQjuu5G5vTm06TEv9tsIgeAvK8hOrP4k=
+gopkg.in/mgutz/dat.v1 v1.1.11 h1:eWTpg57YNHupW4qhPC3j9FXGtyZ4aZ6/7TevhVNT9pw=
+gopkg.in/mgutz/dat.v1 v1.1.11/go.mod h1:/aoJEN48UesEhBJIf5E2TemqmsL7LEonKVindr+V2SE=
 gopkg.in/mgutz/dat.v2 v2.0.0-20171004160617-d76e4f81c4ef h1:qD+M6IiDd7s+KtfGDOGWVnk1MgeDs153K00sSLTmpTI=
 gopkg.in/mgutz/dat.v2 v2.0.0-20171004160617-d76e4f81c4ef/go.mod h1:5gQ9u/67w+i03GWDRWDw1l4kDMRc5Jx0CRMxMPy+oSg=
 gopkg.in/resty.v1 v1.12.0/go.mod h1:mDo4pnntr5jdWRML875a/NmxYqAlA73dVijT2AXvQQo=

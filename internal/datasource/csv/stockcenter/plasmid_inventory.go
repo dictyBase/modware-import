@@ -2,6 +2,7 @@ package stockcenter
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -55,11 +56,17 @@ func (pir *csvPlasmidInventoryReader) Value() (*PlasmidInventory, error) {
 		inv.StoredAs = pir.Record[3]
 	}
 	if len(pir.Record[4]) > 0 {
-		storedOn, err := time.Parse(registry.STOCK_DATE_LAYOUT, pir.Record[4])
-		if err != nil {
-			return inv, err
+		m := dateRegxp.FindStringSubmatch(pir.Record[4])
+		if m != nil {
+			storedOn, err := time.Parse(
+				registry.STOCK_DATE_LAYOUT,
+				fmt.Sprintf("%s-%s-%s", m[1], ucFirstAllLower(m[2]), m[3]),
+			)
+			if err != nil {
+				return inv, err
+			}
+			inv.StoredOn = storedOn
 		}
-		inv.StoredOn = storedOn
 	}
 	if len(pir.Record[5]) > 0 {
 		inv.PrivateComment = pir.Record[5]
