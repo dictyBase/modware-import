@@ -11,6 +11,8 @@ import (
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
@@ -23,16 +25,39 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
-		gc, err := getInventory(id, client, "plasmid", regs.PLASMID_INV_ONTO, logger)
+		gc, err := getInventory(id, client, "plasmid", regs.PLASMID_INV_ONTO)
 		if err != nil {
+			if grpc.Code(err) != codes.NotFound { // error in lookup
+				return err
+			}
+			logger.WithFields(
+				logrus.Fields{
+					"type":  "inventory",
+					"stock": "plasmid",
+					"event": "get",
+					"id":    id,
+				}).Debugf("retrieved inventories")
+			if err := delExistingInventory(id, client, "plasmid", gc); err != nil {
+				return err
+			}
+			logger.WithFields(
+				logrus.Fields{
+					"type":  "inventory",
+					"stock": "plasmid",
+					"event": "delete",
+					"id":    id,
+				}).Debugf("deleted inventories")
+		}
+		if err := createPlasmidInventory(id, client, invSlice); err != nil {
 			return err
 		}
-		if err := delExistingInventory(id, client, "plasmid", gc, logger); err != nil {
-			return err
-		}
-		if err := createPlasmidInventory(id, client, invSlice, logger); err != nil {
-			return err
-		}
+		logger.WithFields(
+			logrus.Fields{
+				"type":  "inventory",
+				"stock": "plasmid",
+				"event": "create",
+				"id":    id,
+			}).Debugf("created inventories")
 		invCount++
 	}
 	logger.WithFields(
@@ -74,7 +99,7 @@ func cacheInvByPlasmidId(ir stockcenter.PlasmidInventoryReader, logger *logrus.E
 	return invMap, nil
 }
 
-func createPlasmidInventory(id string, client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.PlasmidInventory, logger *logrus.Entry) error {
+func createPlasmidInventory(id string, client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.PlasmidInventory) error {
 	for _, inv := range invSlice {
 		var ids []string
 		m := map[string]string{
@@ -102,12 +127,5 @@ func createPlasmidInventory(id string, client pb.TaggedAnnotationServiceClient, 
 			return err
 		}
 	}
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "inventory",
-			"stock": "strains",
-			"event": "create",
-			"id":    id,
-		}).Debugf("created inventories")
 	return nil
 }
