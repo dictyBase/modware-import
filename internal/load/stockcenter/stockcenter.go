@@ -68,7 +68,7 @@ func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology
 	)
 }
 
-func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto, stock string) (*pb.TaggedAnnotationGroupCollection, error) {
+func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto string) (*pb.TaggedAnnotationGroupCollection, error) {
 	return client.ListAnnotationGroups(
 		context.Background(),
 		&pb.ListGroupParameters{
@@ -79,7 +79,7 @@ func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto, stoc
 		})
 }
 
-func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, stock string, gc *pb.TaggedAnnotationGroupCollection) error {
+func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection) error {
 	for _, gcd := range gc.Data {
 		// remove annotations group
 		_, err := client.DeleteAnnotationGroup(
