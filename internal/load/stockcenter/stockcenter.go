@@ -69,8 +69,8 @@ func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology
 	)
 }
 
-func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto, stock string, logger *logrus.Entry) (*pb.TaggedAnnotationGroupCollection, error) {
-	gc, err := client.ListAnnotationGroups(
+func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto, stock string) (*pb.TaggedAnnotationGroupCollection, error) {
+	return client.ListAnnotationGroups(
 		context.Background(),
 		&pb.ListGroupParameters{
 			Filter: fmt.Sprintf(
@@ -78,20 +78,6 @@ func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto, stoc
 				id, regs.INV_LOCATION_TAG, onto,
 			),
 		})
-	if err != nil {
-		if grpc.Code(err) != codes.NotFound { // error in lookup
-			return gc, err
-		}
-	}
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "inventory",
-			"stock": stock,
-			"event": "get",
-			"id":    id,
-		}).Debugf("retrieved inventories")
-
-	return gc, nil
 }
 
 func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, stock string, gc *pb.TaggedAnnotationGroupCollection, logger *logrus.Entry) error {

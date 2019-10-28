@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -23,12 +26,21 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
-		gc, err := getInventory(id, client, "strain", regs.STRAIN_INV_ONTO, logger)
+		gc, err := getInventory(id, client, "strain", regs.STRAIN_INV_ONTO)
 		if err != nil {
-			return err
-		}
-		if err := delExistingInventory(id, client, "strain", gc, logger); err != nil {
-			return err
+			if grpc.Code(err) != codes.NotFound { // error in lookup
+				return err
+			}
+			logger.WithFields(
+				logrus.Fields{
+					"type":  "inventory",
+					"stock": "strain",
+					"event": "get",
+					"id":    id,
+				}).Debugf("retrieved inventories")
+			if err := delExistingInventory(id, client, "strain", gc, logger); err != nil {
+				return err
+			}
 		}
 		if err := createStrainInventory(id, client, invSlice, logger); err != nil {
 			return err
