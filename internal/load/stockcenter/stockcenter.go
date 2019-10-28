@@ -6,7 +6,6 @@ import (
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
@@ -80,7 +79,7 @@ func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto, stoc
 		})
 }
 
-func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, stock string, gc *pb.TaggedAnnotationGroupCollection, logger *logrus.Entry) error {
+func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, stock string, gc *pb.TaggedAnnotationGroupCollection) error {
 	for _, gcd := range gc.Data {
 		// remove annotations group
 		_, err := client.DeleteAnnotationGroup(
@@ -101,12 +100,5 @@ func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, st
 			}
 		}
 	}
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "inventory",
-			"stock": stock,
-			"event": "delete",
-			"id":    id,
-		}).Debugf("deleted inventories")
 	return nil
 }
