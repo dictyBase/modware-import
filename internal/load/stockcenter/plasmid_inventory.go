@@ -25,7 +25,7 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
-		gc, err := getInventory(id, client, "plasmid", regs.PLASMID_INV_ONTO)
+		gc, err := getInventory(id, client, regs.PLASMID_INV_ONTO)
 		if err != nil {
 			if grpc.Code(err) != codes.NotFound { // error in lookup
 				return err
@@ -37,7 +37,7 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 					"event": "get",
 					"id":    id,
 				}).Debugf("retrieved inventories")
-			if err := delExistingInventory(id, client, "plasmid", gc); err != nil {
+			if err := delExistingInventory(id, client, gc); err != nil {
 				return err
 			}
 			logger.WithFields(
