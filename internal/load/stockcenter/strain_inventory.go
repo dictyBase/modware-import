@@ -62,6 +62,7 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 					"stock":  "strains",
 					"event":  "skip record",
 					"output": inv.RecordLine,
+					"id":     inv.StrainId,
 				}).Warnf("skipped the record")
 			continue
 		}

@@ -38,6 +38,7 @@ func NewCsvPlasmidInventoryReader(r io.Reader) PlasmidInventoryReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
+	cr.LazyQuotes = true
 	return &csvPlasmidInventoryReader{&csource.CsvReader{Reader: cr}}
 }
 

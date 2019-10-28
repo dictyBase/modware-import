@@ -40,6 +40,7 @@ func NewCsvStrainInventoryReader(r io.Reader) StrainInventoryReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
+	cr.LazyQuotes = true
 	return &csvStrainInventoryReader{&csource.CsvReader{Reader: cr}}
 }
 
