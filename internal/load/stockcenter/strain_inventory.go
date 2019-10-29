@@ -26,13 +26,15 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
+		found := true
 		gc, err := getInventory(id, client, regs.STRAIN_INV_ONTO)
 		if err != nil {
 			if grpc.Code(err) != codes.NotFound { // error in lookup
 				return err
 			}
+			found = false
 		}
-		if len(gc.Data) > 0 { // remove if inventory exists
+		if found { // remove if inventory exists
 			logger.WithFields(
 				logrus.Fields{
 					"type":  "inventory",
