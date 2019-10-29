@@ -31,6 +31,8 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 			if grpc.Code(err) != codes.NotFound { // error in lookup
 				return err
 			}
+		}
+		if len(gc.Data) > 0 { // remove if inventory exists
 			logger.WithFields(
 				logrus.Fields{
 					"type":  "inventory",
