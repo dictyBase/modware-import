@@ -25,12 +25,15 @@ func createAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, valu
 			},
 		},
 	)
-	return ta, fmt.Errorf(
-		"error in creating annotation %s for id %s %s",
-		tag,
-		id,
-		err,
-	)
+	if err != nil {
+		return ta, fmt.Errorf(
+			"error in creating annotation %s for id %s %s",
+			tag,
+			id,
+			err,
+		)
+	}
+	return ta, nil
 }
 
 func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
