@@ -125,7 +125,7 @@ func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, i
 			if len(v) == 0 {
 				continue
 			}
-			t, err := findOrCreateAnno(client, t, inv.StrainId, regs.STRAIN_INV_ONTO, v)
+			t, err := createAnno(client, t, inv.StrainId, regs.STRAIN_INV_ONTO, v)
 			if err != nil {
 				return err
 			}

@@ -25,11 +25,15 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
+		found := true
 		gc, err := getInventory(id, client, regs.PLASMID_INV_ONTO)
 		if err != nil {
 			if grpc.Code(err) != codes.NotFound { // error in lookup
 				return err
 			}
+			found = false
+		}
+		if found {
 			logger.WithFields(
 				logrus.Fields{
 					"type":  "inventory",
