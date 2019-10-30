@@ -3,7 +3,7 @@ package s3
 import (
 	"fmt"
 
-	minio "github.com/minio/minio-go"
+	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

@@ -61,8 +61,9 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 				"stock": "plasmid",
 				"event": "create",
 				"id":    id,
+				"count": len(invSlice),
 			}).Debugf("created inventories")
-		invCount++
+		invCount = invCount + len(invSlice)
 	}
 	logger.WithFields(
 		logrus.Fields{

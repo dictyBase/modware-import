@@ -26,6 +26,9 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
+		for _, inv := range invSlice {
+			logger.Infof("id:%s location:%s color:%s", inv.StrainId, inv.PhysicalLocation, inv.VialColor)
+		}
 		found := true
 		gc, err := getInventory(id, client, regs.STRAIN_INV_ONTO)
 		if err != nil {
@@ -33,6 +36,13 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			found = false
+			logger.WithFields(
+				logrus.Fields{
+					"type":  "inventory",
+					"stock": "strain",
+					"event": "get",
+					"id":    id,
+				}).Debugf("no inventories")
 		}
 		if found { // remove if inventory exists
 			logger.WithFields(
@@ -62,8 +72,9 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 				"stock": "strain",
 				"event": "create",
 				"id":    id,
+				"count": len(invSlice),
 			}).Debugf("created inventories")
-		invCount++
+		invCount = invCount + len(invSlice)
 	}
 	logger.WithFields(
 		logrus.Fields{

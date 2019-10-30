@@ -3,7 +3,7 @@ package registry
 import (
 	"io"
 
-	minio "github.com/minio/minio-go"
+	"github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )

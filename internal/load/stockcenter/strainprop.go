@@ -20,6 +20,9 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	pcount := 0
+	if !pr.Next() {
+		logger.Errorln("error in reading strainprop data")
+	}
 	for pr.Next() {
 		prop, err := pr.Value()
 		if err != nil {

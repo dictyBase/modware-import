@@ -3,6 +3,10 @@ package stockcenter
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
@@ -104,4 +108,9 @@ func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, gc
 		}
 	}
 	return nil
+}
+
+func TimestampProto(t time.Time) *timestamp.Timestamp {
+	ts, _ := ptypes.TimestampProto(t)
+	return ts
 }
