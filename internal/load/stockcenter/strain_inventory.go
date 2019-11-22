@@ -60,7 +60,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 					"id":    id,
 				}).Debugf("deleted inventories")
 		}
-		if err := createStrainInventory(id, client, invSlice, logger); err != nil {
+		if err := createStrainInventory(id, client, invSlice, found, logger); err != nil {
 			return err
 		}
 		logger.WithFields(
@@ -113,7 +113,7 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 	return invMap, nil
 }
 
-func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.StrainInventory, logger *logrus.Entry) error {
+func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.StrainInventory, found bool, logger *logrus.Entry) error {
 	for _, inv := range invSlice {
 		var ids []string
 		m := map[string]string{
@@ -124,25 +124,37 @@ func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, i
 			regs.INV_PRIV_COMMENT_TAG: inv.PrivateComment,
 			regs.INV_PUB_COMMENT_TAG:  inv.PublicComment,
 			regs.INV_STORAGE_DATE_TAG: inv.StoredOn.Format(time.RFC3339Nano),
-			regs.STRAIN_INV_ONTO:      regs.INV_EXIST_VALUE,
 		}
 		if !inv.StoredOn.IsZero() {
 			m[regs.INV_STORAGE_DATE_TAG] = inv.StoredOn.Format(time.RFC3339Nano)
 		}
+	INNER:
 		for tag, value := range m {
-			if len(value) != 0 {
-				anno, err := createAnno(client, tag, inv.StrainId, regs.STRAIN_INV_ONTO, value)
-				if err != nil {
-					return err
-				}
-				logger.Debugf("created annotation for id:%s tag:%s value:%s", inv.StrainId, tag, value)
-				ids = append(ids, anno.Data.Id)
+			if len(value) == 0 {
+				continue INNER
 			}
+			anno, err := createAnno(client, tag, inv.StrainId, regs.STRAIN_INV_ONTO, value)
+			if err != nil {
+				return err
+			}
+			logger.Debugf("created annotation for id:%s tag:%s value:%s", inv.StrainId, tag, value)
+			ids = append(ids, anno.Data.Id)
 		}
 		_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
 		if err != nil {
 			return err
 		}
+	}
+	// create presence of inventory annotation
+	if !found {
+		_, err := createAnno(
+			client, regs.STRAIN_INV_ONTO, invSlice[0].StrainId,
+			regs.STRAIN_INV_ONTO, regs.INV_EXIST_VALUE,
+		)
+		if err != nil {
+			return err
+		}
+
 	}
 	return nil
 }
