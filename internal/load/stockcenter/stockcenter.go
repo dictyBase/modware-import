@@ -14,6 +14,33 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+func createAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string, rank int) (*pb.TaggedAnnotation, error) {
+	ta, err := client.CreateAnnotation(
+		context.Background(),
+		&pb.NewTaggedAnnotation{
+			Data: &pb.NewTaggedAnnotation_Data{
+				Attributes: &pb.NewTaggedAnnotationAttributes{
+					Value:     value,
+					CreatedBy: regs.DEFAULT_USER,
+					Tag:       tag,
+					EntryId:   id,
+					Ontology:  ontology,
+					Rank:      int64(rank),
+				},
+			},
+		},
+	)
+	if err != nil {
+		return ta, fmt.Errorf(
+			"error in creating annotation %s for id %s %s",
+			tag,
+			id,
+			err,
+		)
+	}
+	return ta, nil
+}
+
 func createAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
 	ta, err := client.CreateAnnotation(
 		context.Background(),
