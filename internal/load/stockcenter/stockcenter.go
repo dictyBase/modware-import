@@ -32,9 +32,10 @@ func createAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, ontolo
 	)
 	if err != nil {
 		return ta, fmt.Errorf(
-			"error in creating annotation %s for id %s %s",
+			"error in creating annotation %s for id %s with rank %d %s",
 			tag,
 			id,
+			rank,
 			err,
 		)
 	}
