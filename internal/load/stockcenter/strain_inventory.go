@@ -129,14 +129,14 @@ func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, i
 		if !inv.StoredOn.IsZero() {
 			m[regs.INV_STORAGE_DATE_TAG] = inv.StoredOn.Format(time.RFC3339Nano)
 		}
-		for t, v := range m {
-			if len(v) != 0 {
-				t, err := createAnno(client, t, inv.StrainId, regs.STRAIN_INV_ONTO, v)
+		for tag, value := range m {
+			if len(value) != 0 {
+				anno, err := createAnno(client, tag, inv.StrainId, regs.STRAIN_INV_ONTO, value)
 				if err != nil {
 					return err
 				}
-				logger.Debugf("created annotation for id:%s tag:%s value:%s", inv.StrainId, t, v)
-				ids = append(ids, t.Data.Id)
+				logger.Debugf("created annotation for id:%s tag:%s value:%s", inv.StrainId, tag, value)
+				ids = append(ids, anno.Data.Id)
 			}
 		}
 		_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
