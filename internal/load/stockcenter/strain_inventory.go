@@ -17,7 +17,7 @@ import (
 )
 
 func LoadStrainInv(cmd *cobra.Command, args []string) error {
-	ir := stockcenter.NewCsvStrainInventoryReader(registry.GetReader(regs.INV_READER))
+	ir := stockcenter.NewTsvStrainInventoryReader(registry.GetReader(regs.INV_READER))
 	logger := registry.GetLogger()
 	invMap, err := cacheInvByStrainId(ir, logger)
 	if err != nil {
@@ -85,6 +85,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 
 func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Entry) (map[string][]*stockcenter.StrainInventory, error) {
 	invMap := make(map[string][]*stockcenter.StrainInventory)
+	readCount := 0
 	for ir.Next() {
 		inv, err := ir.Value()
 		if err != nil {
@@ -109,7 +110,15 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 		} else {
 			invMap[inv.StrainId] = []*stockcenter.StrainInventory{inv}
 		}
+		readCount += 1
 	}
+	logger.WithFields(
+		logrus.Fields{
+			"type":  "inventory",
+			"stock": "strains",
+			"event": "read",
+			"count": readCount,
+		}).Infof("read all record")
 	return invMap, nil
 }
 
