@@ -10,7 +10,7 @@ do
                 strain \
                 --access-key ${ACCESS_KEY} \
                 --secret-key  ${SECRET_KEY} \
-                --log-level debug \
+                --log-level info \
                 -a strain_user_annotations.csv \
                 -g strain_genes.tsv \
                 -i strain_strain.tsv \
@@ -21,7 +21,7 @@ do
                 plasmid \
                 --access-key ${ACCESS_KEY} \
                 --secret-key  ${SECRET_KEY} \
-                --log-level debug \
+                --log-level info \
                 -a plasmid_user_annotations.csv \
                 -g plasmid_genes.tsv \
                 -i plasmid_plasmid.tsv \
@@ -32,7 +32,7 @@ do
                     strainchar \
                     --access-key ${ACCESS_KEY} \
                     --secret-key  ${SECRET_KEY} \
-                    --log-level debug \
+                    --log-level info \
                     -i strain_characteristics.tsv
             ;;
         "strainprop")
@@ -40,7 +40,7 @@ do
                     strainprop \
                     --access-key ${ACCESS_KEY} \
                     --secret-key  ${SECRET_KEY} \
-                    --log-level debug \
+                    --log-level info \
                     -i strain_props.tsv
             ;;
         "genotype")
@@ -48,7 +48,7 @@ do
                     genotype \
                     --access-key ${ACCESS_KEY} \
                     --secret-key  ${SECRET_KEY} \
-                    --log-level debug \
+                    --log-level info \
                     -i strain_genotype.tsv
             ;;
         "strainsyn")
@@ -56,8 +56,16 @@ do
                     strainsyn \
                     --access-key ${ACCESS_KEY} \
                     --secret-key  ${SECRET_KEY} \
-                    --log-level debug \
+                    --log-level info \
                     -i strain_props.tsv
+            ;;
+        "straininv")
+                ${APP} stockcenter \
+                    strain-inventory \
+                    --access-key ${ACCESS_KEY} \
+                    --secret-key  ${SECRET_KEY} \
+                    --log-level info \
+                    -i strain_inventory.tsv
             ;;
         "*")
                 echo unknown command ${scmd}
