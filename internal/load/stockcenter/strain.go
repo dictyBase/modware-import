@@ -7,7 +7,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/dictyBase/apihelpers/aphgrpc"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -51,8 +50,8 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 			if grpc.Code(err) == codes.NotFound {
 				// create new strain entry
 				attr := &pb.ExistingStrainAttributes{
-					CreatedAt: aphgrpc.TimestampProto(strain.CreatedOn),
-					UpdatedAt: aphgrpc.TimestampProto(strain.UpdatedOn),
+					CreatedAt: TimestampProto(strain.CreatedOn),
+					UpdatedAt: TimestampProto(strain.UpdatedOn),
 					CreatedBy: strain.User,
 					UpdatedBy: strain.User,
 					Summary:   strain.Summary,

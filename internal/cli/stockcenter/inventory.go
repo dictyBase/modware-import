@@ -4,22 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
-	minio "github.com/minio/minio-go"
+	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-// InvCmd is for loading stockcenter inventory data
-var InvCmd = &cobra.Command{
-	Use:     "inventory",
-	Short:   "load stockcenter inventory data",
-	Args:    cobra.NoArgs,
-	RunE:    loader.LoadInv,
-	PreRunE: setInvPreRun,
-}
 
 func setInvPreRun(cmd *cobra.Command, args []string) error {
 	if err := setAnnoAPIClient(); err != nil {
@@ -41,8 +31,12 @@ func setInvInputReader() error {
 		registry.SetReader(regsc.INV_READER, pr)
 	case "bucket":
 		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket-path"),
-			viper.GetString("inventory-input"),
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString("inventory-input"),
+			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
@@ -60,24 +54,24 @@ func setInvInputReader() error {
 	return nil
 }
 
-func init() {
-	InvCmd.Flags().String(
+func initInvCmd(cmd *cobra.Command) {
+	cmd.Flags().String(
 		"annotation-grpc-host",
 		"annotation-api",
 		"grpc host address for annotation service",
 	)
 	viper.BindEnv("annotation-grpc-host", "ANNOTATION_API_SERVICE_HOST")
-	InvCmd.Flags().String(
+	cmd.Flags().String(
 		"annotation-grpc-port",
 		"",
 		"grpc port for annotation service",
 	)
 	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
-	InvCmd.Flags().StringP(
+	cmd.Flags().StringP(
 		"inventory-input",
 		"i",
 		"",
 		"csv file with inventory data",
 	)
-	viper.BindPFlags(InvCmd.Flags())
+	viper.BindPFlags(cmd.Flags())
 }

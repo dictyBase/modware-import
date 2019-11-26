@@ -7,7 +7,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/dictyBase/apihelpers/aphgrpc"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -49,8 +48,8 @@ func LoadPlasmid(cmd *cobra.Command, args []string) error {
 			if grpc.Code(err) == codes.NotFound {
 				// create new strain entry
 				attr := &pb.ExistingPlasmidAttributes{
-					CreatedAt: aphgrpc.TimestampProto(plasmid.CreatedOn),
-					UpdatedAt: aphgrpc.TimestampProto(plasmid.UpdatedOn),
+					CreatedAt: TimestampProto(plasmid.CreatedOn),
+					UpdatedAt: TimestampProto(plasmid.UpdatedOn),
 					CreatedBy: plasmid.User,
 					Summary:   plasmid.Summary,
 					Name:      plasmid.Name,

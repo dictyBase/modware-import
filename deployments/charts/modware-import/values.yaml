@@ -17,6 +17,7 @@ load:
       - genotype
       - strainprop
       - strainsyn
+      - straininv
   #- command: genome
     #group:
       #-

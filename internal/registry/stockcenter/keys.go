@@ -17,11 +17,11 @@ const (
 	STRAINCHAR_READER          = "strain-char-input"
 	PHENO_READER               = "pheno-input"
 	GENO_READER                = "geno-input"
-	INV_READER                 = "inv-input"
 	STRAINPROP_READER          = "strainprop-input"
 	DEFAULT_USER               = "dictybase@northwestern.edu"
 	DICTY_ANNO_ONTOLOGY        = "dicty_annotation"
 	DICTY_MUTAGENESIS_ONTOLOGY = "Dd Mutagenesis Method"
 	DICTY_GENETICMOD_ONTOLOGY  = "genetic modification"
 	READFILE_READER            = "readfile-input"
+	STOCK_DATE_LAYOUT          = "02-Jan-06"
 )

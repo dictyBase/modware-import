@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/dictyBase/apihelpers/aphgrpc"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/order"
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -97,8 +96,8 @@ OUTER:
 				Data: &pb.ExistingOrder_Data{
 					Type: "order",
 					Attributes: &pb.ExistingOrderAttributes{
-						CreatedAt: aphgrpc.TimestampProto(order.CreatedAt),
-						UpdatedAt: aphgrpc.TimestampProto(order.CreatedAt),
+						CreatedAt: TimestampProto(order.CreatedAt),
+						UpdatedAt: TimestampProto(order.CreatedAt),
 						Purchaser: order.User,
 						Items:     items,
 					},

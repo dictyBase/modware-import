@@ -62,8 +62,8 @@ func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 				_, err := client.DeleteAnnotation(
 					context.Background(),
 					&annotation.DeleteAnnotationRequest{
-						EntryId: ta.Id,
-						Purge:   true,
+						Id:    ta.Id,
+						Purge: true,
 					})
 				if err != nil {
 					return fmt.Errorf("unable to remove synonyms for %s %s", entryId, err)
