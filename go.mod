@@ -7,7 +7,7 @@ require (
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/minio/minio-go/v6 v6.0.41
+	github.com/minio/minio-go/v6 v6.0.43
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
