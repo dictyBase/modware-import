@@ -2,6 +2,7 @@ package stockcenter
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -57,17 +58,11 @@ func (sir *tsvStrainInventoryReader) Value() (*StrainInventory, error) {
 		inv.StoredAs = sir.Record[5]
 	}
 	if len(sir.Record[6]) > 0 {
-		m := regexp.DateRegxp.FindStringSubmatch(sir.Record[6])
-		if m != nil {
-			storedOn, err := time.Parse(
-				registry.STOCK_DATE_LAYOUT,
-				fmt.Sprintf("%s-%s-%s", m[1], ucFirstAllLower(m[2]), m[3]),
-			)
-			if err != nil {
-				return inv, err
-			}
-			inv.StoredOn = storedOn
+		storedOn, err := parseInvDate(sir.Record[6])
+		if err != nil {
+			return inv, err
 		}
+		inv.StoredOn = storedOn
 	}
 	inv.PrivateComment = sir.Record[7]
 	if len(sir.Record) >= 9 {
@@ -75,6 +70,17 @@ func (sir *tsvStrainInventoryReader) Value() (*StrainInventory, error) {
 	}
 	inv.RecordLine = strings.Join(sir.Record, "\t")
 	return inv, nil
+}
+
+func parseInvDate(date string) (time.Time, error) {
+	m := regexp.DateRegxp.FindStringSubmatch(date)
+	if m == nil {
+		return time.Time{}, errors.New("error in parsing date string")
+	}
+	return time.Parse(
+		registry.STOCK_DATE_LAYOUT,
+		fmt.Sprintf("%s-%s-%s", m[1], ucFirstAllLower(m[2]), m[3]),
+	)
 }
 
 func ucFirstAllLower(s string) string {
