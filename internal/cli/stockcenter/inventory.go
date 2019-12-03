@@ -71,7 +71,7 @@ func initInvCmd(cmd *cobra.Command) {
 		"inventory-input",
 		"i",
 		"",
-		"csv file with inventory data",
+		"tsv file with inventory data",
 	)
 	viper.BindPFlags(cmd.Flags())
 }
