@@ -108,11 +108,11 @@ func cacheInvByPlasmidId(ir stockcenter.PlasmidInventoryReader, logger *logrus.E
 				}).Warnf("skipped the record")
 			continue
 		}
-		if invSlice, ok := invMap[inv.PlasmidId]; ok {
-			invMap[inv.PlasmidId] = append(invSlice, inv)
+		if invSlice, ok := invMap[inv.PlasmidID]; ok {
+			invMap[inv.PlasmidID] = append(invSlice, inv)
 			continue
 		}
-		invMap[inv.PlasmidId] = []*stockcenter.PlasmidInventory{inv}
+		invMap[inv.PlasmidID] = []*stockcenter.PlasmidInventory{inv}
 	}
 	return invMap, nil
 }
@@ -135,7 +135,7 @@ func createPlasmidInventory(args *plasmidInvArgs) error {
 			if len(value) == 0 {
 				continue INNER
 			}
-			anno, err := createAnnoWithRank(args.client, tag, inv.PlasmidId, regs.PLASMID_INV_ONTO, value, i)
+			anno, err := createAnnoWithRank(args.client, tag, inv.PlasmidID, regs.PLASMID_INV_ONTO, value, i)
 			if err != nil {
 				return err
 			}

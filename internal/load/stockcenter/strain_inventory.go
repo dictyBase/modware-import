@@ -108,14 +108,14 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 					"stock":  "strains",
 					"event":  "skip record",
 					"output": inv.RecordLine,
-					"id":     inv.StrainId,
+					"id":     inv.StrainID,
 				}).Warnf("skipped the record")
 			continue
 		}
-		if v, ok := invMap[inv.StrainId]; ok {
-			invMap[inv.StrainId] = append(v, inv)
+		if v, ok := invMap[inv.StrainID]; ok {
+			invMap[inv.StrainID] = append(v, inv)
 		} else {
-			invMap[inv.StrainId] = []*stockcenter.StrainInventory{inv}
+			invMap[inv.StrainID] = []*stockcenter.StrainInventory{inv}
 		}
 		readCount += 1
 	}
@@ -149,7 +149,7 @@ func createStrainInventory(args *strainInvArgs) error {
 			if len(value) == 0 {
 				continue INNER
 			}
-			anno, err := createAnnoWithRank(args.client, tag, inv.StrainId, regs.STRAIN_INV_ONTO, value, i)
+			anno, err := createAnnoWithRank(args.client, tag, inv.StrainID, regs.STRAIN_INV_ONTO, value, i)
 			if err != nil {
 				return err
 			}

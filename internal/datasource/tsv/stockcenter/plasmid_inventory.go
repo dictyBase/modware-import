@@ -12,7 +12,7 @@ import (
 
 //PlasmidInventory is the container for plasmid inventory
 type PlasmidInventory struct {
-	PlasmidId        string
+	PlasmidID        string
 	PrivateComment   string
 	StoredOn         time.Time
 	PhysicalLocation string
@@ -43,7 +43,7 @@ func (pir *tsvPlasmidInventoryReader) Value() (*PlasmidInventory, error) {
 	if pir.Err != nil {
 		return inv, pir.Err
 	}
-	inv.PlasmidId = pir.Record[0]
+	inv.PlasmidID = pir.Record[0]
 	inv.PhysicalLocation = pir.Record[1]
 	if len(pir.Record[2]) > 0 {
 		inv.ObtainedAs = pir.Record[2]
