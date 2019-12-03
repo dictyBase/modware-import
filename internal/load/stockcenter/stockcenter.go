@@ -57,8 +57,8 @@ func createAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, ontolo
 	return ta, nil
 }
 
-func createAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
-	ta, err := client.CreateAnnotation(
+func createAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) error {
+	_, err := client.CreateAnnotation(
 		context.Background(),
 		&pb.NewTaggedAnnotation{
 			Data: &pb.NewTaggedAnnotation_Data{
@@ -73,14 +73,14 @@ func createAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, valu
 		},
 	)
 	if err != nil {
-		return ta, fmt.Errorf(
+		return fmt.Errorf(
 			"error in creating annotation %s for id %s %s",
 			tag,
 			id,
 			err,
 		)
 	}
-	return ta, nil
+	return nil
 }
 
 func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
@@ -129,7 +129,7 @@ func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto strin
 		})
 }
 
-func delExistingInventory(id string, client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection) error {
+func delExistingInventory(client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection) error {
 	for _, gcd := range gc.Data {
 		// remove annotations group
 		_, err := client.DeleteAnnotationGroup(

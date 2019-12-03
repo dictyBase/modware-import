@@ -49,7 +49,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 					"event": "get",
 					"id":    id,
 				}).Debugf("retrieved inventories")
-			if err := delExistingInventory(id, client, gc); err != nil {
+			if err := delExistingInventory(client, gc); err != nil {
 				return err
 			}
 			logger.WithFields(
@@ -162,13 +162,10 @@ func createStrainInventory(args *strainInvArgs) error {
 	}
 	// create presence of inventory annotation
 	if !args.found {
-		_, err := createAnno(
+		return createAnno(
 			args.client, regs.STRAIN_INV_ONTO, args.id,
 			regs.STRAIN_INV_ONTO, regs.INV_EXIST_VALUE,
 		)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
