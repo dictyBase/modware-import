@@ -9,10 +9,25 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
+	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
+
+type strainInvArgs struct {
+	id       string
+	client   pb.TaggedAnnotationServiceClient
+	invSlice []*stockcenter.StrainInventory
+	found    bool
+}
+
+type plasmidInvArgs struct {
+	id       string
+	client   pb.TaggedAnnotationServiceClient
+	invSlice []*stockcenter.PlasmidInventory
+	found    bool
+}
 
 func createAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string, rank int) (*pb.TaggedAnnotation, error) {
 	ta, err := client.CreateAnnotation(

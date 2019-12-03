@@ -60,9 +60,16 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 					"id":    id,
 				}).Debugf("deleted inventories")
 		}
-		if err := createStrainInventory(id, client, invSlice, found); err != nil {
+		err = createStrainInventory(&strainInvArgs{
+			id:       id,
+			client:   client,
+			invSlice: invSlice,
+			found:    found,
+		})
+		if err != nil {
 			return err
 		}
+
 		logger.WithFields(
 			logrus.Fields{
 				"type":  "inventory",
@@ -122,8 +129,8 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 	return invMap, nil
 }
 
-func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.StrainInventory, found bool) error {
-	for i, inv := range invSlice {
+func createStrainInventory(args *strainInvArgs) error {
+	for i, inv := range args.invSlice {
 		var ids []string
 		m := map[string]string{
 			regs.INV_LOCATION_TAG:     inv.PhysicalLocation,
@@ -142,27 +149,26 @@ func createStrainInventory(id string, client pb.TaggedAnnotationServiceClient, i
 			if len(value) == 0 {
 				continue INNER
 			}
-			anno, err := createAnnoWithRank(client, tag, inv.StrainId, regs.STRAIN_INV_ONTO, value, i)
+			anno, err := createAnnoWithRank(args.client, tag, inv.StrainId, regs.STRAIN_INV_ONTO, value, i)
 			if err != nil {
 				return err
 			}
 			ids = append(ids, anno.Data.Id)
 		}
-		_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
+		_, err := args.client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
 		if err != nil {
 			return err
 		}
 	}
 	// create presence of inventory annotation
-	if !found {
+	if !args.found {
 		_, err := createAnno(
-			client, regs.STRAIN_INV_ONTO, invSlice[0].StrainId,
+			args.client, regs.STRAIN_INV_ONTO, args.id,
 			regs.STRAIN_INV_ONTO, regs.INV_EXIST_VALUE,
 		)
 		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }

@@ -59,7 +59,13 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 					"id":    id,
 				}).Debugf("deleted inventories")
 		}
-		if err := createPlasmidInventory(id, client, invSlice, found); err != nil {
+		err = createPlasmidInventory(&plasmidInvArgs{
+			id:       id,
+			client:   client,
+			invSlice: invSlice,
+			found:    found,
+		})
+		if err != nil {
 			return err
 		}
 		logger.WithFields(
@@ -111,8 +117,8 @@ func cacheInvByPlasmidId(ir stockcenter.PlasmidInventoryReader, logger *logrus.E
 	return invMap, nil
 }
 
-func createPlasmidInventory(id string, client pb.TaggedAnnotationServiceClient, invSlice []*stockcenter.PlasmidInventory, found bool) error {
-	for i, inv := range invSlice {
+func createPlasmidInventory(args *plasmidInvArgs) error {
+	for i, inv := range args.invSlice {
 		var ids []string
 		m := map[string]string{
 			regs.INV_LOCATION_TAG:     inv.PhysicalLocation,
@@ -129,27 +135,26 @@ func createPlasmidInventory(id string, client pb.TaggedAnnotationServiceClient, 
 			if len(value) == 0 {
 				continue INNER
 			}
-			anno, err := createAnnoWithRank(client, tag, inv.PlasmidId, regs.PLASMID_INV_ONTO, value, i)
+			anno, err := createAnnoWithRank(args.client, tag, inv.PlasmidId, regs.PLASMID_INV_ONTO, value, i)
 			if err != nil {
 				return err
 			}
 			ids = append(ids, anno.Data.Id)
 		}
-		_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
+		_, err := args.client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
 		if err != nil {
 			return err
 		}
 	}
 	// create presence of inventory annotation
-	if !found {
+	if !args.found {
 		_, err := createAnno(
-			client, regs.PLASMID_INV_ONTO, invSlice[0].PlasmidId,
+			args.client, regs.PLASMID_INV_ONTO, args.id,
 			regs.PLASMID_INV_ONTO, regs.INV_EXIST_VALUE,
 		)
 		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }
