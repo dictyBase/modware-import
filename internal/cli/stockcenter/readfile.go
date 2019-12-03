@@ -49,13 +49,13 @@ func setReadFilePreRun(cmd *cobra.Command, args []string) error {
 
 func setReadFileInputReader() error {
 	switch viper.GetString("input-source") {
-	case "folder":
+	case FOLDER:
 		pr, err := os.Open(viper.GetString("readfile-input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("readfile-input"), err)
 		}
 		registry.SetReader(regsc.READFILE_READER, pr)
-	case "bucket":
+	case BUCKET:
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
 			fmt.Sprintf(
