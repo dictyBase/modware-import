@@ -53,7 +53,7 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	}
 	// set hook to write to local file
 	fname, _ := cmd.Flags().GetString("log-file")
-	if len(fname) <= 0 {
+	if len(fname) == 0 {
 		f, err := ioutil.TempFile(os.TempDir(), "loader")
 		if err != nil {
 			return e, fmt.Errorf("error in creating temp file for logging %s", err)
