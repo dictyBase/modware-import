@@ -50,7 +50,7 @@ func setPlasmidAPIClient() error {
 
 func setPlasmidInputReader() error {
 	switch viper.GetString("input-source") {
-	case "folder":
+	case FOLDER:
 		ar, err := os.Open(viper.GetString("plasmid-annotator-input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-annotator-input"), err)
@@ -71,7 +71,7 @@ func setPlasmidInputReader() error {
 		registry.SetReader(regsc.PLASMID_PUB_READER, pr)
 		registry.SetReader(regsc.PLASMID_GENE_READER, gr)
 		registry.SetReader(regsc.PLASMID_READER, sr)
-	case "bucket":
+	case BUCKET:
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
 			fmt.Sprintf("%s/%s",

@@ -10,6 +10,11 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	FOLDER = "folder"
+	BUCKET = "bucket"
+)
+
 // StockCenterCmd represents the base subcommand for grouping all
 // subcommands for loading stockcenter related data
 var StockCenterCmd = &cobra.Command{

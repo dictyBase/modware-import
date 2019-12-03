@@ -50,7 +50,7 @@ func setOrderAPIClient() error {
 
 func setOrderInputReader() error {
 	switch viper.GetString("input-source") {
-	case "folder":
+	case FOLDER:
 		pr, err := os.Open(viper.GetString("plasmid-map-input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-map-input"), err)
@@ -61,7 +61,7 @@ func setOrderInputReader() error {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("order-input"), err)
 		}
 		registry.SetReader(regsc.ORDER_READER, or)
-	case "bucket":
+	case BUCKET:
 		pr, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
 			viper.GetString("plasmid-map-input"),

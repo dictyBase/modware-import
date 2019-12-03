@@ -50,7 +50,7 @@ func setStrainAPIClient() error {
 
 func setStrainInputReader() error {
 	switch viper.GetString("input-source") {
-	case "folder":
+	case FOLDER:
 		ar, err := os.Open(viper.GetString("strain-annotator-input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-annotator-input"), err)
@@ -71,7 +71,7 @@ func setStrainInputReader() error {
 		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
 		registry.SetReader(regsc.STRAIN_GENE_READER, gr)
 		registry.SetReader(regsc.STRAIN_READER, sr)
-	case "bucket":
+	case BUCKET:
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
 			fmt.Sprintf(

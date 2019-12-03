@@ -33,13 +33,13 @@ func setStrainPropPreRun(cmd *cobra.Command, args []string) error {
 
 func setStrainPropInputReader() error {
 	switch viper.GetString("input-source") {
-	case "folder":
+	case FOLDER:
 		pr, err := os.Open(viper.GetString("strainprop-input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("strainprop-input"), err)
 		}
 		registry.SetReader(regsc.STRAINPROP_READER, pr)
-	case "bucket":
+	case BUCKET:
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
 			fmt.Sprintf(
