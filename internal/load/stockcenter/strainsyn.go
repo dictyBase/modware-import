@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
@@ -53,7 +53,7 @@ func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 					entryId, synTag, regs.DICTY_ANNO_ONTOLOGY,
 				)})
 		if err != nil {
-			if grpc.Code(err) != codes.NotFound {
+			if status.Code(err) != codes.NotFound {
 				return fmt.Errorf("error in listing synonyms for %s %s", entryId, err)
 			}
 		} else {

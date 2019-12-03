@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
@@ -46,7 +46,7 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 				),
 			})
 		if err != nil {
-			if grpc.Code(err) != codes.NotFound { // error in lookup
+			if status.Code(err) != codes.NotFound { // error in lookup
 				return err
 			}
 			// no phenotype group found, create or find all individual annotations and phenotype

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
@@ -29,7 +29,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 		found := true
 		gc, err := getInventory(id, client, regs.StrainInvOnto)
 		if err != nil {
-			if grpc.Code(err) != codes.NotFound { // error in lookup
+			if status.Code(err) != codes.NotFound { // error in lookup
 				return err
 			}
 			found = false

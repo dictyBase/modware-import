@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
@@ -45,7 +45,7 @@ func LoadPlasmid(cmd *cobra.Command, args []string) error {
 		}
 		_, err = client.GetPlasmid(context.Background(), &pb.StockId{Id: plasmid.Id})
 		if err != nil {
-			if grpc.Code(err) == codes.NotFound {
+			if status.Code(err) == codes.NotFound {
 				// create new strain entry
 				attr := &pb.ExistingPlasmidAttributes{
 					CreatedAt: TimestampProto(plasmid.CreatedOn),
