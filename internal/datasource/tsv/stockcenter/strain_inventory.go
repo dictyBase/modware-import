@@ -17,7 +17,7 @@ import (
 
 //StrainInventory is the container for strain inventory
 type StrainInventory struct {
-	StrainId         string
+	StrainID         string
 	PrivateComment   string
 	PublicComment    string
 	StoredOn         time.Time
@@ -50,7 +50,7 @@ func (sir *tsvStrainInventoryReader) Value() (*StrainInventory, error) {
 	if sir.Err != nil {
 		return inv, sir.Err
 	}
-	inv.StrainId = sir.Record[0]
+	inv.StrainID = sir.Record[0]
 	inv.PhysicalLocation = sir.Record[1]
 	inv.VialColor = sir.Record[2]
 	inv.VialsCount = sir.Record[3]
