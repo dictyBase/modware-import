@@ -104,59 +104,9 @@ func init() {
 		"bucket",
 		"source of the file, could be one of bucket or folder",
 	)
-	RootCmd.PersistentFlags().StringP(
-		"log-level",
-		"",
-		"error",
-		"log level for the application",
-	)
-	RootCmd.PersistentFlags().StringP(
-		"log-format",
-		"",
-		"json",
-		"format of the logging out, either of json or text",
-	)
-	RootCmd.PersistentFlags().String(
-		"log-file",
-		"",
-		"file for log output other than standard output, written to a temp folder by default",
-	)
-	RootCmd.PersistentFlags().String(
-		"log-file-bucket",
-		"dictybase",
-		"S3 bucket for log file",
-	)
-	RootCmd.PersistentFlags().String(
-		"log-file-bucket-path",
-		"import/log",
-		"S3 path inside the bucket for storing log file",
-	)
-	RootCmd.PersistentFlags().StringP(
-		"s3-server",
-		"",
-		"minio",
-		"S3 server endpoint",
-	)
+	setLoggingArgs(RootCmd)
+	setS3Args(RootCmd)
 	viper.BindEnv("s3-server", "MINIO_SERVICE_HOST")
-	RootCmd.PersistentFlags().StringP(
-		"s3-server-port",
-		"",
-		"",
-		"S3 server port",
-	)
-	viper.BindEnv("s3-server-port", "MINIO_SERVICE_PORT")
-	RootCmd.PersistentFlags().StringP(
-		"access-key",
-		"",
-		"",
-		"access key for S3 server",
-	)
-	RootCmd.PersistentFlags().StringP(
-		"secret-key",
-		"",
-		"",
-		"secret key for S3 server",
-	)
 	viper.BindPFlags(RootCmd.Flags())
 	viper.BindPFlags(RootCmd.PersistentFlags())
 }
@@ -176,3 +126,61 @@ func init() {
 //fmt.Println("Using config file:", viper.ConfigFileUsed())
 //}
 //}
+
+func setLoggingArgs(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringP(
+		"log-level",
+		"",
+		"error",
+		"log level for the application",
+	)
+	cmd.PersistentFlags().StringP(
+		"log-format",
+		"",
+		"json",
+		"format of the logging out, either of json or text",
+	)
+	cmd.PersistentFlags().String(
+		"log-file",
+		"",
+		"file for log output other than standard output, written to a temp folder by default",
+	)
+	cmd.PersistentFlags().String(
+		"log-file-bucket",
+		"dictybase",
+		"S3 bucket for log file",
+	)
+	cmd.PersistentFlags().String(
+		"log-file-bucket-path",
+		"import/log",
+		"S3 path inside the bucket for storing log file",
+	)
+}
+
+func setS3Args(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringP(
+		"s3-server-port",
+		"",
+		"",
+		"S3 server port",
+	)
+	viper.BindEnv("s3-server-port", "MINIO_SERVICE_PORT")
+	cmd.PersistentFlags().StringP(
+		"access-key",
+		"",
+		"",
+		"access key for S3 server",
+	)
+	cmd.PersistentFlags().StringP(
+		"secret-key",
+		"",
+		"",
+		"secret key for S3 server",
+	)
+	cmd.PersistentFlags().StringP(
+		"s3-server",
+		"",
+		"minio",
+		"S3 server endpoint",
+	)
+}
