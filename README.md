@@ -1,9 +1,8 @@
 # modware-import
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](LICENSE)   
-[![Go Report Card](https://goreportcard.com/badge/github.com/dictyBase/modware-import)](https://goreportcard.com/report/github.com/dictyBase/modware-import)
 [![Technical debt](https://badgen.net/codeclimate/tech-debt/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import/trends/technical_debt)
 [![Issues](https://badgen.net/codeclimate/issues/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import/issues)
-[![Maintainability percentage](https://badgen.net/codeclimate/maintainability-percentage/dictyBase/modware-import)](https://codeclimate.com/github/dictyBase/modware-import)
+[![Maintainability](https://api.codeclimate.com/v1/badges/22388ee505a191b3f6b9/maintainability)](https://codeclimate.com/github/dictyBase/modware-import/maintainability)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=dictyBase/modware-import)](https://dependabot.com)   
 ![GitHub repo size](https://img.shields.io/github/repo-size/dictyBase/modware-import?style=plastic)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/dictyBase/modware-import?style=plastic)
