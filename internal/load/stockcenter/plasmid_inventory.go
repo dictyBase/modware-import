@@ -48,7 +48,7 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 					"event": "get",
 					"id":    id,
 				}).Debugf("retrieved inventories")
-			if err := delExistingInventory(id, client, gc); err != nil {
+			if err := delExistingInventory(client, gc); err != nil {
 				return err
 			}
 			logger.WithFields(
@@ -148,13 +148,10 @@ func createPlasmidInventory(args *plasmidInvArgs) error {
 	}
 	// create presence of inventory annotation
 	if !args.found {
-		_, err := createAnno(
+		return createAnno(
 			args.client, regs.PLASMID_INV_ONTO, args.id,
 			regs.PLASMID_INV_ONTO, regs.INV_EXIST_VALUE,
 		)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
