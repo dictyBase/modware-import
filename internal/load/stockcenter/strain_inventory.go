@@ -17,7 +17,7 @@ import (
 )
 
 func LoadStrainInv(cmd *cobra.Command, args []string) error {
-	ir := stockcenter.NewTsvStrainInventoryReader(registry.GetReader(regs.INV_READER))
+	ir := stockcenter.NewTsvStrainInventoryReader(registry.GetReader(regs.InvReader))
 	logger := registry.GetLogger()
 	invMap, err := cacheInvByStrainId(ir, logger)
 	if err != nil {
@@ -27,7 +27,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	invCount := 0
 	for id, invSlice := range invMap {
 		found := true
-		gc, err := getInventory(id, client, regs.STRAIN_INV_ONTO)
+		gc, err := getInventory(id, client, regs.StrainInvOnto)
 		if err != nil {
 			if grpc.Code(err) != codes.NotFound { // error in lookup
 				return err
@@ -133,23 +133,23 @@ func createStrainInventory(args *strainInvArgs) error {
 	for i, inv := range args.invSlice {
 		var ids []string
 		m := map[string]string{
-			regs.INV_LOCATION_TAG:     inv.PhysicalLocation,
-			regs.INV_STORED_AS_TAG:    inv.StoredAs,
-			regs.INV_VIAL_COUNT_TAG:   inv.VialsCount,
-			regs.INV_VIAL_COLOR_TAG:   inv.VialColor,
-			regs.INV_PRIV_COMMENT_TAG: inv.PrivateComment,
-			regs.INV_PUB_COMMENT_TAG:  inv.PublicComment,
-			regs.INV_STORAGE_DATE_TAG: inv.StoredOn.Format(time.RFC3339Nano),
+			regs.InvLocationTag:    inv.PhysicalLocation,
+			regs.InvStoredAsTag:    inv.StoredAs,
+			regs.InvVialCountTag:   inv.VialsCount,
+			regs.InvVialColorTag:   inv.VialColor,
+			regs.InvPrivCommentTag: inv.PrivateComment,
+			regs.InvPubCommentTag:  inv.PublicComment,
+			regs.InvStorageDateTag: inv.StoredOn.Format(time.RFC3339Nano),
 		}
 		if !inv.StoredOn.IsZero() {
-			m[regs.INV_STORAGE_DATE_TAG] = inv.StoredOn.Format(time.RFC3339Nano)
+			m[regs.InvStorageDateTag] = inv.StoredOn.Format(time.RFC3339Nano)
 		}
 	INNER:
 		for tag, value := range m {
 			if len(value) == 0 {
 				continue INNER
 			}
-			anno, err := createAnnoWithRank(args.client, tag, inv.StrainID, regs.STRAIN_INV_ONTO, value, i)
+			anno, err := createAnnoWithRank(args.client, tag, inv.StrainID, regs.StrainInvOnto, value, i)
 			if err != nil {
 				return err
 			}
@@ -163,8 +163,8 @@ func createStrainInventory(args *strainInvArgs) error {
 	// create presence of inventory annotation
 	if !args.found {
 		return createAnno(
-			args.client, regs.STRAIN_INV_ONTO, args.id,
-			regs.STRAIN_INV_ONTO, regs.INV_EXIST_VALUE,
+			args.client, regs.StrainInvOnto, args.id,
+			regs.StrainInvOnto, regs.InvExistValue,
 		)
 	}
 	return nil
