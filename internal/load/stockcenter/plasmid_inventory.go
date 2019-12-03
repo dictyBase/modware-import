@@ -19,6 +19,7 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 	ir := stockcenter.NewTsvPlasmidInventoryReader(registry.GetReader(regs.InvReader))
 	logger := registry.GetLogger()
 	invMap, err := cacheInvByPlasmidId(ir, logger)
+	logger.Debugf("cached %d plasmid inventories", len(invMap))
 	if err != nil {
 		return err
 	}
@@ -98,6 +99,7 @@ func cacheInvByPlasmidId(ir stockcenter.PlasmidInventoryReader, logger *logrus.E
 				err,
 			)
 		}
+		logger.Debugf("got plasmid id %s", inv.PlasmidID)
 		if len(inv.PhysicalLocation) == 0 {
 			logger.WithFields(
 				logrus.Fields{
