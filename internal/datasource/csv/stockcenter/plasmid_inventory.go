@@ -75,3 +75,7 @@ func (pir *csvPlasmidInventoryReader) Value() (*PlasmidInventory, error) {
 	inv.RecordLine = strings.Join(pir.Record, "\t")
 	return inv, nil
 }
+
+func ucFirstAllLower(s string) string {
+	return fmt.Sprintf("%s%s", string(s[0]), strings.ToLower(s[1:]))
+}
