@@ -2,15 +2,12 @@ package stockcenter
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"strings"
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
 	tsource "github.com/dictyBase/modware-import/internal/datasource/tsv"
-	"github.com/dictyBase/modware-import/internal/regexp"
-	registry "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 )
 
 //PlasmidInventory is the container for plasmid inventory
@@ -55,17 +52,11 @@ func (pir *tsvPlasmidInventoryReader) Value() (*PlasmidInventory, error) {
 		inv.StoredAs = pir.Record[3]
 	}
 	if len(pir.Record[4]) > 0 {
-		m := regexp.DateRegxp.FindStringSubmatch(pir.Record[4])
-		if m != nil {
-			storedOn, err := time.Parse(
-				registry.STOCK_DATE_LAYOUT,
-				fmt.Sprintf("%s-%s-%s", m[1], ucFirstAllLower(m[2]), m[3]),
-			)
-			if err != nil {
-				return inv, err
-			}
-			inv.StoredOn = storedOn
+		storedOn, err := parseInvDate(pir.Record[4])
+		if err != nil {
+			return inv, err
 		}
+		inv.StoredOn = storedOn
 	}
 	if len(pir.Record[5]) > 0 {
 		inv.PrivateComment = pir.Record[5]
