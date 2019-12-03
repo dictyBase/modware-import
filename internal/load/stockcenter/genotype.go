@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
@@ -107,7 +107,7 @@ func NewOrReloadGeno(client pb.TaggedAnnotationServiceClient, p *param) (Status,
 			&pb.TaggedAnnotationUpdate{Data: data},
 		)
 		return Updated, err
-	case grpc.Code(err) == codes.NotFound: // create a new one
+	case status.Code(err) == codes.NotFound: // create a new one
 		data := &pb.NewTaggedAnnotation_Data{
 			Attributes: &pb.NewTaggedAnnotationAttributes{
 				Value:     p.value,

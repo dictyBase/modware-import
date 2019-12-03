@@ -11,8 +11,8 @@ import (
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
@@ -28,7 +28,7 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 		found := true
 		gc, err := getInventory(id, client, regs.PlasmidInvOntO)
 		if err != nil {
-			if grpc.Code(err) != codes.NotFound { // error in lookup
+			if status.Code(err) != codes.NotFound { // error in lookup
 				return err
 			}
 			found = false

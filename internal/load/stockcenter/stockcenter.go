@@ -11,8 +11,8 @@ import (
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type strainInvArgs struct {
@@ -94,7 +94,7 @@ func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology
 	switch {
 	case err == nil:
 		return ta, nil
-	case grpc.Code(err) == codes.NotFound:
+	case status.Code(err) == codes.NotFound:
 		return client.CreateAnnotation(
 			context.Background(),
 			&pb.NewTaggedAnnotation{
