@@ -28,7 +28,7 @@ func setInvInputReader() error {
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("inventory-input"), err)
 		}
-		registry.SetReader(regsc.INV_READER, pr)
+		registry.SetReader(regsc.InvReader, pr)
 	case BUCKET:
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
@@ -47,7 +47,7 @@ func setInvInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.INV_READER, ar)
+		registry.SetReader(regsc.InvReader, ar)
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
 	}

@@ -16,7 +16,7 @@ import (
 )
 
 func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
-	ir := stockcenter.NewTsvPlasmidInventoryReader(registry.GetReader(regs.INV_READER))
+	ir := stockcenter.NewTsvPlasmidInventoryReader(registry.GetReader(regs.InvReader))
 	logger := registry.GetLogger()
 	invMap, err := cacheInvByPlasmidId(ir, logger)
 	if err != nil {
@@ -26,7 +26,7 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 	invCount := 0
 	for id, invSlice := range invMap {
 		found := true
-		gc, err := getInventory(id, client, regs.PLASMID_INV_ONTO)
+		gc, err := getInventory(id, client, regs.PlasmidInvOntO)
 		if err != nil {
 			if grpc.Code(err) != codes.NotFound { // error in lookup
 				return err
@@ -121,21 +121,21 @@ func createPlasmidInventory(args *plasmidInvArgs) error {
 	for i, inv := range args.invSlice {
 		var ids []string
 		m := map[string]string{
-			regs.INV_LOCATION_TAG:     inv.PhysicalLocation,
-			regs.INV_STORED_AS_TAG:    inv.StoredAs,
-			regs.INV_PRIV_COMMENT_TAG: inv.PrivateComment,
-			regs.INV_OBTAINED_AS_TAG:  inv.ObtainedAs,
-			regs.PLASMID_INV_TAG:      regs.INV_EXIST_VALUE,
+			regs.InvLocationTag:    inv.PhysicalLocation,
+			regs.InvStoredAsTag:    inv.StoredAs,
+			regs.InvPrivCommentTag: inv.PrivateComment,
+			regs.InvObtainedAsTag:  inv.ObtainedAs,
+			regs.PlasmidInvTag:     regs.InvExistValue,
 		}
 		if !inv.StoredOn.IsZero() {
-			m[regs.INV_STORAGE_DATE_TAG] = inv.StoredOn.Format(time.RFC3339Nano)
+			m[regs.InvStorageDateTag] = inv.StoredOn.Format(time.RFC3339Nano)
 		}
 	INNER:
 		for tag, value := range m {
 			if len(value) == 0 {
 				continue INNER
 			}
-			anno, err := createAnnoWithRank(args.client, tag, inv.PlasmidID, regs.PLASMID_INV_ONTO, value, i)
+			anno, err := createAnnoWithRank(args.client, tag, inv.PlasmidID, regs.PlasmidInvOntO, value, i)
 			if err != nil {
 				return err
 			}
@@ -149,8 +149,8 @@ func createPlasmidInventory(args *plasmidInvArgs) error {
 	// create presence of inventory annotation
 	if !args.found {
 		return createAnno(
-			args.client, regs.PLASMID_INV_ONTO, args.id,
-			regs.PLASMID_INV_ONTO, regs.INV_EXIST_VALUE,
+			args.client, regs.PlasmidInvOntO, args.id,
+			regs.PlasmidInvOntO, regs.InvExistValue,
 		)
 	}
 	return nil

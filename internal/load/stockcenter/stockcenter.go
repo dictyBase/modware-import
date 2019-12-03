@@ -124,7 +124,7 @@ func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto strin
 		&pb.ListGroupParameters{
 			Filter: fmt.Sprintf(
 				"entry_id==%s;tag==%s;ontology==%s",
-				id, regs.INV_LOCATION_TAG, onto,
+				id, regs.InvLocationTag, onto,
 			),
 		})
 }
