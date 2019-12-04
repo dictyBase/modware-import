@@ -37,6 +37,8 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	switch level {
 	case "debug":
 		logger.SetLevel(logrus.DebugLevel)
+	case "info":
+		logger.SetLevel(logrus.InfoLevel)
 	case "warn":
 		logger.SetLevel(logrus.WarnLevel)
 	case "error":
