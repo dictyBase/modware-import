@@ -106,7 +106,6 @@ func init() {
 	)
 	setLoggingArgs(RootCmd)
 	setS3Args(RootCmd)
-	viper.BindEnv("s3-server", "MINIO_SERVICE_HOST")
 	viper.BindPFlags(RootCmd.Flags())
 	viper.BindPFlags(RootCmd.PersistentFlags())
 }
@@ -177,6 +176,7 @@ func setS3Args(cmd *cobra.Command) {
 		"",
 		"secret key for S3 server",
 	)
+	viper.BindEnv("s3-server", "MINIO_SERVICE_HOST")
 	cmd.PersistentFlags().StringP(
 		"s3-server",
 		"",
