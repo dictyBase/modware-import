@@ -34,6 +34,7 @@ func init() {
 		StrainSynCmd,
 		StrainInvCmd,
 		PlasmidInvCmd,
+		ReadFileCmd,
 	)
 	StockCenterCmd.PersistentFlags().String(
 		"s3-bucket",
