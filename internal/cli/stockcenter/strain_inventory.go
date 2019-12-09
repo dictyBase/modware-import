@@ -30,18 +30,6 @@ var StrainInvCmd = &cobra.Command{
 }
 
 func init() {
-	StrainInvCmd.Flags().String(
-		"annotation-grpc-host",
-		"annotation-api",
-		"grpc host address for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-host", "ANNOTATION_API_SERVICE_HOST")
-	StrainInvCmd.Flags().String(
-		"annotation-grpc-port",
-		"",
-		"grpc port for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
 	StrainInvCmd.Flags().StringP(
 		"strain-inventory-input",
 		"i",

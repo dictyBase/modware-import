@@ -151,18 +151,6 @@ func setStrainInputReader() error {
 }
 
 func init() {
-	StrainCmd.Flags().String(
-		"stock-grpc-host",
-		"stock-api",
-		"grpc host address for stock service",
-	)
-	viper.BindEnv("stock-grpc-host", "STOCK_API_SERVICE_HOST")
-	StrainCmd.Flags().String(
-		"stock-grpc-port",
-		"",
-		"grpc port for stock service",
-	)
-	viper.BindEnv("stock-grpc-port", "STOCK_API_SERVICE_PORT")
 	StrainCmd.Flags().StringP(
 		"strain-annotator-input",
 		"a",
