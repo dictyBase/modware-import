@@ -2,9 +2,12 @@ package stockcenter
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
+	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -96,5 +99,38 @@ func setAnnoAPIClient() error {
 	regsc.SetAnnotationAPIClient(
 		annotation.NewTaggedAnnotationServiceClient(conn),
 	)
+	return nil
+}
+
+func setReader(input, key string) error {
+	switch viper.GetString("input-source") {
+	case FOLDER:
+		r, err := os.Open(viper.GetString(input))
+		if err != nil {
+			return fmt.Errorf("error in opening file %s %s", viper.GetString(input), err)
+		}
+		registry.SetReader(key, r)
+	case BUCKET:
+		ar, err := registry.GetS3Client().GetObject(
+			viper.GetString("s3-bucket"),
+			fmt.Sprintf(
+				"%s/%s",
+				viper.GetString("s3-bucket-path"),
+				viper.GetString(input),
+			),
+			minio.GetObjectOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"error in getting file %s from bucket %s %s",
+				viper.GetString(input),
+				viper.GetString("s3-bucket-path"),
+				err,
+			)
+		}
+		registry.SetReader(key, ar)
+	default:
+		return fmt.Errorf("error input source %s not supported", viper.GetString(input))
+	}
 	return nil
 }

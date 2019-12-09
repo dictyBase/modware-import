@@ -19,7 +19,7 @@ const (
 )
 
 func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
-	pr := stockcenter.NewCsvStockPropReader(registry.GetReader(regs.STRAINPROP_READER))
+	pr := stockcenter.NewCsvStockPropReader(registry.GetReader(regs.StrainSynReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	pcount := 0

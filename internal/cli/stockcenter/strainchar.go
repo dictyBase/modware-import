@@ -1,67 +1,27 @@
 package stockcenter
 
 import (
-	"fmt"
-	"os"
-
 	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
-	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
-	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 // StrainCharCmd is for loading stockcenter strain characteristics data
 var StrainCharCmd = &cobra.Command{
-	Use:     "strainchar",
-	Short:   "load stockcenter strain characteristics data",
-	Args:    cobra.NoArgs,
-	RunE:    loader.LoadStrainChar,
-	PreRunE: setStrainCharPreRun,
-}
-
-func setStrainCharPreRun(cmd *cobra.Command, args []string) error {
-	if err := setAnnoAPIClient(); err != nil {
-		return err
-	}
-	if err := setStrainCharInputReader(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func setStrainCharInputReader() error {
-	switch viper.GetString("input-source") {
-	case FOLDER:
-		pr, err := os.Open(viper.GetString("strainchar-input"))
-		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("strainchar-input"), err)
+	Use:   "strainchar",
+	Short: "load stockcenter strain characteristics data",
+	Args:  cobra.NoArgs,
+	RunE:  loader.LoadStrainChar,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if err := setAnnoAPIClient(); err != nil {
+			return err
 		}
-		registry.SetReader(regsc.STRAINCHAR_READER, pr)
-	case BUCKET:
-		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf(
-				"%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("strainchar-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("strainchar-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
-			)
+		if err := setReader(viper.GetString("strainchar-input"), regsc.STRAINCHAR_READER); err != nil {
+			return err
 		}
-		registry.SetReader(regsc.STRAINCHAR_READER, ar)
-	default:
-		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
-	}
-	return nil
+		return nil
+	},
 }
 
 func init() {
