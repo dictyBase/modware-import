@@ -53,25 +53,3 @@ func setInvInputReader() error {
 	}
 	return nil
 }
-
-func initInvCmd(cmd *cobra.Command) {
-	cmd.Flags().String(
-		"annotation-grpc-host",
-		"annotation-api",
-		"grpc host address for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-host", "ANNOTATION_API_SERVICE_HOST")
-	cmd.Flags().String(
-		"annotation-grpc-port",
-		"",
-		"grpc port for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
-	cmd.Flags().StringP(
-		"inventory-input",
-		"i",
-		"",
-		"tsv file with inventory data",
-	)
-	viper.BindPFlags(cmd.Flags())
-}

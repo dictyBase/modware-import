@@ -147,18 +147,6 @@ func setPlasmidInputReader() error {
 }
 
 func init() {
-	PlasmidCmd.Flags().String(
-		"stock-grpc-host",
-		"stock-api",
-		"grpc host address for stock service",
-	)
-	viper.BindEnv("stock-grpc-host", "STOCK_API_SERVICE_HOST")
-	PlasmidCmd.Flags().String(
-		"stock-grpc-port",
-		"",
-		"grpc port for stock service",
-	)
-	viper.BindEnv("stock-grpc-port", "STOCK_API_SERVICE_PORT")
 	PlasmidCmd.Flags().StringP(
 		"plasmid-annotator-input",
 		"a",

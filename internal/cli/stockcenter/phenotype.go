@@ -61,18 +61,6 @@ func setPhenoInputReader() error {
 }
 
 func init() {
-	PhenoCmd.Flags().String(
-		"annotation-grpc-host",
-		"annotation-api",
-		"grpc host address for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-host", "ANNOTATION_API_SERVICE_HOST")
-	PhenoCmd.Flags().String(
-		"annotation-grpc-port",
-		"",
-		"grpc port for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
 	PhenoCmd.Flags().StringP(
 		"phenotype-input",
 		"i",

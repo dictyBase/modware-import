@@ -36,6 +36,13 @@ func init() {
 		PlasmidInvCmd,
 		ReadFileCmd,
 	)
+	s3BucketFlags()
+	stockAPIFlags()
+	annoAPIFlags()
+	viper.BindPFlags(StockCenterCmd.PersistentFlags())
+}
+
+func s3BucketFlags() {
 	StockCenterCmd.PersistentFlags().String(
 		"s3-bucket",
 		"dictybase",
@@ -46,7 +53,36 @@ func init() {
 		"import/stockcenter",
 		"path inside S3 bucket for input files",
 	)
-	viper.BindPFlags(StockCenterCmd.PersistentFlags())
+}
+
+func stockAPIFlags() {
+	StockCenterCmd.PersistentFlags().String(
+		"stock-grpc-host",
+		"stock-api",
+		"grpc host address for stock service",
+	)
+	viper.BindEnv("stock-grpc-host", "STOCK_API_SERVICE_HOST")
+	StockCenterCmd.PersistentFlags().String(
+		"stock-grpc-port",
+		"",
+		"grpc port for stock service",
+	)
+	viper.BindEnv("stock-grpc-port", "STOCK_API_SERVICE_PORT")
+}
+
+func annoAPIFlags() {
+	StockCenterCmd.PersistentFlags().String(
+		"annotation-grpc-host",
+		"annotation-api",
+		"grpc host address for annotation service",
+	)
+	viper.BindEnv("annotation-grpc-host", "ANNOTATION_API_SERVICE_HOST")
+	StockCenterCmd.PersistentFlags().String(
+		"annotation-grpc-port",
+		"",
+		"grpc port for annotation service",
+	)
+	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
 }
 
 func setAnnoAPIClient() error {

@@ -31,18 +31,6 @@ var PlasmidInvCmd = &cobra.Command{
 }
 
 func init() {
-	PlasmidInvCmd.Flags().String(
-		"annotation-grpc-host",
-		"annotation-api",
-		"grpc host address for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-host", "ANNOTATION_API_SERVICE_HOST")
-	PlasmidInvCmd.Flags().String(
-		"annotation-grpc-port",
-		"",
-		"grpc port for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
 	PlasmidInvCmd.Flags().StringP(
 		"plasmid-inventory-input",
 		"i",

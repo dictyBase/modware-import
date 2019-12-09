@@ -65,18 +65,6 @@ func setStrainCharInputReader() error {
 }
 
 func init() {
-	StrainCharCmd.Flags().String(
-		"annotation-grpc-host",
-		"annotation-api",
-		"grpc host address for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-host", "ANNOTATION_API_SERVICE_HOST")
-	StrainCharCmd.Flags().String(
-		"annotation-grpc-port",
-		"",
-		"grpc port for annotation service",
-	)
-	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
 	StrainCharCmd.Flags().StringP(
 		"strainchar-input",
 		"i",
