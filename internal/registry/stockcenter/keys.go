@@ -18,6 +18,7 @@ const (
 	PHENO_READER               = "pheno-input"
 	GENO_READER                = "geno-input"
 	STRAINPROP_READER          = "strainprop-input"
+	StrainSynReader            = "strainsyn-input"
 	DEFAULT_USER               = "dictybase@northwestern.edu"
 	DICTY_ANNO_ONTOLOGY        = "dicty_annotation"
 	DICTY_MUTAGENESIS_ONTOLOGY = "Dd Mutagenesis Method"
