@@ -19,10 +19,10 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 	ir := stockcenter.NewTsvPlasmidInventoryReader(registry.GetReader(regs.InvReader))
 	logger := registry.GetLogger()
 	invMap, err := cacheInvByPlasmidId(ir, logger)
-	logger.Debugf("cached %d plasmid inventories", len(invMap))
 	if err != nil {
 		return err
 	}
+	logger.Debugf("cached %d plasmid inventories", len(invMap))
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
@@ -42,13 +42,6 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 				}).Debugf("no inventories")
 		}
 		if found {
-			logger.WithFields(
-				logrus.Fields{
-					"type":  "inventory",
-					"stock": "plasmid",
-					"event": "get",
-					"id":    id,
-				}).Debugf("retrieved inventories")
 			if err := delExistingInventory(client, gc); err != nil {
 				return err
 			}
@@ -99,13 +92,12 @@ func cacheInvByPlasmidId(ir stockcenter.PlasmidInventoryReader, logger *logrus.E
 				err,
 			)
 		}
-		logger.Debugf("got plasmid id %s", inv.PlasmidID)
 		if len(inv.PhysicalLocation) == 0 {
 			logger.WithFields(
 				logrus.Fields{
 					"type":   "inventory",
 					"stock":  "plasmid",
-					"event":  "skip record",
+					"event":  "skip",
 					"output": inv.RecordLine,
 				}).Warnf("skipped the record")
 			continue
