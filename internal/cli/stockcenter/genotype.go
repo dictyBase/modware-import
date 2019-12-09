@@ -1,67 +1,27 @@
 package stockcenter
 
 import (
-	"fmt"
-	"os"
-
 	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
-	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
-	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 // GenoCmd is for loading stockcenter genotype data
 var GenoCmd = &cobra.Command{
-	Use:     "genotype",
-	Short:   "load stockcenter genotype data",
-	Args:    cobra.NoArgs,
-	RunE:    loader.LoadGeno,
-	PreRunE: setGenoPreRun,
-}
-
-func setGenoPreRun(cmd *cobra.Command, args []string) error {
-	if err := setAnnoAPIClient(); err != nil {
-		return err
-	}
-	if err := setGenoInputReader(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func setGenoInputReader() error {
-	switch viper.GetString("input-source") {
-	case FOLDER:
-		pr, err := os.Open(viper.GetString("genotype-input"))
-		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("genotype-input"), err)
+	Use:   "genotype",
+	Short: "load stockcenter genotype data",
+	Args:  cobra.NoArgs,
+	RunE:  loader.LoadGeno,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if err := setAnnoAPIClient(); err != nil {
+			return err
 		}
-		registry.SetReader(regsc.GENO_READER, pr)
-	case BUCKET:
-		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf(
-				"%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("genotype-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("genotype-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
-			)
+		if err := setReader(viper.GetString("genotype-input"), regsc.GENO_READER); err != nil {
+			return err
 		}
-		registry.SetReader(regsc.GENO_READER, ar)
-	default:
-		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
-	}
-	return nil
+		return nil
+	},
 }
 
 func init() {
