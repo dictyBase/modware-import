@@ -143,7 +143,7 @@ func createPlasmidInventory(args *plasmidInvArgs) error {
 	// create presence of inventory annotation
 	if !args.found {
 		return createAnno(
-			args.client, regs.PlasmidInvOntO, args.id,
+			args.client, regs.PlasmidInvTag, args.id,
 			regs.PlasmidInvOntO, regs.InvExistValue,
 		)
 	}
