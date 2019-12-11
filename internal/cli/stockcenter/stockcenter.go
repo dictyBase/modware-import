@@ -105,9 +105,9 @@ func setAnnoAPIClient() error {
 func setReader(input, key string) error {
 	switch viper.GetString("input-source") {
 	case FOLDER:
-		r, err := os.Open(viper.GetString(input))
+		r, err := os.Open(input)
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString(input), err)
+			return fmt.Errorf("error in opening file %s %s", input, err)
 		}
 		registry.SetReader(key, r)
 	case BUCKET:
@@ -116,21 +116,21 @@ func setReader(input, key string) error {
 			fmt.Sprintf(
 				"%s/%s",
 				viper.GetString("s3-bucket-path"),
-				viper.GetString(input),
+				input,
 			),
 			minio.GetObjectOptions{},
 		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
-				viper.GetString(input),
+				input,
 				viper.GetString("s3-bucket-path"),
 				err,
 			)
 		}
 		registry.SetReader(key, ar)
 	default:
-		return fmt.Errorf("error input source %s not supported", viper.GetString(input))
+		return fmt.Errorf("error input source %s not supported", input)
 	}
 	return nil
 }
