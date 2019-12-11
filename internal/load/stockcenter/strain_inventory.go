@@ -163,7 +163,7 @@ func createStrainInventory(args *strainInvArgs) error {
 	// create presence of inventory annotation
 	if !args.found {
 		return createAnno(
-			args.client, regs.StrainInvOnto, args.id,
+			args.client, regs.StrainInvTag, args.id,
 			regs.StrainInvOnto, regs.InvExistValue,
 		)
 	}

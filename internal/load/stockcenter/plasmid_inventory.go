@@ -119,7 +119,6 @@ func createPlasmidInventory(args *plasmidInvArgs) error {
 			regs.InvStoredAsTag:    inv.StoredAs,
 			regs.InvPrivCommentTag: inv.PrivateComment,
 			regs.InvObtainedAsTag:  inv.ObtainedAs,
-			regs.PlasmidInvTag:     regs.InvExistValue,
 		}
 		if !inv.StoredOn.IsZero() {
 			m[regs.InvStorageDateTag] = inv.StoredOn.Format(time.RFC3339Nano)
