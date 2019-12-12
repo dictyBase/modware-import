@@ -11,6 +11,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -94,6 +95,12 @@ func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 		logger.Debugf("loaded all %d synonyms for %s", len(props), entryId)
 		pcount++
 	}
-	logger.Infof("loaded synonyms for %d strains", pcount)
+	logger.WithFields(
+		logrus.Fields{
+			"type":  "synonym",
+			"stock": "strain",
+			"event": "load",
+			"count": pcount,
+		}).Infof("loaded strain synonym")
 	return nil
 }

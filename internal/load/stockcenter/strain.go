@@ -11,6 +11,7 @@ import (
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -35,6 +36,7 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 	)
 	logger := registry.GetLogger()
 	client := regs.GetStockAPIClient()
+	count := 0
 	for sr.Next() {
 		strain, err := sr.Value()
 		if err != nil {
@@ -78,7 +80,7 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 				if err != nil {
 					return fmt.Errorf("error in creating strain %s %s", strain.Id, err)
 				}
-				logger.Infof("created strain %s", nstr.Data.Id)
+				logger.Debugf("created strain %s", nstr.Data.Id)
 				continue
 			}
 			return fmt.Errorf("error in finding strain %s %s", strain.Id, err)
@@ -109,7 +111,15 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("error in updating strain %s %s", strain.Id, err)
 		}
-		logger.Infof("updated strain %s", ustr.Data.Id)
+		logger.Debugf("updated strain %s", ustr.Data.Id)
+		count += 1
 	}
+	logger.WithFields(
+		logrus.Fields{
+			"type":  "annotations",
+			"stock": "strains",
+			"event": "load",
+			"count": count,
+		}).Infof("loaded strain annotations")
 	return nil
 }

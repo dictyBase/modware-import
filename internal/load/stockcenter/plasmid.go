@@ -11,6 +11,7 @@ import (
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -33,6 +34,7 @@ func LoadPlasmid(cmd *cobra.Command, args []string) error {
 	)
 	logger := registry.GetLogger()
 	client := regs.GetStockAPIClient()
+	count := 0
 	for sr.Next() {
 		plasmid, err := sr.Value()
 		if err != nil {
@@ -74,7 +76,7 @@ func LoadPlasmid(cmd *cobra.Command, args []string) error {
 				if err != nil {
 					return fmt.Errorf("error in creating plasmid %s %s", plasmid.Id, err)
 				}
-				logger.Infof("created plasmid %s", npl.Data.Id)
+				logger.Debugf("created plasmid %s", npl.Data.Id)
 				continue
 			}
 			return fmt.Errorf("error in finding plasmid %s %s", plasmid.Id, err)
@@ -105,7 +107,15 @@ func LoadPlasmid(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("error in updating plasmid %s %s", plasmid.Id, err)
 		}
-		logger.Infof("updated plasmid %s", upl.Data.Id)
+		logger.Debugf("updated plasmid %s", upl.Data.Id)
+		count += 1
 	}
+	logger.WithFields(
+		logrus.Fields{
+			"type":  "annotations",
+			"stock": "plasmid",
+			"event": "load",
+			"count": count,
+		}).Infof("loaded plasmid annotations")
 	return nil
 }
