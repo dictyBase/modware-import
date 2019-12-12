@@ -11,6 +11,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +38,7 @@ func LoadGeno(cmd *cobra.Command, args []string) error {
 	gr := stockcenter.NewCsvGenotypeReader(registry.GetReader(regs.GENO_READER))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
-	ct := 0
+	count := 0
 	uct := 0
 	rct := 0
 	nct := 0
@@ -72,12 +73,18 @@ func LoadGeno(cmd *cobra.Command, args []string) error {
 			logger.Debugf("skipped genotype %s for strain %s", geno.Genotype, geno.StrainId)
 			rct++
 		}
-		ct++
+		count += 1
 	}
-	logger.Infof(
-		"read:%d  create:%d  update:%d total:%d genotypes",
-		rct, nct, uct, ct,
-	)
+	logger.WithFields(
+		logrus.Fields{
+			"type":    "genotype",
+			"stock":   "strain",
+			"event":   "load",
+			"count":   count,
+			"read":    rct,
+			"created": nct,
+			"updated": uct,
+		}).Infof("loaded strain genotypes")
 	return nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -37,6 +38,12 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 		)
 		count++
 	}
-	logger.Infof("loaded %d strain characteristics", count)
+	logger.WithFields(
+		logrus.Fields{
+			"type":  "characteristic",
+			"stock": "strain",
+			"event": "load",
+			"count": count,
+		}).Infof("loaded strain characteristics")
 	return nil
 }

@@ -125,7 +125,7 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 			"stock": "strains",
 			"event": "read",
 			"count": readCount,
-		}).Infof("read all record")
+		}).Debugf("read all record")
 	return invMap, nil
 }
 
