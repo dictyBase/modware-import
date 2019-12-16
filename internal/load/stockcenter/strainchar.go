@@ -20,6 +20,7 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	count := 0
+	found := 0
 	for scr.Next() {
 		chs, err := scr.Value()
 		if err != nil {
@@ -28,15 +29,18 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 				err,
 			)
 		}
-		_, err = findOrCreateAnno(client, chs.Character, chs.Id, strainCharOnto, val)
+		created, err := findOrCreateAnnoWithStatus(client, chs.Character, chs.Id, strainCharOnto, val)
 		if err != nil {
 			return err
 		}
+		if created {
+			count++
+		}
+		found++
 		logger.Debugf(
 			"loaded strain %s characteristics with prop %s and value %s",
 			chs.Id, chs.Character, val,
 		)
-		count++
 	}
 	logger.WithFields(
 		logrus.Fields{
@@ -44,6 +48,7 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 			"stock": "strain",
 			"event": "load",
 			"count": count,
+			"found": found,
 		}).Infof("loaded strain characteristics")
 	return nil
 }
