@@ -14,12 +14,14 @@ type TsvReader struct {
 
 // Next read the next tsv record
 func (r *TsvReader) Next() bool {
-	if !r.Reader.Scan() {
-		if err := r.Reader.Err(); err != nil {
-			r.Err = err
-		}
+	resp := r.Reader.Scan()
+	if err := r.Reader.Err(); err != nil {
+		r.Err = err
 		return false
 	}
+	if !resp {
+		return resp
+	}
 	r.Record = strings.Split(r.Reader.Text(), "\t")
-	return true
+	return resp
 }
