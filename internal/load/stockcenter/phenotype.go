@@ -8,9 +8,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
-	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
+	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -102,4 +103,31 @@ func handlePhenotype(client pb.TaggedAnnotationServiceClient, ph *stockcenter.Ph
 	}
 	_, err := client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
 	return err
+}
+
+func cachePhenotype(pr stockcenter.PhenotypeReader, logger *logrus.Entry) (map[string][]*stockcenter.Phenotype, error) {
+	phenoMap := make(map[string][]*stockcenter.Phenotype)
+	readCount := 0
+	for pr.Next() {
+		pheno, err := pr.Value()
+		if err != nil {
+			return phenoMap, fmt.Errorf(
+				"error in loading strain phenotype %s", err,
+			)
+		}
+		if phslice, ok := phenoMap[pheno.StrainId]; ok {
+			phenoMap[pheno.StrainId] = append(phslice, pheno)
+		} else {
+			phenoMap[pheno.StrainId] = []*stockcenter.Phenotype{pheno}
+		}
+		readCount++
+	}
+	logger.WithFields(
+		logrus.Fields{
+			"type":  "phenotype",
+			"stock": "strains",
+			"event": "read",
+			"count": readCount,
+		}).Debugf("read all record")
+	return phenoMap, nil
 }
