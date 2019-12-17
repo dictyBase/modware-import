@@ -11,13 +11,14 @@ image:
 load:
   - command: stockcenter
     dsc:
-      - strain
-      - plasmid
-      - characteristics
-      - genotype
-      - strainprop
-      - strainsyn
-      - straininv
+        - strain
+        - plasmid
+        - genotype
+        - strainprop
+        - strainsyn
+        - straininv
+        - plasmidinv
+        - characteristics
   #- command: genome
     #group:
       #-

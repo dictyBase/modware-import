@@ -67,6 +67,14 @@ do
                     --log-level info \
                     -i strain_inventory.tsv
             ;;
+        "plasmidinv")
+                ${APP} stockcenter \
+                    plasmid-inventory \
+                    --access-key ${ACCESS_KEY} \
+                    --secret-key  ${SECRET_KEY} \
+                    --log-level info \
+                    -i plasmid_inventory.tsv \
+            ;;
         "*")
                 echo unknown command ${scmd}
             ;;
