@@ -21,9 +21,6 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	pcount := 0
-	if !pr.Next() {
-		logger.Errorln("error in reading strainprop data")
-	}
 	for pr.Next() {
 		prop, err := pr.Value()
 		if err != nil {
@@ -40,6 +37,9 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 			onto = regs.DICTY_ANNO_ONTOLOGY
 		case mutmethodTag:
 			onto = regs.DICTY_MUTAGENESIS_ONTOLOGY
+		case synTag:
+			// it is loaded by the synonym loader
+			continue
 		default:
 			logger.Warnf(
 				"property %s is not recognized, record is not loaded",
