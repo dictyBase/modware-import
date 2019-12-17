@@ -29,7 +29,7 @@ func init() {
 		"phenotype-input",
 		"i",
 		"",
-		"csv file with strain data",
+		"tsv file with strain data",
 	)
 	viper.BindPFlags(PhenoCmd.Flags())
 }
