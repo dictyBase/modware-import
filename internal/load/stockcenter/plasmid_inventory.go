@@ -42,7 +42,7 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 				}).Debugf("no inventories")
 		}
 		if found {
-			if err := delExistingInventory(client, gc); err != nil {
+			if err := delAnnotationGroup(client, gc); err != nil {
 				return err
 			}
 			logger.WithFields(

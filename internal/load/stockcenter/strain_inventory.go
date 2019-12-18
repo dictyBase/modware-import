@@ -49,7 +49,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 					"event": "get",
 					"id":    id,
 				}).Debugf("retrieved inventories")
-			if err := delExistingInventory(client, gc); err != nil {
+			if err := delAnnotationGroup(client, gc); err != nil {
 				return err
 			}
 			logger.WithFields(
@@ -69,7 +69,6 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-
 		logger.WithFields(
 			logrus.Fields{
 				"type":  "inventory",

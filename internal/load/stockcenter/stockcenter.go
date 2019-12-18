@@ -15,6 +15,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type strainPhenoArgs struct {
+	id         string
+	client     pb.TaggedAnnotationServiceClient
+	phenoSlice []*stockcenter.Phenotype
+}
+
 type strainInvArgs struct {
 	id       string
 	client   pb.TaggedAnnotationServiceClient
@@ -169,7 +175,7 @@ func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto strin
 		})
 }
 
-func delExistingInventory(client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection) error {
+func delAnnotationGroup(client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection) error {
 	for _, gcd := range gc.Data {
 		// remove annotations group
 		_, err := client.DeleteAnnotationGroup(
