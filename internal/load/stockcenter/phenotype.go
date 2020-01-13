@@ -104,25 +104,34 @@ func createPhenotype(args *strainPhenoArgs) error {
 				if len(dataSlice[1]) > 0 {
 					anno, err := createAnnoWithRank(args.client, dataSlice[0], args.id, onto, dataSlice[1], i)
 					if err != nil {
-						return err
+						return fmt.Errorf(
+							"error creating pheno with onto %s and tag %s %s",
+							onto, dataSlice[0], err,
+						)
 					}
 					ids = append(ids, anno.Data.Id)
 				}
 				if len(dataSlice[3]) > 0 {
 					anno, err := createAnnoWithRank(args.client, dataSlice[2], args.id, onto, dataSlice[3], i)
 					if err != nil {
-						return err
+						return fmt.Errorf(
+							"error creating pheno with onto %s and tag %s %s",
+							onto, dataSlice[2], err,
+						)
 					}
 					ids = append(ids, anno.Data.Id)
 				}
 				continue INNER
 			}
-			if len(dataSlice[1]) == 0 {
+			if len(dataSlice[0]) == 0 {
 				continue INNER
 			}
 			anno, err := createAnnoWithRank(args.client, dataSlice[0], args.id, onto, dataSlice[1], i)
 			if err != nil {
-				return err
+				return fmt.Errorf(
+					"error creating pheno with onto %s and tag %s %s",
+					onto, dataSlice[0], err,
+				)
 			}
 			ids = append(ids, anno.Data.Id)
 		}
