@@ -26,7 +26,7 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 	count := 0
 	for id, phenoSlice := range phenoMap {
 		found := true
-		gc, err := getPhenotype(client, phenoSlice[0])
+		gc, err := getPhenotype(client, id, regs.PhenoOntology)
 		if err != nil {
 			if status.Code(err) != codes.NotFound { // error in lookup
 				return fmt.Errorf("error in getting phenotype of %s %s", id, err)
@@ -104,20 +104,14 @@ func createPhenotype(args *strainPhenoArgs) error {
 				if len(dataSlice[1]) > 0 {
 					anno, err := createAnnoWithRank(args.client, dataSlice[0], args.id, onto, dataSlice[1], i)
 					if err != nil {
-						return fmt.Errorf(
-							"error creating pheno with onto %s and tag %s %s",
-							onto, dataSlice[0], err,
-						)
+						return err
 					}
 					ids = append(ids, anno.Data.Id)
 				}
 				if len(dataSlice[3]) > 0 {
 					anno, err := createAnnoWithRank(args.client, dataSlice[2], args.id, onto, dataSlice[3], i)
 					if err != nil {
-						return fmt.Errorf(
-							"error creating pheno with onto %s and tag %s %s",
-							onto, dataSlice[2], err,
-						)
+						return err
 					}
 					ids = append(ids, anno.Data.Id)
 				}
@@ -128,10 +122,7 @@ func createPhenotype(args *strainPhenoArgs) error {
 			}
 			anno, err := createAnnoWithRank(args.client, dataSlice[0], args.id, onto, dataSlice[1], i)
 			if err != nil {
-				return fmt.Errorf(
-					"error creating pheno with onto %s and tag %s %s",
-					onto, dataSlice[0], err,
-				)
+				return err
 			}
 			ids = append(ids, anno.Data.Id)
 		}
@@ -170,15 +161,11 @@ func cachePhenotype(pr stockcenter.PhenotypeReader, logger *logrus.Entry) (map[s
 	return phenoMap, nil
 }
 
-func getPhenotype(client pb.TaggedAnnotationServiceClient, pheno *stockcenter.Phenotype) (*pb.TaggedAnnotationGroupCollection, error) {
+func getPhenotype(client pb.TaggedAnnotationServiceClient, id, onto string) (*pb.TaggedAnnotationGroupCollection, error) {
 	return client.ListAnnotationGroups(
 		context.Background(),
 		&pb.ListGroupParameters{
-			Filter: fmt.Sprintf(
-				"entry_id==%s;tag==%s;ontology==%s",
-				pheno.StrainId,
-				pheno.Observation,
-				regs.PhenoOntology,
-			),
+			Filter: fmt.Sprintf("entry_id==%s;ontology==%s", id, onto),
+			Limit:  100,
 		})
 }
