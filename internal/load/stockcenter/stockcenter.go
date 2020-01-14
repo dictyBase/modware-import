@@ -120,7 +120,7 @@ func findOrCreateAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, 
 		)
 		if err != nil {
 			return ta, create, fmt.Errorf(
-				"error in finding annotation %s for id %s %s",
+				"error in creating annotation %s for id %s %s",
 				tag,
 				id,
 				err,
@@ -128,7 +128,7 @@ func findOrCreateAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, 
 		}
 		create = true
 	}
-	return ta, create, nil
+	return ta, create, err
 }
 
 func findOrCreateAnnoWithStatus(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (bool, error) {
