@@ -20,11 +20,10 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	if err != nil {
 		return &logrus.Entry{}, err
 	}
-	logger := &logrus.Logger{
-		Out:       os.Stderr,
-		Formatter: lfmt,
-		Level:     level,
-	}
+	logger := logrus.New()
+	logger.SetOutput(os.Stderr)
+	logger.SetFormatter(lfmt)
+	logger.SetLevel(level)
 	// set hook to write to local file
 	fname, _ := cmd.Flags().GetString("log-file")
 	if len(fname) == 0 {
