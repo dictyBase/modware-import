@@ -19,7 +19,12 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 	pr := stockcenter.NewPhenotypeReader(registry.GetReader(regs.PHENO_READER))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
-	phenoMap, err := cachePhenotype(pr, logger)
+	phenoMap, err := processPhenotype(
+		&processPhenoArgs{
+			pr:     pr,
+			logger: logger,
+			client: client,
+		})
 	if err != nil {
 		return err
 	}
@@ -134,15 +139,52 @@ func createPhenotype(args *strainPhenoArgs) error {
 	return nil
 }
 
-func cachePhenotype(pr stockcenter.PhenotypeReader, logger *logrus.Entry) (map[string][]*stockcenter.Phenotype, error) {
+func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenotype, error) {
 	phenoMap := make(map[string][]*stockcenter.Phenotype)
 	readCount := 0
+	pr := args.pr
 	for pr.Next() {
 		pheno, err := pr.Value()
 		if err != nil {
 			return phenoMap, fmt.Errorf(
 				"error in loading strain phenotype %s", err,
 			)
+		}
+		phStatus, err := validateAnnoTag(
+			&validateTagArgs{
+				client:   args.client,
+				logger:   args.logger,
+				tag:      pheno.Observation,
+				ontology: regs.PhenoOntology,
+				id:       pheno.StrainId,
+				stock:    "strain",
+				loader:   "phenotype",
+			},
+		)
+		if err != nil {
+			return phenoMap, err
+		}
+		if !phStatus {
+			continue
+		}
+		if len(pheno.Assay) > 0 {
+			status, err := validateAnnoTag(
+				&validateTagArgs{
+					client:   args.client,
+					logger:   args.logger,
+					tag:      pheno.Assay,
+					ontology: regs.AssayOntology,
+					id:       pheno.StrainId,
+					stock:    "strain",
+					loader:   "phenotype",
+				},
+			)
+			if err != nil {
+				return phenoMap, err
+			}
+			if !status {
+				continue
+			}
 		}
 		if phslice, ok := phenoMap[pheno.StrainId]; ok {
 			phenoMap[pheno.StrainId] = append(phslice, pheno)
@@ -151,13 +193,13 @@ func cachePhenotype(pr stockcenter.PhenotypeReader, logger *logrus.Entry) (map[s
 		}
 		readCount++
 	}
-	logger.WithFields(
+	args.logger.WithFields(
 		logrus.Fields{
 			"type":  "phenotype",
 			"stock": "strains",
 			"event": "read",
 			"count": readCount,
-		}).Debugf("read all record")
+		}).Infof("read all record")
 	return phenoMap, nil
 }
 
