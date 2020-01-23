@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/sirupsen/logrus"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
@@ -21,6 +22,12 @@ type strainPhenoArgs struct {
 	phenoSlice []*stockcenter.Phenotype
 }
 
+type processPhenoArgs struct {
+	client pb.TaggedAnnotationServiceClient
+	pr     stockcenter.PhenotypeReader
+	logger *logrus.Entry
+}
+
 type strainInvArgs struct {
 	id       string
 	client   pb.TaggedAnnotationServiceClient
@@ -33,6 +40,51 @@ type plasmidInvArgs struct {
 	client   pb.TaggedAnnotationServiceClient
 	invSlice []*stockcenter.PlasmidInventory
 	found    bool
+}
+
+type validateTagArgs struct {
+	client   pb.TaggedAnnotationServiceClient
+	tag      string
+	ontology string
+	id       string
+	stock    string
+	loader   string
+	logger   *logrus.Entry
+}
+
+func validateAnnoTag(args *validateTagArgs) (bool, error) {
+	tag, err := args.client.GetAnnotationTag(
+		context.Background(),
+		&pb.TagRequest{Name: args.tag, Ontology: args.ontology},
+	)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			args.logger.WithFields(
+				logrus.Fields{
+					"type":     args.loader,
+					"stock":    args.stock,
+					"tag":      args.tag,
+					"ontology": args.ontology,
+					"id":       args.id,
+					"event":    "non-existent tag",
+				}).Warn("tag does not exist")
+			return false, nil
+		}
+		return false, fmt.Errorf("error in tag lookup %s", err)
+	}
+	if tag.IsObsolete {
+		args.logger.WithFields(
+			logrus.Fields{
+				"type":     args.loader,
+				"stock":    args.stock,
+				"tag":      args.tag,
+				"ontology": args.ontology,
+				"id":       args.id,
+				"event":    "obsolete tag",
+			}).Warn("tag is obsolete")
+		return false, nil
+	}
+	return true, nil
 }
 
 func createAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string, rank int) (*pb.TaggedAnnotation, error) {
