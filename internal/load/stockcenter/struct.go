@@ -15,6 +15,13 @@ type createAnnoArgs struct {
 	client   pb.TaggedAnnotationServiceClient
 }
 
+type createPhenoArgs struct {
+	id     string
+	rank   int
+	pheno  *stockcenter.Phenotype
+	client pb.TaggedAnnotationServiceClient
+}
+
 type getPhenoArgs struct {
 	ontology string
 	id       string
