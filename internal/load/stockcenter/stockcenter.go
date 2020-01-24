@@ -260,3 +260,32 @@ func TimestampProto(t time.Time) *timestamp.Timestamp {
 	ts, _ := ptypes.TimestampProto(t)
 	return ts
 }
+
+func handleAnnoRetrieval(args *annoParams) error {
+	found := true
+	if args.err != nil {
+		if status.Code(args.err) != codes.NotFound { // error in lookup
+			return fmt.Errorf("error in getting %s of %s %s", args.loader, args.id, args.err)
+		}
+		found = false
+		args.logger.WithFields(logrus.Fields{
+			"event": "get",
+			"id":    args.id,
+		}).Debugf("no %s", args.loader)
+	}
+	if !found {
+		return nil
+	}
+	args.logger.WithFields(logrus.Fields{
+		"event": "get",
+		"id":    args.id,
+	}).Debugf("retrieved %s", args.loader)
+	if err := delAnnotationGroup(args.client, args.gc); err != nil {
+		return err
+	}
+	args.logger.WithFields(logrus.Fields{
+		"event": "delete",
+		"id":    args.id,
+	}).Debugf("deleted %s", args.loader)
+	return nil
+}

@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -32,34 +29,21 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 	}
 	count := 0
 	for id, phenoSlice := range phenoMap {
-		found := true
 		gc, err := getPhenotype(&getPhenoArgs{
 			id:       id,
 			client:   client,
 			ontology: regs.PhenoOntology,
 		})
+		err = handleAnnoRetrieval(&annoParams{
+			id:     id,
+			gc:     gc,
+			err:    err,
+			client: client,
+			logger: logger,
+			loader: "phenotype",
+		})
 		if err != nil {
-			if status.Code(err) != codes.NotFound { // error in lookup
-				return fmt.Errorf("error in getting phenotype of %s %s", id, err)
-			}
-			found = false
-			logger.WithFields(logrus.Fields{
-				"event": "get",
-				"id":    id,
-			}).Debugf("no phenotype")
-		}
-		if found {
-			logger.WithFields(logrus.Fields{
-				"event": "get",
-				"id":    id,
-			}).Debugf("retrieved phenotype")
-			if err := delAnnotationGroup(client, gc); err != nil {
-				return err
-			}
-			logger.WithFields(logrus.Fields{
-				"event": "delete",
-				"id":    id,
-			}).Debugf("deleted phenotype")
+			return err
 		}
 		err = createPhenotype(&strainPhenoArgs{
 			id:         id,
@@ -73,13 +57,13 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 			"event": "create",
 			"id":    id,
 			"count": len(phenoSlice),
-		}).Debugf("created phenotypes")
+		}).Debug("created phenotypes")
 		count += len(phenoSlice)
 	}
 	logger.WithFields(logrus.Fields{
 		"event": "load",
 		"count": count,
-	}).Infof("loaded phenotypes")
+	}).Info("loaded phenotypes")
 	return nil
 }
 
@@ -196,7 +180,7 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 	args.logger.WithFields(logrus.Fields{
 		"event": "read",
 		"count": readCount,
-	}).Infof("read all record")
+	}).Info("read all record")
 	return phenoMap, nil
 }
 
