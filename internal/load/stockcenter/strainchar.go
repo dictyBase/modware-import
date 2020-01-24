@@ -29,14 +29,13 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 				err,
 			)
 		}
-		created, err := findOrCreateAnnoWithStatus(
-			&createAnnoArgs{
-				client:   client,
-				tag:      chs.Character,
-				id:       chs.Id,
-				ontology: strainCharOnto,
-				value:    val,
-			})
+		created, err := findOrCreateAnnoWithStatus(&createAnnoArgs{
+			client:   client,
+			tag:      chs.Character,
+			id:       chs.Id,
+			ontology: strainCharOnto,
+			value:    val,
+		})
 		if err != nil {
 			return err
 		}
@@ -49,13 +48,12 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 			chs.Id, chs.Character, val,
 		)
 	}
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "characteristic",
-			"stock": "strain",
-			"event": "load",
-			"count": count,
-			"found": found,
-		}).Infof("loaded strain characteristics")
+	logger.WithFields(logrus.Fields{
+		"type":  "characteristic",
+		"stock": "strain",
+		"event": "load",
+		"count": count,
+		"found": found,
+	}).Infof("loaded strain characteristics")
 	return nil
 }

@@ -19,55 +19,50 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 	pr := stockcenter.NewPhenotypeReader(registry.GetReader(regs.PHENO_READER))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
-	phenoMap, err := processPhenotype(
-		&processPhenoArgs{
-			pr:     pr,
-			logger: logger,
-			client: client,
-		})
+	phenoMap, err := processPhenotype(&processPhenoArgs{
+		pr:     pr,
+		logger: logger,
+		client: client,
+	})
 	if err != nil {
 		return err
 	}
 	count := 0
 	for id, phenoSlice := range phenoMap {
 		found := true
-		gc, err := getPhenotype(
-			&getPhenoArgs{
-				client:   client,
-				id:       id,
-				ontology: regs.PhenoOntology,
-			})
+		gc, err := getPhenotype(&getPhenoArgs{
+			id:       id,
+			client:   client,
+			ontology: regs.PhenoOntology,
+		})
 		if err != nil {
 			if status.Code(err) != codes.NotFound { // error in lookup
 				return fmt.Errorf("error in getting phenotype of %s %s", id, err)
 			}
 			found = false
-			logger.WithFields(
-				logrus.Fields{
-					"type":  "phenotype",
-					"stock": "strain",
-					"event": "get",
-					"id":    id,
-				}).Debugf("no phenotype")
+			logger.WithFields(logrus.Fields{
+				"type":  "phenotype",
+				"stock": "strain",
+				"event": "get",
+				"id":    id,
+			}).Debugf("no phenotype")
 		}
 		if found {
-			logger.WithFields(
-				logrus.Fields{
-					"type":  "phenotype",
-					"stock": "strain",
-					"event": "get",
-					"id":    id,
-				}).Debugf("retrieved phenotype")
+			logger.WithFields(logrus.Fields{
+				"type":  "phenotype",
+				"stock": "strain",
+				"event": "get",
+				"id":    id,
+			}).Debugf("retrieved phenotype")
 			if err := delAnnotationGroup(client, gc); err != nil {
 				return err
 			}
-			logger.WithFields(
-				logrus.Fields{
-					"type":  "phenotype",
-					"stock": "strain",
-					"event": "delete",
-					"id":    id,
-				}).Debugf("deleted phenotype")
+			logger.WithFields(logrus.Fields{
+				"type":  "phenotype",
+				"stock": "strain",
+				"event": "delete",
+				"id":    id,
+			}).Debugf("deleted phenotype")
 		}
 		err = createPhenotype(&strainPhenoArgs{
 			id:         id,
@@ -77,23 +72,21 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		logger.WithFields(
-			logrus.Fields{
-				"type":  "phenotype",
-				"stock": "strain",
-				"event": "create",
-				"id":    id,
-				"count": len(phenoSlice),
-			}).Debugf("created phenotypes")
+		logger.WithFields(logrus.Fields{
+			"type":  "phenotype",
+			"stock": "strain",
+			"event": "create",
+			"id":    id,
+			"count": len(phenoSlice),
+		}).Debugf("created phenotypes")
 		count += len(phenoSlice)
 	}
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "phenotype",
-			"stock": "strains",
-			"event": "load",
-			"count": count,
-		}).Infof("loaded phenotypes")
+	logger.WithFields(logrus.Fields{
+		"type":  "phenotype",
+		"stock": "strains",
+		"event": "load",
+		"count": count,
+	}).Infof("loaded phenotypes")
 	return nil
 }
 
@@ -147,25 +140,22 @@ func createPhenotype(args *strainPhenoArgs) error {
 func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenotype, error) {
 	phenoMap := make(map[string][]*stockcenter.Phenotype)
 	readCount := 0
-	pr := args.pr
-	for pr.Next() {
-		pheno, err := pr.Value()
+	for args.pr.Next() {
+		pheno, err := args.pr.Value()
 		if err != nil {
 			return phenoMap, fmt.Errorf(
 				"error in loading strain phenotype %s", err,
 			)
 		}
-		phStatus, err := validateAnnoTag(
-			&validateTagArgs{
-				client:   args.client,
-				logger:   args.logger,
-				tag:      pheno.Observation,
-				ontology: regs.PhenoOntology,
-				id:       pheno.StrainId,
-				stock:    "strain",
-				loader:   "phenotype",
-			},
-		)
+		phStatus, err := validateAnnoTag(&validateTagArgs{
+			client:   args.client,
+			logger:   args.logger,
+			tag:      pheno.Observation,
+			ontology: regs.PhenoOntology,
+			id:       pheno.StrainId,
+			stock:    "strain",
+			loader:   "phenotype",
+		})
 		if err != nil {
 			return phenoMap, err
 		}
@@ -173,17 +163,15 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 			continue
 		}
 		if len(pheno.Assay) > 0 {
-			status, err := validateAnnoTag(
-				&validateTagArgs{
-					client:   args.client,
-					logger:   args.logger,
-					tag:      pheno.Assay,
-					ontology: regs.AssayOntology,
-					id:       pheno.StrainId,
-					stock:    "strain",
-					loader:   "phenotype",
-				},
-			)
+			status, err := validateAnnoTag(&validateTagArgs{
+				client:   args.client,
+				logger:   args.logger,
+				tag:      pheno.Assay,
+				ontology: regs.AssayOntology,
+				id:       pheno.StrainId,
+				stock:    "strain",
+				loader:   "phenotype",
+			})
 			if err != nil {
 				return phenoMap, err
 			}
