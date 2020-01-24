@@ -31,7 +31,12 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 	count := 0
 	for id, phenoSlice := range phenoMap {
 		found := true
-		gc, err := getPhenotype(client, id, regs.PhenoOntology)
+		gc, err := getPhenotype(
+			&getPhenoArgs{
+				client:   client,
+				id:       id,
+				ontology: regs.PhenoOntology,
+			})
 		if err != nil {
 			if status.Code(err) != codes.NotFound { // error in lookup
 				return fmt.Errorf("error in getting phenotype of %s %s", id, err)
@@ -203,11 +208,11 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 	return phenoMap, nil
 }
 
-func getPhenotype(client pb.TaggedAnnotationServiceClient, id, onto string) (*pb.TaggedAnnotationGroupCollection, error) {
-	return client.ListAnnotationGroups(
+func getPhenotype(args *getPhenoArgs) (*pb.TaggedAnnotationGroupCollection, error) {
+	return args.client.ListAnnotationGroups(
 		context.Background(),
 		&pb.ListGroupParameters{
-			Filter: fmt.Sprintf("entry_id==%s;ontology==%s", id, onto),
+			Filter: fmt.Sprintf("entry_id==%s;ontology==%s", args.id, args.ontology),
 			Limit:  100,
 		})
 }

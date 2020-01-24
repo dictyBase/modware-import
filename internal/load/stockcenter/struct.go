@@ -6,6 +6,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type createAnnoArgs struct {
+	ontology string
+	tag      string
+	value    string
+	id       string
+	client   pb.TaggedAnnotationServiceClient
+}
+
 type getPhenoArgs struct {
 	ontology string
 	id       string

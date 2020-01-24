@@ -29,7 +29,14 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 				err,
 			)
 		}
-		created, err := findOrCreateAnnoWithStatus(client, chs.Character, chs.Id, strainCharOnto, val)
+		created, err := findOrCreateAnnoWithStatus(
+			&createAnnoArgs{
+				client:   client,
+				tag:      chs.Character,
+				id:       chs.Id,
+				ontology: strainCharOnto,
+				value:    val,
+			})
 		if err != nil {
 			return err
 		}
