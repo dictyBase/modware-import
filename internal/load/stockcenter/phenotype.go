@@ -82,47 +82,74 @@ func organizeMorePhenoAnno(pheno *stockcenter.Phenotype) [][]string {
 	}
 }
 
+func createMorePhenoAnno(args *createPhenoArgs) ([]string, error) {
+	var ids []string
+	for _, dataSlice := range organizeMorePhenoAnno(args.pheno) {
+		if len(dataSlice[1]) == 0 {
+			continue
+		}
+		anno, err := createAnnoWithRank(&createAnnoArgs{
+			ontology: regs.DICTY_ANNO_ONTOLOGY,
+			client:   args.client,
+			tag:      dataSlice[0],
+			value:    dataSlice[1],
+			rank:     args.rank,
+			id:       args.id,
+		})
+		if err != nil {
+			return ids, err
+		}
+		ids = append(ids, anno.Data.Id)
+	}
+	return ids, nil
+}
+
+func createPhenoAnno(args *createPhenoArgs) ([]string, error) {
+	var ids []string
+	for onto, dataSlice := range organizePhenoAnno(args.pheno) {
+		if len(dataSlice[0]) == 0 {
+			continue
+		}
+		anno, err := createAnnoWithRank(&createAnnoArgs{
+			client:   args.client,
+			tag:      dataSlice[0],
+			value:    dataSlice[1],
+			id:       args.id,
+			rank:     args.rank,
+			ontology: onto,
+		})
+		if err != nil {
+			return ids, err
+		}
+		ids = append(ids, anno.Data.Id)
+	}
+	return ids, nil
+}
+
 func createPhenotype(args *strainPhenoArgs) error {
 	for i, pheno := range args.phenoSlice {
-		var ids []string
-	FIRST:
-		for _, dataSlice := range organizeMorePhenoAnno(pheno) {
-			if len(dataSlice[1]) == 0 {
-				continue FIRST
-			}
-			anno, err := createAnnoWithRank(&createAnnoArgs{
-				ontology: regs.DICTY_ANNO_ONTOLOGY,
-				client:   args.client,
-				tag:      dataSlice[0],
-				value:    dataSlice[1],
-				id:       args.id,
-				rank:     i,
-			})
-			if err != nil {
-				return err
-			}
-			ids = append(ids, anno.Data.Id)
-
+		mpids, err := createMorePhenoAnno(&createPhenoArgs{
+			id:     args.id,
+			pheno:  pheno,
+			client: args.client,
+			rank:   i,
+		})
+		if err != nil {
+			return err
 		}
-	SECOND:
-		for onto, dataSlice := range organizePhenoAnno(pheno) {
-			if len(dataSlice[0]) == 0 {
-				continue SECOND
-			}
-			anno, err := createAnnoWithRank(&createAnnoArgs{
-				client:   args.client,
-				tag:      dataSlice[0],
-				value:    dataSlice[1],
-				id:       args.id,
-				ontology: onto,
-				rank:     i,
-			})
-			if err != nil {
-				return err
-			}
-			ids = append(ids, anno.Data.Id)
+		pids, err := createPhenoAnno(&createPhenoArgs{
+			id:     args.id,
+			pheno:  pheno,
+			client: args.client,
+			rank:   i,
+		})
+		if err != nil {
+			return err
 		}
-		_, err := args.client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
+		_, err = args.client.CreateAnnotationGroup(
+			context.Background(),
+			&pb.AnnotationIdList{Ids: append(mpids, pids...)},
+		)
 		if err != nil {
 			return err
 		}
