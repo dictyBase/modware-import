@@ -104,48 +104,6 @@ func createAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, valu
 	return nil
 }
 
-func findOrCreateAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string, rank int) (*pb.TaggedAnnotation, bool, error) {
-	create := false
-	ta, err := client.GetEntryAnnotation(
-		context.Background(),
-		&pb.EntryAnnotationRequest{
-			Tag:      tag,
-			EntryId:  id,
-			Ontology: ontology,
-			Rank:     int64(rank),
-		})
-	switch {
-	case err == nil:
-		return ta, create, nil
-	case status.Code(err) == codes.NotFound:
-		_, err := client.CreateAnnotation(
-			context.Background(),
-			&pb.NewTaggedAnnotation{
-				Data: &pb.NewTaggedAnnotation_Data{
-					Attributes: &pb.NewTaggedAnnotationAttributes{
-						Value:     value,
-						CreatedBy: regs.DEFAULT_USER,
-						Tag:       tag,
-						EntryId:   id,
-						Ontology:  ontology,
-						Rank:      int64(rank),
-					},
-				},
-			},
-		)
-		if err != nil {
-			return ta, create, fmt.Errorf(
-				"error in creating annotation %s for id %s %s",
-				tag,
-				id,
-				err,
-			)
-		}
-		create = true
-	}
-	return ta, create, err
-}
-
 func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 	create := false
 	_, err := args.client.GetEntryAnnotation(
