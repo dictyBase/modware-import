@@ -18,7 +18,10 @@ import (
 func LoadPheno(cmd *cobra.Command, args []string) error {
 	pr := stockcenter.NewPhenotypeReader(registry.GetReader(regs.PHENO_READER))
 	client := regs.GetAnnotationAPIClient()
-	logger := registry.GetLogger()
+	logger := registry.GetLogger().WithFields(logrus.Fields{
+		"type":  "phenotype",
+		"stock": "strain",
+	})
 	phenoMap, err := processPhenotype(&processPhenoArgs{
 		pr:     pr,
 		logger: logger,
@@ -41,16 +44,12 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 			}
 			found = false
 			logger.WithFields(logrus.Fields{
-				"type":  "phenotype",
-				"stock": "strain",
 				"event": "get",
 				"id":    id,
 			}).Debugf("no phenotype")
 		}
 		if found {
 			logger.WithFields(logrus.Fields{
-				"type":  "phenotype",
-				"stock": "strain",
 				"event": "get",
 				"id":    id,
 			}).Debugf("retrieved phenotype")
@@ -58,8 +57,6 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			logger.WithFields(logrus.Fields{
-				"type":  "phenotype",
-				"stock": "strain",
 				"event": "delete",
 				"id":    id,
 			}).Debugf("deleted phenotype")
@@ -73,8 +70,6 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		logger.WithFields(logrus.Fields{
-			"type":  "phenotype",
-			"stock": "strain",
 			"event": "create",
 			"id":    id,
 			"count": len(phenoSlice),
@@ -82,8 +77,6 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 		count += len(phenoSlice)
 	}
 	logger.WithFields(logrus.Fields{
-		"type":  "phenotype",
-		"stock": "strains",
 		"event": "load",
 		"count": count,
 	}).Infof("loaded phenotypes")
@@ -201,8 +194,6 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 		readCount++
 	}
 	args.logger.WithFields(logrus.Fields{
-		"type":  "phenotype",
-		"stock": "strains",
 		"event": "read",
 		"count": readCount,
 	}).Infof("read all record")

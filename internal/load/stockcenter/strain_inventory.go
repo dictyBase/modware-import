@@ -18,7 +18,10 @@ import (
 
 func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	ir := stockcenter.NewTsvStrainInventoryReader(registry.GetReader(regs.InvReader))
-	logger := registry.GetLogger()
+	logger := registry.GetLogger().WithFields(logrus.Fields{
+		"type":  "inventory",
+		"stock": "strain",
+	})
 	invMap, err := cacheInvByStrainId(ir, logger)
 	if err != nil {
 		return err
@@ -33,32 +36,23 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			found = false
-			logger.WithFields(
-				logrus.Fields{
-					"type":  "inventory",
-					"stock": "strain",
-					"event": "get",
-					"id":    id,
-				}).Debugf("no inventories")
+			logger.WithFields(logrus.Fields{
+				"event": "get",
+				"id":    id,
+			}).Debugf("no inventories")
 		}
 		if found { // remove if inventory exists
-			logger.WithFields(
-				logrus.Fields{
-					"type":  "inventory",
-					"stock": "strain",
-					"event": "get",
-					"id":    id,
-				}).Debugf("retrieved inventories")
+			logger.WithFields(logrus.Fields{
+				"event": "get",
+				"id":    id,
+			}).Debugf("retrieved inventories")
 			if err := delAnnotationGroup(client, gc); err != nil {
 				return err
 			}
-			logger.WithFields(
-				logrus.Fields{
-					"type":  "inventory",
-					"stock": "strain",
-					"event": "delete",
-					"id":    id,
-				}).Debugf("deleted inventories")
+			logger.WithFields(logrus.Fields{
+				"event": "delete",
+				"id":    id,
+			}).Debugf("deleted inventories")
 		}
 		err = createStrainInventory(&strainInvArgs{
 			id:       id,
@@ -69,23 +63,17 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		logger.WithFields(
-			logrus.Fields{
-				"type":  "inventory",
-				"stock": "strain",
-				"event": "create",
-				"id":    id,
-				"count": len(invSlice),
-			}).Debugf("created inventories")
+		logger.WithFields(logrus.Fields{
+			"event": "create",
+			"id":    id,
+			"count": len(invSlice),
+		}).Debugf("created inventories")
 		invCount += len(invSlice)
 	}
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "inventory",
-			"stock": "strains",
-			"event": "load",
-			"count": invCount,
-		}).Infof("loaded inventories")
+	logger.WithFields(logrus.Fields{
+		"event": "load",
+		"count": invCount,
+	}).Infof("loaded inventories")
 	return nil
 }
 
@@ -101,14 +89,11 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 			)
 		}
 		if len(inv.PhysicalLocation) == 0 || len(inv.VialColor) == 0 {
-			logger.WithFields(
-				logrus.Fields{
-					"type":   "inventory",
-					"stock":  "strains",
-					"event":  "skip record",
-					"output": inv.RecordLine,
-					"id":     inv.StrainID,
-				}).Warnf("skipped the record")
+			logger.WithFields(logrus.Fields{
+				"event":  "skip record",
+				"output": inv.RecordLine,
+				"id":     inv.StrainID,
+			}).Warnf("skipped the record")
 			continue
 		}
 		if v, ok := invMap[inv.StrainID]; ok {
@@ -118,13 +103,10 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 		}
 		readCount += 1
 	}
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "inventory",
-			"stock": "strains",
-			"event": "read",
-			"count": readCount,
-		}).Debugf("read all record")
+	logger.WithFields(logrus.Fields{
+		"event": "read",
+		"count": readCount,
+	}).Debugf("read all record")
 	return invMap, nil
 }
 
@@ -148,7 +130,14 @@ func createStrainInventory(args *strainInvArgs) error {
 			if len(value) == 0 {
 				continue INNER
 			}
-			anno, err := createAnnoWithRank(args.client, tag, inv.StrainID, regs.StrainInvOnto, value, i)
+			anno, err := createAnnoWithRank(&createAnnoArgs{
+				ontology: regs.StrainInvOnto,
+				client:   args.client,
+				id:       inv.StrainID,
+				value:    value,
+				tag:      tag,
+				rank:     i,
+			})
 			if err != nil {
 				return err
 			}
