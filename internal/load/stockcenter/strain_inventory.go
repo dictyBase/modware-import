@@ -26,9 +26,8 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
-		found := true
 		gc, err := getInventory(id, client, regs.StrainInvOnto)
-		err = handleAnnoRetrieval(&annoParams{
+		found, err := handleAnnoRetrieval(&annoParams{
 			id:     id,
 			gc:     gc,
 			err:    err,
