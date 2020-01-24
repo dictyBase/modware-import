@@ -11,6 +11,7 @@ type createAnnoArgs struct {
 	tag      string
 	value    string
 	id       string
+	rank     int
 	client   pb.TaggedAnnotationServiceClient
 }
 

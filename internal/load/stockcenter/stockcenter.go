@@ -50,18 +50,18 @@ func validateAnnoTag(args *validateTagArgs) (bool, error) {
 	return true, nil
 }
 
-func createAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string, rank int) (*pb.TaggedAnnotation, error) {
-	ta, err := client.CreateAnnotation(
+func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
+	ta, err := args.client.CreateAnnotation(
 		context.Background(),
 		&pb.NewTaggedAnnotation{
 			Data: &pb.NewTaggedAnnotation_Data{
 				Attributes: &pb.NewTaggedAnnotationAttributes{
-					Value:     value,
+					Value:     args.value,
 					CreatedBy: regs.DEFAULT_USER,
-					Tag:       tag,
-					EntryId:   id,
-					Ontology:  ontology,
-					Rank:      int64(rank),
+					Tag:       args.tag,
+					EntryId:   args.id,
+					Ontology:  args.ontology,
+					Rank:      int64(args.rank),
 				},
 			},
 		},
@@ -69,9 +69,9 @@ func createAnnoWithRank(client pb.TaggedAnnotationServiceClient, tag, id, ontolo
 	if err != nil {
 		return ta, fmt.Errorf(
 			"error in creating annotation %s for id %s with rank %d %s",
-			tag,
-			id,
-			rank,
+			args.tag,
+			args.id,
+			args.rank,
 			err,
 		)
 	}

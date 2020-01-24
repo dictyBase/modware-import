@@ -90,40 +90,56 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func organizePhenoAnno(pheno *stockcenter.Phenotype) map[string][]string {
+	return map[string][]string{
+		regs.PhenoOntology: {pheno.Observation, regs.EmptyValue},
+		regs.AssayOntology: {pheno.Assay, regs.EmptyValue},
+		regs.EnvOntology:   {pheno.Environment, regs.EmptyValue},
+	}
+}
+
+func organizeMorePhenoAnno(pheno *stockcenter.Phenotype) [][]string {
+	return [][]string{
+		{regs.LiteratureTag, pheno.LiteratureID},
+		{regs.NoteTag, pheno.Note},
+	}
+}
+
 func createPhenotype(args *strainPhenoArgs) error {
 	for i, pheno := range args.phenoSlice {
 		var ids []string
-		m := map[string][]string{
-			regs.PhenoOntology: {pheno.Observation, regs.EmptyValue},
-			regs.AssayOntology: {pheno.Assay, regs.EmptyValue},
-			regs.EnvOntology:   {pheno.Environment, regs.EmptyValue},
-			regs.DICTY_ANNO_ONTOLOGY: {
-				regs.LiteratureTag, pheno.LiteratureID,
-				regs.NoteTag, pheno.Note},
+	FIRST:
+		for _, dataSlice := range organizeMorePhenoAnno(pheno) {
+			if len(dataSlice[1]) == 0 {
+				continue FIRST
+			}
+			anno, err := createAnnoWithRank(&createAnnoArgs{
+				ontology: regs.DICTY_ANNO_ONTOLOGY,
+				client:   args.client,
+				tag:      dataSlice[0],
+				value:    dataSlice[1],
+				id:       args.id,
+				rank:     i,
+			})
+			if err != nil {
+				return err
+			}
+			ids = append(ids, anno.Data.Id)
+
 		}
-	INNER:
-		for onto, dataSlice := range m {
-			if onto == regs.DICTY_ANNO_ONTOLOGY {
-				if len(dataSlice[1]) > 0 {
-					anno, err := createAnnoWithRank(args.client, dataSlice[0], args.id, onto, dataSlice[1], i)
-					if err != nil {
-						return err
-					}
-					ids = append(ids, anno.Data.Id)
-				}
-				if len(dataSlice[3]) > 0 {
-					anno, err := createAnnoWithRank(args.client, dataSlice[2], args.id, onto, dataSlice[3], i)
-					if err != nil {
-						return err
-					}
-					ids = append(ids, anno.Data.Id)
-				}
-				continue INNER
-			}
+	SECOND:
+		for onto, dataSlice := range organizePhenoAnno(pheno) {
 			if len(dataSlice[0]) == 0 {
-				continue INNER
+				continue SECOND
 			}
-			anno, err := createAnnoWithRank(args.client, dataSlice[0], args.id, onto, dataSlice[1], i)
+			anno, err := createAnnoWithRank(&createAnnoArgs{
+				client:   args.client,
+				tag:      dataSlice[0],
+				value:    dataSlice[1],
+				id:       args.id,
+				ontology: onto,
+				rank:     i,
+			})
 			if err != nil {
 				return err
 			}
@@ -143,9 +159,7 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 	for args.pr.Next() {
 		pheno, err := args.pr.Value()
 		if err != nil {
-			return phenoMap, fmt.Errorf(
-				"error in loading strain phenotype %s", err,
-			)
+			return phenoMap, fmt.Errorf("error in loading strain phenotype %s", err)
 		}
 		phStatus, err := validateAnnoTag(&validateTagArgs{
 			client:   args.client,
@@ -186,13 +200,12 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 		}
 		readCount++
 	}
-	args.logger.WithFields(
-		logrus.Fields{
-			"type":  "phenotype",
-			"stock": "strains",
-			"event": "read",
-			"count": readCount,
-		}).Infof("read all record")
+	args.logger.WithFields(logrus.Fields{
+		"type":  "phenotype",
+		"stock": "strains",
+		"event": "read",
+		"count": readCount,
+	}).Infof("read all record")
 	return phenoMap, nil
 }
 
