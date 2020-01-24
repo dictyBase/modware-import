@@ -10,47 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
-	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-type strainPhenoArgs struct {
-	id         string
-	client     pb.TaggedAnnotationServiceClient
-	phenoSlice []*stockcenter.Phenotype
-}
-
-type processPhenoArgs struct {
-	client pb.TaggedAnnotationServiceClient
-	pr     stockcenter.PhenotypeReader
-	logger *logrus.Entry
-}
-
-type strainInvArgs struct {
-	id       string
-	client   pb.TaggedAnnotationServiceClient
-	invSlice []*stockcenter.StrainInventory
-	found    bool
-}
-
-type plasmidInvArgs struct {
-	id       string
-	client   pb.TaggedAnnotationServiceClient
-	invSlice []*stockcenter.PlasmidInventory
-	found    bool
-}
-
-type validateTagArgs struct {
-	client   pb.TaggedAnnotationServiceClient
-	tag      string
-	ontology string
-	id       string
-	stock    string
-	loader   string
-	logger   *logrus.Entry
-}
 
 func validateAnnoTag(args *validateTagArgs) (bool, error) {
 	tag, err := args.client.GetAnnotationTag(
