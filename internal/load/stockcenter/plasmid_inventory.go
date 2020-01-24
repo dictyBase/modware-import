@@ -94,15 +94,19 @@ func cacheInvByPlasmidId(ir stockcenter.PlasmidInventoryReader, logger *logrus.E
 	return invMap, nil
 }
 
+func organizePlasmidInvAnno(inv *stockcenter.PlasmidInventory) map[string]string {
+	return map[string]string{
+		regs.InvLocationTag:    inv.PhysicalLocation,
+		regs.InvStoredAsTag:    inv.StoredAs,
+		regs.InvPrivCommentTag: inv.PrivateComment,
+		regs.InvObtainedAsTag:  inv.ObtainedAs,
+	}
+}
+
 func createPlasmidInventory(args *plasmidInvArgs) error {
 	for i, inv := range args.invSlice {
 		var ids []string
-		m := map[string]string{
-			regs.InvLocationTag:    inv.PhysicalLocation,
-			regs.InvStoredAsTag:    inv.StoredAs,
-			regs.InvPrivCommentTag: inv.PrivateComment,
-			regs.InvObtainedAsTag:  inv.ObtainedAs,
-		}
+		m := organizePlasmidInvAnno(inv)
 		if !inv.StoredOn.IsZero() {
 			m[regs.InvStorageDateTag] = inv.StoredOn.Format(time.RFC3339Nano)
 		}
@@ -111,7 +115,14 @@ func createPlasmidInventory(args *plasmidInvArgs) error {
 			if len(value) == 0 {
 				continue INNER
 			}
-			anno, err := createAnnoWithRank(args.client, tag, inv.PlasmidID, regs.PlasmidInvOntO, value, i)
+			anno, err := createAnnoWithRank(&createAnnoArgs{
+				ontology: regs.PlasmidInvOntO,
+				client:   args.client,
+				id:       inv.PlasmidID,
+				value:    value,
+				tag:      tag,
+				rank:     i,
+			})
 			if err != nil {
 				return err
 			}
