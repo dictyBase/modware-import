@@ -34,7 +34,7 @@ func LoadPheno(cmd *cobra.Command, args []string) error {
 			client:   client,
 			ontology: regs.PhenoOntology,
 		})
-		err = handleAnnoRetrieval(&annoParams{
+		_, err = handleAnnoRetrieval(&annoParams{
 			id:     id,
 			gc:     gc,
 			err:    err,

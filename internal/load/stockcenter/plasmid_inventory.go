@@ -11,8 +11,6 @@ import (
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
@@ -26,32 +24,17 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 	client := regs.GetAnnotationAPIClient()
 	invCount := 0
 	for id, invSlice := range invMap {
-		found := true
 		gc, err := getInventory(id, client, regs.PlasmidInvOntO)
+		found, err := handleAnnoRetrieval(&annoParams{
+			id:     id,
+			gc:     gc,
+			err:    err,
+			client: client,
+			logger: logger,
+			loader: "inventory",
+		})
 		if err != nil {
-			if status.Code(err) != codes.NotFound { // error in lookup
-				return err
-			}
-			found = false
-			logger.WithFields(
-				logrus.Fields{
-					"type":  "inventory",
-					"stock": "plasmid",
-					"event": "get",
-					"id":    id,
-				}).Debugf("no inventories")
-		}
-		if found {
-			if err := delAnnotationGroup(client, gc); err != nil {
-				return err
-			}
-			logger.WithFields(
-				logrus.Fields{
-					"type":  "inventory",
-					"stock": "plasmid",
-					"event": "delete",
-					"id":    id,
-				}).Debugf("deleted inventories")
+			return err
 		}
 		err = createPlasmidInventory(&plasmidInvArgs{
 			id:       id,
