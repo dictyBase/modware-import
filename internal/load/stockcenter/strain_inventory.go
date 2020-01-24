@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -31,28 +28,16 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	for id, invSlice := range invMap {
 		found := true
 		gc, err := getInventory(id, client, regs.StrainInvOnto)
+		err = handleAnnoRetrieval(&annoParams{
+			id:     id,
+			gc:     gc,
+			err:    err,
+			client: client,
+			logger: logger,
+			loader: "inventory",
+		})
 		if err != nil {
-			if status.Code(err) != codes.NotFound { // error in lookup
-				return err
-			}
-			found = false
-			logger.WithFields(logrus.Fields{
-				"event": "get",
-				"id":    id,
-			}).Debugf("no inventories")
-		}
-		if found { // remove if inventory exists
-			logger.WithFields(logrus.Fields{
-				"event": "get",
-				"id":    id,
-			}).Debugf("retrieved inventories")
-			if err := delAnnotationGroup(client, gc); err != nil {
-				return err
-			}
-			logger.WithFields(logrus.Fields{
-				"event": "delete",
-				"id":    id,
-			}).Debugf("deleted inventories")
+			return err
 		}
 		err = createStrainInventory(&strainInvArgs{
 			id:       id,
@@ -67,13 +52,13 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 			"event": "create",
 			"id":    id,
 			"count": len(invSlice),
-		}).Debugf("created inventories")
+		}).Debug("created inventories")
 		invCount += len(invSlice)
 	}
 	logger.WithFields(logrus.Fields{
 		"event": "load",
 		"count": invCount,
-	}).Infof("loaded inventories")
+	}).Info("loaded inventories")
 	return nil
 }
 
@@ -93,7 +78,7 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 				"event":  "skip record",
 				"output": inv.RecordLine,
 				"id":     inv.StrainID,
-			}).Warnf("skipped the record")
+			}).Warn("skipped the record")
 			continue
 		}
 		if v, ok := invMap[inv.StrainID]; ok {
@@ -106,22 +91,26 @@ func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Ent
 	logger.WithFields(logrus.Fields{
 		"event": "read",
 		"count": readCount,
-	}).Debugf("read all record")
+	}).Debug("read all record")
 	return invMap, nil
+}
+
+func organizeStrainInvAnno(inv *stockcenter.StrainInventory) map[string]string {
+	return map[string]string{
+		regs.InvLocationTag:    inv.PhysicalLocation,
+		regs.InvStoredAsTag:    inv.StoredAs,
+		regs.InvVialCountTag:   inv.VialsCount,
+		regs.InvVialColorTag:   inv.VialColor,
+		regs.InvPrivCommentTag: inv.PrivateComment,
+		regs.InvPubCommentTag:  inv.PublicComment,
+		regs.InvStorageDateTag: inv.StoredOn.Format(time.RFC3339Nano),
+	}
 }
 
 func createStrainInventory(args *strainInvArgs) error {
 	for i, inv := range args.invSlice {
 		var ids []string
-		m := map[string]string{
-			regs.InvLocationTag:    inv.PhysicalLocation,
-			regs.InvStoredAsTag:    inv.StoredAs,
-			regs.InvVialCountTag:   inv.VialsCount,
-			regs.InvVialColorTag:   inv.VialColor,
-			regs.InvPrivCommentTag: inv.PrivateComment,
-			regs.InvPubCommentTag:  inv.PublicComment,
-			regs.InvStorageDateTag: inv.StoredOn.Format(time.RFC3339Nano),
-		}
+		m := organizeStrainInvAnno(inv)
 		if !inv.StoredOn.IsZero() {
 			m[regs.InvStorageDateTag] = inv.StoredOn.Format(time.RFC3339Nano)
 		}

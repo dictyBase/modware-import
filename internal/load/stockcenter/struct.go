@@ -56,3 +56,12 @@ type validateTagArgs struct {
 	loader   string
 	logger   *logrus.Entry
 }
+
+type annoParams struct {
+	client pb.TaggedAnnotationServiceClient
+	gc     *pb.TaggedAnnotationGroupCollection
+	logger *logrus.Entry
+	id     string
+	loader string
+	err    error
+}
