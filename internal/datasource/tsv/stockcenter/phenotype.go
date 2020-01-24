@@ -11,12 +11,12 @@ import (
 
 //Phenotype is the container for strain phenotype
 type Phenotype struct {
-	StrainId     string
+	StrainID     string
 	Observation  string
 	Environment  string
 	Assay        string
 	Note         string
-	LiteratureId string
+	LiteratureID string
 }
 
 //PhenotypeReader is the defined interface for reading the data
@@ -41,7 +41,7 @@ func (cp *tsvPhenotypeReader) Value() (*Phenotype, error) {
 	if cp.Err != nil {
 		return p, cp.Err
 	}
-	p.StrainId = cp.Record[0]
+	p.StrainID = cp.Record[0]
 	p.Observation = cp.Record[1]
 	if len(cp.Record[2]) > 0 {
 		p.Environment = cp.Record[2]
@@ -49,7 +49,7 @@ func (cp *tsvPhenotypeReader) Value() (*Phenotype, error) {
 	if len(cp.Record[3]) > 0 {
 		p.Assay = cp.Record[3]
 	}
-	p.LiteratureId = cp.Record[4]
+	p.LiteratureID = cp.Record[4]
 	if !strings.HasPrefix(cp.Record[5], "[") {
 		p.Note = cp.Record[5]
 	}

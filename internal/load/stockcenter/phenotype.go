@@ -94,11 +94,11 @@ func createPhenotype(args *strainPhenoArgs) error {
 	for i, pheno := range args.phenoSlice {
 		var ids []string
 		m := map[string][]string{
-			regs.PhenoOntology: []string{pheno.Observation, regs.EmptyValue},
-			regs.AssayOntology: []string{pheno.Assay, regs.EmptyValue},
-			regs.EnvOntology:   []string{pheno.Environment, regs.EmptyValue},
-			regs.DICTY_ANNO_ONTOLOGY: []string{
-				regs.LiteratureTag, pheno.LiteratureId,
+			regs.PhenoOntology: {pheno.Observation, regs.EmptyValue},
+			regs.AssayOntology: {pheno.Assay, regs.EmptyValue},
+			regs.EnvOntology:   {pheno.Environment, regs.EmptyValue},
+			regs.DICTY_ANNO_ONTOLOGY: {
+				regs.LiteratureTag, pheno.LiteratureID,
 				regs.NoteTag, pheno.Note},
 		}
 	INNER:
@@ -152,7 +152,7 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 			logger:   args.logger,
 			tag:      pheno.Observation,
 			ontology: regs.PhenoOntology,
-			id:       pheno.StrainId,
+			id:       pheno.StrainID,
 			stock:    "strain",
 			loader:   "phenotype",
 		})
@@ -168,7 +168,7 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 				logger:   args.logger,
 				tag:      pheno.Assay,
 				ontology: regs.AssayOntology,
-				id:       pheno.StrainId,
+				id:       pheno.StrainID,
 				stock:    "strain",
 				loader:   "phenotype",
 			})
@@ -179,10 +179,10 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 				continue
 			}
 		}
-		if phslice, ok := phenoMap[pheno.StrainId]; ok {
-			phenoMap[pheno.StrainId] = append(phslice, pheno)
+		if phslice, ok := phenoMap[pheno.StrainID]; ok {
+			phenoMap[pheno.StrainID] = append(phslice, pheno)
 		} else {
-			phenoMap[pheno.StrainId] = []*stockcenter.Phenotype{pheno}
+			phenoMap[pheno.StrainID] = []*stockcenter.Phenotype{pheno}
 		}
 		readCount++
 	}
