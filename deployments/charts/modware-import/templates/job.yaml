@@ -31,4 +31,6 @@ spec:
         {{- include "modware-import.envManifest" $ | nindent 8 }}
         command: ["/usr/local/bin/dsc-runner"]
         args: [{{ $loader.subGroupThree | join "," }}]
+      {{- end }}
+      {{- end }}
       restartPolicy: Never

@@ -42,13 +42,13 @@ Generate a random container name
 Generates image and imagePullPolicy manifest lines
 */}}
 {{- define "modware-import.imageManifest" -}}
-image: "{{ .Values.image.repository }}:{{ .Values.image.tag}}" 
-imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+image: {{ .Values.image.repository }}:{{ .Values.image.tag}}
+imagePullPolicy: {{ .Values.image.pullPolicy }}
 {{- end -}}
 
 {{/*
 Generate env manifests
-*//}}
+*/}}
 {{- define "modware-import.envManifest" -}}
 env:
 - name: SECRET_KEY
