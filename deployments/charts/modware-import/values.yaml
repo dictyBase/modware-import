@@ -10,14 +10,17 @@ image:
 # data to be loaded
 load:
   - command: stockcenter
-    dsc:
+    subGroupOne:
         - strain
         - plasmid
+    subGroupTwo:
         - genotype
-        - strainprop
-        - strainsyn
+        - phenotype
         - straininv
         - plasmidinv
+    subGroupThree:
+        - strainprop
+        - strainsyn
         - characteristics
   #- command: genome
     #group:
@@ -27,4 +30,4 @@ load:
 
 # verbosity of log
 log:
-  level: debug
+  level: info
