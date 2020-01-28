@@ -3,7 +3,7 @@ package stockcenter
 import (
 	"fmt"
 
-	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
+	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
@@ -17,7 +17,7 @@ const (
 )
 
 func LoadStrainProp(cmd *cobra.Command, args []string) error {
-	pr := stockcenter.NewCsvStockPropReader(registry.GetReader(regs.STRAINPROP_READER))
+	pr := stockcenter.NewTsvStockPropReader(registry.GetReader(regs.STRAINPROP_READER))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	pcount := 0

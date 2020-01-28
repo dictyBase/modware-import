@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
-	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
+	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
@@ -20,7 +20,7 @@ const (
 )
 
 func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
-	pr := stockcenter.NewCsvStockPropReader(registry.GetReader(regs.StrainSynReader))
+	pr := stockcenter.NewTsvStockPropReader(registry.GetReader(regs.StrainSynReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	pcount := 0
