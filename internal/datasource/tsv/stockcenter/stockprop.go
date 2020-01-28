@@ -1,11 +1,11 @@
 package stockcenter
 
 import (
-	"encoding/csv"
+	"bufio"
 	"io"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
-	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
+	tsource "github.com/dictyBase/modware-import/internal/datasource/tsv"
 )
 
 //StockProp is the container for stock properties
@@ -21,20 +21,18 @@ type StockPropReader interface {
 	Value() (*StockProp, error)
 }
 
-type csvStockPropReader struct {
-	*csource.CsvReader
+type tsvStockPropReader struct {
+	*tsource.TsvReader
 }
 
-//NewCsvStockPropReader is to get an instance of StockPropReader
-func NewCsvStockPropReader(r io.Reader) StockPropReader {
-	cr := csv.NewReader(r)
-	cr.FieldsPerRecord = -1
-	cr.Comma = '\t'
-	return &csvStockPropReader{&csource.CsvReader{Reader: cr}}
+//NewTsvStockPropReader is to get an instance of StockPropReader
+func NewTsvStockPropReader(r io.Reader) StockPropReader {
+	tr := bufio.NewScanner(r)
+	return &tsvStockPropReader{&tsource.TsvReader{Reader: tr}}
 }
 
 //Value gets a new StockProp instance
-func (spr *csvStockPropReader) Value() (*StockProp, error) {
+func (spr *tsvStockPropReader) Value() (*StockProp, error) {
 	prop := new(StockProp)
 	if spr.Err != nil {
 		return prop, spr.Err
