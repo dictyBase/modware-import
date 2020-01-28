@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "modware-import.fullname" . }}
+  name: {{ printf "%s-%s-%s" (include "modware-import.fullname" .) "stockcenter" (randAlpha 8) | lower }}
   labels:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
     release: "{{ .Release.Name }}"
@@ -9,28 +9,61 @@ metadata:
 spec:
   template:
     metadata:
-      name: {{ template "modware-import.fullname" . }}
+      name: {{ printf "%s-%s-%s" (include "modware-import.fullname" .) "stockcenter" (randAlpha 8) | lower }}
       labels:
-        app: {{ template "modware-import.fullname" . }}
+        app: {{ printf "%s-%s" (include "modware-import.fullname" .)  "subGroupOne" }}
     spec:
       containers:
-      {{- range $loader := .Values.load }}
-      {{- if eq $loader.command "stockcenter" }}
-      - name: {{ template "modware-import.containerName" $ }}
-        {{- include "modware-import.imageManifest" $ | nindent 8 }}
-        {{- include "modware-import.envManifest" $ | nindent 8 }}
+      - name: {{ template "modware-import.containerName" . }}
+        {{- include "modware-import.imageManifest" . | nindent 8 }}
+        {{- include "modware-import.envManifest" . | nindent 8 }}
         command: ["/usr/local/bin/dsc-runner"]
-        args: [{{ $loader.subGroupOne | join "," }}]
-      - name: {{ template "modware-import.containerName" $ }}
-        {{- include "modware-import.imageManifest" $ | nindent 8 }}
-        {{- include "modware-import.envManifest" $ | nindent 8 }}
-        command: ["/usr/local/bin/dsc-runner"]
-        args: [{{ $loader.subGroupTwo | join "," }}]
-      - name: {{ template "modware-import.containerName" $ }}
-        {{- include "modware-import.imageManifest" $ | nindent 8 }}
-        {{- include "modware-import.envManifest" $ | nindent 8 }}
-        command: ["/usr/local/bin/dsc-runner"]
-        args: [{{ $loader.subGroupThree | join "," }}]
-      {{- end }}
-      {{- end }}
+        args: [{{ .Values.load.stockcenter.subGroupOne | join "," }}]
       restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-%s-%s" (include "modware-import.fullname" .) "stockcenter" (randAlpha 8) | lower }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  template:
+    metadata:
+      name: {{ printf "%s-%s-%s" (include "modware-import.fullname" .) "stockcenter" (randAlpha 8) | lower }}
+      labels:
+        app: {{ printf "%s-%s" (include "modware-import.fullname" .)  "subGroupTwo" }}
+    spec:
+      containers:
+      - name: {{ template "modware-import.containerName" . }}
+        {{- include "modware-import.imageManifest" . | nindent 8 }}
+        {{- include "modware-import.envManifest" . | nindent 8 }}
+        command: ["/usr/local/bin/dsc-runner"]
+        args: [{{ .Values.load.stockcenter.subGroupTwo | join "," }}]
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-%s-%s" (include "modware-import.fullname" .) "stockcenter" (randAlpha 8) | lower }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  template:
+    metadata:
+      name: {{ printf "%s-%s-%s" (include "modware-import.fullname" .) "stockcenter" (randAlpha 8) | lower }}
+      labels:
+        app: {{ printf "%s-%s" (include "modware-import.fullname" .)  "subGroupThree" }}
+    spec:
+      containers:
+      - name: {{ template "modware-import.containerName" . }}
+        {{- include "modware-import.imageManifest" . | nindent 8 }}
+        {{- include "modware-import.envManifest" . | nindent 8 }}
+        command: ["/usr/local/bin/dsc-runner"]
+        args: [{{ .Values.load.stockcenter.subGroupThree | join "," }}]
+      restartPolicy: Never
+
