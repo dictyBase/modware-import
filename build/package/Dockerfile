@@ -12,7 +12,9 @@ ADD internal internal
 RUN go build -o app cmd/import/main.go
 
 FROM alpine:3.10
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates tzdata \
+    && cp /usr/share/zoneinfo/America/Chicago /etc/localtime \
+    && echo "America/Chicago" > /etc/timezone
 COPY --from=0 /modware-import/app /usr/local/bin/
 COPY build/package/dsc-runner.sh /usr/local/bin/dsc-runner
 RUN chmod +x /usr/local/bin/dsc-runner
