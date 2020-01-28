@@ -230,9 +230,7 @@ func handleAnnoRetrieval(args *annoParams) (bool, error) {
 			"event": "get",
 			"id":    args.id,
 		}).Debugf("no %s", args.loader)
-	}
-	if !found {
-		return found, args.err
+		return found, nil
 	}
 	args.logger.WithFields(logrus.Fields{
 		"event": "get",
@@ -245,5 +243,5 @@ func handleAnnoRetrieval(args *annoParams) (bool, error) {
 		"event": "delete",
 		"id":    args.id,
 	}).Debugf("deleted %s", args.loader)
-	return found, args.err
+	return found, nil
 }
