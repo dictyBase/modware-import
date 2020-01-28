@@ -9,19 +9,19 @@ image:
 
 # data to be loaded
 load:
-  - command: stockcenter
+  stockcenter:
     subGroupOne:
         - strain
         - plasmid
+        - straininv
     subGroupTwo:
         - genotype
         - phenotype
-        - straininv
-        - plasmidinv
-    subGroupThree:
         - strainprop
+    subGroupThree:
         - strainsyn
         - characteristics
+        - plasmidinv
   #- command: genome
     #group:
       #-
