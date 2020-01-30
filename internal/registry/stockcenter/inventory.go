@@ -12,7 +12,7 @@ const (
 	InvVialCountTag   = "number of vials"
 	InvVialColorTag   = "color"
 	InvStorageDateTag = "storage date"
-	InvObtainedAsTag  = "obtained as"
+	InvObtainedAsTag  = "clear"
 	PlasmidInvTag     = "plasmid inventory"
 	StrainInvTag      = "strain_inventory"
 )
