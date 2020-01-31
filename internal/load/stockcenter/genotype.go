@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
-	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
+	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
@@ -35,7 +35,7 @@ type param struct {
 }
 
 func LoadGeno(cmd *cobra.Command, args []string) error {
-	gr := stockcenter.NewCsvGenotypeReader(registry.GetReader(regs.GENO_READER))
+	gr := stockcenter.NewTsvGenotypeReader(registry.GetReader(regs.GENO_READER))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	count := 0
