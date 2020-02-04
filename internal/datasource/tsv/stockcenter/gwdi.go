@@ -36,6 +36,7 @@ type GWDIStrain struct {
 	Summary  string
 	GeneId   string
 	Genotype string
+	Property string
 }
 
 //GWDIStrainReader is the defined interface for reading the data
@@ -56,7 +57,7 @@ func NewGWDIStrainReader(r io.Reader) GWDIStrainReader {
 
 //Value gets a new GWDIStrain instance
 func (g *tsvGWDIStraineader) Value() (*GWDIStrain, error) {
-	gst := new(GWDIStrain)
+	gst := &GWDIStrain{Property: "endogenous insertion"}
 	if g.Err != nil {
 		return gst, g.Err
 	}
