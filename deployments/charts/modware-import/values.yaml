@@ -13,15 +13,15 @@ load:
     subGroupOne:
         - strain
         - plasmid
-        - straininv
-    subGroupTwo:
         - genotype
-        - phenotype
-        - strainprop
-    subGroupThree:
-        - strainsyn
         - characteristics
+    subGroupTwo:
+        - strainprop
+        - strainsyn
+    subGroupThree:
+        - straininv
         - plasmidinv
+        - phenotype
   #- command: genome
     #group:
       #-
