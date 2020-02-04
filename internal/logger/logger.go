@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	logrus_stack "github.com/Gurpartap/logrus-stack"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
@@ -34,6 +35,7 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 		fname = f.Name()
 	}
 	logger.Hooks.Add(lfshook.NewHook(fname, lfmt))
+	logger.Hooks.Add(logrus_stack.StandardHook())
 	registry.SetValue(registry.LOG_FILE_KEY, fname)
 	return logrus.NewEntry(logger), nil
 }
