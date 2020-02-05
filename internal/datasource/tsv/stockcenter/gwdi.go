@@ -31,12 +31,17 @@ var chrMap = map[string]string{
 
 //GWDIStrain is the container for GWDI strain
 type GWDIStrain struct {
-	Label    string
-	Name     string
-	Summary  string
-	GeneId   string
-	Genotype string
-	Property string
+	Label     string
+	Name      string
+	Summary   string
+	GeneId    string
+	Genotype  string
+	Property  string
+	Character string
+	Parent    string
+	Plasmid   string
+	Species   string
+	Depositor string
 }
 
 //GWDIStrainReader is the defined interface for reading the data
@@ -57,7 +62,14 @@ func NewGWDIStrainReader(r io.Reader) GWDIStrainReader {
 
 //Value gets a new GWDIStrain instance
 func (g *tsvGWDIStraineader) Value() (*GWDIStrain, error) {
-	gst := &GWDIStrain{Property: "endogenous insertion"}
+	gst := &GWDIStrain{
+		Property:  "endogenous insertion",
+		Character: "blasticidin resistant, axenic, null mutant",
+		Parent:    "DBS0351471",
+		Plasmid:   "Blasticidin S resistance cassette",
+		Depositor: "baldwinAJ@cardiff.ac.uk",
+		Species:   "Dictyostelium discoideum",
+	}
 	if g.Err != nil {
 		return gst, g.Err
 	}

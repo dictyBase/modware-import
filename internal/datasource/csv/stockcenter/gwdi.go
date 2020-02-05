@@ -6,8 +6,11 @@ import (
 	"io"
 	"strings"
 
+	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+
 	"github.com/dictyBase/modware-import/internal/datasource"
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
+	tsource "github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 )
 
 var chrMap = map[string]string{
@@ -31,11 +34,17 @@ var chrMap = map[string]string{
 
 //GWDIStrain is the container for GWDI strain
 type GWDIStrain struct {
-	Label    string
-	Name     string
-	Summary  string
-	GeneId   string
-	Genotype string
+	Label      string
+	Name       string
+	Summary    string
+	GeneId     string
+	Genotype   string
+	Character  string
+	Parent     string
+	Plasmid    string
+	Species    string
+	Depositor  string
+	Properties map[string]*tsource.StockProp
 }
 
 //GWDIStrainReader is the defined interface for reading the data
@@ -48,7 +57,7 @@ type csvGWDIStraineader struct {
 	*csource.CsvReader
 }
 
-//NewStockPropReader is to get an instance of StrainPropReader
+//NewGWDIStrainReader is to get an instance of GWDIStrainReader
 func NewGWDIStrainReader(r io.Reader) GWDIStrainReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
@@ -56,9 +65,25 @@ func NewGWDIStrainReader(r io.Reader) GWDIStrainReader {
 	return &csvGWDIStraineader{&csource.CsvReader{Reader: cr}}
 }
 
-//Value gets a new StockProp instance
+//Value gets a new GWDIStrain instance
 func (g *csvGWDIStraineader) Value() (*GWDIStrain, error) {
-	gst := new(GWDIStrain)
+	gst := &GWDIStrain{
+		Character: "blasticidin resistant, axenic, null mutant",
+		Parent:    "DBS0351471",
+		Plasmid:   "Blasticidin S resistance cassette",
+		Depositor: "baldwinAJ@cardiff.ac.uk",
+		Species:   "Dictyostelium discoideum",
+	}
+	gst.Properties = map[string]*tsource.StockProp{
+		regs.DICTY_ANNO_ONTOLOGY: &tsource.StockProp{
+			Property: "mutant type",
+			Value:    "endogenous insertion",
+		},
+		regs.DICTY_MUTAGENESIS_ONTOLOGY: &tsource.StockProp{
+			Property: "mutagenesis method",
+			Value:    "Restriction Enzyme-Mediated Integration",
+		},
+	}
 	if g.Err != nil {
 		return gst, g.Err
 	}
@@ -76,7 +101,7 @@ func (g *csvGWDIStraineader) Value() (*GWDIStrain, error) {
 	var summ strings.Builder
 	fmt.Fprintf(
 		&summ,
-		"Genome Wide Dictyostelium Insertion bank(GWDI) %s mutatnt;",
+		"Genome Wide Dictyostelium Insertion bank(GWDI) %s mutant;",
 		gst.Label,
 	)
 	fmt.Fprintf(
