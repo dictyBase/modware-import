@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
@@ -32,19 +33,22 @@ var chrMap = map[string]string{
 	"DDB0232433": "chr6",
 }
 
+var grxp = regexp.MustCompile(`(DDB_G[0-9]{5,}){2,}`)
+
 //GWDIStrain is the container for GWDI strain
 type GWDIStrain struct {
-	Label      string
-	Name       string
-	Summary    string
-	GeneId     string
-	Genotype   string
-	Character  string
-	Parent     string
-	Plasmid    string
-	Species    string
-	Depositor  string
-	Properties map[string]*tsource.StockProp
+	Label       string
+	Name        string
+	Summary     string
+	Genotype    string
+	Character   string
+	Parent      string
+	Plasmid     string
+	Species     string
+	Depositor   string
+	Publication string
+	Genes       []string
+	Properties  map[string]*tsource.StockProp
 }
 
 //GWDIStrainReader is the defined interface for reading the data
@@ -68,11 +72,12 @@ func NewGWDIStrainReader(r io.Reader) GWDIStrainReader {
 //Value gets a new GWDIStrain instance
 func (g *csvGWDIStraineader) Value() (*GWDIStrain, error) {
 	gst := &GWDIStrain{
-		Character: "blasticidin resistant, axenic, null mutant",
-		Parent:    "DBS0351471",
-		Plasmid:   "Blasticidin S resistance cassette",
-		Depositor: "baldwinAJ@cardiff.ac.uk",
-		Species:   "Dictyostelium discoideum",
+		Character:   "blasticidin resistant, axenic, null mutant",
+		Parent:      "DBS0351471",
+		Plasmid:     "Blasticidin S resistance cassette",
+		Depositor:   "baldwinAJ@cardiff.ac.uk",
+		Species:     "Dictyostelium discoideum",
+		Publication: "10.1101/582072",
 	}
 	gst.Properties = map[string]*tsource.StockProp{
 		regs.DICTY_ANNO_ONTOLOGY: &tsource.StockProp{
@@ -90,12 +95,16 @@ func (g *csvGWDIStraineader) Value() (*GWDIStrain, error) {
 	gene := g.Record[7]
 	if strings.HasPrefix(gene, "DDB_G") {
 		gst.Label = g.Record[0]
-		gst.GeneId = gene
 	} else if g.Record[7] == "none" {
 		gst.Label = g.Record[0]
 	} else {
 		gst.Label = fmt.Sprintf("%s-", gene)
-		gst.GeneId = gene
+	}
+	switch g.Record[6] {
+	case "intragenic", "intergenic_down", "intergenic_up":
+		gst.Genes = []string{gene}
+	case "intergenic_both":
+		gst.Genes = grxp.FindAllString(gene, -1)
 	}
 	gst.Name = g.Record[0]
 	var summ strings.Builder

@@ -25,4 +25,5 @@ const (
 	DICTY_GENETICMOD_ONTOLOGY  = "genetic modification"
 	READFILE_READER            = "readfile-input"
 	STOCK_DATE_LAYOUT          = "02-Jan-06"
+	GWDI_READER                = "gwdi-input"
 )
