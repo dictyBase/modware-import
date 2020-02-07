@@ -41,12 +41,12 @@ type GWDIStrain struct {
 	Name        string
 	Summary     string
 	Genotype    string
-	Characters  []string
 	Parent      string
 	Plasmid     string
 	Species     string
 	Depositor   string
 	Publication string
+	Characters  []string
 	Genes       []string
 	Properties  map[string]*tsource.StockProp
 }

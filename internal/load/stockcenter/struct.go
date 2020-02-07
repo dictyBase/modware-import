@@ -2,7 +2,6 @@ package stockcenter
 
 import (
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
-	cstock "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/sirupsen/logrus"
 )
@@ -73,12 +72,4 @@ type annoParams struct {
 	id     string
 	loader string
 	err    error
-}
-
-type gwdiGenoParams struct {
-	id       string
-	user     string
-	ontology string
-	gwdi     *cstock.GWDIStrain
-	client   pb.TaggedAnnotationServiceClient
 }
