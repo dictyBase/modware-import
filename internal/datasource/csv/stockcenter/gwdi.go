@@ -41,7 +41,7 @@ type GWDIStrain struct {
 	Name        string
 	Summary     string
 	Genotype    string
-	Character   string
+	Characters  []string
 	Parent      string
 	Plasmid     string
 	Species     string
@@ -72,12 +72,16 @@ func NewGWDIStrainReader(r io.Reader) GWDIStrainReader {
 //Value gets a new GWDIStrain instance
 func (g *csvGWDIStraineader) Value() (*GWDIStrain, error) {
 	gst := &GWDIStrain{
-		Character:   "blasticidin resistant, axenic, null mutant",
 		Parent:      "DBS0351471",
 		Plasmid:     "Blasticidin S resistance cassette",
 		Depositor:   "baldwinAJ@cardiff.ac.uk",
 		Species:     "Dictyostelium discoideum",
 		Publication: "10.1101/582072",
+	}
+	gst.Characters = []string{
+		"blasticidin resistant",
+		"axenic",
+		"null mutant",
 	}
 	gst.Properties = map[string]*tsource.StockProp{
 		regs.DICTY_ANNO_ONTOLOGY: &tsource.StockProp{
