@@ -85,7 +85,7 @@ func createAnno(args *createAnnoArgs) error {
 			Data: &pb.NewTaggedAnnotation_Data{
 				Attributes: &pb.NewTaggedAnnotationAttributes{
 					Value:     args.value,
-					CreatedBy: regs.DEFAULT_USER,
+					CreatedBy: args.user,
 					Tag:       args.tag,
 					EntryId:   args.id,
 					Ontology:  args.ontology,
@@ -95,9 +95,10 @@ func createAnno(args *createAnnoArgs) error {
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"error in creating annotation %s for id %s %s",
+			"error in creating annotation %s for id %s with ontology %s %s",
 			args.tag,
 			args.id,
+			args.ontology,
 			err,
 		)
 	}
