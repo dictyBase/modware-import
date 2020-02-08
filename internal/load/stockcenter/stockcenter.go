@@ -118,20 +118,13 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 	case err == nil:
 		return create, nil
 	case status.Code(err) == codes.NotFound:
-		_, err := args.client.CreateAnnotation(
-			context.Background(),
-			&pb.NewTaggedAnnotation{
-				Data: &pb.NewTaggedAnnotation_Data{
-					Attributes: &pb.NewTaggedAnnotationAttributes{
-						Value:     args.value,
-						CreatedBy: regs.DEFAULT_USER,
-						Tag:       args.tag,
-						EntryId:   args.id,
-						Ontology:  args.ontology,
-					},
-				},
-			},
-		)
+		err = createAnno(&createAnnoArgs{
+			value:    args.value,
+			user:     regs.DEFAULT_USER,
+			tag:      args.tag,
+			id:       args.id,
+			ontology: args.ontology,
+		})
 		if err != nil {
 			return create, fmt.Errorf(
 				"error in finding annotation %s for id %s %s",
