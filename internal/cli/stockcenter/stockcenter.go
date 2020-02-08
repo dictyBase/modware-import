@@ -38,6 +38,7 @@ func init() {
 		StrainInvCmd,
 		PlasmidInvCmd,
 		ReadFileCmd,
+		GwdiCmd,
 	)
 	s3BucketFlags()
 	stockAPIFlags()
