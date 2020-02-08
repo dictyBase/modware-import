@@ -61,16 +61,7 @@ type csvGWDIStraineader struct {
 	*csource.CsvReader
 }
 
-//NewGWDIStrainReader is to get an instance of GWDIStrainReader
-func NewGWDIStrainReader(r io.Reader) GWDIStrainReader {
-	cr := csv.NewReader(r)
-	cr.FieldsPerRecord = -1
-	cr.Comma = '\t'
-	return &csvGWDIStraineader{&csource.CsvReader{Reader: cr}}
-}
-
-//Value gets a new GWDIStrain instance
-func (g *csvGWDIStraineader) Value() (*GWDIStrain, error) {
+func defaultGWDIStrain() *GWDIStrain {
 	gst := &GWDIStrain{
 		Parent:      "DBS0351471",
 		Plasmid:     "Blasticidin S resistance cassette",
@@ -93,6 +84,20 @@ func (g *csvGWDIStraineader) Value() (*GWDIStrain, error) {
 			Value:    "Restriction Enzyme-Mediated Integration",
 		},
 	}
+	return gst
+}
+
+//NewGWDIStrainReader is to get an instance of GWDIStrainReader
+func NewGWDIStrainReader(r io.Reader) GWDIStrainReader {
+	cr := csv.NewReader(r)
+	cr.FieldsPerRecord = -1
+	cr.Comma = '\t'
+	return &csvGWDIStraineader{&csource.CsvReader{Reader: cr}}
+}
+
+//Value gets a new GWDIStrain instance
+func (g *csvGWDIStraineader) Value() (*GWDIStrain, error) {
+	gst := defaultGWDIStrain()
 	if g.Err != nil {
 		return gst, g.Err
 	}
