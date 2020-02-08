@@ -33,10 +33,6 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("error in creating new gwdi strain record  %s", err)
 		}
-		logger.WithFields(logrus.Fields{
-			"event": "create",
-			"id":    strain.Data.Id,
-		}).Debug("new gwdi strain record")
 		err = createAnno(&createAnnoArgs{
 			user:     regs.DEFAULT_USER,
 			id:       strain.Data.Id,
@@ -48,11 +44,6 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("cannot create genotype of gwdi strain %s %s", strain.Data.Id, err)
 		}
-		logger.WithFields(logrus.Fields{
-			"event": "create",
-			"id":    strain.Data.Id,
-		}).Debug("new gwdi genotype")
-
 		for _, char := range gwdi.Characters {
 			err = createAnno(&createAnnoArgs{
 				user:     regs.DEFAULT_USER,
@@ -69,11 +60,6 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 				)
 			}
 		}
-		logger.WithFields(logrus.Fields{
-			"event": "create",
-			"id":    strain.Data.Id,
-		}).Debug("new gwdi characteristics")
-
 		for onto, prop := range gwdi.Properties {
 			err = createAnno(&createAnnoArgs{
 				user:     regs.DEFAULT_USER,
@@ -93,7 +79,7 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 		logger.WithFields(logrus.Fields{
 			"event": "create",
 			"id":    strain.Data.Id,
-		}).Debug("new gwdi properties")
+		}).Debug("new gwdi strain record")
 		count++
 	}
 	logger.WithFields(logrus.Fields{
