@@ -36,10 +36,10 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 		err = createAnno(&createAnnoArgs{
 			user:     regs.DEFAULT_USER,
 			id:       strain.Data.Id,
-			ontology: regs.DICTY_ANNO_ONTOLOGY,
 			client:   annclient,
-			value:    gwdi.Genotype,
+			ontology: regs.DICTY_ANNO_ONTOLOGY,
 			tag:      genoTag,
+			value:    gwdi.Genotype,
 		})
 		if err != nil {
 			return fmt.Errorf("cannot create genotype of gwdi strain %s %s", strain.Data.Id, err)
@@ -47,10 +47,10 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 		for _, char := range gwdi.Characters {
 			err = createAnno(&createAnnoArgs{
 				user:     regs.DEFAULT_USER,
-				client:   annclient,
-				tag:      char,
 				id:       strain.Data.Id,
+				client:   annclient,
 				ontology: strainCharOnto,
+				tag:      char,
 				value:    val,
 			})
 			if err != nil {
@@ -63,10 +63,10 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 		for onto, prop := range gwdi.Properties {
 			err = createAnno(&createAnnoArgs{
 				user:     regs.DEFAULT_USER,
-				client:   annclient,
-				tag:      prop.Property,
 				id:       strain.Data.Id,
+				client:   annclient,
 				ontology: onto,
+				tag:      prop.Property,
 				value:    prop.Value,
 			})
 			if err != nil {

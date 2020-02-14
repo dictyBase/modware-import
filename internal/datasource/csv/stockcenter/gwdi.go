@@ -75,11 +75,11 @@ func defaultGWDIStrain() *GWDIStrain {
 		"null mutant",
 	}
 	gst.Properties = map[string]*tsource.StockProp{
-		regs.DICTY_ANNO_ONTOLOGY: &tsource.StockProp{
+		regs.DICTY_ANNO_ONTOLOGY: {
 			Property: "mutant type",
 			Value:    "endogenous insertion",
 		},
-		regs.DICTY_MUTAGENESIS_ONTOLOGY: &tsource.StockProp{
+		regs.DICTY_MUTAGENESIS_ONTOLOGY: {
 			Property: "mutagenesis method",
 			Value:    "Restriction Enzyme-Mediated Integration",
 		},
