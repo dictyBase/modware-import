@@ -2,3 +2,7 @@
 (*github.com/spf13/viper).BindPFlags
 github.com/spf13/viper.BindPFlags
 *github.com/spf13/viper.BindPFlags
+(github.com/spf13/viper).BindEnv
+(*github.com/spf13/viper).BindEnv
+github.com/spf13/viper.BindEnv
+*github.com/spf13/viper.BindEnv
