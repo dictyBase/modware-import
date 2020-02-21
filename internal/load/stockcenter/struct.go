@@ -1,7 +1,10 @@
 package stockcenter
 
 import (
+	"context"
+
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
+	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/sirupsen/logrus"
 )
@@ -72,4 +75,18 @@ type annoParams struct {
 	id     string
 	loader string
 	err    error
+}
+
+type gwdiDelProdArgs struct {
+	strains *stock.StrainCollection
+	ctx     context.Context
+}
+
+type gwdiDelConsumerArgs struct {
+	concurrency int
+	tasks       chan string
+	ctx         context.Context
+	aclient     pb.TaggedAnnotationServiceClient
+	sclient     stock.StockServiceClient
+	cancelFn    context.CancelFunc
 }
