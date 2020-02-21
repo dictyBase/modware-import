@@ -113,3 +113,47 @@ func createGwdi(client pb.StockServiceClient, gwdi *stockcenter.GWDIStrain) (*pb
 		},
 	)
 }
+
+func delProducer(args *gwdiDelProdArgs) chan string {
+	tasks := make(chan string)
+	go func() {
+		defer close(tasks)
+		for _, data := range args.strains.Data {
+			select {
+			case <-args.ctx.Done():
+				return
+			case tasks <- data.Id:
+			}
+		}
+	}()
+	return tasks
+}
+
+func delConsumer(args *gwdiDelConsumerArgs) chan error {
+	errc := make(chan error, 1)
+	for i := 0; i < args.concurrency; i++ {
+		go func() {
+			defer close(errc)
+			for {
+				select {
+				case <-args.ctx.Done():
+					return
+				case id, ok := <-args.tasks:
+					if !ok {
+						return
+					}
+					_, err := args.sclient.RemoveStock(
+						args.ctx,
+						&pb.StockId{Id: id},
+					)
+					if err != nil {
+						errc <- err
+						args.cancelFn()
+						return
+					}
+				}
+			}
+		}()
+	}
+	return errc
+}
