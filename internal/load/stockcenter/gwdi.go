@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -11,6 +12,66 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+type gwdiDel struct {
+	aclient annotation.TaggedAnnotationServiceClient
+	sclient pb.StockServiceClient
+	logger  *logrus.Entry
+	ctx     context.Context
+}
+
+func (gd *gwdiDel) Execute(id string) error {
+	_, err := gd.sclient.RemoveStock(gd.ctx, &pb.StockId{Id: id})
+	if err != nil {
+		return err
+	}
+	gd.logger.WithFields(logrus.Fields{
+		"event": "delete",
+		"id":    id,
+	}).Debug("remove gwdi strain")
+	tac, err := gd.aclient.ListAnnotations(
+		gd.ctx,
+		&annotation.ListParameters{
+			Limit:  20,
+			Filter: fmt.Sprintf("entry_id===%s", id),
+		})
+	if err != nil {
+		return fmt.Errorf("error in finding any gwdi annotation for %s %s", id, err)
+	}
+	for _, ta := range tac.Data {
+		_, err := gd.aclient.DeleteAnnotation(
+			gd.ctx,
+			&annotation.DeleteAnnotationRequest{
+				Id:    ta.Id,
+				Purge: true,
+			})
+		if err != nil {
+			return fmt.Errorf("unable to remove annotation for %s %s", id, err)
+		}
+	}
+	gd.logger.WithFields(logrus.Fields{
+		"event": "delete",
+		"id":    id,
+		"count": len(tac.Data),
+	}).Debug("remove gwdi strain annotations")
+	return nil
+}
+
+type gwdiCreate struct {
+	aclient        annotation.TaggedAnnotationServiceClient
+	sclient        pb.StockServiceClient
+	logger         *logrus.Entry
+	ctx            context.Context
+	user           string
+	value          string
+	genoTag        string
+	annoOntology   string
+	strainCharOnto string
+}
+
+func (gc *gwdiCreate) Execute(gwdi *stockcenter.GWDIStrain) error {
+	return nil
+}
 
 func LoadGwdi(cmd *cobra.Command, args []string) error {
 	gr := stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER))
@@ -114,6 +175,56 @@ func createGwdi(client pb.StockServiceClient, gwdi *stockcenter.GWDIStrain) (*pb
 	)
 }
 
+func createConsumer(args *gwdiCreateConsumerArgs) chan error {
+	errc := make(chan error, 1)
+	for i := 0; i < args.concurrency; i++ {
+		go func(runner *gwdiCreate) {
+			defer close(errc)
+			for {
+				select {
+				case <-args.ctx.Done():
+					return
+				case gwdi, ok := <-args.tasks:
+					if !ok {
+						return
+					}
+					if err := runner.Execute(gwdi); err != nil {
+						errc <- err
+						args.cancelFn()
+						return
+					}
+				}
+			}
+		}(args.runner)
+	}
+	return errc
+}
+
+func createProducer(args *gwdiCreateProdArgs) (chan *stockcenter.GWDIStrain, chan error) {
+	tasks := make(chan *stockcenter.GWDIStrain)
+	errc := make(chan error, 1)
+	go func() {
+		defer close(tasks)
+		defer close(errc)
+		for args.gr.Next() {
+			gwdi, err := args.gr.Value()
+			select {
+			case <-args.ctx.Done():
+				return
+			default:
+				if err != nil {
+					errc <- err
+					args.cancelFn()
+					return
+				}
+				tasks <- gwdi
+			}
+
+		}
+	}()
+	return tasks, errc
+}
+
 func delProducer(args *gwdiDelProdArgs) chan string {
 	tasks := make(chan string)
 	go func() {
@@ -132,7 +243,7 @@ func delProducer(args *gwdiDelProdArgs) chan string {
 func delConsumer(args *gwdiDelConsumerArgs) chan error {
 	errc := make(chan error, 1)
 	for i := 0; i < args.concurrency; i++ {
-		go func() {
+		go func(runner *gwdiDel) {
 			defer close(errc)
 			for {
 				select {
@@ -142,18 +253,14 @@ func delConsumer(args *gwdiDelConsumerArgs) chan error {
 					if !ok {
 						return
 					}
-					_, err := args.sclient.RemoveStock(
-						args.ctx,
-						&pb.StockId{Id: id},
-					)
-					if err != nil {
+					if err := runner.Execute(id); err != nil {
 						errc <- err
 						args.cancelFn()
 						return
 					}
 				}
 			}
-		}()
+		}(args.runner)
 	}
 	return errc
 }
