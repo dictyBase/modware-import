@@ -5,6 +5,7 @@ import (
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
+	cstock "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/sirupsen/logrus"
 )
@@ -86,7 +87,20 @@ type gwdiDelConsumerArgs struct {
 	concurrency int
 	tasks       chan string
 	ctx         context.Context
-	aclient     pb.TaggedAnnotationServiceClient
-	sclient     stock.StockServiceClient
 	cancelFn    context.CancelFunc
+	runner      *gwdiDel
+}
+
+type gwdiCreateProdArgs struct {
+	ctx      context.Context
+	gr       cstock.GWDIStrainReader
+	cancelFn context.CancelFunc
+}
+
+type gwdiCreateConsumerArgs struct {
+	concurrency int
+	tasks       chan *cstock.GWDIStrain
+	ctx         context.Context
+	cancelFn    context.CancelFunc
+	runner      *gwdiCreate
 }
