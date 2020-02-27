@@ -11,6 +11,9 @@ import (
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type gwdiDel struct {
@@ -57,19 +60,44 @@ func (gd *gwdiDel) Execute(id string) error {
 	return nil
 }
 
-func delProducer(args *gwdiDelProdArgs) chan string {
+func delProducer(args *gwdiDelProdArgs) (chan string, chan error) {
 	tasks := make(chan string)
-	go func() {
+	errc := make(chan error, 1)
+	go func(client pb.StockServiceClient) {
 		defer close(tasks)
-		for _, data := range args.strains.Data {
+		defer close(errc)
+		cursor := int64(0)
+		for {
+			sc, err := client.ListStrains(
+				args.ctx,
+				&pb.StockParameters{
+					Cursor: cursor,
+					Limit:  20,
+					Filter: "descriptor=~GWDI",
+				})
+			if err != nil {
+				if status.Code(err) == codes.NotFound {
+					return
+				}
+				errc <- fmt.Errorf("error in searching for gwdi strains %s", err)
+				args.cancelFn()
+				return
+			}
 			select {
 			case <-args.ctx.Done():
 				return
-			case tasks <- data.Id:
+			default:
+				if sc.Meta.NextCursor == 0 {
+					return
+				}
+				cursor = sc.Meta.NextCursor
+				for _, scData := range sc.Data {
+					tasks <- scData.Id
+				}
 			}
 		}
-	}()
-	return tasks
+	}(args.client)
+	return tasks, errc
 }
 
 func delConsumer(args *gwdiDelConsumerArgs) chan error {
@@ -240,13 +268,39 @@ func createProducer(args *gwdiCreateProdArgs) (chan *stockcenter.GWDIStrain, cha
 }
 
 func LoadGwdi(cmd *cobra.Command, args []string) error {
-	gr := stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER))
 	stclient := regs.GetStockAPIClient()
-	annclient := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger().WithFields(logrus.Fields{
 		"type":  "gwdi",
 		"stock": "strain",
 	})
+	ctx, cancelFn := context.WithCancel(context.Background())
+	if viper.GetBool("gwdi-prune") {
+		logger.WithFields(logrus.Fields{
+			"event": "prune",
+		}).Debug("going to prune gwdi strains")
+		cursor := int64(0)
+		for {
+			sc, err := stclient.ListStrains(
+				ctx,
+				&pb.StockParameters{
+					Cursor: cursor,
+					Limit:  20,
+					Filter: "descriptor=~GWDI",
+				})
+			if err != nil {
+				if status.Code(err) == codes.NotFound {
+					break
+				}
+				return fmt.Errorf("error in searching for gwdi strains %s", err)
+			}
+			if sc.Meta.NextCursor == 0 {
+				break
+			}
+			cursor = sc.Meta.NextCursor
+		}
+	}
+	gr := stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER))
+	annclient := regs.GetAnnotationAPIClient()
 	count := 0
 	for gr.Next() {
 		gwdi, err := gr.Value()

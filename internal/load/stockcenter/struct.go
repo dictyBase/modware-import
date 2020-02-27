@@ -79,8 +79,9 @@ type annoParams struct {
 }
 
 type gwdiDelProdArgs struct {
-	ctx    context.Context
-	client stock.StockServiceClient
+	ctx      context.Context
+	cancelFn context.CancelFunc
+	client   stock.StockServiceClient
 }
 
 type gwdiDelConsumerArgs struct {
