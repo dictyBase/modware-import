@@ -79,8 +79,8 @@ type annoParams struct {
 }
 
 type gwdiDelProdArgs struct {
-	strains *stock.StrainCollection
-	ctx     context.Context
+	ctx    context.Context
+	client stock.StockServiceClient
 }
 
 type gwdiDelConsumerArgs struct {
