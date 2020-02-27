@@ -3,7 +3,9 @@ module github.com/dictyBase/modware-import
 require (
 	github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4
 	github.com/dictyBase/apihelpers v0.0.0-20191119134328-9ff59ee4c896 // indirect
+	github.com/dictyBase/arangomanager v0.1.2 // indirect
 	github.com/dictyBase/go-genproto v0.0.0-20200122001226-b1ccbdee4aa3
+	github.com/dictyBase/modware-stock v0.0.0-20190909185806-113ab683652f // indirect
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.12.0
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
@@ -22,10 +24,10 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.6.2
-	github.com/urfave/cli v1.22.2 // indirect
 	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad // indirect
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
 	golang.org/x/sys v0.0.0-20200122134326-e047566fdf82 // indirect
 	google.golang.org/grpc v1.27.0
+	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

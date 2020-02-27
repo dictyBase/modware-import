@@ -39,5 +39,11 @@ func init() {
 		true,
 		"prune all gwdi strain records",
 	)
+	GwdiCmd.Flags().IntP(
+		"concurrency",
+		"c",
+		30,
+		"No of concurrent workers",
+	)
 	viper.BindPFlags(GwdiCmd.Flags())
 }
