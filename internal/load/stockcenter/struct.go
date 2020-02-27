@@ -82,6 +82,7 @@ type gwdiDelProdArgs struct {
 	ctx      context.Context
 	cancelFn context.CancelFunc
 	client   stock.StockServiceClient
+	logger   *logrus.Entry
 }
 
 type gwdiDelConsumerArgs struct {

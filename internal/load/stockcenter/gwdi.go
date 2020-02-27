@@ -93,6 +93,10 @@ func delProducer(args *gwdiDelProdArgs) (chan string, chan error) {
 				cursor = sc.Meta.NextCursor
 				for _, scData := range sc.Data {
 					tasks <- scData.Id
+					args.logger.WithFields(logrus.Fields{
+						"event": "queue",
+						"id":    scData.Id,
+					}).Debug("queued gwdi strain for pruning")
 				}
 			}
 		}
@@ -268,104 +272,74 @@ func createProducer(args *gwdiCreateProdArgs) (chan *stockcenter.GWDIStrain, cha
 }
 
 func LoadGwdi(cmd *cobra.Command, args []string) error {
-	stclient := regs.GetStockAPIClient()
 	logger := registry.GetLogger().WithFields(logrus.Fields{
 		"type":  "gwdi",
 		"stock": "strain",
 	})
-	ctx, cancelFn := context.WithCancel(context.Background())
 	if viper.GetBool("gwdi-prune") {
-		logger.WithFields(logrus.Fields{
-			"event": "prune",
-		}).Debug("going to prune gwdi strains")
-		cursor := int64(0)
-		for {
-			sc, err := stclient.ListStrains(
-				ctx,
-				&pb.StockParameters{
-					Cursor: cursor,
-					Limit:  20,
-					Filter: "descriptor=~GWDI",
-				})
-			if err != nil {
-				if status.Code(err) == codes.NotFound {
-					break
-				}
-				return fmt.Errorf("error in searching for gwdi strains %s", err)
-			}
-			if sc.Meta.NextCursor == 0 {
-				break
-			}
-			cursor = sc.Meta.NextCursor
+		if err := runConcurrentPrune(logger); err != nil {
+			return err
 		}
 	}
-	gr := stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER))
+	return runConcurrentCreate(logger)
+}
+
+func runConcurrentCreate(logger *logrus.Entry) error {
+	stclient := regs.GetStockAPIClient()
 	annclient := regs.GetAnnotationAPIClient()
-	count := 0
-	for gr.Next() {
-		gwdi, err := gr.Value()
-		if err != nil {
-			logger.WithFields(logrus.Fields{
-				"event": "read",
-			}).Errorf("gwdi datasource error %s", err)
-			continue
-		}
-		strain, err := createGwdi(stclient, gwdi)
-		if err != nil {
-			return fmt.Errorf("error in creating new gwdi strain record  %s", err)
-		}
-		err = createAnno(&createAnnoArgs{
-			user:     regs.DEFAULT_USER,
-			id:       strain.Data.Id,
-			client:   annclient,
-			ontology: regs.DICTY_ANNO_ONTOLOGY,
-			tag:      genoTag,
-			value:    gwdi.Genotype,
-		})
-		if err != nil {
-			return fmt.Errorf("cannot create genotype of gwdi strain %s %s", strain.Data.Id, err)
-		}
-		for _, char := range gwdi.Characters {
-			err = createAnno(&createAnnoArgs{
-				user:     regs.DEFAULT_USER,
-				id:       strain.Data.Id,
-				client:   annclient,
-				ontology: strainCharOnto,
-				tag:      char,
-				value:    val,
-			})
-			if err != nil {
-				return fmt.Errorf(
-					"cannot create characteristic %s of gwdi strain %s %s",
-					char, strain.Data.Id, err,
-				)
-			}
-		}
-		for onto, prop := range gwdi.Properties {
-			err = createAnno(&createAnnoArgs{
-				user:     regs.DEFAULT_USER,
-				id:       strain.Data.Id,
-				client:   annclient,
-				ontology: onto,
-				tag:      prop.Property,
-				value:    prop.Value,
-			})
-			if err != nil {
-				return fmt.Errorf(
-					"cannot create property %s of gwdi strain %s %s",
-					prop.Property, strain.Data.Id, err,
-				)
-			}
-		}
-		logger.WithFields(logrus.Fields{
-			"event": "create",
-			"id":    strain.Data.Id,
-		}).Debug("new gwdi strain record")
-		count++
-	}
-	logger.WithFields(logrus.Fields{
-		"event": "load",
-		"count": count,
-	}).Info("all gwdi records")
-	return nil
+	ctx, cancelFn := context.WithCancel(context.Background())
+	var errcList []<-chan error
+	tasks, errc := createProducer(&gwdiCreateProdArgs{
+		ctx:      ctx,
+		cancelFn: cancelFn,
+		gr:       stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER)),
+	})
+	errcList = append(errcList, errc)
+	errc = createConsumer(&gwdiCreateConsumerArgs{
+		concurrency: viper.GetInt("concurrency"),
+		tasks:       tasks,
+		ctx:         ctx,
+		cancelFn:    cancelFn,
+		runner: &gwdiCreate{
+			aclient:        annclient,
+			sclient:        stclient,
+			logger:         logger,
+			ctx:            ctx,
+			user:           regs.DEFAULT_USER,
+			value:          val,
+			genoTag:        genoTag,
+			annoOntology:   regs.DICTY_ANNO_ONTOLOGY,
+			strainCharOnto: strainCharOnto,
+		},
+	})
+	errcList = append(errcList, errc)
+	return waitForPipeline(errcList...)
+}
+
+func runConcurrentPrune(logger *logrus.Entry) error {
+	stclient := regs.GetStockAPIClient()
+	annclient := regs.GetAnnotationAPIClient()
+	ctx, cancelFn := context.WithCancel(context.Background())
+	var errcList []<-chan error
+	tasks, errc := delProducer(&gwdiDelProdArgs{
+		ctx:      ctx,
+		cancelFn: cancelFn,
+		client:   stclient,
+		logger:   logger,
+	})
+	errcList = append(errcList, errc)
+	errc = delConsumer(&gwdiDelConsumerArgs{
+		concurrency: viper.GetInt("concurrency"),
+		tasks:       tasks,
+		ctx:         ctx,
+		cancelFn:    cancelFn,
+		runner: &gwdiDel{
+			aclient: annclient,
+			sclient: stclient,
+			logger:  logger,
+			ctx:     ctx,
+		},
+	})
+	errcList = append(errcList, errc)
+	return waitForPipeline(errcList...)
 }
