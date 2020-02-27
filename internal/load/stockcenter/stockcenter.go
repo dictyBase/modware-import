@@ -3,6 +3,7 @@ package stockcenter
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -238,4 +239,48 @@ func handleAnnoRetrieval(args *annoParams) (bool, error) {
 		"id":    args.id,
 	}).Debugf("deleted %s", args.loader)
 	return found, nil
+}
+
+// waitForPipeline waits for results from all error channels.
+// It returns early on the first error.
+func waitForPipeline(errs ...<-chan error) error {
+	for err := range mergeErrors(errs...) {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// mergeErrors merges multiple channels of errors.
+// Based on https://blog.golang.org/pipelines.
+func mergeErrors(cs ...<-chan error) <-chan error {
+	// We must ensure that the output channel has the capacity to
+	// hold as many errors
+	// as there are error channels.
+	// This will ensure that it never blocks, even
+	// if WaitForPipeline returns early.
+	out := make(chan error, len(cs))
+
+	// Start an output goroutine for each input channel in cs.  output
+	// copies values from c to out until c is closed, then calls
+	// wg.Done.
+	var wg sync.WaitGroup
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go func(c <-chan error) {
+			for v := range c {
+				out <- v
+			}
+			wg.Done()
+		}(c)
+	}
+
+	// Start a goroutine to close out once all the output goroutines
+	// are done.  This must start after the wg.Add call.
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }
