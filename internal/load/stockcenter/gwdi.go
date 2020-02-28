@@ -158,7 +158,6 @@ func (gc *gwdiCreate) Execute(gwdi *stockcenter.GWDIStrain) error {
 	}
 	if err := gc.createPropAndChar(strain.Data.Id, gwdi); err != nil {
 		return err
-
 	}
 	gc.logger.WithFields(logrus.Fields{
 		"event": "create",
@@ -269,7 +268,6 @@ func createProducer(args *gwdiCreateProdArgs) (chan *stockcenter.GWDIStrain, cha
 				}
 				tasks <- gwdi
 			}
-
 		}
 	}()
 	return tasks, errc
