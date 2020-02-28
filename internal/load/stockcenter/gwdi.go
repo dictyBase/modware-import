@@ -76,11 +76,10 @@ func delProducer(args *gwdiDelProdArgs) (chan string, chan error) {
 					Filter: "descriptor=~GWDI",
 				})
 			if err != nil {
-				if status.Code(err) == codes.NotFound {
-					return
+				if status.Code(err) != codes.NotFound {
+					errc <- fmt.Errorf("error in searching for gwdi strains %s", err)
+					args.cancelFn()
 				}
-				errc <- fmt.Errorf("error in searching for gwdi strains %s", err)
-				args.cancelFn()
 				return
 			}
 			select {
@@ -157,10 +156,21 @@ func (gc *gwdiCreate) Execute(gwdi *stockcenter.GWDIStrain) error {
 	if err != nil {
 		return fmt.Errorf("cannot create genotype of gwdi strain %s %s", strain.Data.Id, err)
 	}
+	if err := gc.createPropAndChar(strain.Data.Id, gwdi); err != nil {
+		return err
+
+	}
+	gc.logger.WithFields(logrus.Fields{
+		"event": "create",
+		"id":    strain.Data.Id}).Debug("new gwdi strain record")
+	return nil
+}
+
+func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain) error {
 	for _, char := range gwdi.Characters {
-		err = createAnno(&createAnnoArgs{
+		err := createAnno(&createAnnoArgs{
 			user:     gc.user,
-			id:       strain.Data.Id,
+			id:       id,
 			client:   gc.aclient,
 			ontology: gc.strainCharOnto,
 			tag:      char,
@@ -168,14 +178,14 @@ func (gc *gwdiCreate) Execute(gwdi *stockcenter.GWDIStrain) error {
 		})
 		if err != nil {
 			return fmt.Errorf("cannot create characteristic %s of gwdi strain %s %s",
-				char, strain.Data.Id, err,
+				char, id, err,
 			)
 		}
 	}
 	for onto, prop := range gwdi.Properties {
-		err = createAnno(&createAnnoArgs{
+		err := createAnno(&createAnnoArgs{
 			user:     gc.user,
-			id:       strain.Data.Id,
+			id:       id,
 			client:   gc.aclient,
 			ontology: onto,
 			tag:      prop.Property,
@@ -183,13 +193,10 @@ func (gc *gwdiCreate) Execute(gwdi *stockcenter.GWDIStrain) error {
 		})
 		if err != nil {
 			return fmt.Errorf("cannot create property %s of gwdi strain %s %s",
-				prop.Property, strain.Data.Id, err,
+				prop.Property, id, err,
 			)
 		}
 	}
-	gc.logger.WithFields(logrus.Fields{
-		"event": "create",
-		"id":    strain.Data.Id}).Debug("new gwdi strain record")
 	return nil
 }
 
