@@ -167,8 +167,7 @@ func (gc *gwdiCreate) Execute(gwdi *stockcenter.GWDIStrain) error {
 			value:    gc.value,
 		})
 		if err != nil {
-			return fmt.Errorf(
-				"cannot create characteristic %s of gwdi strain %s %s",
+			return fmt.Errorf("cannot create characteristic %s of gwdi strain %s %s",
 				char, strain.Data.Id, err,
 			)
 		}
@@ -183,16 +182,14 @@ func (gc *gwdiCreate) Execute(gwdi *stockcenter.GWDIStrain) error {
 			value:    prop.Value,
 		})
 		if err != nil {
-			return fmt.Errorf(
-				"cannot create property %s of gwdi strain %s %s",
+			return fmt.Errorf("cannot create property %s of gwdi strain %s %s",
 				prop.Property, strain.Data.Id, err,
 			)
 		}
 	}
 	gc.logger.WithFields(logrus.Fields{
 		"event": "create",
-		"id":    strain.Data.Id,
-	}).Debug("new gwdi strain record")
+		"id":    strain.Data.Id}).Debug("new gwdi strain record")
 	return nil
 }
 
