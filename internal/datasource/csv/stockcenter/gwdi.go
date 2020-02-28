@@ -102,11 +102,12 @@ func (g *csvGWDIStraineader) Value() (*GWDIStrain, error) {
 		return gst, g.Err
 	}
 	gene := g.Record[7]
-	if strings.HasPrefix(gene, "DDB_G") {
+	switch {
+	case strings.HasPrefix(gene, "DDB_G"):
 		gst.Label = g.Record[0]
-	} else if g.Record[7] == "none" {
+	case g.Record[7] == "none":
 		gst.Label = g.Record[0]
-	} else {
+	default:
 		gst.Label = fmt.Sprintf("%s-", gene)
 	}
 	switch g.Record[6] {
