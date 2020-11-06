@@ -20,11 +20,10 @@ type gwdiDel struct {
 	aclient annotation.TaggedAnnotationServiceClient
 	sclient pb.StockServiceClient
 	logger  *logrus.Entry
-	ctx     context.Context
 }
 
 func (gd *gwdiDel) Execute(id string) error {
-	_, err := gd.sclient.RemoveStock(gd.ctx, &pb.StockId{Id: id})
+	_, err := gd.sclient.RemoveStock(context.Background(), &pb.StockId{Id: id})
 	if err != nil {
 		return err
 	}
@@ -33,7 +32,7 @@ func (gd *gwdiDel) Execute(id string) error {
 		"id":    id,
 	}).Debug("remove gwdi strain")
 	tac, err := gd.aclient.ListAnnotations(
-		gd.ctx,
+		context.Background(),
 		&annotation.ListParameters{
 			Limit:  20,
 			Filter: fmt.Sprintf("entry_id===%s", id),
@@ -43,7 +42,7 @@ func (gd *gwdiDel) Execute(id string) error {
 	}
 	for _, ta := range tac.Data {
 		_, err := gd.aclient.DeleteAnnotation(
-			gd.ctx,
+			context.Background(),
 			&annotation.DeleteAnnotationRequest{
 				Id:    ta.Id,
 				Purge: true,
@@ -60,72 +59,35 @@ func (gd *gwdiDel) Execute(id string) error {
 	return nil
 }
 
-func delProducer(args *gwdiDelProdArgs) (chan string, chan error) {
-	tasks := make(chan string)
-	errc := make(chan error, 1)
-	go func(client pb.StockServiceClient) {
-		defer close(tasks)
-		defer close(errc)
-		cursor := int64(0)
-		for {
-			sc, err := client.ListStrains(
-				args.ctx,
-				&pb.StockParameters{
-					Cursor: cursor,
-					Limit:  20,
-					Filter: "descriptor=~GWDI",
-				})
-			if err != nil {
-				if status.Code(err) != codes.NotFound {
-					errc <- fmt.Errorf("error in searching for gwdi strains %s", err)
-					args.cancelFn()
-				}
-				return
-			}
-			select {
-			case <-args.ctx.Done():
-				return
-			default:
-				if sc.Meta.NextCursor == 0 {
-					return
-				}
-				cursor = sc.Meta.NextCursor
-				for _, scData := range sc.Data {
-					tasks <- scData.Id
-					args.logger.WithFields(logrus.Fields{
-						"event": "queue",
-						"id":    scData.Id,
-					}).Debug("queued gwdi strain for pruning")
-				}
+func strainsForDeletion(args *gwdiStrainDelArgs) ([]string, error) {
+	cursor := int64(0)
+	var ids []string
+	for {
+		sc, err := args.client.ListStrains(
+			context.Background(),
+			&pb.StockParameters{
+				Cursor: cursor,
+				Limit:  20,
+				Filter: "descriptor=~GWDI",
+			})
+		if err != nil {
+			if status.Code(err) != codes.NotFound {
+				return ids, fmt.Errorf("error in searching for gwdi strains %s", err)
 			}
 		}
-	}(args.client)
-	return tasks, errc
-}
-
-func delConsumer(args *gwdiDelConsumerArgs) chan error {
-	errc := make(chan error, 1)
-	for i := 0; i < args.concurrency; i++ {
-		go func(runner *gwdiDel) {
-			defer close(errc)
-			for {
-				select {
-				case <-args.ctx.Done():
-					return
-				case id, ok := <-args.tasks:
-					if !ok {
-						return
-					}
-					if err := runner.Execute(id); err != nil {
-						errc <- err
-						args.cancelFn()
-						return
-					}
-				}
-			}
-		}(args.runner)
+		if sc.Meta.NextCursor == 0 {
+			return ids, nil
+		}
+		cursor = sc.Meta.NextCursor
+		for _, scData := range sc.Data {
+			ids = append(ids, scData.Id)
+			args.logger.WithFields(logrus.Fields{
+				"event": "queue",
+				"id":    scData.Id,
+			}).Debug("queued gwdi strain for pruning")
+		}
 	}
-	return errc
+	return ids, nil
 }
 
 type gwdiCreate struct {
@@ -279,7 +241,7 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 		"stock": "strain",
 	})
 	if viper.GetBool("gwdi-prune") {
-		if err := runConcurrentPrune(logger); err != nil {
+		if err := runStrainDeletion(logger); err != nil {
 			return err
 		}
 	}
@@ -318,30 +280,26 @@ func runConcurrentCreate(logger *logrus.Entry) error {
 	return waitForPipeline(errcList...)
 }
 
-func runConcurrentPrune(logger *logrus.Entry) error {
+func runStrainDeletion(logger *logrus.Entry) error {
 	stclient := regs.GetStockAPIClient()
 	annclient := regs.GetAnnotationAPIClient()
-	ctx, cancelFn := context.WithCancel(context.Background())
-	var errcList []<-chan error
-	tasks, errc := delProducer(&gwdiDelProdArgs{
-		ctx:      ctx,
-		cancelFn: cancelFn,
-		client:   stclient,
-		logger:   logger,
+	ids, err := strainsForDeletion(&gwdiStrainDelArgs{
+		client: stclient,
+		logger: logger,
 	})
-	errcList = append(errcList, errc)
-	errc = delConsumer(&gwdiDelConsumerArgs{
-		concurrency: viper.GetInt("concurrency"),
-		tasks:       tasks,
-		ctx:         ctx,
-		cancelFn:    cancelFn,
-		runner: &gwdiDel{
-			aclient: annclient,
-			sclient: stclient,
-			logger:  logger,
-			ctx:     ctx,
-		},
-	})
-	errcList = append(errcList, errc)
-	return waitForPipeline(errcList...)
+	if err != nil {
+		return err
+	}
+	del := &gwdiDel{
+		aclient: annclient,
+		sclient: stclient,
+		logger:  logger,
+	}
+	for _, id := range ids {
+		if err := del.Execute(id); err != nil {
+			return err
+		}
+	}
+	logger.Infof("deleted %d existed gwdi strains", len(ids))
+	return nil
 }
