@@ -12,8 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type gwdiDel struct {
@@ -68,11 +68,11 @@ func strainsForDeletion(args *gwdiStrainDelArgs) ([]string, error) {
 			&pb.StockParameters{
 				Cursor: cursor,
 				Limit:  20,
-				Filter: "descriptor=~GWDI",
+				Filter: "label=~GWDI",
 			})
 		if err != nil {
-			if status.Code(err) != codes.NotFound {
-				return ids, fmt.Errorf("error in searching for gwdi strains %s", err)
+			if grpc.Code(err) == codes.NotFound {
+				return ids, nil
 			}
 		}
 		if sc.Meta.NextCursor == 0 {
