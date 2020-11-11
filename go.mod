@@ -2,6 +2,7 @@ module github.com/dictyBase/modware-import
 
 require (
 	github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4
+	github.com/dictyBase/aphgrpc v1.3.0
 	github.com/dictyBase/apihelpers v0.0.0-20191119134328-9ff59ee4c896 // indirect
 	github.com/dictyBase/arangomanager v0.1.2 // indirect
 	github.com/dictyBase/go-genproto v0.0.0-20200122001226-b1ccbdee4aa3
