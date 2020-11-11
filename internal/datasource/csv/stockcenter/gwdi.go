@@ -90,8 +90,7 @@ func defaultGWDIStrain() *GWDIStrain {
 //NewGWDIStrainReader is to get an instance of GWDIStrainReader
 func NewGWDIStrainReader(r io.Reader) GWDIStrainReader {
 	cr := csv.NewReader(r)
-	cr.FieldsPerRecord = -1
-	cr.Comma = '\t'
+	cr.Comment = '#'
 	return &csvGWDIStraineader{&csource.CsvReader{Reader: cr}}
 }
 

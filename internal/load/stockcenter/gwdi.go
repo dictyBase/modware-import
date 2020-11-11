@@ -7,6 +7,7 @@ import (
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
+	cstock "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
@@ -190,20 +191,11 @@ func createConsumer(args *gwdiCreateConsumerArgs) chan error {
 	errc := make(chan error, 1)
 	for i := 0; i < args.concurrency; i++ {
 		go func(runner *gwdiCreate) {
-			defer close(errc)
-			for {
-				select {
-				case <-args.ctx.Done():
+			//defer close(errc)
+			for gwdi := range args.tasks {
+				if err := runner.Execute(gwdi); err != nil {
+					errc <- err
 					return
-				case gwdi, ok := <-args.tasks:
-					if !ok {
-						return
-					}
-					if err := runner.Execute(gwdi); err != nil {
-						errc <- err
-						args.cancelFn()
-						return
-					}
 				}
 			}
 		}(args.runner)
@@ -214,24 +206,18 @@ func createConsumer(args *gwdiCreateConsumerArgs) chan error {
 func createProducer(args *gwdiCreateProdArgs) (chan *stockcenter.GWDIStrain, chan error) {
 	tasks := make(chan *stockcenter.GWDIStrain)
 	errc := make(chan error, 1)
-	go func() {
+	go func(gr cstock.GWDIStrainReader) {
 		defer close(tasks)
 		defer close(errc)
-		for args.gr.Next() {
-			gwdi, err := args.gr.Value()
-			select {
-			case <-args.ctx.Done():
+		for gr.Next() {
+			gwdi, err := gr.Value()
+			if err != nil {
+				errc <- err
 				return
-			default:
-				if err != nil {
-					errc <- err
-					args.cancelFn()
-					return
-				}
-				tasks <- gwdi
 			}
+			tasks <- gwdi
 		}
-	}()
+	}(args.gr)
 	return tasks, errc
 }
 
