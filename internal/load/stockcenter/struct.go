@@ -10,6 +10,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type genoArgs struct {
+	tag, id, user   string
+	ontology, value string
+}
+
 type createAnnoArgs struct {
 	ontology string
 	tag      string
