@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	strainCharOnto = "strain_characteristics"
-	val            = "novalue"
+	val = "novalue"
 )
 
 func LoadStrainChar(cmd *cobra.Command, args []string) error {
@@ -33,8 +32,8 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 			client:   client,
 			tag:      chs.Character,
 			id:       chs.Id,
-			ontology: strainCharOnto,
 			value:    val,
+			ontology: regs.DICTY_STRAINCHAR_ONTOLOGY,
 		})
 		if err != nil {
 			return err
