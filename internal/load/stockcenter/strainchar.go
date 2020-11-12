@@ -10,10 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	val = "novalue"
-)
-
 func LoadStrainChar(cmd *cobra.Command, args []string) error {
 	scr := stockcenter.NewTsvCharacterReader(registry.GetReader(regs.STRAINCHAR_READER))
 	client := regs.GetAnnotationAPIClient()

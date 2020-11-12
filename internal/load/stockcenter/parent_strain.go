@@ -21,7 +21,7 @@ func createAX3Parent(args *parentArgs) error {
 	if grpc.Code(err) != codes.NotFound {
 		return err
 	}
-	_, err := args.sclient.LoadStrain(
+	_, err = args.sclient.LoadStrain(
 		context.Background(),
 		sreg.AX3ParentStrain(),
 	)

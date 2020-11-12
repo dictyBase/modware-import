@@ -10,12 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	sysnameTag   = "systematic name"
-	mutmethodTag = "mutagenesis method"
-	muttypeTag   = "mutant type"
-)
-
 func LoadStrainProp(cmd *cobra.Command, args []string) error {
 	pr := stockcenter.NewTsvStockPropReader(registry.GetReader(regs.STRAINPROP_READER))
 	client := regs.GetAnnotationAPIClient()

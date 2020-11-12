@@ -15,10 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	genoTag = "genotype"
-)
-
 type Status int
 
 const (
