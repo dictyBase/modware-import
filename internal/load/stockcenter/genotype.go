@@ -15,16 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Status int
-
-const (
-	Created Status = iota
-	Updated
-	Deleted
-	Read
-	Nop
-)
-
 func LoadGeno(cmd *cobra.Command, args []string) error {
 	gr := stockcenter.NewTsvGenotypeReader(registry.GetReader(regs.GENO_READER))
 	client := regs.GetAnnotationAPIClient()

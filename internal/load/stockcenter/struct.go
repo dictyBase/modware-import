@@ -2,13 +2,21 @@ package stockcenter
 
 import (
 	"context"
+	"regexp"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	cstock "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
+	"github.com/emirpasic/gods/maps/hashmap"
 	"github.com/sirupsen/logrus"
 )
+
+var stRegex = regexp.MustCompile(`^DBS`)
+
+type plasmidIdMap struct {
+	idmap *hashmap.Map
+}
 
 type genoArgs struct {
 	tag, id, user   string

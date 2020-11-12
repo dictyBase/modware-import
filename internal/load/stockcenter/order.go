@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"regexp"
 	"strings"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/order"
@@ -16,12 +15,6 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/spf13/cobra"
 )
-
-var stRegex = regexp.MustCompile(`^DBS`)
-
-type plasmidIdMap struct {
-	idmap *hashmap.Map
-}
 
 func newPlasmidMap(r io.Reader) (*plasmidIdMap, error) {
 	m := hashmap.New()
