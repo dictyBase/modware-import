@@ -47,7 +47,13 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 			)
 			continue
 		}
-		_, err = findOrCreateAnno(client, prop.Property, prop.Id, onto, prop.Value)
+		_, err = findOrCreateAnno(&createAnnoArgs{
+			client:   client,
+			ontology: onto,
+			id:       prop.Id,
+			value:    prop.Value,
+			tag:      prop.Property,
+		})
 		if err != nil {
 			return err
 		}

@@ -147,28 +147,28 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 	return create, errVal
 }
 
-func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
-	ta, err := client.GetEntryAnnotation(
+func findOrCreateAnno(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
+	ta, err := args.client.GetEntryAnnotation(
 		context.Background(),
 		&pb.EntryAnnotationRequest{
-			Tag:      tag,
-			EntryId:  id,
-			Ontology: ontology,
+			Tag:      args.tag,
+			EntryId:  args.id,
+			Ontology: args.ontology,
 		})
 	switch {
 	case err == nil:
 		return ta, nil
-	case status.Code(err) == codes.NotFound:
-		return client.CreateAnnotation(
+	case grpc.Code(err) == codes.NotFound:
+		return args.client.CreateAnnotation(
 			context.Background(),
 			&pb.NewTaggedAnnotation{
 				Data: &pb.NewTaggedAnnotation_Data{
 					Attributes: &pb.NewTaggedAnnotationAttributes{
-						Value:     value,
+						Value:     args.value,
 						CreatedBy: regs.DEFAULT_USER,
-						Tag:       tag,
-						EntryId:   id,
-						Ontology:  ontology,
+						Tag:       args.tag,
+						EntryId:   args.id,
+						Ontology:  args.ontology,
 					},
 				},
 			},
@@ -176,8 +176,8 @@ func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology
 	}
 	return ta, fmt.Errorf(
 		"error in finding annotation %s for id %s %s",
-		tag,
-		id,
+		args.tag,
+		args.id,
 		err,
 	)
 }
