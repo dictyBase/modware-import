@@ -12,6 +12,7 @@ import (
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -108,6 +109,7 @@ func createAnno(args *createAnnoArgs) error {
 
 func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 	create := false
+	var errVal error
 	_, err := args.client.GetEntryAnnotation(
 		context.Background(),
 		&pb.EntryAnnotationRequest{
@@ -117,8 +119,9 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 		})
 	switch {
 	case err == nil:
-		return create, nil
-	case status.Code(err) == codes.NotFound:
+		errVal = nil
+		break
+	case grpc.Code(err) == codes.NotFound:
 		err = createAnno(&createAnnoArgs{
 			value:    args.value,
 			user:     regs.DEFAULT_USER,
@@ -127,16 +130,21 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 			ontology: args.ontology,
 		})
 		if err != nil {
-			return create, fmt.Errorf(
-				"error in finding annotation %s for id %s %s",
-				args.tag,
-				args.id,
-				err,
-			)
+			errVal = err
+		} else {
+			create = true
 		}
-		create = true
+		break
+	case err != nil:
+		errVal = fmt.Errorf(
+			"error in finding annotation %s for id %s %s",
+			args.tag,
+			args.id,
+			err,
+		)
+		break
 	}
-	return create, nil
+	return create, errVal
 }
 
 func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
