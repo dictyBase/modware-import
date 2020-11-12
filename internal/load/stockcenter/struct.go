@@ -104,3 +104,8 @@ type gwdiCreateConsumerArgs struct {
 	cancelFn    context.CancelFunc
 	runner      *gwdiCreate
 }
+
+type parentArgs struct {
+	sclient stock.StockServiceClient
+	aclient pb.TaggedAnnotationServiceClient
+}
