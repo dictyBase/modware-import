@@ -95,7 +95,6 @@ type gwdiCreate struct {
 	aclient        annotation.TaggedAnnotationServiceClient
 	sclient        pb.StockServiceClient
 	logger         *logrus.Entry
-	ctx            context.Context
 	user           string
 	value          string
 	genoTag        string
@@ -237,29 +236,23 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 func runConcurrentCreate(logger *logrus.Entry) error {
 	stclient := regs.GetStockAPIClient()
 	annclient := regs.GetAnnotationAPIClient()
-	ctx, cancelFn := context.WithCancel(context.Background())
 	var errcList []<-chan error
 	tasks, errc := createProducer(&gwdiCreateProdArgs{
-		ctx:      ctx,
-		cancelFn: cancelFn,
-		gr:       stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER)),
+		gr: stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER)),
 	})
 	errcList = append(errcList, errc)
 	errc = createConsumer(&gwdiCreateConsumerArgs{
 		concurrency: viper.GetInt("concurrency"),
 		tasks:       tasks,
-		ctx:         ctx,
-		cancelFn:    cancelFn,
 		runner: &gwdiCreate{
 			aclient:        annclient,
 			sclient:        stclient,
 			logger:         logger,
-			ctx:            ctx,
 			user:           regs.DEFAULT_USER,
 			value:          val,
 			genoTag:        genoTag,
 			annoOntology:   regs.DICTY_ANNO_ONTOLOGY,
-			strainCharOnto: strainCharOnto,
+			strainCharOnto: regs.DICTY_STRAINCHAR_ONTOLOGY,
 		},
 	})
 	errcList = append(errcList, errc)
