@@ -3,6 +3,7 @@ package stockcenter
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
@@ -195,18 +196,43 @@ func createGwdi(client pb.StockServiceClient, gwdi *stockcenter.GWDIStrain) (*pb
 
 func createConsumer(args *gwdiCreateConsumerArgs) chan error {
 	errc := make(chan error, 1)
+	counter := make(chan int, 1)
+	wg := sync.WaitGroup{}
+	wg.Add(args.concurrency)
 	for i := 0; i < args.concurrency; i++ {
 		go func(runner *gwdiCreate) {
-			//defer close(errc)
+			lc := 0
+			defer func() { counter <- lc }()
+			defer wg.Done()
 			for gwdi := range args.tasks {
 				if err := runner.Execute(gwdi); err != nil {
 					errc <- err
 					return
 				}
+				lc++
 			}
 		}(args.runner)
 	}
+	go loadingCount(args.runner.logger, counter)
+	go syncLoader(wg, counter, errc)
 	return errc
+}
+
+func loadingCount(logger *logrus.Entry, counter chan int) {
+	c := 0
+	for v := range counter {
+		c = c + v
+	}
+	logger.WithFields(logrus.Fields{
+		"type":  "counter",
+		"count": c,
+	}).Infof("loaded gwdi strains")
+}
+
+func syncLoader(wg sync.WaitGroup, counter chan int, errc chan error) {
+	wg.Wait()
+	close(counter)
+	close(errc)
 }
 
 func createProducer(args *gwdiCreateProdArgs) (chan *stockcenter.GWDIStrain, chan error) {
