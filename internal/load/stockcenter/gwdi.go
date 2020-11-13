@@ -236,6 +236,13 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 func runConcurrentCreate(logger *logrus.Entry) error {
 	stclient := regs.GetStockAPIClient()
 	annclient := regs.GetAnnotationAPIClient()
+	pargs := &parentArgs{aclient: annclient, sclient: stclient}
+	if err := createAX3Parent(pargs); err != nil {
+		return err
+	}
+	if err := createAX4Parent(pargs); err != nil {
+		return err
+	}
 	var errcList []<-chan error
 	tasks, errc := createProducer(&gwdiCreateProdArgs{
 		gr: stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER)),
