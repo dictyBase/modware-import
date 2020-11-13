@@ -39,7 +39,14 @@ func (gd *gwdiDel) Execute(id string) error {
 			Filter: fmt.Sprintf("entry_id===%s", id),
 		})
 	if err != nil {
-		return fmt.Errorf("error in finding any gwdi annotation for %s %s", id, err)
+		if grpc.Code(err) != codes.NotFound {
+			return fmt.Errorf("error in finding any gwdi annotation for %s %s", id, err)
+		}
+		gd.logger.WithFields(logrus.Fields{
+			"event": "delete",
+			"id":    id,
+		}).Debug("could not find any annotation for delete")
+		return nil
 	}
 	for _, ta := range tac.Data {
 		_, err := gd.aclient.DeleteAnnotation(
