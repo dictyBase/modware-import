@@ -68,6 +68,7 @@ func defaultGWDIStrain() *GWDIStrain {
 		Depositor:   "baldwinAJ@cardiff.ac.uk",
 		Species:     "Dictyostelium discoideum",
 		Publication: "10.1101/582072",
+		Genotype:    "axeA1,axeB1,axeC1,gxcAA-,[bsRcas],bsR",
 	}
 	gst.Characters = []string{
 		"blasticidin resistant",
