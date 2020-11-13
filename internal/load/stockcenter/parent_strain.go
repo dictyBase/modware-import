@@ -71,6 +71,7 @@ func loadAX3ParentProps(args *parentArgs) error {
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
 		id:       sreg.AX3ParentId,
 		tag:      sysnameTag,
+		user:     sreg.DEFAULT_USER,
 		value:    "AX3",
 	})
 	if err != nil {
@@ -82,6 +83,7 @@ func loadAX3ParentProps(args *parentArgs) error {
 		ontology: sreg.DICTY_MUTAGENESIS_ONTOLOGY,
 		id:       sreg.AX3ParentId,
 		tag:      mutmethodTag,
+		user:     sreg.DEFAULT_USER,
 		value:    "N-Methyl-N-Nitro-N-Nitrosoguanidine",
 	})
 	if err != nil {
@@ -92,6 +94,7 @@ func loadAX3ParentProps(args *parentArgs) error {
 		client:   args.aclient,
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
 		id:       sreg.AX3ParentId,
+		user:     sreg.DEFAULT_USER,
 		tag:      muttypeTag,
 		value:    "endogenous mutation",
 	})
@@ -104,6 +107,7 @@ func loadAX4ParentProps(args *parentArgs) error {
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
 		id:       sreg.AX4ParentId,
 		tag:      sysnameTag,
+		user:     sreg.DEFAULT_USER,
 		value:    sreg.AX4ParentId,
 	})
 	if err != nil {
@@ -115,6 +119,7 @@ func loadAX4ParentProps(args *parentArgs) error {
 		ontology: sreg.DICTY_MUTAGENESIS_ONTOLOGY,
 		id:       sreg.AX4ParentId,
 		tag:      mutmethodTag,
+		user:     sreg.DEFAULT_USER,
 		value:    "Spontaneous",
 	})
 	if err != nil {
@@ -125,6 +130,7 @@ func loadAX4ParentProps(args *parentArgs) error {
 		client:   args.aclient,
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
 		id:       sreg.AX4ParentId,
+		user:     sreg.DEFAULT_USER,
 		tag:      muttypeTag,
 		value:    "endogenous mutation",
 	})
@@ -147,6 +153,7 @@ func loadParentMoreProps(id string, args *parentArgs) error {
 		client:   args.aclient,
 		ontology: sreg.DICTY_STRAINCHAR_ONTOLOGY,
 		id:       id,
+		user:     sreg.DEFAULT_USER,
 		tag:      "axenic",
 		value:    val,
 	})
