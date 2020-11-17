@@ -8,7 +8,6 @@ import (
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
-	cstock "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
@@ -103,6 +102,7 @@ type gwdiCreate struct {
 	aclient        annotation.TaggedAnnotationServiceClient
 	sclient        pb.StockServiceClient
 	logger         *logrus.Entry
+	ctx            context.Context
 	user           string
 	value          string
 	genoTag        string
@@ -197,21 +197,30 @@ func createGwdi(client pb.StockServiceClient, gwdi *stockcenter.GWDIStrain) (*pb
 func createConsumer(args *gwdiCreateConsumerArgs) chan error {
 	errc := make(chan error, 1)
 	counter := make(chan int, 1)
-	wg := sync.WaitGroup{}
+	wg := new(sync.WaitGroup)
 	wg.Add(args.concurrency)
 	for i := 0; i < args.concurrency; i++ {
-		go func(runner *gwdiCreate) {
+		go func(args *gwdiCreateConsumerArgs) {
 			lc := 0
 			defer func() { counter <- lc }()
 			defer wg.Done()
-			for gwdi := range args.tasks {
-				if err := runner.Execute(gwdi); err != nil {
-					errc <- err
+			for {
+				select {
+				case <-args.ctx.Done():
 					return
+				case gwdi, ok := <-args.tasks:
+					if !ok {
+						return
+					}
+					if err := args.runner.Execute(gwdi); err != nil {
+						errc <- err
+						args.cancelFn()
+						return
+					}
 				}
 				lc++
 			}
-		}(args.runner)
+		}(args)
 	}
 	go loadingCount(args.runner.logger, counter)
 	go syncLoader(wg, counter, errc)
@@ -229,7 +238,7 @@ func loadingCount(logger *logrus.Entry, counter chan int) {
 	}).Infof("loaded gwdi strains")
 }
 
-func syncLoader(wg sync.WaitGroup, counter chan int, errc chan error) {
+func syncLoader(wg *sync.WaitGroup, counter chan int, errc chan error) {
 	wg.Wait()
 	close(counter)
 	close(errc)
@@ -238,18 +247,24 @@ func syncLoader(wg sync.WaitGroup, counter chan int, errc chan error) {
 func createProducer(args *gwdiCreateProdArgs) (chan *stockcenter.GWDIStrain, chan error) {
 	tasks := make(chan *stockcenter.GWDIStrain)
 	errc := make(chan error, 1)
-	go func(gr cstock.GWDIStrainReader) {
+	go func(args *gwdiCreateProdArgs) {
 		defer close(tasks)
 		defer close(errc)
-		for gr.Next() {
-			gwdi, err := gr.Value()
-			if err != nil {
-				errc <- err
+		for args.gr.Next() {
+			gwdi, err := args.gr.Value()
+			select {
+			case <-args.ctx.Done():
 				return
+			default:
+				if err != nil {
+					errc <- err
+					args.cancelFn()
+					return
+				}
+				tasks <- gwdi
 			}
-			tasks <- gwdi
 		}
-	}(args.gr)
+	}(args)
 	return tasks, errc
 }
 
@@ -276,18 +291,24 @@ func runConcurrentCreate(logger *logrus.Entry) error {
 	if err := createAX4Parent(pargs); err != nil {
 		return err
 	}
+	ctx, cancelFn := context.WithCancel(context.Background())
 	var errcList []<-chan error
 	tasks, errc := createProducer(&gwdiCreateProdArgs{
-		gr: stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER)),
+		ctx:      ctx,
+		cancelFn: cancelFn,
+		gr:       stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER)),
 	})
 	errcList = append(errcList, errc)
 	errc = createConsumer(&gwdiCreateConsumerArgs{
 		concurrency: viper.GetInt("concurrency"),
 		tasks:       tasks,
+		ctx:         ctx,
+		cancelFn:    cancelFn,
 		runner: &gwdiCreate{
 			aclient:        annclient,
 			sclient:        stclient,
 			logger:         logger,
+			ctx:            ctx,
 			user:           regs.DEFAULT_USER,
 			value:          val,
 			genoTag:        genoTag,

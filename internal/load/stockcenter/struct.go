@@ -105,13 +105,17 @@ type gwdiDelConsumerArgs struct {
 }
 
 type gwdiCreateProdArgs struct {
-	gr cstock.GWDIStrainReader
+	gr       cstock.GWDIStrainReader
+	cancelFn context.CancelFunc
+	ctx      context.Context
 }
 
 type gwdiCreateConsumerArgs struct {
 	concurrency int
 	tasks       chan *cstock.GWDIStrain
 	runner      *gwdiCreate
+	ctx         context.Context
+	cancelFn    context.CancelFunc
 }
 
 type parentArgs struct {
