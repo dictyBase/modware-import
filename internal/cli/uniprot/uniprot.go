@@ -1,6 +1,10 @@
 package uniprot
 
 import (
+	"fmt"
+
+	"github.com/dictyBase/modware-import/internal/registry"
+	r "github.com/go-redis/redis/v7"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -31,4 +35,18 @@ func redisFlags() {
 		"grpc port for redis service",
 	)
 	viper.BindEnv("redis-master-service-port", "REDIS_MASTER_SERVICE_PORT")
+}
+
+func setRedisClient() error {
+	client := r.NewClient(&r.Options{
+		Addr: fmt.Sprintf("%s:%s", viper.GetString("redis-master-service-host"), viper.GetString("redis-master-service-port")),
+	})
+	err := client.Ping().Err()
+	if err != nil {
+		return fmt.Errorf("error pinging redis %s", err)
+	}
+	registry.SetRedisClient(
+		client,
+	)
+	return nil
 }

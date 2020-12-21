@@ -11,12 +11,12 @@ var UniprotMappingCmd = &cobra.Command{
 	Short: "load uniprot id mappings",
 	Args:  cobra.NoArgs,
 	// RunE:  loader.LoadUniprotMappings,
-	// PreRunE: func(cmd *cobra.Command, args []string) error {
-	// 	if err := setRedisClient(); err != nil {
-	// 		return err
-	// 	}
-	// 	return nil
-	// },
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if err := setRedisClient(); err != nil {
+			return err
+		}
+		return nil
+	},
 }
 
 func init() {
