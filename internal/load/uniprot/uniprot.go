@@ -52,7 +52,7 @@ func LoadUniprotMappings(cmd *cobra.Command, args []string) error {
 				urc++
 			} else {
 				// store in redis
-				err := client.HSet(IDCacheKey, s[0], gs[0])
+				err := client.HSet(IDCacheKey, s[0], gs[0]).Err()
 				if err != nil {
 					return fmt.Errorf("error in setting the value in redis %s %s", s, err)
 				}
@@ -64,13 +64,13 @@ func LoadUniprotMappings(cmd *cobra.Command, args []string) error {
 				sc++
 				ns := strings.Split(s[2], ";")
 				// store in redis
-				err := client.HSet(IDCacheKey, s[0], ns[0])
+				err := client.HSet(IDCacheKey, s[0], ns[0]).Err()
 				if err != nil {
 					return fmt.Errorf("error in setting the value in redis %s %s", s, err)
 				}
 			} else {
 				// store in redis
-				err := client.HSet(IDCacheKey, s[0], s[2])
+				err := client.HSet(IDCacheKey, s[0], s[2]).Err()
 				if err != nil {
 					return fmt.Errorf("error in setting the value in redis %s %s", s, err)
 				}
