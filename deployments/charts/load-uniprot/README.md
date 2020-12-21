@@ -1,6 +1,6 @@
 # load-uniprot
 
-This [helm](https://github.com/kubernetes/helm) chart provides [kubernetes](http://kubernetes.io) manifests for running a [load-uniprot](https://hub.docker.com/r/dictybase/arangoadmin/) job.
+This [helm](https://github.com/kubernetes/helm) chart provides [kubernetes](http://kubernetes.io) manifests for running a [load-uniprot](https://hub.docker.com/r/dictybase/modware-import/) job.
 
 # Managing the chart
 
@@ -26,12 +26,12 @@ For upgrades and rollback, look [here](https://docs.helm.sh/using_helm/#helm-upg
 
 The following tables lists the configurable parameters of the **chado-sqitch** chart and their default values.
 
-| Parameter          | Description                                 | Default                 |
-| ------------------ | ------------------------------------------- | ----------------------- |
-| `image.repository` | load-uniprot image                          | `dictybase/arangoadmin` |
-| `image.tag`        | image tag                                   | `0.0.1`                 |
-| `image.pullPolicy` | Image pull policy                           | `IfNotPresent`          |
-| `log.level`        | Name of user with ArangoDB admin privileges | `info`                  |
+| Parameter          | Description                                 | Default                    |
+| ------------------ | ------------------------------------------- | -------------------------- |
+| `image.repository` | load-uniprot image                          | `dictybase/modware-import` |
+| `image.tag`        | image tag                                   | `0.0.1`                    |
+| `image.pullPolicy` | Image pull policy                           | `IfNotPresent`             |
+| `log.level`        | Name of user with ArangoDB admin privileges | `info`                     |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
