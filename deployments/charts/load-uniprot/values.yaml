@@ -1,0 +1,12 @@
+# Default values for arango-admin.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: dictybase/modware-import
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# verbosity of log
+log:
+  level: info
