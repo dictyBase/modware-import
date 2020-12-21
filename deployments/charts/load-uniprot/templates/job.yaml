@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-%s-%s" (include "load-uniprot.fullname" .) "stockcenter" (randAlpha 8) | lower }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  template:
+    metadata:
+      name: {{ printf "%s-%s-%s" (include "load-uniprot.fullname" .) "stockcenter" (randAlpha 8) | lower }}
+      labels:
+        app: {{ printf "%s-%s" (include "load-uniprot.fullname" .)  "subGroupOne" }}
+    spec:
+      containers:
+      - name: {{ template "load-uniprot.containerName" . }}
+        {{- include "load-uniprot.imageManifest" . | nindent 8 }}
+        {{- include "load-uniprot.envManifest" . | nindent 8 }}
+        command: ["/usr/local/bin/app", "uniprot", "mapping"]
+      restartPolicy: Never
