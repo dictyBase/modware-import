@@ -1,4 +1,4 @@
-FROM golang:1.11.13-alpine3.10
+FROM golang:1.13.15-alpine3.12
 LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
 ENV GOPROXY https://proxy.golang.org
 RUN apk add --no-cache git build-base
@@ -11,7 +11,7 @@ ADD cmd cmd
 ADD internal internal
 RUN go build -o app cmd/import/main.go
 
-FROM alpine:3.10
+FROM alpine:3.12
 RUN apk --no-cache add ca-certificates tzdata \
     && cp /usr/share/zoneinfo/America/Chicago /etc/localtime \
     && echo "America/Chicago" > /etc/timezone
