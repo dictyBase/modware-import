@@ -57,7 +57,11 @@ func LoadUniprotMappings(cmd *cobra.Command, args []string) error {
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error in scanning output %s", err)
 	}
-	stat := fmt.Sprintf("name:%d\tid:%d\tisoform:%d\tunresolved:%d\tnomap:%d\n", c.geneName, c.geneID, c.isoform, c.unresolved, c.noMap)
+	stat := fmt.Sprintf(
+		"name:%d\tid:%d\tisoform:%d\tunresolved:%d\tnomap:%d\n",
+		c.geneName, c.geneID, c.isoform,
+		c.unresolved, c.noMap,
+	)
 	log.Print(stat)
 	return nil
 }
