@@ -14,10 +14,7 @@ var UniprotMappingCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadUniprotMappings,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := setRedisClient(); err != nil {
-			return err
-		}
-		return nil
+		return setRedisClient()
 	},
 }
 
