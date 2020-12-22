@@ -1,6 +1,8 @@
 package uniprot
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -18,11 +20,19 @@ var UniprotMappingCmd = &cobra.Command{
 	},
 }
 
+var uniprotURL = fmt.Sprintf(
+	"%s/?%s&%s&%s",
+	"https://www.uniprot.org/uniprot",
+	"query=taxonomy:44689",
+	"columns=id,database(dictyBase),genes(PREFERRED)",
+	"format=tab",
+)
+
 func init() {
 	UniprotMappingCmd.Flags().StringP(
 		"uniprot-url",
 		"u",
-		"https://www.uniprot.org/uniprot/?query=taxonomy:44689&columns=id,database(dictyBase),genes(PREFERRED)&format=tab",
+		uniprotURL,
 		"uniprot endpoint",
 	)
 	viper.BindPFlags(UniprotMappingCmd.Flags())
