@@ -116,15 +116,9 @@ func handleGeneIDs(s []string, c *Count, client *r.Client) error {
 func handleGeneNames(s []string, c *Count, client *r.Client) error {
 	c.geneName++
 	if strings.Contains(s[2], ";") {
-		c.isoform++
-		ns := strings.Split(s[2], ";")
-		err := client.HSet(UniprotCacheKey, s[0], ns[0]).Err()
+		err := handleIsoforms(s, c, client)
 		if err != nil {
-			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-		}
-		err = client.HSet(GeneCacheKey, ns[0], s[0]).Err()
-		if err != nil {
-			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+			return fmt.Errorf("error in handling isoform %s %s", s, err)
 		}
 	} else {
 		err := client.HSet(UniprotCacheKey, s[0], s[2]).Err()
@@ -135,6 +129,20 @@ func handleGeneNames(s []string, c *Count, client *r.Client) error {
 		if err != nil {
 			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
 		}
+	}
+	return nil
+}
+
+func handleIsoforms(s []string, c *Count, client *r.Client) error {
+	c.isoform++
+	ns := strings.Split(s[2], ";")
+	err := client.HSet(UniprotCacheKey, s[0], ns[0]).Err()
+	if err != nil {
+		return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+	}
+	err = client.HSet(GeneCacheKey, ns[0], s[0]).Err()
+	if err != nil {
+		return fmt.Errorf("error in setting the value in redis %s %s", s, err)
 	}
 	return nil
 }
