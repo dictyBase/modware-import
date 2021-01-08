@@ -14,8 +14,12 @@ import (
 )
 
 const (
-	// IDCacheKey is the key for storing redis hash field value
-	IDCacheKey = "UNIPROT2NAME/uniprot"
+	// UniprotCacheKey is the key for storing the Redis hash field value
+	// for UniprotID -> Gene Name/ID
+	UniprotCacheKey = "UNIPROT2NAME/uniprot"
+	// GeneCacheKey is the key for storing the Redis has field value
+	// for Gene Name/ID -> Uniprot ID
+	GeneCacheKey = "GENE2UNIPROT/gene"
 )
 
 // Count represents the number of each item in the dataset
@@ -80,8 +84,11 @@ func readLine(s []string, c *Count, client *r.Client) error {
 			log.Printf("unresolved line %s\t%s\n", s[0], s[1])
 			c.unresolved++
 		} else {
-			// store in redis
-			err := client.HSet(IDCacheKey, s[0], gs[0]).Err()
+			err := client.HSet(UniprotCacheKey, s[0], gs[0]).Err()
+			if err != nil {
+				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+			}
+			err = client.HSet(GeneCacheKey, gs[0], s[0]).Err()
 			if err != nil {
 				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
 			}
@@ -92,14 +99,20 @@ func readLine(s []string, c *Count, client *r.Client) error {
 		if strings.Contains(s[2], ";") {
 			c.isoform++
 			ns := strings.Split(s[2], ";")
-			// store in redis
-			err := client.HSet(IDCacheKey, s[0], ns[0]).Err()
+			err := client.HSet(UniprotCacheKey, s[0], ns[0]).Err()
+			if err != nil {
+				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+			}
+			err = client.HSet(GeneCacheKey, ns[0], s[0]).Err()
 			if err != nil {
 				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
 			}
 		} else {
-			// store in redis
-			err := client.HSet(IDCacheKey, s[0], s[2]).Err()
+			err := client.HSet(UniprotCacheKey, s[0], s[2]).Err()
+			if err != nil {
+				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+			}
+			err = client.HSet(GeneCacheKey, s[2], s[0]).Err()
 			if err != nil {
 				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
 			}
