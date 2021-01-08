@@ -78,47 +78,63 @@ func readLine(s []string, c *Count, client *r.Client) error {
 		c.noMap++
 	// only gene ids
 	case sl == 2:
-		c.geneID++
-		gs := strings.Split(s[1], ";")
-		if len(gs) > 3 {
-			log.Printf("unresolved line %s\t%s\n", s[0], s[1])
-			c.unresolved++
-		} else {
-			err := client.HSet(UniprotCacheKey, s[0], gs[0]).Err()
-			if err != nil {
-				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-			}
-			err = client.HSet(GeneCacheKey, gs[0], s[0]).Err()
-			if err != nil {
-				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-			}
+		err := handleGeneIDs(s, c, client)
+		if err != nil {
+			return fmt.Errorf("error in handling gene IDs %s %s", s, err)
 		}
 	// gene name
 	case sl == 3:
-		c.geneName++
-		if strings.Contains(s[2], ";") {
-			c.isoform++
-			ns := strings.Split(s[2], ";")
-			err := client.HSet(UniprotCacheKey, s[0], ns[0]).Err()
-			if err != nil {
-				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-			}
-			err = client.HSet(GeneCacheKey, ns[0], s[0]).Err()
-			if err != nil {
-				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-			}
-		} else {
-			err := client.HSet(UniprotCacheKey, s[0], s[2]).Err()
-			if err != nil {
-				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-			}
-			err = client.HSet(GeneCacheKey, s[2], s[0]).Err()
-			if err != nil {
-				return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-			}
+		err := handleGeneNames(s, c, client)
+		if err != nil {
+			return fmt.Errorf("error in handling gene names %s %s", s, err)
 		}
 	default:
 		log.Printf("something seriously wrong with this line %s\n", s)
+	}
+	return nil
+}
+
+func handleGeneIDs(s []string, c *Count, client *r.Client) error {
+	c.geneID++
+	gs := strings.Split(s[1], ";")
+	if len(gs) > 3 {
+		log.Printf("unresolved line %s\t%s\n", s[0], s[1])
+		c.unresolved++
+	} else {
+		err := client.HSet(UniprotCacheKey, s[0], gs[0]).Err()
+		if err != nil {
+			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+		}
+		err = client.HSet(GeneCacheKey, gs[0], s[0]).Err()
+		if err != nil {
+			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+		}
+	}
+	return nil
+}
+
+func handleGeneNames(s []string, c *Count, client *r.Client) error {
+	c.geneName++
+	if strings.Contains(s[2], ";") {
+		c.isoform++
+		ns := strings.Split(s[2], ";")
+		err := client.HSet(UniprotCacheKey, s[0], ns[0]).Err()
+		if err != nil {
+			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+		}
+		err = client.HSet(GeneCacheKey, ns[0], s[0]).Err()
+		if err != nil {
+			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+		}
+	} else {
+		err := client.HSet(UniprotCacheKey, s[0], s[2]).Err()
+		if err != nil {
+			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+		}
+		err = client.HSet(GeneCacheKey, s[2], s[0]).Err()
+		if err != nil {
+			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+		}
 	}
 	return nil
 }
