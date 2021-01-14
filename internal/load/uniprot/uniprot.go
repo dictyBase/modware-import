@@ -125,6 +125,13 @@ func handleGeneNames(s []string, c *Count, client *r.Client) error {
 		if err != nil {
 			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
 		}
+		// store gene ID
+		id := strings.TrimSuffix(s[1], ";")
+		err = client.HSet(GeneCacheKey, id, s[0]).Err()
+		if err != nil {
+			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+		}
+		// store gene name
 		err = client.HSet(GeneCacheKey, s[2], s[0]).Err()
 		if err != nil {
 			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
