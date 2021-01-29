@@ -132,7 +132,7 @@ type leveldbMap struct {
 	db *leveldb.DB
 }
 
-func NewStrainMap() (IdMapper, error) {
+func NewIdMap() (IdMapper, error) {
 	m := &leveldbMap{}
 	db, err := leveldb.Open(storage.NewMemStorage(), nil)
 	if err != nil {
