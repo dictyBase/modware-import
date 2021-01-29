@@ -58,24 +58,6 @@ type GWDIStrain struct {
 	Properties  map[string]*tsource.StockProp
 }
 
-func summIntraMultiple() string {
-	var b strings.Builder
-	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) mutants,")
-	b.WriteString(" %s intragenic insertions;")
-	b.WriteString(" insertion at position %s, %s,")
-	b.WriteString(" at %s genomic sites; %s orientation;")
-	b.WriteString(" this stock contains %s individual mutants")
-	return b.String()
-}
-
-func summaryIntraSingle() string {
-	var b strings.Builder
-	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) %s mutant;")
-	b.WriteString(" insertion at position %s, %s,")
-	b.WriteString(" at %s genomic sites; %s orientation.")
-	return b.String()
-}
-
 func defaultGWDIStrain() *GWDIStrain {
 	return &GWDIStrain{
 		Parent:      "DBS0351471",
@@ -101,6 +83,77 @@ func defaultGWDIStrain() *GWDIStrain {
 	}
 }
 
+func summInterSingleUp() string {
+	var b strings.Builder
+	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) intergenic mutant,")
+	b.WriteString(" insertion is within 500 bp of start codon;")
+	b.WriteString(" nearest gene %s is upstream of insertion site (Crick strand),")
+	b.WriteString(" insertion at position %s, %s")
+	b.WriteString(" %s at genomic sites; %s orientation.")
+	return b.String()
+}
+
+func summInterSingle() string {
+	var b strings.Builder
+	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) intergenic mutant,")
+	b.WriteString(" not near a known coding region;")
+	b.WriteString(" insertion at position %s, %s,")
+	b.WriteString(" %s at genomic sites; %s orientation.")
+	return b.String()
+}
+
+func summIntraMultiple() string {
+	var b strings.Builder
+	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) mutants,")
+	b.WriteString(" %s intragenic insertions;")
+	b.WriteString(" insertion at position %s, %s,")
+	b.WriteString(" %s at genomic sites; %s orientation;")
+	b.WriteString(" this stock contains %s individual mutants")
+	return b.String()
+}
+
+func summaryIntraSingle() string {
+	var b strings.Builder
+	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) %s mutant;")
+	b.WriteString(" insertion at position %s, %s,")
+	b.WriteString(" %s at genomic sites; %s orientation.")
+	return b.String()
+}
+
+func intergenic_single_up_annotation(r []string) *GWDIStrain {
+	strain := defaultGWDIStrain()
+	d := fmt.Sprintf("[%s]-", r[8])
+	strain.Label = d
+	strain.Name = r[0]
+	strain.Genotype = fmt.Sprintf(genoTmpl, d)
+	strain.Characters[2] = "mutant"
+	strain.Genes = []string{r[8]}
+	strain.Summary = fmt.Sprintf(
+		summInterSingleUp(),
+		r[8], r[2], chrMap[r[1]],
+		insrMap[r[3]], r[5],
+	)
+	return strain
+}
+
+func intergenic_single_annotation(r []string) *GWDIStrain {
+	strain := defaultGWDIStrain()
+	strain.Label = r[0]
+	strain.Name = r[0]
+	strain.Genotype = fmt.Sprintf(genoTmpl, r[0])
+	strain.Characters[2] = "mutant"
+	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
+		Property: "mutant type",
+		Value:    "exogenous mutation",
+	}
+	strain.Summary = fmt.Sprintf(
+		summInterSingle(),
+		r[2], chrMap[r[1]],
+		insrMap[r[3]], r[5],
+	)
+	return strain
+}
+
 func intragenic_multiple_annotation(r []string) *GWDIStrain {
 	d := fmt.Sprintf("%s-", r[8])
 	strain := defaultGWDIStrain()
@@ -111,7 +164,7 @@ func intragenic_multiple_annotation(r []string) *GWDIStrain {
 	strain.Summary = fmt.Sprintf(
 		summIntraMultiple(),
 		d, r[2], chrMap[r[1]],
-		insrMap[r[3]], r[5],
+		insrMap[r[3]], r[5], r[4],
 	)
 	return strain
 }
@@ -129,28 +182,4 @@ func intragenic_single_annotation(r []string) *GWDIStrain {
 		insrMap[r[3]], r[5],
 	)
 	return strain
-}
-
-func createGroups(r []string) string {
-	var group string
-	if r[6] == "intragenic" || r[6] == "NA" {
-		if r[4] == "1" {
-			group = fmt.Sprintf("%s_single", r[6])
-		} else {
-			group = fmt.Sprintf("%s_multiple", r[6])
-		}
-	} else {
-		if r[7] == "none" {
-			if r[4] == "1" {
-				group = fmt.Sprintf("%s_none_single", r[6])
-			} else {
-				group = fmt.Sprintf("%s_none_multiple", r[6])
-			}
-		} else if r[4] == "1" {
-			group = fmt.Sprintf("%s_single", r[6])
-		} else {
-			group = fmt.Sprintf("%s_multiple", r[6])
-		}
-	}
-	return group
 }
