@@ -13,7 +13,7 @@ const (
 	genoTmpl = `axeA1,axeB1,axeC1,%s,[bsRcas],bsR`
 )
 
-var grxp = regexp.MustCompile(`(DDB_G[0-9]{5,}){2,}`)
+var disrupt_rgxp = regexp.MustCompile(`^(DDB_G[0-9]{5,})`)
 
 var insrMap = map[string]string{
 	"G1": "GATC",
@@ -83,6 +83,17 @@ func defaultGWDIStrain() *GWDIStrain {
 	}
 }
 
+func summInterSingleBoth() string {
+	var b strings.Builder
+	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) intergenic mutant,")
+	b.WriteString(" insertion is within 500 bp of start codons")
+	b.WriteString(" of two neighboring genes oriented in opposite direction;")
+	b.WriteString(" potentially affected genes are %s and %s,")
+	b.WriteString(" insertion at position %s, %s")
+	b.WriteString(" %s at genomic sites; %s orientation.")
+	return b.String()
+}
+
 func summInterSingleUpDown(orientation string) string {
 	var b strings.Builder
 	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) intergenic mutant,")
@@ -120,6 +131,23 @@ func summaryIntraSingle() string {
 	b.WriteString(" insertion at position %s, %s,")
 	b.WriteString(" %s at genomic sites; %s orientation.")
 	return b.String()
+}
+
+func intergenic_single_both_annotation(r []string) *GWDIStrain {
+	strain := defaultGWDIStrain()
+	m := disrupt_rgxp.FindStringSubmatch(r[7])
+	d := fmt.Sprintf("[%s/%s]-", m[0], m[1])
+	strain.Label = d
+	strain.Name = r[0]
+	strain.Genotype = fmt.Sprintf(genoTmpl, d)
+	strain.Characters[2] = "mutant"
+	strain.Genes = []string{m[0], m[1]}
+	strain.Summary = fmt.Sprintf(
+		summInterSingleBoth(),
+		m[0], m[1], r[2], chrMap[r[1]],
+		insrMap[r[3]], r[5],
+	)
+	return strain
 }
 
 func intergenic_single_down_annotation(r []string) *GWDIStrain {
