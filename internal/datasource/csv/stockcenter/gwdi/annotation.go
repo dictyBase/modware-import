@@ -83,6 +83,13 @@ func defaultGWDIStrain() *GWDIStrain {
 	}
 }
 
+func summInterMultipleUpDown(orientation string) string {
+	var b strings.Builder
+	b.WriteString(summInterUpDown(orientation))
+	b.WriteString(" This stock contains %s individual mutants")
+	return b.String()
+}
+
 func summInterSingleBoth() string {
 	var b strings.Builder
 	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) intergenic mutant,")
@@ -94,13 +101,20 @@ func summInterSingleBoth() string {
 	return b.String()
 }
 
-func summInterSingleUpDown(orientation string) string {
+func summInterUpDown(orientation string) string {
+	strand := "Crick"
+	if orientation == "downstream" {
+		strand = "Watson"
+	}
 	var b strings.Builder
 	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) intergenic mutant,")
 	b.WriteString(" insertion is within 500 bp of start codon;")
 	b.WriteString(" nearest gene %s is ")
-	b.WriteString(orientation)
-	b.WriteString(" insertion site (Watson strand),")
+	b.WriteString(
+		fmt.Sprintf(
+			"%s of the insertions site (%s strand)",
+			orientation, strand,
+		))
 	b.WriteString(" insertion at position %s, %s")
 	b.WriteString(" %s at genomic sites; %s orientation.")
 	return b.String()
@@ -133,6 +147,22 @@ func summaryIntraSingle() string {
 	return b.String()
 }
 
+func intergenic_multiple_up_annotation(r []string) *GWDIStrain {
+	strain := defaultGWDIStrain()
+	d := fmt.Sprintf("[%s]-", r[8])
+	strain.Label = d
+	strain.Name = r[0]
+	strain.Genotype = fmt.Sprintf(genoTmpl, d)
+	strain.Characters[2] = "mutant"
+	strain.Genes = []string{r[8]}
+	strain.Summary = fmt.Sprintf(
+		summInterMultipleUpDown("upstream"),
+		r[8], r[2], chrMap[r[1]],
+		insrMap[r[3]], r[5], r[4],
+	)
+	return strain
+}
+
 func intergenic_single_both_annotation(r []string) *GWDIStrain {
 	strain := defaultGWDIStrain()
 	m := disrupt_rgxp.FindStringSubmatch(r[7])
@@ -159,7 +189,7 @@ func intergenic_single_down_annotation(r []string) *GWDIStrain {
 	strain.Characters[2] = "mutant"
 	strain.Genes = []string{r[8]}
 	strain.Summary = fmt.Sprintf(
-		summInterSingleUpDown("downstream"),
+		summInterUpDown("downstream"),
 		r[8], r[2], chrMap[r[1]],
 		insrMap[r[3]], r[5],
 	)
@@ -175,7 +205,7 @@ func intergenic_single_up_annotation(r []string) *GWDIStrain {
 	strain.Characters[2] = "mutant"
 	strain.Genes = []string{r[8]}
 	strain.Summary = fmt.Sprintf(
-		summInterSingleUpDown("upstream"),
+		summInterUpDown("upstream"),
 		r[8], r[2], chrMap[r[1]],
 		insrMap[r[3]], r[5],
 	)
