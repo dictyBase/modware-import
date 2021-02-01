@@ -127,7 +127,14 @@ func summInterUpDown(orientation string) string {
 	return b.String()
 }
 
-func summInterSingle() string {
+func summInterNoGeneMultiple() string {
+	var b strings.Builder
+	b.WriteString(summInterNoGeneSingle())
+	b.WriteString(" This stock contains %s individual mutants")
+	return b.String()
+}
+
+func summInterNoGeneSingle() string {
 	var b strings.Builder
 	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) intergenic mutant,")
 	b.WriteString(" not near a known coding region;")
@@ -161,6 +168,29 @@ func intragenic_mutant_annotation(r []string) *GWDIStrain {
 	strain.Name = r[0]
 	strain.Genes = []string{r[8]}
 	strain.Genotype = fmt.Sprintf(genoTmpl, d)
+	return strain
+}
+
+func geneless_mutant_annotation(r []string) *GWDIStrain {
+	strain := defaultGWDIStrain()
+	strain.Label = r[0]
+	strain.Name = r[0]
+	strain.Genotype = fmt.Sprintf(genoTmpl, r[0])
+	strain.Characters[2] = "mutant"
+	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
+		Property: "mutant type",
+		Value:    "exogenous insertion",
+	}
+	return strain
+}
+
+func intergenic_multiple_no_gene_annotation(r []string) *GWDIStrain {
+	strain := geneless_mutant_annotation(r)
+	strain.Summary = fmt.Sprintf(
+		summInterNoGeneMultiple(),
+		r[2], chrMap[r[1]],
+		insrMap[r[3]], r[5], r[4],
+	)
 	return strain
 }
 
@@ -246,18 +276,10 @@ func intergenic_single_up_annotation(r []string) *GWDIStrain {
 	return intergenic_single_up_down_annotation(r, "upstream")
 }
 
-func intergenic_single_annotation(r []string) *GWDIStrain {
-	strain := defaultGWDIStrain()
-	strain.Label = r[0]
-	strain.Name = r[0]
-	strain.Genotype = fmt.Sprintf(genoTmpl, r[0])
-	strain.Characters[2] = "mutant"
-	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
-		Property: "mutant type",
-		Value:    "exogenous mutation",
-	}
+func intergenic_single_no_gene_annotation(r []string) *GWDIStrain {
+	strain := geneless_mutant_annotation(r)
 	strain.Summary = fmt.Sprintf(
-		summInterSingle(),
+		summInterNoGeneSingle(),
 		r[2], chrMap[r[1]],
 		insrMap[r[3]], r[5],
 	)
