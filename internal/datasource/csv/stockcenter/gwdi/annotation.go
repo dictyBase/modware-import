@@ -154,6 +154,16 @@ func summaryIntraSingle() string {
 	return b.String()
 }
 
+func intragenic_mutant_annotation(r []string) *GWDIStrain {
+	d := fmt.Sprintf("%s-", r[8])
+	strain := defaultGWDIStrain()
+	strain.Label = d
+	strain.Name = r[0]
+	strain.Genes = []string{r[8]}
+	strain.Genotype = fmt.Sprintf(genoTmpl, d)
+	return strain
+}
+
 func intergenic_multiple_both_annotation(r []string) *GWDIStrain {
 	strain := defaultGWDIStrain()
 	m := disrupt_rgxp.FindStringSubmatch(r[7])
@@ -195,6 +205,22 @@ func intergenic_multiple_up_annotation(r []string) *GWDIStrain {
 	return intergenic_multiple_up_down_annotation(r, "upstream")
 }
 
+func intergenic_single_up_down_annotation(r []string, orientation string) *GWDIStrain {
+	strain := defaultGWDIStrain()
+	d := fmt.Sprintf("[%s]-", r[8])
+	strain.Label = d
+	strain.Name = r[0]
+	strain.Genotype = fmt.Sprintf(genoTmpl, d)
+	strain.Characters[2] = "mutant"
+	strain.Genes = []string{r[8]}
+	strain.Summary = fmt.Sprintf(
+		summInterUpDown(orientation),
+		r[8], r[2], chrMap[r[1]],
+		insrMap[r[3]], r[5],
+	)
+	return strain
+}
+
 func intergenic_single_both_annotation(r []string) *GWDIStrain {
 	strain := defaultGWDIStrain()
 	m := disrupt_rgxp.FindStringSubmatch(r[7])
@@ -207,22 +233,6 @@ func intergenic_single_both_annotation(r []string) *GWDIStrain {
 	strain.Summary = fmt.Sprintf(
 		summInterSingleBoth(),
 		m[0], m[1], r[2], chrMap[r[1]],
-		insrMap[r[3]], r[5],
-	)
-	return strain
-}
-
-func intergenic_single_up_down_annotation(r []string, orientation string) *GWDIStrain {
-	strain := defaultGWDIStrain()
-	d := fmt.Sprintf("[%s]-", r[8])
-	strain.Label = d
-	strain.Name = r[0]
-	strain.Genotype = fmt.Sprintf(genoTmpl, d)
-	strain.Characters[2] = "mutant"
-	strain.Genes = []string{r[8]}
-	strain.Summary = fmt.Sprintf(
-		summInterUpDown(orientation),
-		r[8], r[2], chrMap[r[1]],
 		insrMap[r[3]], r[5],
 	)
 	return strain
@@ -255,30 +265,20 @@ func intergenic_single_annotation(r []string) *GWDIStrain {
 }
 
 func intragenic_multiple_annotation(r []string) *GWDIStrain {
-	d := fmt.Sprintf("%s-", r[8])
-	strain := defaultGWDIStrain()
-	strain.Label = d
-	strain.Name = r[0]
-	strain.Genes = []string{r[8]}
-	strain.Genotype = fmt.Sprintf(genoTmpl, d)
+	strain := intragenic_mutant_annotation(r)
 	strain.Summary = fmt.Sprintf(
 		summIntraMultiple(),
-		d, r[2], chrMap[r[1]],
+		strain.Label, r[2], chrMap[r[1]],
 		insrMap[r[3]], r[5], r[4],
 	)
 	return strain
 }
 
 func intragenic_single_annotation(r []string) *GWDIStrain {
-	d := fmt.Sprintf("%s-", r[8])
-	strain := defaultGWDIStrain()
-	strain.Label = d
-	strain.Name = r[0]
-	strain.Genes = []string{r[8]}
-	strain.Genotype = fmt.Sprintf(genoTmpl, d)
+	strain := intragenic_mutant_annotation(r)
 	strain.Summary = fmt.Sprintf(
 		summaryIntraSingle(),
-		d, r[2], chrMap[r[1]],
+		strain.Label, r[2], chrMap[r[1]],
 		insrMap[r[3]], r[5],
 	)
 	return strain
