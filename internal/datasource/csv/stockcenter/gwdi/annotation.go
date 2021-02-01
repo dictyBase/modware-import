@@ -161,6 +161,13 @@ func summaryIntraSingle() string {
 	return b.String()
 }
 
+func summaryNAMultiple() string {
+	var b strings.Builder
+	b.WriteString(summaryIntraSingle())
+	b.WriteString(" this stock contains %s individual mutants")
+	return b.String()
+}
+
 func intragenic_mutant_annotation(r []string) *GWDIStrain {
 	d := fmt.Sprintf("%s-", r[8])
 	strain := defaultGWDIStrain()
@@ -302,6 +309,34 @@ func intragenic_single_annotation(r []string) *GWDIStrain {
 		summaryIntraSingle(),
 		strain.Label, r[2], chrMap[r[1]],
 		insrMap[r[3]], r[5],
+	)
+	return strain
+}
+
+func single_na_annotation(r []string) *GWDIStrain {
+	strain := geneless_mutant_annotation(r)
+	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
+		Property: "mutant type",
+		Value:    "endogenous insertion",
+	}
+	strain.Summary = fmt.Sprintf(
+		summaryIntraSingle(),
+		strain.Label, r[2], chrMap[r[1]],
+		insrMap[r[3]], r[5],
+	)
+	return strain
+}
+
+func multiple_na_annotation(r []string) *GWDIStrain {
+	strain := geneless_mutant_annotation(r)
+	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
+		Property: "mutant type",
+		Value:    "endogenous insertion",
+	}
+	strain.Summary = fmt.Sprintf(
+		summaryNAMultiple(),
+		strain.Label, r[2], chrMap[r[1]],
+		insrMap[r[3]], r[5], r[4],
 	)
 	return strain
 }
