@@ -43,18 +43,18 @@ var chrMap = map[string]string{
 
 //GWDIStrain is the container for GWDI strain
 type GWDIStrain struct {
-	Label       string
-	Name        string
-	Summary     string
-	Genotype    string
-	Parent      string
-	Plasmid     string
-	Species     string
-	Depositor   string
-	Publication string
-	Characters  []string
-	Genes       []string
-	Properties  map[string]*tsource.StockProp
+	Label       string                        `json:"label"`
+	Name        string                        `json:"name"`
+	Summary     string                        `json:"summary"`
+	Genotype    string                        `json:"genotype"`
+	Parent      string                        `json:"parent"`
+	Plasmid     string                        `json:"plasmid,omitempty"`
+	Species     string                        `json:"species"`
+	Depositor   string                        `json:"depositor"`
+	Publication string                        `json:"publication"`
+	Characters  []string                      `json:"characters"`
+	Genes       []string                      `json:"genes,omitempty"`
+	Properties  map[string]*tsource.StockProp `json:"properties"`
 }
 
 func defaultGWDIStrain() *GWDIStrain {
