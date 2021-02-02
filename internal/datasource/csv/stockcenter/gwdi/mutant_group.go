@@ -79,6 +79,18 @@ func (g *GWDI) MutantReader(group string) GWDIMutantReader {
 	return NewGWDIMutantIterator(g.listCache.IterateByPrefix([]byte(group)))
 }
 
+func (g *GWDI) AllGroups() ([]string, error) {
+	var all []string
+	prefixes, err := g.listCache.CommonPrefixes()
+	if err != nil {
+		return all, err
+	}
+	for _, p := range prefixes {
+		all = append(all, string(p))
+	}
+	return all, nil
+}
+
 func (g *GWDI) AnnotateMutant() error {
 	if err := g.DedupId(); err != nil {
 		return err
