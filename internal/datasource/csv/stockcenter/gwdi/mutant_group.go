@@ -6,7 +6,34 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/syndtr/goleveldb/leveldb/iterator"
 )
+
+type GWDIMutantReader interface {
+	Next() bool
+	Value() (*GWDIStrain, error)
+}
+
+type groupItr struct {
+	itr iterator.Iterator
+}
+
+func NewGWDIMutantIterator(itr iterator.Iterator) GWDIMutantReader {
+	return &groupItr{itr: itr}
+}
+
+func (g *groupItr) Next() bool {
+	return g.itr.Next()
+}
+
+func (g *groupItr) Value() (*GWDIStrain, error) {
+	strain := &GWDIStrain{}
+	if err := json.Unmarshal(g.itr.Value(), strain); err != nil {
+		return strain, fmt.Errorf("error in decoding value for strain group %s", err)
+	}
+	return strain, nil
+}
 
 type annoFn func(r []string) *GWDIStrain
 
@@ -46,6 +73,10 @@ func NewGWDI(r io.Reader) (*GWDI, error) {
 		"intragenic_multiple":      intragenic_multiple_annotation,
 	}
 	return g, nil
+}
+
+func (g *GWDI) MutantReader(group string) GWDIMutantReader {
+	return NewGWDIMutantIterator(g.listCache.IterateByPrefix([]byte(group)))
 }
 
 func (g *GWDI) AnnotateMutant() error {
