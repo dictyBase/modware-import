@@ -48,6 +48,13 @@ func NewGWDI(r io.Reader) (*GWDI, error) {
 	return g, nil
 }
 
+func (g *GWDI) AnnotateMutant() error {
+	if err := g.DedupId(); err != nil {
+		return err
+	}
+	return g.GroupMutant()
+}
+
 func (g *GWDI) GroupMutant() error {
 	cache := g.listCache
 	cache.StartBatch()
@@ -55,7 +62,7 @@ func (g *GWDI) GroupMutant() error {
 	itr := m.Iterate()
 	for itr.Next() {
 		r := strings.Split(string(itr.Value()), "\t")
-		group := createGroup(r)
+		group := inferGroup(r)
 		fn, ok := g.annoMapper[group]
 		if !ok {
 			return fmt.Errorf("unexpected group %s", group)
@@ -113,7 +120,7 @@ func (g *GWDI) DedupId() error {
 	return nil
 }
 
-func createGroup(r []string) string {
+func inferGroup(r []string) string {
 	var group string
 	if r[6] == "intragenic" || r[6] == "NA" {
 		if r[4] == "1" {
