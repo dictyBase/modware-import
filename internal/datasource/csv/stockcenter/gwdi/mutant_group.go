@@ -2,16 +2,20 @@ package gwdi
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 )
 
+type annoFn func(r []string) *GWDIStrain
+
 // GWDI is for managing gwdi data
 type GWDI struct {
-	listCache ListCacher
-	mapper    IdMapper
-	reader    io.Reader
+	listCache  ListCacher
+	mapper     IdMapper
+	reader     io.Reader
+	annoMapper map[string]annoFn
 }
 
 func NewGWDI(r io.Reader) (*GWDI, error) {
@@ -27,6 +31,20 @@ func NewGWDI(r io.Reader) (*GWDI, error) {
 	g.listCache = c
 	g.mapper = m
 	g.reader = r
+	g.annoMapper = map[string]annoFn{
+		"NA_multiple":              multiple_na_annotation,
+		"NA_single":                single_na_annotation,
+		"intergenic_down_multiple": intergenic_multiple_down_annotation,
+		"intergenic_up_multiple":   intergenic_multiple_up_annotation,
+		"intergenic_both_multiple": intergenic_multiple_both_annotation,
+		"intergenic_none_multiple": intergenic_multiple_no_gene_annotation,
+		"intergenic_up_single":     intergenic_single_up_annotation,
+		"intergenic_down_single":   intergenic_single_down_annotation,
+		"intergenic_both_single":   intergenic_single_both_annotation,
+		"intergenic_none_single":   intergenic_single_no_gene_annotation,
+		"intragenic_single":        intragenic_single_annotation,
+		"intragenic_multiple":      intragenic_multiple_annotation,
+	}
 	return g, nil
 }
 
@@ -37,13 +55,22 @@ func (g *GWDI) GroupMutant() error {
 	itr := m.Iterate()
 	for itr.Next() {
 		r := strings.Split(string(itr.Value()), "\t")
-		group := createGroups(r)
-		cache.AppendToBatch([]byte(key), value)
+		group := createGroup(r)
+		fn, ok := g.annoMapper[group]
+		if !ok {
+			return fmt.Errorf("unexpected group %s", group)
+		}
+		value, err := json.Marshal(fn(r))
+		if err != nil {
+			return fmt.Errorf("error in encoding strain %s", err)
+		}
+		cache.AppendToBatch([]byte(group), value)
 	}
 	itr.Release()
 	if err := cache.CommitBatch(); err != nil {
 		return fmt.Errorf("error in writing to cache %s", err)
 	}
+	return nil
 }
 
 func (g *GWDI) DedupId() error {
@@ -86,7 +113,7 @@ func (g *GWDI) DedupId() error {
 	return nil
 }
 
-func createGroups(r []string) string {
+func createGroup(r []string) string {
 	var group string
 	if r[6] == "intragenic" || r[6] == "NA" {
 		if r[4] == "1" {
