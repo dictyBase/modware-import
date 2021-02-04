@@ -13,6 +13,7 @@ const (
 )
 
 var disrupt_rgxp = regexp.MustCompile(`^(DDB_G[0-9]{5,})`)
+var suffix_rgxp = regexp.MustCompile(`(^GWDI_\d+_[A-Z]{1,2}_\d+)[a-z]{1}$`)
 
 var insrMap = map[string]string{
 	"G1": "GATC",
@@ -82,6 +83,13 @@ func defaultGWDIStrain() *GWDIStrain {
 	}
 }
 
+func removeSuffix(id string) string {
+	if suffix_rgxp.MatchString(id) {
+		return suffix_rgxp.ReplaceAllString(id, "$1")
+	}
+	return id
+}
+
 func intragenic_mutant_annotation(r []string) *GWDIStrain {
 	d := fmt.Sprintf("%s-", r[8])
 	strain := defaultGWDIStrain()
@@ -94,9 +102,9 @@ func intragenic_mutant_annotation(r []string) *GWDIStrain {
 
 func geneless_mutant_annotation(r []string) *GWDIStrain {
 	strain := defaultGWDIStrain()
-	strain.Label = r[0]
+	strain.Label = removeSuffix(r[0])
 	strain.Name = r[0]
-	strain.Genotype = fmt.Sprintf(genoTmpl, r[0])
+	strain.Genotype = fmt.Sprintf(genoTmpl, strain.Label)
 	strain.Characters[2] = "mutant"
 	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
 		Property: "mutant type",
