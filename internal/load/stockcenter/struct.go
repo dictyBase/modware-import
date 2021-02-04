@@ -6,7 +6,7 @@ import (
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
-	cstock "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
+	cstock "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter/gwdi"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/emirpasic/gods/maps/hashmap"
 	"github.com/sirupsen/logrus"
@@ -105,7 +105,7 @@ type gwdiDelConsumerArgs struct {
 }
 
 type gwdiCreateProdArgs struct {
-	gr       cstock.GWDIStrainReader
+	gr       cstock.GWDIMutantReader
 	cancelFn context.CancelFunc
 	ctx      context.Context
 }

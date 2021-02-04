@@ -7,7 +7,7 @@ import (
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
-	"github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
+	stockcenter "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter/gwdi"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/sirupsen/logrus"
@@ -39,14 +39,14 @@ func (gd *gwdiDel) Execute(id string) error {
 			Filter: fmt.Sprintf("entry_id===%s", id),
 		})
 	if err != nil {
-		if grpc.Code(err) != codes.NotFound {
-			return fmt.Errorf("error in finding any gwdi annotation for %s %s", id, err)
+		if grpc.Code(err) == codes.NotFound {
+			gd.logger.WithFields(logrus.Fields{
+				"event": "delete",
+				"id":    id,
+			}).Debug("could not find any annotation for delete")
+			return nil
 		}
-		gd.logger.WithFields(logrus.Fields{
-			"event": "delete",
-			"id":    id,
-		}).Debug("could not find any annotation for delete")
-		return nil
+		return fmt.Errorf("error in finding any gwdi annotation for %s %s", id, err)
 	}
 	for _, ta := range tac.Data {
 		_, err := gd.aclient.DeleteAnnotation(
@@ -56,6 +56,13 @@ func (gd *gwdiDel) Execute(id string) error {
 				Purge: true,
 			})
 		if err != nil {
+			if grpc.Code(err) == codes.NotFound {
+				gd.logger.WithFields(logrus.Fields{
+					"event": "delete",
+					"id":    ta.Id,
+				}).Debug("could not find annotation with id for delete")
+				continue
+			}
 			return fmt.Errorf("unable to remove annotation for %s %s", id, err)
 		}
 	}
@@ -80,11 +87,12 @@ func strainsForDeletion(args *gwdiStrainDelArgs) ([]string, error) {
 			})
 		if err != nil {
 			if grpc.Code(err) == codes.NotFound {
-				return ids, nil
+				break
 			}
+			return ids, err
 		}
 		if sc.Meta.NextCursor == 0 {
-			return ids, nil
+			break
 		}
 		cursor = sc.Meta.NextCursor
 		for _, scData := range sc.Data {
@@ -278,10 +286,20 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	return runConcurrentCreate(logger)
+	gw, err := stockcenter.NewGWDI(registry.GetReader(regs.GWDI_READER))
+	if err != nil {
+		return err
+	}
+	if err := gw.AnnotateMutant(); err != nil {
+		return err
+	}
+	return runConcurrentCreate(
+		logger,
+		gw.MutantReader("NA_single"),
+	)
 }
 
-func runConcurrentCreate(logger *logrus.Entry) error {
+func runConcurrentCreate(logger *logrus.Entry, gr stockcenter.GWDIMutantReader) error {
 	stclient := regs.GetStockAPIClient()
 	annclient := regs.GetAnnotationAPIClient()
 	pargs := &parentArgs{aclient: annclient, sclient: stclient}
@@ -296,7 +314,7 @@ func runConcurrentCreate(logger *logrus.Entry) error {
 	tasks, errc := createProducer(&gwdiCreateProdArgs{
 		ctx:      ctx,
 		cancelFn: cancelFn,
-		gr:       stockcenter.NewGWDIStrainReader(registry.GetReader(regs.GWDI_READER)),
+		gr:       gr,
 	})
 	errcList = append(errcList, errc)
 	errc = createConsumer(&gwdiCreateConsumerArgs{
