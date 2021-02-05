@@ -83,7 +83,7 @@ func strainsForDeletion(args *gwdiStrainDelArgs) ([]string, error) {
 			&pb.StockParameters{
 				Cursor: cursor,
 				Limit:  20,
-				Filter: "name@=~GWDI",
+				Filter: "name=~GWDI_",
 			})
 		if err != nil {
 			if grpc.Code(err) == codes.NotFound {
