@@ -3,6 +3,7 @@ package stockcenter
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 
@@ -33,24 +34,36 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	gw, err := stockcenter.NewGWDI(registry.GetReader(regs.GWDI_READER))
+	mr, err := mutantGroups(registry.GetReader(regs.GWDI_READER))
 	if err != nil {
 		return err
 	}
-	if err := gw.AnnotateMutant(); err != nil {
-		return err
-	}
-	groups, err := gw.AllGroups()
-	if err != nil {
-		return err
-	}
-	for _, g := range groups {
-		err := runConcurrentCreate(logger, gw.MutantReader(g))
+	for _, g := range mr {
+		err := runConcurrentCreate(logger, g)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func mutantGroups(r io.Reader) ([]stockcenter.GWDIMutantReader, error) {
+	var mr []stockcenter.GWDIMutantReader
+	gw, err := stockcenter.NewGWDI(r)
+	if err != nil {
+		return mr, err
+	}
+	if err := gw.AnnotateMutant(); err != nil {
+		return mr, err
+	}
+	groups, err := gw.AllGroups()
+	if err != nil {
+		return mr, err
+	}
+	for _, g := range groups {
+		mr = append(mr, gw.MutantReader(g))
+	}
+	return mr, nil
 }
 
 func runConcurrentCreate(logger *logrus.Entry, gr stockcenter.GWDIMutantReader) error {
