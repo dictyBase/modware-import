@@ -26,6 +26,9 @@ type gwdiDel struct {
 func (gd *gwdiDel) Execute(id string) error {
 	_, err := gd.sclient.RemoveStock(context.Background(), &pb.StockId{Id: id})
 	if err != nil {
+		if grpc.Code(err) == codes.NotFound {
+			return nil
+		}
 		return fmt.Errorf("error in removing gwdi strain with id %s %s", id, err)
 	}
 	gd.logger.WithFields(logrus.Fields{
