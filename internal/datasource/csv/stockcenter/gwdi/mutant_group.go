@@ -136,15 +136,14 @@ func (g *GWDI) DedupId() error {
 		if err != nil {
 			return fmt.Errorf("error in reading record %s", err)
 		}
-		id := record[0]
-		ok, err := m.Exist([]byte(id))
+		ok, err := m.Exist([]byte(record[0]))
 		if err != nil {
 			return err
 		}
 		if ok {
 		INNER:
 			for _, p := range chars {
-				id = fmt.Sprintf("%s%s", id, string(p))
+				id := fmt.Sprintf("%s%s", record[0], string(p))
 				ok, err := m.Exist([]byte(id))
 				if err != nil {
 					return err
@@ -156,7 +155,7 @@ func (g *GWDI) DedupId() error {
 			}
 		}
 		rstr := strings.Join(record, "\t")
-		if err := m.Put([]byte(id), []byte(rstr)); err != nil {
+		if err := m.Put([]byte(record[0]), []byte(rstr)); err != nil {
 			return err
 		}
 	}
