@@ -26,7 +26,7 @@ type gwdiDel struct {
 func (gd *gwdiDel) Execute(id string) error {
 	_, err := gd.sclient.RemoveStock(context.Background(), &pb.StockId{Id: id})
 	if err != nil {
-		return err
+		return fmt.Errorf("error in removing gwdi strain with id %s %s", id, err)
 	}
 	gd.logger.WithFields(logrus.Fields{
 		"event": "delete",
@@ -83,13 +83,13 @@ func strainsForDeletion(args *gwdiStrainDelArgs) ([]string, error) {
 			&pb.StockParameters{
 				Cursor: cursor,
 				Limit:  20,
-				Filter: "label=~GWDI",
+				Filter: "name@=~GWDI",
 			})
 		if err != nil {
 			if grpc.Code(err) == codes.NotFound {
 				break
 			}
-			return ids, err
+			return ids, fmt.Errorf("error getting list of strains %s", err)
 		}
 		if sc.Meta.NextCursor == 0 {
 			break
@@ -191,7 +191,7 @@ func createGwdi(client pb.StockServiceClient, gwdi *stockcenter.GWDIStrain) (*pb
 		Publications: []string{gwdi.Publication},
 		Names:        []string{gwdi.Name},
 	}
-	return client.CreateStrain(
+	strain, err := client.CreateStrain(
 		context.Background(),
 		&pb.NewStrain{
 			Data: &pb.NewStrain_Data{
@@ -200,6 +200,10 @@ func createGwdi(client pb.StockServiceClient, gwdi *stockcenter.GWDIStrain) (*pb
 			},
 		},
 	)
+	if err != nil {
+		return strain, fmt.Errorf("error in creating gwdi strain %s", err)
+	}
+	return strain, nil
 }
 
 func createConsumer(args *gwdiCreateConsumerArgs) chan error {
@@ -293,10 +297,20 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 	if err := gw.AnnotateMutant(); err != nil {
 		return err
 	}
-	return runConcurrentCreate(
-		logger,
-		gw.MutantReader("NA_single"),
-	)
+	groups := []string{
+		"NA_single",
+		"NA_multiple",
+		"intergenic_both_multiple",
+		"intergenic_up_multiple",
+		"intergenic_down_multiple",
+	}
+	for _, g := range groups {
+		err := runConcurrentCreate(logger, gw.MutantReader(g))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func runConcurrentCreate(logger *logrus.Entry, gr stockcenter.GWDIMutantReader) error {
