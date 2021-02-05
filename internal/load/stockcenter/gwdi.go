@@ -304,12 +304,9 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 	if err := gw.AnnotateMutant(); err != nil {
 		return err
 	}
-	groups := []string{
-		"NA_single",
-		"NA_multiple",
-		"intergenic_both_multiple",
-		"intergenic_up_multiple",
-		"intergenic_down_multiple",
+	groups, err := gw.AllGroups()
+	if err != nil {
+		return err
 	}
 	for _, g := range groups {
 		err := runConcurrentCreate(logger, gw.MutantReader(g))
