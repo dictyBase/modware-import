@@ -99,18 +99,25 @@ func strainsForDeletion(args *gwdiStrainDelArgs) ([]string, error) {
 			return ids, fmt.Errorf("error getting list of strains %s", err)
 		}
 		if sc.Meta.NextCursor == 0 {
+			ids = append(ids, queueIds(sc, args.logger)...)
 			break
 		}
 		cursor = sc.Meta.NextCursor
-		for _, scData := range sc.Data {
-			ids = append(ids, scData.Id)
-			args.logger.WithFields(logrus.Fields{
-				"event": "queue",
-				"id":    scData.Id,
-			}).Debug("queued gwdi strain for pruning")
-		}
+		ids = append(ids, queueIds(sc, args.logger)...)
 	}
 	return ids, nil
+}
+
+func queueIds(sc *pb.StrainCollection, logger *logrus.Entry) []string {
+	var ids []string
+	for _, scData := range sc.Data {
+		ids = append(ids, scData.Id)
+		logger.WithFields(logrus.Fields{
+			"event": "queue",
+			"id":    scData.Id,
+		}).Debug("queued gwdi strain for pruning")
+	}
+	return ids
 }
 
 type gwdiCreate struct {
