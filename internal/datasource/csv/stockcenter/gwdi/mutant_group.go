@@ -124,7 +124,6 @@ func (g *GWDI) GroupMutant() error {
 }
 
 func (g *GWDI) DedupId() error {
-	chars := "abcdefghijklmnopqrst"
 	m := g.mapper
 	r := csv.NewReader(g.reader)
 	r.Comment = '#'
@@ -136,30 +135,48 @@ func (g *GWDI) DedupId() error {
 		if err != nil {
 			return fmt.Errorf("error in reading record %s", err)
 		}
-		ok, err := m.Exist([]byte(record[0]))
+		id, err := g.syntheticId(record[0])
 		if err != nil {
 			return err
 		}
-		if ok {
-		INNER:
-			for _, p := range chars {
-				id := fmt.Sprintf("%s%s", record[0], string(p))
-				ok, err := m.Exist([]byte(id))
-				if err != nil {
-					return err
-				}
-				if !ok {
-					record[0] = id
-					break INNER
-				}
-			}
-		}
+		record[0] = id
 		rstr := strings.Join(record, "\t")
 		if err := m.Put([]byte(record[0]), []byte(rstr)); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (g *GWDI) syntheticId(r string) (string, error) {
+	ok, err := g.mapper.Exist([]byte(r))
+	if err != nil {
+		return r, err
+	}
+	if !ok {
+		return r, nil
+	}
+	id, err := g.selectId(r)
+	if err != nil {
+		return r, err
+	}
+	return id, nil
+}
+
+func (g *GWDI) selectId(r string) (string, error) {
+	chars := "abcdefghijklmnopqrst"
+	var id string
+	for _, p := range chars {
+		id = fmt.Sprintf("%s%s", r, string(p))
+		ok, err := g.mapper.Exist([]byte(id))
+		if err != nil {
+			return id, err
+		}
+		if !ok {
+			break
+		}
+	}
+	return id, nil
 }
 
 func inferGroup(r []string) string {
