@@ -69,11 +69,14 @@ func mutantGroups(r io.Reader) ([]stockcenter.GWDIMutantReader, error) {
 func runConcurrentCreate(logger *logrus.Entry, gr stockcenter.GWDIMutantReader) error {
 	stclient := regs.GetStockAPIClient()
 	annclient := regs.GetAnnotationAPIClient()
-	pargs := &parentArgs{aclient: annclient, sclient: stclient}
-	if err := createAX3Parent(pargs); err != nil {
+	ps := &parentStrain{
+		aclient: annclient,
+		sclient: stclient,
+	}
+	if err := ps.findOrCreateAX3(); err != nil {
 		return err
 	}
-	if err := createAX4Parent(pargs); err != nil {
+	if err := ps.findOrCreateAX4(); err != nil {
 		return err
 	}
 	ctx, cancelFn := context.WithCancel(context.Background())

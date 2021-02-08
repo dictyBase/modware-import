@@ -4,51 +4,53 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
+	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	sreg "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
 
-func createAX4Parent(args *parentArgs) error {
-	_, err := args.sclient.GetStrain(
+type parentStrain struct {
+	aclient annotation.TaggedAnnotationServiceClient
+	sclient pb.StockServiceClient
+}
+
+func (p *parentStrain) isPresent(id string) (bool, error) {
+	_, err := p.sclient.GetStrain(
 		context.Background(),
-		&stock.StockId{Id: sreg.AX4ParentId},
+		&stock.StockId{Id: id},
 	)
-	if err == nil { //AX4 parent exists
-		return nil
+	if err != nil {
+		if grpc.Code(err) == codes.NotFound {
+			return false, nil
+		}
+		return false,
+			fmt.Errorf("error in finding parent strain %s", err)
 	}
-	if grpc.Code(err) != codes.NotFound {
-		return err
-	}
-	_, err = args.sclient.LoadStrain(
+	return true, nil
+}
+
+func (p *parentStrain) createAX4() error {
+	_, err := p.sclient.LoadStrain(
 		context.Background(),
 		sreg.AX4ParentStrain(),
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"error in creating AX4 Parent strain %s %s", sreg.AX4ParentId, err,
+			"error in creating AX4 Parent strain %s %s", sreg.AX3ParentId, err,
 		)
 	}
-	if err := loadAX4ParentProps(args); err != nil {
+	if err := p.insertAX4Props(); err != nil {
 		return err
 
 	}
-	return loadParentMoreProps(sreg.AX4ParentId, args)
+	return p.createExtraProps(sreg.AX4ParentId)
 }
 
-func createAX3Parent(args *parentArgs) error {
-	_, err := args.sclient.GetStrain(
-		context.Background(),
-		&stock.StockId{Id: sreg.AX3ParentId},
-	)
-	if err == nil { //AX3 parent exists
-		return nil
-	}
-	if grpc.Code(err) != codes.NotFound {
-		return err
-	}
-	_, err = args.sclient.LoadStrain(
+func (p *parentStrain) createAX3() error {
+	_, err := p.sclient.LoadStrain(
 		context.Background(),
 		sreg.AX3ParentStrain(),
 	)
@@ -57,53 +59,17 @@ func createAX3Parent(args *parentArgs) error {
 			"error in creating AX3 Parent strain %s %s", sreg.AX3ParentId, err,
 		)
 	}
-	if err := loadAX3ParentProps(args); err != nil {
+	if err := p.insertAX3Props(); err != nil {
 		return err
 
 	}
-	return loadParentMoreProps(sreg.AX3ParentId, args)
+	return p.createExtraProps(sreg.AX3ParentId)
 }
 
-func loadAX3ParentProps(args *parentArgs) error {
+func (p *parentStrain) insertAX4Props() error {
 	//systematic name
 	err := createAnno(&createAnnoArgs{
-		client:   args.aclient,
-		ontology: sreg.DICTY_ANNO_ONTOLOGY,
-		id:       sreg.AX3ParentId,
-		tag:      sysnameTag,
-		user:     sreg.DEFAULT_USER,
-		value:    "AX3",
-	})
-	if err != nil {
-		return err
-	}
-	//mutagenesis method
-	err = createAnno(&createAnnoArgs{
-		client:   args.aclient,
-		ontology: sreg.DICTY_MUTAGENESIS_ONTOLOGY,
-		id:       sreg.AX3ParentId,
-		tag:      mutmethodTag,
-		user:     sreg.DEFAULT_USER,
-		value:    "N-Methyl-N-Nitro-N-Nitrosoguanidine",
-	})
-	if err != nil {
-		return err
-	}
-	//genetic modification
-	return createAnno(&createAnnoArgs{
-		client:   args.aclient,
-		ontology: sreg.DICTY_ANNO_ONTOLOGY,
-		id:       sreg.AX3ParentId,
-		user:     sreg.DEFAULT_USER,
-		tag:      muttypeTag,
-		value:    "endogenous mutation",
-	})
-}
-
-func loadAX4ParentProps(args *parentArgs) error {
-	//systematic name
-	err := createAnno(&createAnnoArgs{
-		client:   args.aclient,
+		client:   p.aclient,
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
 		id:       sreg.AX4ParentId,
 		tag:      sysnameTag,
@@ -115,7 +81,7 @@ func loadAX4ParentProps(args *parentArgs) error {
 	}
 	//mutagenesis method
 	err = createAnno(&createAnnoArgs{
-		client:   args.aclient,
+		client:   p.aclient,
 		ontology: sreg.DICTY_MUTAGENESIS_ONTOLOGY,
 		id:       sreg.AX4ParentId,
 		tag:      mutmethodTag,
@@ -127,7 +93,7 @@ func loadAX4ParentProps(args *parentArgs) error {
 	}
 	//genetic modification
 	return createAnno(&createAnnoArgs{
-		client:   args.aclient,
+		client:   p.aclient,
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
 		id:       sreg.AX4ParentId,
 		user:     sreg.DEFAULT_USER,
@@ -136,25 +102,83 @@ func loadAX4ParentProps(args *parentArgs) error {
 	})
 }
 
-func loadParentMoreProps(id string, args *parentArgs) error {
+func (p *parentStrain) findOrCreateAX4() error {
+	ok, err := p.isPresent(sreg.AX4ParentId)
+	if err != nil {
+		return err
+	}
+	if ok {
+		return nil
+	}
+	return p.createAX4()
+}
+
+func (p *parentStrain) findOrCreateAX3() error {
+	ok, err := p.isPresent(sreg.AX3ParentId)
+	if err != nil {
+		return err
+	}
+	if ok {
+		return nil
+	}
+	return p.createAX3()
+}
+
+func (p *parentStrain) insertAX3Props() error {
+	//systematic name
+	err := createAnno(&createAnnoArgs{
+		client:   p.aclient,
+		ontology: sreg.DICTY_ANNO_ONTOLOGY,
+		id:       sreg.AX3ParentId,
+		tag:      sysnameTag,
+		user:     sreg.DEFAULT_USER,
+		value:    "AX3",
+	})
+	if err != nil {
+		return err
+	}
+	//mutagenesis method
+	err = createAnno(&createAnnoArgs{
+		client:   p.aclient,
+		ontology: sreg.DICTY_MUTAGENESIS_ONTOLOGY,
+		id:       sreg.AX3ParentId,
+		tag:      mutmethodTag,
+		user:     sreg.DEFAULT_USER,
+		value:    "N-Methyl-N-Nitro-N-Nitrosoguanidine",
+	})
+	if err != nil {
+		return err
+	}
+	//genetic modification
+	return createAnno(&createAnnoArgs{
+		client:   p.aclient,
+		ontology: sreg.DICTY_ANNO_ONTOLOGY,
+		id:       sreg.AX3ParentId,
+		user:     sreg.DEFAULT_USER,
+		tag:      muttypeTag,
+		value:    "endogenous mutation",
+	})
+}
+
+func (p *parentStrain) createExtraProps(id string) error {
 	//genotype
-	_, err := NewOrReloadGeno(args.aclient, &genoArgs{
+	_, err := NewOrReloadGeno(p.aclient, &genoArgs{
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
 		user:     sreg.DEFAULT_USER,
-		id:       id,
-		tag:      genoTag,
 		value:    "axeA1,axeB1,axeC1",
+		tag:      genoTag,
+		id:       id,
 	})
 	if err != nil {
 		return err
 	}
 	//strain characteristics
 	return createAnno(&createAnnoArgs{
-		client:   args.aclient,
 		ontology: sreg.DICTY_STRAINCHAR_ONTOLOGY,
-		id:       id,
 		user:     sreg.DEFAULT_USER,
+		client:   p.aclient,
 		tag:      "axenic",
+		id:       id,
 		value:    val,
 	})
 }
