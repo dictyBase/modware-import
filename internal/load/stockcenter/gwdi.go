@@ -15,8 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func LoadGwdi(cmd *cobra.Command, args []string) error {
@@ -214,7 +214,7 @@ func (gd *gwdiDel) strainsForDeletion() ([]string, error) {
 				Filter: "name=~GWDI_",
 			})
 		if err != nil {
-			if grpc.Code(err) == codes.NotFound {
+			if status.Code(err) == codes.NotFound {
 				break
 			}
 			return ids, fmt.Errorf("error getting list of strains %s", err)
@@ -249,7 +249,7 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 			Filter: fmt.Sprintf("entry_id===%s", id),
 		})
 	if err != nil {
-		if grpc.Code(err) == codes.NotFound {
+		if status.Code(err) == codes.NotFound {
 			return nil
 		}
 		return fmt.Errorf("error in finding any gwdi annotation for %s %s", id, err)
@@ -262,7 +262,7 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 				Purge: true,
 			})
 		if err != nil {
-			if grpc.Code(err) == codes.NotFound {
+			if status.Code(err) == codes.NotFound {
 				continue
 			}
 			return fmt.Errorf("unable to remove annotation for %s %s", id, err)
@@ -279,7 +279,7 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 func (gd *gwdiDel) execute(id string) error {
 	_, err := gd.sclient.RemoveStock(context.Background(), &pb.StockId{Id: id})
 	if err != nil {
-		if grpc.Code(err) == codes.NotFound {
+		if status.Code(err) == codes.NotFound {
 			return nil
 		}
 		if strings.Contains(err.Error(), "document not found") {
