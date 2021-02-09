@@ -12,7 +12,6 @@ import (
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -120,7 +119,7 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 	switch {
 	case err == nil:
 		errVal = nil
-	case grpc.Code(err) == codes.NotFound:
+	case status.Code(err) == codes.NotFound:
 		err = createAnno(&createAnnoArgs{
 			value:    args.value,
 			user:     regs.DEFAULT_USER,
@@ -155,7 +154,7 @@ func findOrCreateAnno(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 	switch {
 	case err == nil:
 		return ta, nil
-	case grpc.Code(err) == codes.NotFound:
+	case status.Code(err) == codes.NotFound:
 		return args.client.CreateAnnotation(
 			context.Background(),
 			&pb.NewTaggedAnnotation{

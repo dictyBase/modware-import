@@ -38,13 +38,13 @@ func (p *parentStrain) createAX4() error {
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"error in creating AX4 Parent strain %s %s", sreg.AX3ParentId, err,
+			"error in creating AX4 Parent strain %s %s", sreg.AX3ParentID, err,
 		)
 	}
 	if err := p.insertAX4Props(); err != nil {
 		return err
 	}
-	return p.createExtraProps(sreg.AX4ParentId)
+	return p.createExtraProps(sreg.AX4ParentID)
 }
 
 func (p *parentStrain) createAX3() error {
@@ -54,13 +54,13 @@ func (p *parentStrain) createAX3() error {
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"error in creating AX3 Parent strain %s %s", sreg.AX3ParentId, err,
+			"error in creating AX3 Parent strain %s %s", sreg.AX3ParentID, err,
 		)
 	}
 	if err := p.insertAX3Props(); err != nil {
 		return err
 	}
-	return p.createExtraProps(sreg.AX3ParentId)
+	return p.createExtraProps(sreg.AX3ParentID)
 }
 
 func (p *parentStrain) insertAX4Props() error {
@@ -68,10 +68,10 @@ func (p *parentStrain) insertAX4Props() error {
 	err := createAnno(&createAnnoArgs{
 		client:   p.aclient,
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
-		id:       sreg.AX4ParentId,
+		id:       sreg.AX4ParentID,
 		tag:      sysnameTag,
 		user:     sreg.DEFAULT_USER,
-		value:    sreg.AX4ParentId,
+		value:    sreg.AX4ParentID,
 	})
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (p *parentStrain) insertAX4Props() error {
 	err = createAnno(&createAnnoArgs{
 		client:   p.aclient,
 		ontology: sreg.DICTY_MUTAGENESIS_ONTOLOGY,
-		id:       sreg.AX4ParentId,
+		id:       sreg.AX4ParentID,
 		tag:      mutmethodTag,
 		user:     sreg.DEFAULT_USER,
 		value:    "Spontaneous",
@@ -92,7 +92,7 @@ func (p *parentStrain) insertAX4Props() error {
 	return createAnno(&createAnnoArgs{
 		client:   p.aclient,
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
-		id:       sreg.AX4ParentId,
+		id:       sreg.AX4ParentID,
 		user:     sreg.DEFAULT_USER,
 		tag:      muttypeTag,
 		value:    "endogenous mutation",
@@ -100,7 +100,7 @@ func (p *parentStrain) insertAX4Props() error {
 }
 
 func (p *parentStrain) findOrCreateAX4() error {
-	ok, err := p.isPresent(sreg.AX4ParentId)
+	ok, err := p.isPresent(sreg.AX4ParentID)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (p *parentStrain) findOrCreateAX4() error {
 }
 
 func (p *parentStrain) findOrCreateAX3() error {
-	ok, err := p.isPresent(sreg.AX3ParentId)
+	ok, err := p.isPresent(sreg.AX3ParentID)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (p *parentStrain) insertAX3Props() error {
 	err := createAnno(&createAnnoArgs{
 		client:   p.aclient,
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
-		id:       sreg.AX3ParentId,
+		id:       sreg.AX3ParentID,
 		tag:      sysnameTag,
 		user:     sreg.DEFAULT_USER,
 		value:    "AX3",
@@ -138,7 +138,7 @@ func (p *parentStrain) insertAX3Props() error {
 	err = createAnno(&createAnnoArgs{
 		client:   p.aclient,
 		ontology: sreg.DICTY_MUTAGENESIS_ONTOLOGY,
-		id:       sreg.AX3ParentId,
+		id:       sreg.AX3ParentID,
 		tag:      mutmethodTag,
 		user:     sreg.DEFAULT_USER,
 		value:    "N-Methyl-N-Nitro-N-Nitrosoguanidine",
@@ -150,7 +150,7 @@ func (p *parentStrain) insertAX3Props() error {
 	return createAnno(&createAnnoArgs{
 		client:   p.aclient,
 		ontology: sreg.DICTY_ANNO_ONTOLOGY,
-		id:       sreg.AX3ParentId,
+		id:       sreg.AX3ParentID,
 		user:     sreg.DEFAULT_USER,
 		tag:      muttypeTag,
 		value:    "endogenous mutation",
