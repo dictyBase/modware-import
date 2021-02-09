@@ -20,10 +20,8 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.6.2
-	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
-	github.com/urfave/cli v1.22.2
-	google.golang.org/grpc v1.27.0
+	google.golang.org/grpc v1.35.0
 )
 
 go 1.13
