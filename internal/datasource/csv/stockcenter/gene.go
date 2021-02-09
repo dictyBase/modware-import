@@ -11,6 +11,7 @@ import (
 
 //StockGeneLookup is an interface for retrieving gene mapped to
 //a stock entry
+
 type StockGeneLookup interface {
 	//StockGene looks up a stock identifier and returns a slice
 	//with a list of gene identifiers
