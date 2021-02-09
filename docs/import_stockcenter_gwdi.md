@@ -1,20 +1,22 @@
-## import stockcenter phenotype
+## import stockcenter gwdi
 
-load stockcenter phenotype data
+load gwdi strains
 
 ### Synopsis
 
-load stockcenter phenotype data
+load gwdi strains
 
 ```
-import stockcenter phenotype [flags]
+import stockcenter gwdi [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help                     help for phenotype
-  -i, --phenotype-input string   tsv file with strain data
+  -c, --concurrency int     No of concurrent workers (default 30)
+  -i, --gwdi-input string   csv file with gwdi strains data
+      --gwdi-prune          prune all gwdi strain records (default true)
+  -h, --help                help for gwdi
 ```
 
 ### Options inherited from parent commands
