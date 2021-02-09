@@ -1,6 +1,7 @@
 package stockcenter
 
 import (
+	"strings"
 	"time"
 
 	"github.com/dictyBase/aphgrpc"
@@ -11,9 +12,21 @@ const (
 	AX3ParentID   = "DBS0237700"
 	AX4ParentID   = "DBS0351471"
 	ParentSpecies = "Dictyostelium discoideum"
-	AX3summary    = "generic axenic strain, used for curation of parental strains when the specific AX3 is not available"
-	AX4summary    = "AX4 strain from the Thompson lab that is the parent of GWDI strains. A different isolate of that strain is being sequenced"
 )
+
+func AX3Summary() string {
+	var b strings.Builder
+	b.WriteString("generic axenic strain, used for curation of parental")
+	b.WriteString("strains when the specific AX3 is not available")
+	return b.String()
+}
+
+func AX4Summary() string {
+	var b strings.Builder
+	b.WriteString("AX4 strain from the Thompson lab that is the parent of GWDI strains.")
+	b.WriteString("A different isolate of that strain is being sequenced")
+	return b.String()
+}
 
 func AX4ParentStrain() *pb.ExistingStrain {
 	return &pb.ExistingStrain{
@@ -25,7 +38,7 @@ func AX4ParentStrain() *pb.ExistingStrain {
 				UpdatedAt:    aphgrpc.TimestampProto(time.Now()),
 				CreatedBy:    DEFAULT_USER,
 				UpdatedBy:    DEFAULT_USER,
-				Summary:      AX4summary,
+				Summary:      AX4Summary(),
 				Species:      ParentSpecies,
 				Label:        "AX4",
 				Parent:       AX3ParentID,
@@ -46,7 +59,7 @@ func AX3ParentStrain() *pb.ExistingStrain {
 				UpdatedAt:    aphgrpc.TimestampProto(time.Now()),
 				CreatedBy:    DEFAULT_USER,
 				UpdatedBy:    DEFAULT_USER,
-				Summary:      AX3summary,
+				Summary:      AX3Summary(),
 				Species:      ParentSpecies,
 				Label:        "AX3",
 				Names:        []string{"AX-3"},
