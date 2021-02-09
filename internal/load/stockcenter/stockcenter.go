@@ -120,7 +120,6 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 	switch {
 	case err == nil:
 		errVal = nil
-		break
 	case grpc.Code(err) == codes.NotFound:
 		err = createAnno(&createAnnoArgs{
 			value:    args.value,
@@ -134,7 +133,6 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 		} else {
 			create = true
 		}
-		break
 	case err != nil:
 		errVal = fmt.Errorf(
 			"error in finding annotation %s for id %s %s",
@@ -142,7 +140,6 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 			args.id,
 			err,
 		)
-		break
 	}
 	return create, errVal
 }

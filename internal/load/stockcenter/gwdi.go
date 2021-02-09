@@ -144,7 +144,7 @@ func createConsumer(args *gwdiCreateConsumerArgs) chan error {
 func loadingCount(logger *logrus.Entry, counter chan int) {
 	c := 0
 	for v := range counter {
-		c = c + v
+		c += v
 	}
 	logger.WithFields(logrus.Fields{
 		"type":  "counter",

@@ -44,7 +44,6 @@ func (p *parentStrain) createAX4() error {
 	}
 	if err := p.insertAX4Props(); err != nil {
 		return err
-
 	}
 	return p.createExtraProps(sreg.AX4ParentId)
 }
@@ -61,7 +60,6 @@ func (p *parentStrain) createAX3() error {
 	}
 	if err := p.insertAX3Props(); err != nil {
 		return err
-
 	}
 	return p.createExtraProps(sreg.AX3ParentId)
 }
