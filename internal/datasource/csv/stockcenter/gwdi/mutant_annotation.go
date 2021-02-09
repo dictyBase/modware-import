@@ -10,6 +10,7 @@ import (
 
 const (
 	genoTmpl = `axeA1,axeB1,axeC1,%s,[bsRcas],bsR`
+	mutant   = "mutant"
 )
 
 var disrupt_rgxp = regexp.MustCompile(`^(DDB_G[0-9]{5,})`)
@@ -105,7 +106,7 @@ func geneless_mutant_annotation(r []string) *GWDIStrain {
 	strain.Label = removeSuffix(r[0])
 	strain.Name = r[0]
 	strain.Genotype = fmt.Sprintf(genoTmpl, strain.Label)
-	strain.Characters[2] = "mutant"
+	strain.Characters[2] = mutant
 	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
 		Property: "mutant type",
 		Value:    "exogenous insertion",
@@ -130,7 +131,7 @@ func intergenic_multiple_both_annotation(r []string) *GWDIStrain {
 	strain.Label = d
 	strain.Name = r[0]
 	strain.Genotype = fmt.Sprintf(genoTmpl, d)
-	strain.Characters[2] = "mutant"
+	strain.Characters[2] = mutant
 	strain.Genes = []string{m[0], m[1]}
 	strain.Summary = fmt.Sprintf(
 		summInterMultipleBoth(),
@@ -146,7 +147,7 @@ func intergenic_multiple_up_down_annotation(r []string, orientation string) *GWD
 	strain.Label = d
 	strain.Name = r[0]
 	strain.Genotype = fmt.Sprintf(genoTmpl, d)
-	strain.Characters[2] = "mutant"
+	strain.Characters[2] = mutant
 	strain.Genes = []string{r[8]}
 	strain.Summary = fmt.Sprintf(
 		summInterMultipleUpDown(orientation),
@@ -170,7 +171,7 @@ func intergenic_single_up_down_annotation(r []string, orientation string) *GWDIS
 	strain.Label = d
 	strain.Name = r[0]
 	strain.Genotype = fmt.Sprintf(genoTmpl, d)
-	strain.Characters[2] = "mutant"
+	strain.Characters[2] = mutant
 	strain.Genes = []string{r[8]}
 	strain.Summary = fmt.Sprintf(
 		summInterUpDown(orientation),
@@ -187,7 +188,7 @@ func intergenic_single_both_annotation(r []string) *GWDIStrain {
 	strain.Label = d
 	strain.Name = r[0]
 	strain.Genotype = fmt.Sprintf(genoTmpl, d)
-	strain.Characters[2] = "mutant"
+	strain.Characters[2] = mutant
 	strain.Genes = []string{m[0], m[1]}
 	strain.Summary = fmt.Sprintf(
 		summInterSingleBoth(),
