@@ -75,6 +75,15 @@ do
                     --log-level ${LOG_LEVEL} \
                     -i strain_phenotype.tsv \
             ;;
+        "gwdi")
+                ${APP} stockcenter \
+                    gwdi \
+                    --access-key ${ACCESS_KEY} \
+                    --secret-key  ${SECRET_KEY} \
+                    --log-level ${LOG_LEVEL} \
+                    -c 5 \
+                    -i gwdi_strain_lite.csv \
+            ;;
         "plasmidinv")
                 ${APP} stockcenter \
                     plasmid-inventory \

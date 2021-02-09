@@ -1,16 +1,33 @@
 package stockcenter
 
 import (
+	"context"
+	"regexp"
+
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
+	cstock "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter/gwdi"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
+	"github.com/emirpasic/gods/maps/hashmap"
 	"github.com/sirupsen/logrus"
 )
+
+var stRegex = regexp.MustCompile(`^DBS`)
+
+type plasmidIDMap struct {
+	idmap *hashmap.Map
+}
+
+type genoArgs struct {
+	tag, id, user   string
+	ontology, value string
+}
 
 type createAnnoArgs struct {
 	ontology string
 	tag      string
 	value    string
 	id       string
+	user     string
 	rank     int
 	client   pb.TaggedAnnotationServiceClient
 }
@@ -71,4 +88,18 @@ type annoParams struct {
 	id     string
 	loader string
 	err    error
+}
+
+type gwdiCreateProdArgs struct {
+	gr       cstock.GWDIMutantReader
+	cancelFn context.CancelFunc
+	ctx      context.Context
+}
+
+type gwdiCreateConsumerArgs struct {
+	concurrency int
+	tasks       chan *cstock.GWDIStrain
+	runner      *gwdiCreate
+	ctx         context.Context
+	cancelFn    context.CancelFunc
 }

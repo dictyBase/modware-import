@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"regexp"
 	"strings"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/order"
@@ -17,13 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var stRegex = regexp.MustCompile(`^DBS`)
-
-type plasmidIdMap struct {
-	idmap *hashmap.Map
-}
-
-func newPlasmidMap(r io.Reader) (*plasmidIdMap, error) {
+func newPlasmidMap(r io.Reader) (*plasmidIDMap, error) {
 	m := hashmap.New()
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
@@ -33,14 +26,14 @@ func newPlasmidMap(r io.Reader) (*plasmidIdMap, error) {
 			break
 		}
 		if err != nil {
-			return &plasmidIdMap{}, err
+			return &plasmidIDMap{}, err
 		}
 		m.Put(row[1], row[0])
 	}
-	return &plasmidIdMap{idmap: m}, nil
+	return &plasmidIDMap{idmap: m}, nil
 }
 
-func (pm *plasmidIdMap) name2Id(name string) (string, bool) {
+func (pm *plasmidIDMap) name2Id(name string) (string, bool) {
 	v, ok := pm.idmap.Get(name)
 	if !ok {
 		return "", false

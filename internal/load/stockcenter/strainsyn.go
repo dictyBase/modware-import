@@ -15,10 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	synTag = "synonym"
-)
-
 func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 	pr := stockcenter.NewTsvStockPropReader(registry.GetReader(regs.StrainSynReader))
 	client := regs.GetAnnotationAPIClient()

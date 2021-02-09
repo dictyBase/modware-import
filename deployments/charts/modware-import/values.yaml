@@ -22,6 +22,8 @@ load:
         - straininv
         - plasmidinv
         - phenotype
+    subGroupFour:
+        - gwdi
   #- command: genome
     #group:
       #-

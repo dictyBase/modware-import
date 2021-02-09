@@ -15,25 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	genoTag = "genotype"
-)
-
-type Status int
-
-const (
-	Created Status = iota
-	Updated
-	Deleted
-	Read
-	Nop
-)
-
-type param struct {
-	tag, id, user   string
-	ontology, value string
-}
-
 func LoadGeno(cmd *cobra.Command, args []string) error {
 	gr := stockcenter.NewTsvGenotypeReader(registry.GetReader(regs.GENO_READER))
 	client := regs.GetAnnotationAPIClient()
@@ -52,7 +33,7 @@ func LoadGeno(cmd *cobra.Command, args []string) error {
 		}
 		st, err := NewOrReloadGeno(
 			client,
-			&param{
+			&genoArgs{
 				tag:      genoTag,
 				id:       geno.StrainId,
 				user:     regs.DEFAULT_USER,
@@ -88,7 +69,7 @@ func LoadGeno(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func NewOrReloadGeno(client pb.TaggedAnnotationServiceClient, p *param) (Status, error) {
+func NewOrReloadGeno(client pb.TaggedAnnotationServiceClient, p *genoArgs) (Status, error) {
 	ta, err := client.GetEntryAnnotation(
 		context.Background(),
 		&pb.EntryAnnotationRequest{

@@ -10,11 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	strainCharOnto = "strain_characteristics"
-	val            = "novalue"
-)
-
 func LoadStrainChar(cmd *cobra.Command, args []string) error {
 	scr := stockcenter.NewTsvCharacterReader(registry.GetReader(regs.STRAINCHAR_READER))
 	client := regs.GetAnnotationAPIClient()
@@ -33,8 +28,8 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 			client:   client,
 			tag:      chs.Character,
 			id:       chs.Id,
-			ontology: strainCharOnto,
 			value:    val,
+			ontology: regs.DICTY_STRAINCHAR_ONTOLOGY,
 		})
 		if err != nil {
 			return err

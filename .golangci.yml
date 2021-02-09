@@ -1,3 +1,8 @@
+linters-settings: 
+    funlen:
+        lines: 80
+    errcheck: 
+        exclude: errcheck_excludes.txt
 linters:
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
@@ -8,7 +13,6 @@ linters:
     - dupl
     - errcheck
     - funlen
-    - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
@@ -38,3 +42,4 @@ linters:
   # - maligned,prealloc
   # - gochecknoglobals
   # - golint
+  # - gochecknoinits

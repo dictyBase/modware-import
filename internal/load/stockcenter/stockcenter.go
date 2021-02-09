@@ -3,6 +3,7 @@ package stockcenter
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -78,26 +79,27 @@ func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 	return ta, nil
 }
 
-func createAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) error {
-	_, err := client.CreateAnnotation(
+func createAnno(args *createAnnoArgs) error {
+	_, err := args.client.CreateAnnotation(
 		context.Background(),
 		&pb.NewTaggedAnnotation{
 			Data: &pb.NewTaggedAnnotation_Data{
 				Attributes: &pb.NewTaggedAnnotationAttributes{
-					Value:     value,
-					CreatedBy: regs.DEFAULT_USER,
-					Tag:       tag,
-					EntryId:   id,
-					Ontology:  ontology,
+					Value:     args.value,
+					CreatedBy: args.user,
+					Tag:       args.tag,
+					EntryId:   args.id,
+					Ontology:  args.ontology,
 				},
 			},
 		},
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"error in creating annotation %s for id %s %s",
-			tag,
-			id,
+			"error in creating annotation %s for id %s with ontology %s %s",
+			args.tag,
+			args.id,
+			args.ontology,
 			err,
 		)
 	}
@@ -106,6 +108,7 @@ func createAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, valu
 
 func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 	create := false
+	var errVal error
 	_, err := args.client.GetEntryAnnotation(
 		context.Background(),
 		&pb.EntryAnnotationRequest{
@@ -115,9 +118,44 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 		})
 	switch {
 	case err == nil:
-		return create, nil
+		errVal = nil
 	case status.Code(err) == codes.NotFound:
-		_, err := args.client.CreateAnnotation(
+		err = createAnno(&createAnnoArgs{
+			value:    args.value,
+			user:     regs.DEFAULT_USER,
+			tag:      args.tag,
+			id:       args.id,
+			ontology: args.ontology,
+		})
+		if err != nil {
+			errVal = err
+		} else {
+			create = true
+		}
+	case err != nil:
+		errVal = fmt.Errorf(
+			"error in finding annotation %s for id %s %s",
+			args.tag,
+			args.id,
+			err,
+		)
+	}
+	return create, errVal
+}
+
+func findOrCreateAnno(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
+	ta, err := args.client.GetEntryAnnotation(
+		context.Background(),
+		&pb.EntryAnnotationRequest{
+			Tag:      args.tag,
+			EntryId:  args.id,
+			Ontology: args.ontology,
+		})
+	switch {
+	case err == nil:
+		return ta, nil
+	case status.Code(err) == codes.NotFound:
+		return args.client.CreateAnnotation(
 			context.Background(),
 			&pb.NewTaggedAnnotation{
 				Data: &pb.NewTaggedAnnotation_Data{
@@ -131,50 +169,11 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 				},
 			},
 		)
-		if err != nil {
-			return create, fmt.Errorf(
-				"error in finding annotation %s for id %s %s",
-				args.tag,
-				args.id,
-				err,
-			)
-		}
-		create = true
-	}
-	return create, nil
-}
-
-func findOrCreateAnno(client pb.TaggedAnnotationServiceClient, tag, id, ontology, value string) (*pb.TaggedAnnotation, error) {
-	ta, err := client.GetEntryAnnotation(
-		context.Background(),
-		&pb.EntryAnnotationRequest{
-			Tag:      tag,
-			EntryId:  id,
-			Ontology: ontology,
-		})
-	switch {
-	case err == nil:
-		return ta, nil
-	case status.Code(err) == codes.NotFound:
-		return client.CreateAnnotation(
-			context.Background(),
-			&pb.NewTaggedAnnotation{
-				Data: &pb.NewTaggedAnnotation_Data{
-					Attributes: &pb.NewTaggedAnnotationAttributes{
-						Value:     value,
-						CreatedBy: regs.DEFAULT_USER,
-						Tag:       tag,
-						EntryId:   id,
-						Ontology:  ontology,
-					},
-				},
-			},
-		)
 	}
 	return ta, fmt.Errorf(
 		"error in finding annotation %s for id %s %s",
-		tag,
-		id,
+		args.tag,
+		args.id,
 		err,
 	)
 }
@@ -244,4 +243,48 @@ func handleAnnoRetrieval(args *annoParams) (bool, error) {
 		"id":    args.id,
 	}).Debugf("deleted %s", args.loader)
 	return found, nil
+}
+
+// waitForPipeline waits for results from all error channels.
+// It returns early on the first error.
+func waitForPipeline(errs ...<-chan error) error {
+	for err := range mergeErrors(errs...) {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// mergeErrors merges multiple channels of errors.
+// Based on https://blog.golang.org/pipelines.
+func mergeErrors(cs ...<-chan error) <-chan error {
+	// We must ensure that the output channel has the capacity to
+	// hold as many errors
+	// as there are error channels.
+	// This will ensure that it never blocks, even
+	// if WaitForPipeline returns early.
+	out := make(chan error, len(cs))
+
+	// Start an output goroutine for each input channel in cs.  output
+	// copies values from c to out until c is closed, then calls
+	// wg.Done.
+	var wg sync.WaitGroup
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go func(c <-chan error) {
+			for v := range c {
+				out <- v
+			}
+			wg.Done()
+		}(c)
+	}
+
+	// Start a goroutine to close out once all the output goroutines
+	// are done.  This must start after the wg.Add call.
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }
