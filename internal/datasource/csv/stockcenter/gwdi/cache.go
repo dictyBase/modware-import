@@ -68,7 +68,7 @@ func (b *leveldbListCache) CommonPrefixes() ([][]byte, error) {
 	if err := itr.Error(); err != nil {
 		return p, fmt.Errorf("error with cache iteration %w", err)
 	}
-	for k, _ := range pm {
+	for k := range pm {
 		p = append(p, []byte(k))
 	}
 	return p, nil
