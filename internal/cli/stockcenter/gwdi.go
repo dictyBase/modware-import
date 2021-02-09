@@ -42,7 +42,7 @@ func init() {
 	GwdiCmd.Flags().IntP(
 		"concurrency",
 		"c",
-		30,
+		15,
 		"No of concurrent workers",
 	)
 	viper.BindPFlags(GwdiCmd.Flags())
