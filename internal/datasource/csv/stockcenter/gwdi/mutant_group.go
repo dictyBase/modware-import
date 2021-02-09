@@ -59,18 +59,18 @@ func NewGWDI(r io.Reader) (*GWDI, error) {
 	g.mapper = m
 	g.reader = r
 	g.annoMapper = map[string]annoFn{
-		"NA_multiple":              multiple_na_annotation,
-		"NA_single":                single_na_annotation,
-		"intergenic_down_multiple": intergenic_multiple_down_annotation,
-		"intergenic_up_multiple":   intergenic_multiple_up_annotation,
-		"intergenic_both_multiple": intergenic_multiple_both_annotation,
-		"intergenic_none_multiple": intergenic_multiple_no_gene_annotation,
-		"intergenic_up_single":     intergenic_single_up_annotation,
-		"intergenic_down_single":   intergenic_single_down_annotation,
-		"intergenic_both_single":   intergenic_single_both_annotation,
-		"intergenic_none_single":   intergenic_single_no_gene_annotation,
-		"intragenic_single":        intragenic_single_annotation,
-		"intragenic_multiple":      intragenic_multiple_annotation,
+		"NA_multiple":              multipleNaAnnotation,
+		"NA_single":                singleNaAnnotation,
+		"intergenic_down_multiple": intergenicMultipleDownAnnotation,
+		"intergenic_up_multiple":   intergenicMultipleUpAnnotation,
+		"intergenic_both_multiple": intergenicMultipleBothAnnotation,
+		"intergenic_none_multiple": intergenicMultipleNoGeneAnnotation,
+		"intergenic_up_single":     intergenicSingleUpAnnotation,
+		"intergenic_down_single":   intergenicSingleDownAnnotation,
+		"intergenic_both_single":   intergenicSingleBothAnnotation,
+		"intergenic_none_single":   intergenicSingleNoGeneAnnotation,
+		"intragenic_single":        intragenicSingleAnnotation,
+		"intragenic_multiple":      intragenicMultipleAnnotation,
 	}
 	return g, nil
 }

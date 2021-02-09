@@ -13,8 +13,8 @@ const (
 	mutant   = "mutant"
 )
 
-var disrupt_rgxp = regexp.MustCompile(`^(DDB_G[0-9]{5,})`)
-var suffix_rgxp = regexp.MustCompile(`(^GWDI_\d+_[A-Z]{1,2}_\d+)[a-z]{1}$`)
+var disruptRgxp = regexp.MustCompile(`^(DDB_G[0-9]{5,})`)
+var suffixRgxp = regexp.MustCompile(`(^GWDI_\d+_[A-Z]{1,2}_\d+)[a-z]{1}$`)
 
 var insrMap = map[string]string{
 	"G1": "GATC",
@@ -85,13 +85,13 @@ func defaultGWDIStrain() *GWDIStrain {
 }
 
 func removeSuffix(id string) string {
-	if suffix_rgxp.MatchString(id) {
-		return suffix_rgxp.ReplaceAllString(id, "$1")
+	if suffixRgxp.MatchString(id) {
+		return suffixRgxp.ReplaceAllString(id, "$1")
 	}
 	return id
 }
 
-func intragenic_mutant_annotation(r []string) *GWDIStrain {
+func intragenicMutantAnnotation(r []string) *GWDIStrain {
 	d := fmt.Sprintf("%s-", r[8])
 	strain := defaultGWDIStrain()
 	strain.Label = d
@@ -101,7 +101,7 @@ func intragenic_mutant_annotation(r []string) *GWDIStrain {
 	return strain
 }
 
-func geneless_mutant_annotation(r []string) *GWDIStrain {
+func genelessMutantAnnotation(r []string) *GWDIStrain {
 	strain := defaultGWDIStrain()
 	strain.Label = removeSuffix(r[0])
 	strain.Name = r[0]
@@ -114,8 +114,8 @@ func geneless_mutant_annotation(r []string) *GWDIStrain {
 	return strain
 }
 
-func intergenic_multiple_no_gene_annotation(r []string) *GWDIStrain {
-	strain := geneless_mutant_annotation(r)
+func intergenicMultipleNoGeneAnnotation(r []string) *GWDIStrain {
+	strain := genelessMutantAnnotation(r)
 	strain.Summary = fmt.Sprintf(
 		summInterNoGeneMultiple(),
 		r[2], chrMap[r[1]],
@@ -124,9 +124,9 @@ func intergenic_multiple_no_gene_annotation(r []string) *GWDIStrain {
 	return strain
 }
 
-func intergenic_multiple_both_annotation(r []string) *GWDIStrain {
+func intergenicMultipleBothAnnotation(r []string) *GWDIStrain {
 	strain := defaultGWDIStrain()
-	m := disrupt_rgxp.FindStringSubmatch(r[7])
+	m := disruptRgxp.FindStringSubmatch(r[7])
 	d := fmt.Sprintf("[%s/%s]-", m[0], m[1])
 	strain.Label = d
 	strain.Name = r[0]
@@ -141,7 +141,7 @@ func intergenic_multiple_both_annotation(r []string) *GWDIStrain {
 	return strain
 }
 
-func intergenic_multiple_up_down_annotation(r []string, orientation string) *GWDIStrain {
+func intergenicMultipleUpDownAnnotation(r []string, orientation string) *GWDIStrain {
 	strain := defaultGWDIStrain()
 	d := fmt.Sprintf("[%s]-", r[8])
 	strain.Label = d
@@ -157,15 +157,15 @@ func intergenic_multiple_up_down_annotation(r []string, orientation string) *GWD
 	return strain
 }
 
-func intergenic_multiple_down_annotation(r []string) *GWDIStrain {
-	return intergenic_multiple_up_down_annotation(r, "downstream")
+func intergenicMultipleDownAnnotation(r []string) *GWDIStrain {
+	return intergenicMultipleUpDownAnnotation(r, "downstream")
 }
 
-func intergenic_multiple_up_annotation(r []string) *GWDIStrain {
-	return intergenic_multiple_up_down_annotation(r, "upstream")
+func intergenicMultipleUpAnnotation(r []string) *GWDIStrain {
+	return intergenicMultipleUpDownAnnotation(r, "upstream")
 }
 
-func intergenic_single_up_down_annotation(r []string, orientation string) *GWDIStrain {
+func intergenicSingleUpDownAnnotation(r []string, orientation string) *GWDIStrain {
 	strain := defaultGWDIStrain()
 	d := fmt.Sprintf("[%s]-", r[8])
 	strain.Label = d
@@ -181,9 +181,9 @@ func intergenic_single_up_down_annotation(r []string, orientation string) *GWDIS
 	return strain
 }
 
-func intergenic_single_both_annotation(r []string) *GWDIStrain {
+func intergenicSingleBothAnnotation(r []string) *GWDIStrain {
 	strain := defaultGWDIStrain()
-	m := disrupt_rgxp.FindStringSubmatch(r[7])
+	m := disruptRgxp.FindStringSubmatch(r[7])
 	d := fmt.Sprintf("[%s/%s]-", m[0], m[1])
 	strain.Label = d
 	strain.Name = r[0]
@@ -198,16 +198,16 @@ func intergenic_single_both_annotation(r []string) *GWDIStrain {
 	return strain
 }
 
-func intergenic_single_down_annotation(r []string) *GWDIStrain {
-	return intergenic_single_up_down_annotation(r, "downstream")
+func intergenicSingleDownAnnotation(r []string) *GWDIStrain {
+	return intergenicSingleUpDownAnnotation(r, "downstream")
 }
 
-func intergenic_single_up_annotation(r []string) *GWDIStrain {
-	return intergenic_single_up_down_annotation(r, "upstream")
+func intergenicSingleUpAnnotation(r []string) *GWDIStrain {
+	return intergenicSingleUpDownAnnotation(r, "upstream")
 }
 
-func intergenic_single_no_gene_annotation(r []string) *GWDIStrain {
-	strain := geneless_mutant_annotation(r)
+func intergenicSingleNoGeneAnnotation(r []string) *GWDIStrain {
+	strain := genelessMutantAnnotation(r)
 	strain.Summary = fmt.Sprintf(
 		summInterNoGeneSingle(),
 		r[2], chrMap[r[1]],
@@ -216,8 +216,8 @@ func intergenic_single_no_gene_annotation(r []string) *GWDIStrain {
 	return strain
 }
 
-func intragenic_multiple_annotation(r []string) *GWDIStrain {
-	strain := intragenic_mutant_annotation(r)
+func intragenicMultipleAnnotation(r []string) *GWDIStrain {
+	strain := intragenicMutantAnnotation(r)
 	strain.Summary = fmt.Sprintf(
 		summIntraMultiple(),
 		strain.Label, r[2], chrMap[r[1]],
@@ -226,8 +226,8 @@ func intragenic_multiple_annotation(r []string) *GWDIStrain {
 	return strain
 }
 
-func intragenic_single_annotation(r []string) *GWDIStrain {
-	strain := intragenic_mutant_annotation(r)
+func intragenicSingleAnnotation(r []string) *GWDIStrain {
+	strain := intragenicMutantAnnotation(r)
 	strain.Summary = fmt.Sprintf(
 		summaryIntraSingle(),
 		strain.Label, r[2], chrMap[r[1]],
@@ -236,8 +236,8 @@ func intragenic_single_annotation(r []string) *GWDIStrain {
 	return strain
 }
 
-func single_na_annotation(r []string) *GWDIStrain {
-	strain := geneless_mutant_annotation(r)
+func singleNaAnnotation(r []string) *GWDIStrain {
+	strain := genelessMutantAnnotation(r)
 	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
 		Property: "mutant type",
 		Value:    "endogenous insertion",
@@ -250,8 +250,8 @@ func single_na_annotation(r []string) *GWDIStrain {
 	return strain
 }
 
-func multiple_na_annotation(r []string) *GWDIStrain {
-	strain := geneless_mutant_annotation(r)
+func multipleNaAnnotation(r []string) *GWDIStrain {
+	strain := genelessMutantAnnotation(r)
 	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
 		Property: "mutant type",
 		Value:    "endogenous insertion",
