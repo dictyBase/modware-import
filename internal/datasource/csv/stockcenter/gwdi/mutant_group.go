@@ -188,15 +188,16 @@ func inferGroup(r []string) string {
 			group = fmt.Sprintf("%s_multiple", r[6])
 		}
 	} else {
-		if r[7] == "none" {
+		switch {
+		case r[7] == "none":
 			if r[4] == "1" {
 				group = fmt.Sprintf("%s_none_single", r[6])
 			} else {
 				group = fmt.Sprintf("%s_none_multiple", r[6])
 			}
-		} else if r[4] == "1" {
+		case r[4] == "1":
 			group = fmt.Sprintf("%s_single", r[6])
-		} else {
+		default:
 			group = fmt.Sprintf("%s_multiple", r[6])
 		}
 	}
