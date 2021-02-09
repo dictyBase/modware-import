@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
-	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	sreg "github.com/dictyBase/modware-import/internal/registry/stockcenter"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type parentStrain struct {
@@ -20,10 +19,10 @@ type parentStrain struct {
 func (p *parentStrain) isPresent(id string) (bool, error) {
 	_, err := p.sclient.GetStrain(
 		context.Background(),
-		&stock.StockId{Id: id},
+		&pb.StockId{Id: id},
 	)
 	if err != nil {
-		if grpc.Code(err) == codes.NotFound {
+		if status.Code(err) == codes.NotFound {
 			return false, nil
 		}
 		return false,

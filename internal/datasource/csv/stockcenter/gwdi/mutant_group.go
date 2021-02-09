@@ -40,7 +40,7 @@ type annoFn func(r []string) *GWDIStrain
 // GWDI is for managing gwdi data
 type GWDI struct {
 	listCache  ListCacher
-	mapper     IdMapper
+	mapper     IDMapper
 	reader     io.Reader
 	annoMapper map[string]annoFn
 }
@@ -51,7 +51,7 @@ func NewGWDI(r io.Reader) (*GWDI, error) {
 	if err != nil {
 		return g, err
 	}
-	m, err := NewIdMap()
+	m, err := NewIDMap()
 	if err != nil {
 		return g, err
 	}
@@ -92,7 +92,7 @@ func (g *GWDI) AllGroups() ([]string, error) {
 }
 
 func (g *GWDI) AnnotateMutant() error {
-	if err := g.DedupId(); err != nil {
+	if err := g.DedupID(); err != nil {
 		return err
 	}
 	return g.GroupMutant()
@@ -123,7 +123,7 @@ func (g *GWDI) GroupMutant() error {
 	return nil
 }
 
-func (g *GWDI) DedupId() error {
+func (g *GWDI) DedupID() error {
 	m := g.mapper
 	r := csv.NewReader(g.reader)
 	r.Comment = '#'
@@ -135,7 +135,7 @@ func (g *GWDI) DedupId() error {
 		if err != nil {
 			return fmt.Errorf("error in reading record %s", err)
 		}
-		id, err := g.syntheticId(record[0])
+		id, err := g.syntheticID(record[0])
 		if err != nil {
 			return err
 		}
@@ -148,7 +148,7 @@ func (g *GWDI) DedupId() error {
 	return nil
 }
 
-func (g *GWDI) syntheticId(r string) (string, error) {
+func (g *GWDI) syntheticID(r string) (string, error) {
 	ok, err := g.mapper.Exist([]byte(r))
 	if err != nil {
 		return r, err
@@ -156,14 +156,14 @@ func (g *GWDI) syntheticId(r string) (string, error) {
 	if !ok {
 		return r, nil
 	}
-	id, err := g.selectId(r)
+	id, err := g.selectID(r)
 	if err != nil {
 		return r, err
 	}
 	return id, nil
 }
 
-func (g *GWDI) selectId(r string) (string, error) {
+func (g *GWDI) selectID(r string) (string, error) {
 	chars := "abcdefghijklmnopqrst"
 	var id string
 	for _, p := range chars {

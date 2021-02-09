@@ -21,7 +21,7 @@ type ListCacher interface {
 	CommonPrefixes() ([][]byte, error)
 }
 
-type IdMapper interface {
+type IDMapper interface {
 	Put(key []byte, value []byte) error
 	Get(key []byte) (value []byte, err error)
 	Remove(key []byte) error
@@ -132,7 +132,7 @@ type leveldbMap struct {
 	db *leveldb.DB
 }
 
-func NewIdMap() (IdMapper, error) {
+func NewIDMap() (IDMapper, error) {
 	m := &leveldbMap{}
 	db, err := leveldb.Open(storage.NewMemStorage(), nil)
 	if err != nil {
