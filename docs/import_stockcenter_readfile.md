@@ -1,20 +1,20 @@
-## import stockcenter phenotype
+## import stockcenter readfile
 
-load stockcenter phenotype data
+read data from any file
 
 ### Synopsis
 
-load stockcenter phenotype data
+read data from any file
 
 ```
-import stockcenter phenotype [flags]
+import stockcenter readfile [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help                     help for phenotype
-  -i, --phenotype-input string   tsv file with strain data
+  -h, --help                    help for readfile
+  -i, --readfile-input string   input file with data
 ```
 
 ### Options inherited from parent commands
