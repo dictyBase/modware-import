@@ -5,7 +5,6 @@ import (
 	"regexp"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
-	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	cstock "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter/gwdi"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/emirpasic/gods/maps/hashmap"
@@ -91,19 +90,6 @@ type annoParams struct {
 	err    error
 }
 
-type gwdiStrainDelArgs struct {
-	client stock.StockServiceClient
-	logger *logrus.Entry
-}
-
-type gwdiDelConsumerArgs struct {
-	concurrency int
-	tasks       chan string
-	ctx         context.Context
-	cancelFn    context.CancelFunc
-	runner      *gwdiDel
-}
-
 type gwdiCreateProdArgs struct {
 	gr       cstock.GWDIMutantReader
 	cancelFn context.CancelFunc
@@ -116,9 +102,4 @@ type gwdiCreateConsumerArgs struct {
 	runner      *gwdiCreate
 	ctx         context.Context
 	cancelFn    context.CancelFunc
-}
-
-type parentArgs struct {
-	sclient stock.StockServiceClient
-	aclient pb.TaggedAnnotationServiceClient
 }
