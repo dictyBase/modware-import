@@ -241,6 +241,41 @@ func (gd *gwdiDel) queueIds(sc *pb.StrainCollection) []string {
 	return ids
 }
 
+func (gd *gwdiDel) deleteAnno(id string) error {
+	tac, err := gd.aclient.ListAnnotations(
+		context.Background(),
+		&annotation.ListParameters{
+			Limit:  20,
+			Filter: fmt.Sprintf("entry_id===%s", id),
+		})
+	if err != nil {
+		if grpc.Code(err) == codes.NotFound {
+			return nil
+		}
+		return fmt.Errorf("error in finding any gwdi annotation for %s %s", id, err)
+	}
+	for _, ta := range tac.Data {
+		_, err := gd.aclient.DeleteAnnotation(
+			context.Background(),
+			&annotation.DeleteAnnotationRequest{
+				Id:    ta.Id,
+				Purge: true,
+			})
+		if err != nil {
+			if grpc.Code(err) == codes.NotFound {
+				continue
+			}
+			return fmt.Errorf("unable to remove annotation for %s %s", id, err)
+		}
+	}
+	gd.logger.WithFields(logrus.Fields{
+		"event": "delete",
+		"id":    id,
+		"count": len(tac.Data),
+	}).Debug("remove gwdi strain annotations")
+	return nil
+}
+
 func (gd *gwdiDel) execute(id string) error {
 	_, err := gd.sclient.RemoveStock(context.Background(), &pb.StockId{Id: id})
 	if err != nil {
@@ -256,46 +291,7 @@ func (gd *gwdiDel) execute(id string) error {
 		"event": "delete",
 		"id":    id,
 	}).Debug("remove gwdi strain")
-	tac, err := gd.aclient.ListAnnotations(
-		context.Background(),
-		&annotation.ListParameters{
-			Limit:  20,
-			Filter: fmt.Sprintf("entry_id===%s", id),
-		})
-	if err != nil {
-		if grpc.Code(err) == codes.NotFound {
-			gd.logger.WithFields(logrus.Fields{
-				"event": "delete",
-				"id":    id,
-			}).Debug("could not find any annotation for delete")
-			return nil
-		}
-		return fmt.Errorf("error in finding any gwdi annotation for %s %s", id, err)
-	}
-	for _, ta := range tac.Data {
-		_, err := gd.aclient.DeleteAnnotation(
-			context.Background(),
-			&annotation.DeleteAnnotationRequest{
-				Id:    ta.Id,
-				Purge: true,
-			})
-		if err != nil {
-			if grpc.Code(err) == codes.NotFound {
-				gd.logger.WithFields(logrus.Fields{
-					"event": "delete",
-					"id":    ta.Id,
-				}).Debug("could not find annotation with id for delete")
-				continue
-			}
-			return fmt.Errorf("unable to remove annotation for %s %s", id, err)
-		}
-	}
-	gd.logger.WithFields(logrus.Fields{
-		"event": "delete",
-		"id":    id,
-		"count": len(tac.Data),
-	}).Debug("remove gwdi strain annotations")
-	return nil
+	return gd.deleteAnno(id)
 }
 
 type gwdiCreate struct {
