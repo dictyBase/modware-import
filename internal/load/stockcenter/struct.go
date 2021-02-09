@@ -13,7 +13,7 @@ import (
 
 var stRegex = regexp.MustCompile(`^DBS`)
 
-type plasmidIdMap struct {
+type plasmidIDMap struct {
 	idmap *hashmap.Map
 }
 
