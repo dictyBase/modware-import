@@ -362,7 +362,14 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 			)
 		}
 	}
-	return nil
+	// create presence of inventory annotation
+	return createAnno(&createAnnoArgs{
+		client:   gc.aclient,
+		tag:      regs.StrainInvTag,
+		ontology: regs.StrainInvOnto,
+		value:    regs.InvExistValue,
+		id:       id,
+	})
 }
 
 func (gc *gwdiCreate) createGwdi(gwdi *stockcenter.GWDIStrain) (*pb.Strain, error) {
