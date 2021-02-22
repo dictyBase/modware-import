@@ -65,7 +65,7 @@ func defaultGWDIStrain() *GWDIStrain {
 		Plasmid:     "Blasticidin S resistance cassette",
 		Depositor:   "baldwinAJ@cardiff.ac.uk",
 		Species:     "Dictyostelium discoideum",
-		Publication: "10.1101/582072",
+		Publication: "doi:10.1101/582072",
 		Characters: []string{
 			"blasticidin resistant",
 			"axenic",
