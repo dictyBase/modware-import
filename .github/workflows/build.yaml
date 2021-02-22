@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: set up golang
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
-            go-version: 1.13.15
+            go-version: 1.16
       - name: check out code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: build docker image
         run: docker build -t dictybase/modware-import:$(echo ${{ github.ref }} | sed -E 's/refs\/(heads|tags)\///')-$(git rev-parse --short HEAD) -f build/package/Dockerfile .
       - name: login to docker hub
