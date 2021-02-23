@@ -368,6 +368,7 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 		tag:      regs.StrainInvTag,
 		ontology: regs.StrainInvOnto,
 		value:    regs.InvExistValue,
+		user:     regs.DEFAULT_USER,
 		id:       id,
 	})
 }
