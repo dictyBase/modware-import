@@ -24,6 +24,7 @@ const (
 	DICTY_MUTAGENESIS_ONTOLOGY = "Dd Mutagenesis Method"
 	DICTY_GENETICMOD_ONTOLOGY  = "genetic modification"
 	DICTY_STRAINCHAR_ONTOLOGY  = "strain_characteristics"
+	DICTY_STRAINPROP_ONTOLOGY  = "dicty_strain_property"
 	READFILE_READER            = "readfile-input"
 	STOCK_DATE_LAYOUT          = "02-Jan-06"
 	GWDI_READER                = "gwdi-input"
