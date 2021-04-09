@@ -362,6 +362,18 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 			)
 		}
 	}
+	// create REMI-seq property for GWDI strain
+	err := createAnno(&createAnnoArgs{
+		client:   gc.aclient,
+		tag:      regs.GWDIStrainTag,
+		ontology: regs.StrainPropOnto,
+		value:    regs.ExistValue,
+		user:     regs.DEFAULT_USER,
+		id:       id,
+	})
+	if err != nil {
+		return fmt.Errorf("error in creating tag for GWDI strain %s", err)
+	}
 	// create presence of inventory annotation
 	return createAnno(&createAnnoArgs{
 		client:   gc.aclient,

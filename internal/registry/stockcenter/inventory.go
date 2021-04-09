@@ -3,8 +3,9 @@ package stockcenter
 const (
 	InvReader         = "inv-input"
 	StrainInvOnto     = "strain_inventory"
-	StrainCharOnto    = "dicty_strain_property"
+	StrainPropOnto    = "dicty_strain_property"
 	PlasmidInvOntO    = "plasmid_inventory"
+	ExistValue        = "value"
 	InvExistValue     = "value"
 	InvLocationTag    = "location"
 	InvPubCommentTag  = "public comment"
