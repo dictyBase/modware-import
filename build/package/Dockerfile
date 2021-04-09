@@ -1,4 +1,4 @@
-FROM golang:1.16.0-alpine3.13
+FROM golang:1.16.3-alpine3.13
 LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
 ENV GOPROXY https://proxy.golang.org
 RUN apk add --no-cache git build-base
