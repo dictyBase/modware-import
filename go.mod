@@ -11,7 +11,7 @@ require (
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/gogo/protobuf v1.3.1 // indirect
-	github.com/golang/protobuf v1.4.3
+	github.com/golang/protobuf v1.5.2
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/mwitkow/go-proto-validators v0.3.0 // indirect
