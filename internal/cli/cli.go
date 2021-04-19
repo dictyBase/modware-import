@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/dictyBase/modware-import/internal/cli/arangodb"
 	"github.com/dictyBase/modware-import/internal/cli/stockcenter"
 	"github.com/dictyBase/modware-import/internal/cli/uniprot"
 	"github.com/dictyBase/modware-import/internal/datasource/s3"
@@ -100,6 +101,7 @@ func Execute() {
 func init() {
 	RootCmd.AddCommand(stockcenter.StockCenterCmd)
 	RootCmd.AddCommand(uniprot.UniprotCmd)
+	RootCmd.AddCommand(arangodb.ArangodbCmd)
 	RootCmd.Flags().Bool("doc", false, "generate markdown documentation")
 	RootCmd.PersistentFlags().String(
 		"input-source",

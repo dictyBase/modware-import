@@ -69,7 +69,7 @@ var DeleteCmd = &cobra.Command{
 func init() {
 	DeleteCmd.Flags().StringP(
 		"database",
-		"db",
+		"d",
 		"",
 		"name of arangodb database whose data from all the non-system collections will be deleted",
 	)
