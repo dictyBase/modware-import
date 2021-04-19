@@ -36,9 +36,8 @@ func arangodbFlags() {
 		"arangodb",
 		"arangodb database host",
 	)
-	ArangodbCmd.PersistentFlags().IntP(
+	ArangodbCmd.PersistentFlags().Int(
 		"arangodb-port",
-		"port",
 		8529,
 		"arangodb database port",
 	)
