@@ -3,6 +3,7 @@ package registry
 import (
 	"io"
 
+	"github.com/dictyBase/arangomanager"
 	r "github.com/go-redis/redis/v7"
 	"github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
@@ -10,16 +11,26 @@ import (
 )
 
 const (
-	LOGRUS_KEY   = "logrus"
-	MINIO_KEY    = "minio"
-	LOG_FILE_KEY = "log_file"
-	REDIS_KEY    = "redis"
+	LOGRUS_KEY           = "logrus"
+	MINIO_KEY            = "minio"
+	LOG_FILE_KEY         = "log_file"
+	REDIS_KEY            = "redis"
+	ARANGODB_SESSION_KEY = "arangodb_session"
+	ARANGODB             = "arangodb"
 )
 
 var v = viper.New()
 
 func SetValue(key, value string) {
 	v.Set(key, value)
+}
+
+func SetArangoSession(s *arangomanager.Session) {
+	v.Set(ARANGODB_SESSION_KEY, s)
+}
+
+func SetArangodbConnection(c *arangomanager.Database) {
+	v.Set(ARANGODB, c)
 }
 
 func SetLogger(l *logrus.Entry) {
@@ -40,6 +51,16 @@ func SetWriter(key string, w io.Writer) {
 
 func SetRedisClient(redis *r.Client) {
 	v.Set(REDIS_KEY, redis)
+}
+
+func GetArangoSession() *arangomanager.Session {
+	s, _ := v.Get(ARANGODB_SESSION_KEY).(*arangomanager.Session)
+	return s
+}
+
+func GetArangodbConnection() *arangomanager.Database {
+	c, _ := v.Get(ARANGODB).(*arangomanager.Database)
+	return c
 }
 
 func GetLogger() *logrus.Entry {

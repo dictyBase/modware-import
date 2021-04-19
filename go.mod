@@ -5,6 +5,7 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/dictyBase/aphgrpc v1.3.0
+	github.com/dictyBase/arangomanager v0.3.0 // indirect
 	github.com/dictyBase/go-genproto v0.0.0-20200122001226-b1ccbdee4aa3
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.12.0
