@@ -36,7 +36,7 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	}
 	logger.Hooks.Add(lfshook.NewHook(fname, lfmt))
 	logger.Hooks.Add(logrus_stack.StandardHook())
-	registry.SetValue(registry.LOG_FILE_KEY, fname)
+	registry.SetValue(registry.LogFileKey, fname)
 	return logrus.NewEntry(logger), nil
 }
 
