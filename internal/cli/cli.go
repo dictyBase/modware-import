@@ -57,13 +57,13 @@ or through a file that is kept in a particular bucket of a S3 server.`,
 				viper.GetString("log-file-bucket-path"),
 				name,
 			),
-			registry.GetValue(registry.LOG_FILE_KEY),
+			registry.GetValue(registry.LogFileKey),
 			minio.PutObjectOptions{},
 		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in uploading file %s with object name %s",
-				registry.GetValue(registry.LOG_FILE_KEY),
+				registry.GetValue(registry.LogFileKey),
 				name,
 			)
 		}
