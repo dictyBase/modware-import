@@ -43,7 +43,7 @@ func arangodbFlags() {
 	)
 	ArangodbCmd.PersistentFlags().Bool(
 		"is-secure",
-		true,
+		false,
 		"flag for secured or unsecured arangodb endpoint",
 	)
 	viper.BindEnv("arangodb-pass", "ARANGODB_PASS")
