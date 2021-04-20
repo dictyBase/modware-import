@@ -6,7 +6,7 @@
 ![Build](https://github.com/dictyBase/modware-import/workflows/Build/badge.svg)
 [![Maintainability](https://api.codeclimate.com/v1/badges/22388ee505a191b3f6b9/maintainability)](https://codeclimate.com/github/dictyBase/modware-import/maintainability)
 ![Last commit](https://badgen.net/github/last-commit/dictyBase/modware-import/develop)   
-[![Funding](https://badgen.net/badge/Funding/Rex%20L%20Chisholm,dictyBase,DCR/yellow?list=|)](https://projectreporter.nih.gov/project_info_description.cfm?aid=10024726&icde=0)
+[![Funding](https://badgen.net/badge/Funding/Rex%20L%20Chisholm,dictyBase,DCR/yellow?list=|)](https://reporter.nih.gov/project-details/10024726)
 
 Cli application for importing dictybase data.The documentation is [here](docs/import.md)
 
