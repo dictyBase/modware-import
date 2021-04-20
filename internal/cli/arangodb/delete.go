@@ -3,6 +3,7 @@ package arangodb
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/dictyBase/arangomanager"
 	"github.com/dictyBase/modware-import/internal/collection"
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// DeleteCmd deletes all data from the given collections
 var DeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete all data from all the collections",
@@ -27,7 +29,7 @@ var DeleteCmd = &cobra.Command{
 			},
 		)
 		if err != nil {
-			return err
+			return fmt.Errorf("error in connecting to database %s", err)
 		}
 		registry.SetArangoSession(session)
 		registry.SetArangodbConnection(db)
@@ -43,6 +45,7 @@ var DeleteCmd = &cobra.Command{
 				err,
 			)
 		}
+		logger := registry.GetLogger()
 		var names []string
 		for _, c := range colls {
 			props, err := c.Properties(context.Background())
@@ -57,12 +60,21 @@ var DeleteCmd = &cobra.Command{
 			}
 			names = append(names, c.Name())
 		}
-		var toDel []string
-		_ = copy(toDel, names)
-		if len(viper.GetString("exclude")) > 0 {
-			toDel = collection.Remove(names, viper.GetStringSlice("exclude")...)
+		logger.Debugf("received %s collections for deletion", strings.Join(names, " "))
+		if len(viper.GetStringSlice("exclude")) > 0 {
+			logger.Debugf(
+				"excluding the %s collections",
+				strings.Join(viper.GetStringSlice("exclude"), ""),
+			)
+			names = collection.Remove(names, viper.GetStringSlice("exclude")...)
 		}
-		return db.Truncate(toDel...)
+		logger.Debugf("going to delete %s collections", strings.Join(names, " "))
+		err = db.Truncate(names...)
+		if err != nil {
+			return err
+		}
+		logger.Infof("deleted %s collections", strings.Join(names, " "))
+		return nil
 	},
 }
 
