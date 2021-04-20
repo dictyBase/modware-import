@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	LOGRUS_KEY           = "logrus"
-	MINIO_KEY            = "minio"
-	LOG_FILE_KEY         = "log_file"
-	REDIS_KEY            = "redis"
-	ARANGODB_SESSION_KEY = "arangodb_session"
-	ARANGODB             = "arangodb"
+	LogrusKey          = "logrus"
+	MinioKey           = "minio"
+	LogFileKey         = "log_file"
+	RedisKey           = "redis"
+	ArangodbSessionKey = "arangodb_session"
+	Arangodb           = "arangodb"
 )
 
 var v = viper.New()
@@ -26,19 +26,19 @@ func SetValue(key, value string) {
 }
 
 func SetArangoSession(s *arangomanager.Session) {
-	v.Set(ARANGODB_SESSION_KEY, s)
+	v.Set(ArangodbSessionKey, s)
 }
 
 func SetArangodbConnection(c *arangomanager.Database) {
-	v.Set(ARANGODB, c)
+	v.Set(Arangodb, c)
 }
 
 func SetLogger(l *logrus.Entry) {
-	v.Set(LOGRUS_KEY, l)
+	v.Set(LogrusKey, l)
 }
 
 func SetS3Client(s3c *minio.Client) {
-	v.Set(MINIO_KEY, s3c)
+	v.Set(MinioKey, s3c)
 }
 
 func SetReader(key string, r io.Reader) {
@@ -50,26 +50,26 @@ func SetWriter(key string, w io.Writer) {
 }
 
 func SetRedisClient(redis *r.Client) {
-	v.Set(REDIS_KEY, redis)
+	v.Set(RedisKey, redis)
 }
 
 func GetArangoSession() *arangomanager.Session {
-	s, _ := v.Get(ARANGODB_SESSION_KEY).(*arangomanager.Session)
+	s, _ := v.Get(ArangodbSessionKey).(*arangomanager.Session)
 	return s
 }
 
 func GetArangodbConnection() *arangomanager.Database {
-	c, _ := v.Get(ARANGODB).(*arangomanager.Database)
+	c, _ := v.Get(Arangodb).(*arangomanager.Database)
 	return c
 }
 
 func GetLogger() *logrus.Entry {
-	l, _ := v.Get(LOGRUS_KEY).(*logrus.Entry)
+	l, _ := v.Get(LogrusKey).(*logrus.Entry)
 	return l
 }
 
 func GetS3Client() *minio.Client {
-	s3c, _ := v.Get(MINIO_KEY).(*minio.Client)
+	s3c, _ := v.Get(MinioKey).(*minio.Client)
 	return s3c
 }
 
@@ -89,6 +89,6 @@ func GetValue(key string) string {
 }
 
 func GetRedisClient() *r.Client {
-	redis, _ := v.Get(REDIS_KEY).(*r.Client)
+	redis, _ := v.Get(RedisKey).(*r.Client)
 	return redis
 }
