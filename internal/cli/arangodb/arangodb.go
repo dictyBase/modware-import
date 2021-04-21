@@ -48,7 +48,6 @@ func arangodbFlags() {
 	)
 	viper.BindEnv("arangodb-pass", "ARANGODB_PASS")
 	viper.BindEnv("arangodb-user", "ARANGODB_USER")
-	viper.BindEnv("arangodb-database", "ARANGODB_DATABASE")
 	viper.BindEnv("arangodb-host", "ARANGODB_SERVICE_HOST")
 	viper.BindEnv("arangodb-port", "ARANGODB_SERVICE_PORT")
 }

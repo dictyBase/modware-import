@@ -7,6 +7,13 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	// mage:import stock
+	"github.com/dictyBase/modware-import/internal/runner/stock"
+	// mage:import annotation
+	"github.com/dictyBase/modware-import/internal/runner/annotation"
+	// mage:import order
+	"github.com/dictyBase/modware-import/internal/runner/order"
 )
 
 // Default target to run when none is specified
@@ -19,20 +26,8 @@ func Build() error {
 	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 }
 
-// A custom install step if you need your bin someplace other than go/bin
-func Install() error {
-	mg.Deps(Build)
-	fmt.Println("Installing...")
+// CleanAll deletes all data from stock,order and annotation databases
+func CleanAll() error {
+	mg.Deps(stock.Clean, annotation.Clean, order.Clean)
 	return nil
-}
-
-// Manage your deps, or running package managers.
-func InstallDeps() error {
-	fmt.Println("Installing Deps...")
-	return nil
-}
-
-// Clean up after yourself
-func Clean() {
-	fmt.Println("Cleaning...")
 }
