@@ -3,14 +3,26 @@ package runner
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 )
 
 const (
-	gitURL = "https://github.com/dictyBase/modware-import.git"
+	gitURL   = "https://github.com/dictyBase/modware-import.git"
+	cloneDir = "modware-import"
 )
+
+func BuildSetup() error {
+	modfile := filepath.Join(cloneDir, "go.mod")
+	if _, err := os.Stat(modfile); os.IsNotExist(err) {
+		if err := CloneSource("develop", cloneDir); err != nil {
+			return nil
+		}
+	}
+	return os.Chdir(cloneDir)
+}
 
 func CloneSource(branch, dir string) error {
 	_, err := git.PlainClone(

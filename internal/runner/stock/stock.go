@@ -15,6 +15,9 @@ const (
 
 // Build builds the binary for modware-import project
 func Build() error {
+	if err := runner.BuildSetup(); err != nil {
+		return err
+	}
 	return sh.Run("go", "build", "-o", command, "cmd/import/main.go")
 }
 
