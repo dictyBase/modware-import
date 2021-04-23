@@ -9,7 +9,7 @@ import (
 func Clean() error {
 	mg.SerialDeps(
 		runner.Build,
-		mg.F(runner.CleanDb, "order"),
+		mg.F(runner.CleanDB, "order"),
 	)
 	return nil
 }
