@@ -3,9 +3,6 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
-
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
@@ -18,19 +15,11 @@ import (
 	"github.com/dictyBase/modware-import/internal/runner/order"
 )
 
-const (
-	cloneDir = "modware-import"
-)
+const ()
 
 // Build builds the binary for modware-import project
 func Build() error {
-	modfile := filepath.Join(cloneDir, "go.mod")
-	if _, err := os.Stat(modfile); os.IsNotExist(err) {
-		if err := runner.CloneSource("develop", cloneDir); err != nil {
-			return nil
-		}
-	}
-	if err := os.Chdir(cloneDir); err != nil {
+	if err := runner.BuildSetup(); err != nil {
 		return err
 	}
 	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
