@@ -9,7 +9,7 @@ import (
 func Clean() error {
 	mg.SerialDeps(
 		runner.Build,
-		mg.F(runner.CleanDb, "annotation"),
+		mg.F(runner.CleanDB, "annotation"),
 	)
 	return nil
 }

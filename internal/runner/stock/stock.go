@@ -18,7 +18,7 @@ const (
 func Clean() error {
 	mg.SerialDeps(
 		runner.Build,
-		mg.F(runner.CleanDb, "stock"),
+		mg.F(runner.CleanDB, "stock"),
 	)
 	return nil
 }
