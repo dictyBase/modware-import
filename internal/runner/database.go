@@ -24,7 +24,7 @@ func Build() error {
 }
 
 // Cleandb deletes data from arangodb database
-func CleanDb(db string) error {
+func CleanDB(db string) error {
 	if err := env.ArangoEnvs(); err != nil {
 		return err
 	}
