@@ -1,12 +1,13 @@
 package runner
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/dictyBase/modware-import/internal/runner/env"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/magefile/mage/sh"
 )
 
 const (
@@ -14,17 +15,42 @@ const (
 	cloneDir = "modware-import"
 )
 
-func BuildSetup() error {
+// Build builds the binary for modware-import project
+func Build() error {
+	if err := buildSetup(); err != nil {
+		return err
+	}
+	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
+}
+
+// Cleandb deletes data from arangodb database
+func CleanDb(db string) error {
+	if err := env.ArangoEnvs(); err != nil {
+		return err
+	}
+	return sh.Run(
+		"./importer",
+		"--log-level",
+		"info",
+		"--is-secure",
+		"arangodb",
+		"delete",
+		"-d",
+		db,
+	)
+}
+
+func buildSetup() error {
 	modfile := filepath.Join(cloneDir, "go.mod")
 	if _, err := os.Stat(modfile); os.IsNotExist(err) {
-		if err := CloneSource("develop", cloneDir); err != nil {
+		if err := cloneSource("develop", cloneDir); err != nil {
 			return nil
 		}
 	}
 	return os.Chdir(cloneDir)
 }
 
-func CloneSource(branch, dir string) error {
+func cloneSource(branch, dir string) error {
 	_, err := git.PlainClone(
 		dir,
 		false,
@@ -34,47 +60,4 @@ func CloneSource(branch, dir string) error {
 			ReferenceName: plumbing.NewBranchReferenceName(branch),
 		})
 	return err
-}
-
-func ArangoEnvs() error {
-	return checkErrors([]string{
-		"ARANGODB_PASS",
-		"ARANGODB_USER",
-		"ARANGODB_SERVICE_HOST",
-		"ARANGODB_SERVICE_PORT",
-	})
-}
-
-func ServiceEnvs() error {
-	return checkErrors([]string{
-		"STOCK_API_SERVICE_HOST",
-		"STOCK_API_SERVICE_PORT",
-		"ANNOTATION_API_SERVICE_HOST",
-		"ANNOTATION_API_SERVICE_PORT",
-	})
-}
-
-func MinioEnvs() error {
-	return checkErrors([]string{
-		"ACCESS_KEY",
-		"SECRET_KEY",
-	})
-}
-
-func MinioAccessKey() string {
-	return os.Getenv("ACCESS_KEY")
-}
-
-func MinioSecretKey() string {
-	return os.Getenv("SECRET_KEY")
-}
-
-func checkErrors(envs []string) error {
-	for _, e := range envs {
-		v := os.Getenv(e)
-		if len(v) == 0 {
-			return fmt.Errorf("env %s is not set", e)
-		}
-	}
-	return nil
 }

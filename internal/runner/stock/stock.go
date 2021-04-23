@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dictyBase/modware-import/internal/runner"
+	"github.com/dictyBase/modware-import/internal/runner/env"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
@@ -13,30 +14,13 @@ const (
 	logLevel = "info"
 )
 
-// Build builds the binary for modware-import project
-func Build() error {
-	if err := runner.BuildSetup(); err != nil {
-		return err
-	}
-	return sh.Run("go", "build", "-o", command, "cmd/import/main.go")
-}
-
-// Clean deletes all stock data from arangodb database
+// Clean deletes all order data from arangodb database
 func Clean() error {
-	if err := runner.ArangoEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
-	return sh.Run(
-		fmt.Sprintf("./%s", command),
-		"--log-level",
-		logLevel,
-		"--is-secure",
-		"arangodb",
-		"delete",
-		"-d",
-		"stock",
+	mg.SerialDeps(
+		runner.Build,
+		mg.F(runner.CleanDb, "stock"),
 	)
+	return nil
 }
 
 // LoadAll loads all stock data
@@ -47,13 +31,13 @@ func LoadAll() error {
 
 // Strain loads strain data including curator assignment
 func Strain() error {
-	if err := runner.MinioEnvs(); err != nil {
+	if err := env.MinioEnvs(); err != nil {
 		return err
 	}
-	if err := runner.ServiceEnvs(); err != nil {
+	if err := env.ServiceEnvs(); err != nil {
 		return err
 	}
-	mg.Deps(Build)
+	mg.Deps(runner.Build)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -61,9 +45,9 @@ func Strain() error {
 		"stockcenter",
 		"strain",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-a", "strain_user_annotations.csv",
 		"-g", "strain_genes.tsv",
 		"-i", "strain_strain.tsv",
@@ -81,9 +65,9 @@ func Plasmid() error {
 		"stockcenter",
 		"plasmid",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-a", "plasmid_user_annotations.csv",
 		"-g", "plasmid_genes.tsv",
 		"-i", "plasmid_strain.tsv",
@@ -101,9 +85,9 @@ func Characteristics() error {
 		"stockcenter",
 		"strainchar",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-i", "strain_characteristics.tsv",
 	)
 }
@@ -118,9 +102,9 @@ func StrainProp() error {
 		"stockcenter",
 		"strainprop",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-i", "strain_props.tsv",
 	)
 }
@@ -135,9 +119,9 @@ func Genotype() error {
 		"stockcenter",
 		"genotype",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-i", "strain_genotype.tsv",
 	)
 }
@@ -152,9 +136,9 @@ func StrainSyn() error {
 		"stockcenter",
 		"strainsyn",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-i", "strain_props.tsv",
 	)
 }
@@ -169,9 +153,9 @@ func StrainInv() error {
 		"stockcenter",
 		"strain-inventory",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-i", "strain_inventory.tsv",
 	)
 }
@@ -186,9 +170,9 @@ func Phenotype() error {
 		"stockcenter",
 		"phenotype",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-i", "strain_phenotype.tsv",
 	)
 }
@@ -203,9 +187,9 @@ func PlasmidInv() error {
 		"stockcenter",
 		"plasmid-inventory",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-i", "plasmid-inventory.tsv",
 	)
 }
@@ -220,9 +204,9 @@ func Gwdi() error {
 		"stockcenter",
 		"gwdi",
 		"--access-key",
-		runner.MinioAccessKey(),
+		env.MinioAccessKey(),
 		"--secret-key",
-		runner.MinioSecretKey(),
+		env.MinioSecretKey(),
 		"-i", "gwdi_strain.csv",
 	)
 }
