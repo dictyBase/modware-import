@@ -38,18 +38,7 @@ func Clean() error {
 
 // LoadAll loads all stock data
 func LoadAll() error {
-	mg.Deps(
-		Strain,
-		Characteristics,
-		Genotype,
-		Phenotype,
-		StrainInv,
-		StrainProp,
-		StrainSyn,
-		Plasmid,
-		PlasmidInv,
-		Gwdi,
-	)
+	mg.Deps(Gwdi)
 	return nil
 }
 
@@ -81,13 +70,7 @@ func Strain() error {
 
 // Plasmid loads plasmid data including curator assignment
 func Plasmid() error {
-	if err := runner.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := runner.ServiceEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
+	mg.Deps(StrainSyn)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -107,13 +90,7 @@ func Plasmid() error {
 
 // Characteristics loads strain characteristics
 func Characteristics() error {
-	if err := runner.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := runner.ServiceEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
+	mg.Deps(Strain)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -130,13 +107,7 @@ func Characteristics() error {
 
 // StrainProp loads strain property data
 func StrainProp() error {
-	if err := runner.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := runner.ServiceEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
+	mg.Deps(StrainInv)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -153,13 +124,7 @@ func StrainProp() error {
 
 // Genotype load strain genotype data
 func Genotype() error {
-	if err := runner.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := runner.ServiceEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
+	mg.Deps(Characteristics)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -176,13 +141,7 @@ func Genotype() error {
 
 // StrainSyn loads strain synonym data
 func StrainSyn() error {
-	if err := runner.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := runner.ServiceEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
+	mg.Deps(StrainProp)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -199,13 +158,7 @@ func StrainSyn() error {
 
 // StrainInv loads strain inventory data
 func StrainInv() error {
-	if err := runner.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := runner.ServiceEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
+	mg.Deps(Phenotype)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -222,13 +175,7 @@ func StrainInv() error {
 
 // Phenotype loads strain phenotype data
 func Phenotype() error {
-	if err := runner.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := runner.ServiceEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
+	mg.Deps(Genotype)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -245,13 +192,7 @@ func Phenotype() error {
 
 // PlasmidInv loads plasmid inventory data
 func PlasmidInv() error {
-	if err := runner.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := runner.ServiceEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
+	mg.Deps(Plasmid)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -268,13 +209,7 @@ func PlasmidInv() error {
 
 // Gwdi loads GWDI strain mutant data
 func Gwdi() error {
-	if err := runner.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := runner.ServiceEnvs(); err != nil {
-		return err
-	}
-	mg.Deps(Build)
+	mg.Deps(PlasmidInv)
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
