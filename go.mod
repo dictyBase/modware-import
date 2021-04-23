@@ -9,10 +9,10 @@ require (
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.12.0
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
+	github.com/go-git/go-git/v5 v5.3.0 // indirect
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.5.2
-	github.com/kr/pretty v0.2.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magefile/mage v1.11.0
 	github.com/minio/minio-go/v6 v6.0.44
