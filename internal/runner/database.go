@@ -3,7 +3,26 @@ package runner
 import (
 	"fmt"
 	"os"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 )
+
+const (
+	gitURL = "https://github.com/dictyBase/modware-import.git"
+)
+
+func CloneSource(branch, dir string) error {
+	_, err := git.PlainClone(
+		dir,
+		false,
+		&git.CloneOptions{
+			URL:           gitURL,
+			SingleBranch:  true,
+			ReferenceName: plumbing.NewBranchReferenceName(branch),
+		})
+	return err
+}
 
 func ArangoEnvs() error {
 	return checkErrors([]string{

@@ -4,12 +4,12 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
+	"github.com/dictyBase/modware-import/internal/runner"
 	// mage:import stock
 	"github.com/dictyBase/modware-import/internal/runner/stock"
 	// mage:import annotation
@@ -19,13 +19,19 @@ import (
 )
 
 const (
-	gitURL = "https://github.com/dictyBase/modware-import.git"
+	cloneDir = "modware-import"
 )
 
 // Build builds the binary for modware-import project
 func Build() error {
-	if _, err := os.Stat("go.mod"); os.IsNotExist(err) {
-		mg.Deps(mg.F(CloneSource, "develop"))
+	modfile := filepath.Join(cloneDir, "go.mod")
+	if _, err := os.Stat(modfile); os.IsNotExist(err) {
+		if err := runner.CloneSource("develop", cloneDir); err != nil {
+			return nil
+		}
+	}
+	if err := os.Chdir(cloneDir); err != nil {
+		return err
 	}
 	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 }
@@ -34,21 +40,4 @@ func Build() error {
 func CleanAll() error {
 	mg.Deps(stock.Clean, annotation.Clean, order.Clean)
 	return nil
-}
-
-// CloneSource get the source code from the default git repository
-func CloneSource(branch string) error {
-	dir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	_, err = git.PlainClone(
-		dir,
-		false,
-		&git.CloneOptions{
-			URL:           gitURL,
-			SingleBranch:  true,
-			ReferenceName: plumbing.NewBranchReferenceName(branch),
-		})
-	return err
 }
