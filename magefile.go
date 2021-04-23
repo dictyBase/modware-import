@@ -3,7 +3,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/go-git/go-git/v5"
@@ -26,9 +25,8 @@ const (
 // Build builds the binary for modware-import project
 func Build() error {
 	if _, err := os.Stat("go.mod"); os.IsNotExist(err) {
-		mg.F(CloneSource, "develop")
+		mg.Deps(mg.F(CloneSource, "develop"))
 	}
-	fmt.Println("building ......")
 	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 }
 
@@ -40,9 +38,6 @@ func CleanAll() error {
 
 // CloneSource get the source code from the default git repository
 func CloneSource(branch string) error {
-	if len(branch) == 0 {
-		branch = "develop"
-	}
 	dir, err := os.Getwd()
 	if err != nil {
 		return err
