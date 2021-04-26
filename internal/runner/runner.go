@@ -33,6 +33,18 @@ func TermSpinner(prefix string) *spinner.Spinner {
 	return TermSpinnerWithPrefixColor(prefix, "fgHiGreen")
 }
 
+// Build is a standalone builder, it builds the binary
+// after checking out the source code from the given branch
+func BuildBranch(branch string) error {
+	if err := buildSetup(cloneDir, branch); err != nil {
+		return err
+	}
+	s := TermSpinner("building modware-import binary ...")
+	defer s.Stop()
+	s.Start()
+	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
+}
+
 // Build is a standalone builder, it builds the binary after
 // checking out the source code from develop branch
 func Build() error {
