@@ -1,9 +1,12 @@
 package runner
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/dictyBase/modware-import/internal/runner/env"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -14,6 +17,26 @@ const (
 	gitURL   = "https://github.com/dictyBase/modware-import.git"
 	cloneDir = "modware-import"
 )
+
+func TermSpinnerWithPrefixColor(prefix, color string) *spinner.Spinner {
+	s := spinner.New(
+		spinner.CharSets[33],
+		300*time.Millisecond,
+	)
+	s.Color("bgHiBlack", "bold", color)
+	s.Prefix = fmt.Sprintf("%s  ", prefix)
+	return s
+}
+
+func TermSpinner(prefix string) *spinner.Spinner {
+	s := spinner.New(
+		spinner.CharSets[33],
+		300*time.Millisecond,
+	)
+	s.Color("bgHiBlack", "bold", "fgHiGreen")
+	s.Prefix = fmt.Sprintf("%s  ", prefix)
+	return s
+}
 
 // Build builds the binary for modware-import project
 func Build() error {
