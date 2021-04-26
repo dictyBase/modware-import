@@ -16,6 +16,7 @@ import (
 const (
 	gitURL   = "https://github.com/dictyBase/modware-import.git"
 	cloneDir = "modware-import"
+	branch   = "develop"
 )
 
 func TermSpinnerWithPrefixColor(prefix, color string) *spinner.Spinner {
@@ -32,9 +33,10 @@ func TermSpinner(prefix string) *spinner.Spinner {
 	return TermSpinnerWithPrefixColor(prefix, "fgHiGreen")
 }
 
-// Build builds the binary for modware-import project
+// Build is a standalone builder, it builds the binary after
+// checking out the source code from develop branch
 func Build() error {
-	if err := buildSetup(); err != nil {
+	if err := buildSetup(cloneDir, branch); err != nil {
 		return err
 	}
 	s := TermSpinner("building modware-import binary ...")
@@ -66,10 +68,10 @@ func CleanDB(db string) error {
 	)
 }
 
-func buildSetup() error {
-	modfile := filepath.Join(cloneDir, "go.mod")
+func buildSetup(dir, branch string) error {
+	modfile := filepath.Join(dir, "go.mod")
 	if _, err := os.Stat(modfile); os.IsNotExist(err) {
-		if err := cloneSource("develop", cloneDir); err != nil {
+		if err := cloneSource(branch, dir); err != nil {
 			return nil
 		}
 	}
