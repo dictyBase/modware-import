@@ -38,6 +38,9 @@ func Strain() error {
 		return err
 	}
 	mg.Deps(runner.Build)
+	s := runner.TermSpinner("Loading strain data ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -58,6 +61,9 @@ func Strain() error {
 // Plasmid loads plasmid data including curator assignment
 func Plasmid() error {
 	mg.Deps(StrainSyn)
+	s := runner.TermSpinner("Loading plasmid data ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -78,6 +84,9 @@ func Plasmid() error {
 // Characteristics loads strain characteristics
 func Characteristics() error {
 	mg.Deps(Strain)
+	s := runner.TermSpinner("Loading strain characteristics ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -95,6 +104,9 @@ func Characteristics() error {
 // StrainProp loads strain property data
 func StrainProp() error {
 	mg.Deps(StrainInv)
+	s := runner.TermSpinner("Loading strain properties ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -112,6 +124,9 @@ func StrainProp() error {
 // Genotype load strain genotype data
 func Genotype() error {
 	mg.Deps(Characteristics)
+	s := runner.TermSpinner("Loading strain genotype ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -129,6 +144,9 @@ func Genotype() error {
 // StrainSyn loads strain synonym data
 func StrainSyn() error {
 	mg.Deps(StrainProp)
+	s := runner.TermSpinner("Loading strain synonym ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -146,6 +164,9 @@ func StrainSyn() error {
 // StrainInv loads strain inventory data
 func StrainInv() error {
 	mg.Deps(Phenotype)
+	s := runner.TermSpinner("Loading strain inventory ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -163,6 +184,9 @@ func StrainInv() error {
 // Phenotype loads strain phenotype data
 func Phenotype() error {
 	mg.Deps(Genotype)
+	s := runner.TermSpinner("Loading strain phenotype ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -180,6 +204,9 @@ func Phenotype() error {
 // PlasmidInv loads plasmid inventory data
 func PlasmidInv() error {
 	mg.Deps(Plasmid)
+	s := runner.TermSpinner("Loading plasmid inventory ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",
@@ -197,6 +224,9 @@ func PlasmidInv() error {
 // Gwdi loads GWDI strain mutant data
 func Gwdi() error {
 	mg.Deps(PlasmidInv)
+	s := runner.TermSpinner("Loading gwdi strain ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", command),
 		"--log-level",

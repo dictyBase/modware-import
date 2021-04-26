@@ -43,6 +43,9 @@ func Build() error {
 	if err := buildSetup(); err != nil {
 		return err
 	}
+	s := TermSpinner("building modware-import binary ...")
+	defer s.Stop()
+	s.Start()
 	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 }
 
@@ -51,6 +54,12 @@ func CleanDB(db string) error {
 	if err := env.ArangoEnvs(); err != nil {
 		return err
 	}
+	s := TermSpinnerWithPrefixColor(
+		fmt.Sprintf("cleaning database %s ...", db),
+		"fgHiMagenta",
+	)
+	defer s.Stop()
+	s.Start()
 	return sh.Run(
 		"./importer",
 		"--log-level",
