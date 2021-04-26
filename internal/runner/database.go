@@ -23,19 +23,13 @@ func TermSpinnerWithPrefixColor(prefix, color string) *spinner.Spinner {
 		spinner.CharSets[33],
 		300*time.Millisecond,
 	)
-	s.Color("bgHiBlack", "bold", color)
+	_ = s.Color("bgHiBlack", "bold", color)
 	s.Prefix = fmt.Sprintf("%s  ", prefix)
 	return s
 }
 
 func TermSpinner(prefix string) *spinner.Spinner {
-	s := spinner.New(
-		spinner.CharSets[33],
-		300*time.Millisecond,
-	)
-	s.Color("bgHiBlack", "bold", "fgHiGreen")
-	s.Prefix = fmt.Sprintf("%s  ", prefix)
-	return s
+	return TermSpinnerWithPrefixColor(prefix, "fgHiGreen")
 }
 
 // Build builds the binary for modware-import project
