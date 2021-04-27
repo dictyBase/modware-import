@@ -44,4 +44,14 @@ func loadFlags() {
 		"cvterm",
 		"arangodb collection for storing ontoloy terms",
 	)
+	LoadCmd.Flags().String(
+		"s3-bucket",
+		"dictybase",
+		"S3 bucket for input files",
+	)
+	LoadCmd.Flags().String(
+		"s3-bucket-path",
+		"import/ontology",
+		"path inside S3 bucket for obojson files",
+	)
 }
