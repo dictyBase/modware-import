@@ -13,11 +13,11 @@ var ArangodbCmd = &cobra.Command{
 
 func init() {
 	ArangodbCmd.AddCommand(DeleteCmd)
-	arangodbFlags()
+	ArangodbFlags()
 	viper.BindPFlags(ArangodbCmd.PersistentFlags())
 }
 
-func arangodbFlags() {
+func ArangodbFlags() {
 	ArangodbCmd.PersistentFlags().StringP(
 		"arangodb-pass",
 		"p",
