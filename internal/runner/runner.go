@@ -17,6 +17,8 @@ const (
 	gitURL   = "https://github.com/dictyBase/modware-import.git"
 	cloneDir = "modware-import"
 	branch   = "develop"
+	Command  = "importer"
+	LogLevel = "info"
 )
 
 func TermSpinnerWithPrefixColor(prefix, color string) *spinner.Spinner {

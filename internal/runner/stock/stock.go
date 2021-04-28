@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	command  = "importer"
 	logLevel = "info"
 )
 
@@ -42,7 +41,7 @@ func Strain() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",
@@ -65,7 +64,7 @@ func Plasmid() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",
@@ -88,7 +87,7 @@ func Characteristics() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",
@@ -108,7 +107,7 @@ func StrainProp() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",
@@ -128,7 +127,7 @@ func Genotype() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",
@@ -148,7 +147,7 @@ func StrainSyn() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",
@@ -168,7 +167,7 @@ func StrainInv() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",
@@ -188,7 +187,7 @@ func Phenotype() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",
@@ -208,7 +207,7 @@ func PlasmidInv() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",
@@ -228,7 +227,7 @@ func Gwdi() error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", command),
+		fmt.Sprintf("./%s", runner.Command),
 		"--log-level",
 		logLevel,
 		"stockcenter",

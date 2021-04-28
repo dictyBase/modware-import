@@ -12,6 +12,8 @@ import (
 	"github.com/dictyBase/modware-import/internal/runner/annotation"
 	// mage:import order
 	"github.com/dictyBase/modware-import/internal/runner/order"
+	// mage:import ontology
+	_ "github.com/dictyBase/modware-import/internal/runner/ontology"
 )
 
 // CleanAll deletes all data from stock,order and annotation databases
