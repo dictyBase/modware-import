@@ -19,6 +19,7 @@ const (
 	ArangodbSessionKey = "arangodb_session"
 	Arangodb           = "arangodb"
 	OboStorageKey      = "obostorage"
+	OboReadersKey      = "oboreaders"
 )
 
 var v = viper.New()
@@ -49,6 +50,10 @@ func SetS3Client(s3c *minio.Client) {
 
 func SetReader(key string, r io.Reader) {
 	v.Set(key, r)
+}
+
+func SetAllReaders(key string, rds []io.Reader) {
+	v.Set(key, rds)
 }
 
 func SetWriter(key string, w io.Writer) {
@@ -92,6 +97,11 @@ func GetWriter(key string) io.Writer {
 func GetReader(key string) io.Reader {
 	r, _ := v.Get(key).(io.Reader)
 	return r
+}
+
+func GetAllReaders(key string) []io.Reader {
+	rds, _ := v.Get(key).([]io.Reader)
+	return rds
 }
 
 func GetValue(key string) string {
