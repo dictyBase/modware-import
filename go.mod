@@ -7,6 +7,7 @@ require (
 	github.com/dictyBase/aphgrpc v1.3.0
 	github.com/dictyBase/arangomanager v0.3.1
 	github.com/dictyBase/go-genproto v0.0.0-20200122001226-b1ccbdee4aa3
+	github.com/dictyBase/go-obograph v1.0.9 // indirect
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.12.0
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
