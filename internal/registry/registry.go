@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/dictyBase/arangomanager"
+	"github.com/dictyBase/go-obograph/storage"
 	r "github.com/go-redis/redis/v7"
 	"github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
@@ -17,12 +18,17 @@ const (
 	RedisKey           = "redis"
 	ArangodbSessionKey = "arangodb_session"
 	Arangodb           = "arangodb"
+	OboStorageKey      = "obostorage"
 )
 
 var v = viper.New()
 
 func SetValue(key, value string) {
 	v.Set(key, value)
+}
+
+func SetArangoOboStorage(s storage.DataSource) {
+	v.Set(OboStorageKey, s)
 }
 
 func SetArangoSession(s *arangomanager.Session) {
@@ -51,6 +57,11 @@ func SetWriter(key string, w io.Writer) {
 
 func SetRedisClient(redis *r.Client) {
 	v.Set(RedisKey, redis)
+}
+
+func GetArangoOboStorage() storage.DataSource {
+	s, _ := v.Get(OboStorageKey).(storage.DataSource)
+	return s
 }
 
 func GetArangoSession() *arangomanager.Session {
