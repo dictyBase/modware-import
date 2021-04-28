@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/dictyBase/go-obograph/graph"
 	araobo "github.com/dictyBase/go-obograph/storage/arangodb"
@@ -28,16 +29,16 @@ var LoadCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := registry.GetLogger()
 		ds := registry.GetArangoOboStorage()
-		for _, r := range registry.GetAllReaders(registry.OboReadersKey) {
+		for k, r := range registry.GetAllReaders(registry.OboReadersKey) {
 			g, err := graph.BuildGraph(r)
 			if err != nil {
 				return err
 			}
 			if !ds.ExistsOboGraph(g) {
-				logger.Info("obograph does not exist, have to be loaded")
+				logger.Infof("obograph %s does not exist, have to be loaded", k)
 				err := ds.SaveOboGraphInfo(g)
 				if err != nil {
-					return fmt.Errorf("error in saving graph %s", err)
+					return fmt.Errorf("error in saving graph information %s", err)
 				}
 				nt, err := ds.SaveTerms(g)
 				if err != nil {
@@ -51,7 +52,7 @@ var LoadCmd = &cobra.Command{
 				logger.Infof("saved %d relationships", nr)
 				continue
 			}
-			logger.Info("obograph exist, have to be updated")
+			logger.Infof("obograph %s exist, have to be updated", k)
 			if err := ds.UpdateOboGraphInfo(g); err != nil {
 				return fmt.Errorf("error in updating graph information %s", err)
 			}
@@ -76,7 +77,7 @@ func init() {
 }
 
 func setOboReaders() error {
-	var rds []io.Reader
+	rds := make(map[string]io.Reader)
 	switch viper.GetString("input-source") {
 	case stockcenter.FOLDER:
 		for _, v := range viper.GetStringSlice("obojson") {
@@ -84,7 +85,7 @@ func setOboReaders() error {
 			if err != nil {
 				return fmt.Errorf("error in opening file %s %s", v, err)
 			}
-			rds = append(rds, r)
+			rds[filepath.Base(v)] = r
 		}
 	case stockcenter.BUCKET:
 		for _, v := range viper.GetStringSlice("obojson") {
@@ -99,7 +100,7 @@ func setOboReaders() error {
 					v, viper.GetString("s3-bucket-path"), err,
 				)
 			}
-			rds = append(rds, r)
+			rds[v] = r
 		}
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))

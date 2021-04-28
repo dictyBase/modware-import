@@ -52,7 +52,7 @@ func SetReader(key string, r io.Reader) {
 	v.Set(key, r)
 }
 
-func SetAllReaders(key string, rds []io.Reader) {
+func SetAllReaders(key string, rds map[string]io.Reader) {
 	v.Set(key, rds)
 }
 
@@ -99,8 +99,8 @@ func GetReader(key string) io.Reader {
 	return r
 }
 
-func GetAllReaders(key string) []io.Reader {
-	rds, _ := v.Get(key).([]io.Reader)
+func GetAllReaders(key string) map[string]io.Reader {
+	rds, _ := v.Get(key).(map[string]io.Reader)
 	return rds
 }
 
