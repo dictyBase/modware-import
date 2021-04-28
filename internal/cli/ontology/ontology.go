@@ -12,7 +12,7 @@ var OntologyCmd = &cobra.Command{
 }
 
 func init() {
-	OntologyCmd.AddCommand(LoadCmd)
+	OntologyCmd.AddCommand(LoadCmd, RefreshCmd)
 	ontologyStorageFlags()
 	viper.BindPFlags(OntologyCmd.PersistentFlags())
 }
@@ -50,6 +50,16 @@ func ontologyStorageFlags() {
 		"is-secure",
 		false,
 		"flag for secured or unsecured arangodb endpoint",
+	)
+	OntologyCmd.PersistentFlags().String(
+		"s3-bucket",
+		"dictybase",
+		"S3 bucket for input files",
+	)
+	OntologyCmd.PersistentFlags().String(
+		"s3-bucket-path",
+		"import/ontology",
+		"path inside S3 bucket for obojson files",
 	)
 	viper.BindEnv("arangodb-pass", "ARANGODB_PASS")
 	viper.BindEnv("arangodb-user", "ARANGODB_USER")
