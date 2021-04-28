@@ -45,9 +45,17 @@ func BuildBranch(branch string) error {
 	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 }
 
-// Build is a standalone builder, it builds the binary after
-// checking out the source code from develop branch
+// Build builds the modware-import binary
 func Build() error {
+	s := TermSpinner("building modware-import binary ...")
+	defer s.Stop()
+	s.Start()
+	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
+}
+
+// MagicBuild is a standalone builder, it builds the binary after
+// checking out the source code from develop branch
+func MagicBuild() error {
 	if err := buildSetup(cloneDir, branch); err != nil {
 		return err
 	}
