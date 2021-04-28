@@ -58,7 +58,7 @@ func ontologyStorageFlags() {
 	)
 	OntologyCmd.PersistentFlags().String(
 		"s3-bucket-path",
-		"import/ontology",
+		"import/obograph-json",
 		"path inside S3 bucket for obojson files",
 	)
 	viper.BindEnv("arangodb-pass", "ARANGODB_PASS")
