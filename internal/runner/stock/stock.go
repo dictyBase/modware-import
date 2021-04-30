@@ -13,15 +13,6 @@ const (
 	logLevel = "info"
 )
 
-// Clean deletes all order data from arangodb database
-func Clean() error {
-	mg.SerialDeps(
-		runner.Build,
-		mg.F(runner.CleanDB, "stock"),
-	)
-	return nil
-}
-
 // LoadAll loads all stock data
 func LoadAll() error {
 	mg.Deps(gwdi)
