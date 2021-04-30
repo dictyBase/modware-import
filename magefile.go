@@ -5,19 +5,19 @@ package main
 import (
 	"github.com/magefile/mage/mg"
 	// mage:import
-	_ "github.com/dictyBase/modware-import/internal/runner"
+	"github.com/dictyBase/modware-import/internal/runner"
 	// mage:import stock
-	"github.com/dictyBase/modware-import/internal/runner/stock"
-	// mage:import annotation
-	"github.com/dictyBase/modware-import/internal/runner/annotation"
-	// mage:import order
-	"github.com/dictyBase/modware-import/internal/runner/order"
+	_ "github.com/dictyBase/modware-import/internal/runner/stock"
 	// mage:import ontology
 	_ "github.com/dictyBase/modware-import/internal/runner/ontology"
 )
 
+var dbs = []string{"stock", "annotation", "order"}
+
 // CleanAll deletes all data from stock,order and annotation databases
 func CleanAll() error {
-	mg.Deps(stock.Clean, annotation.Clean, order.Clean)
+	for _, db := range dbs {
+		mg.Deps(mg.F(runner.CleanDB(db)))
+	}
 	return nil
 }
