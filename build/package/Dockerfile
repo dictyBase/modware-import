@@ -1,7 +1,7 @@
 FROM golang:1.16.3-alpine3.13
 LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
 ENV GOPROXY https://proxy.golang.org
-RUN apk add --no-cache git build-base
+RUN apk add --no-cache git 
 # install mage
 RUN git clone https://github.com/magefile/mage \
     && cd mage \
