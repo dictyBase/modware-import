@@ -47,7 +47,8 @@ func BuildBranch(branch string) error {
 	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 }
 
-// Build builds the modware-import binary
+// Build builds the modware-import binary. It is intended to run
+// from source folder
 func Build() error {
 	s := TermSpinner("building modware-import binary ...")
 	defer s.Stop()
@@ -64,7 +65,11 @@ func MagicBuild() error {
 	s := TermSpinner("building modware-import binary ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
+	err := sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
+	if err != nil {
+		return err
+	}
+	return os.Chdir(cloneDir)
 }
 
 // Cleandb deletes data from arangodb database

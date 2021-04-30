@@ -27,7 +27,7 @@ func strain() error {
 	if err := env.ServiceEnvs(); err != nil {
 		return err
 	}
-	mg.Deps(runner.Build)
+	mg.Deps(runner.MagicBuild)
 	s := runner.TermSpinner("Loading strain data ...")
 	defer s.Stop()
 	s.Start()
