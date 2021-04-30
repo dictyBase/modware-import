@@ -80,7 +80,11 @@ func setOboReaders() error {
 	rds := make(map[string]io.Reader)
 	switch viper.GetString("input-source") {
 	case stockcenter.FOLDER:
-		for _, v := range viper.GetStringSlice("obojson") {
+		files, err := obojsonFiles(viper.GetString("folder"))
+		if err != nil {
+			return err
+		}
+		for _, v := range files {
 			r, err := os.Open(v)
 			if err != nil {
 				return fmt.Errorf("error in opening file %s %s", v, err)
@@ -88,19 +92,21 @@ func setOboReaders() error {
 			rds[filepath.Base(v)] = r
 		}
 	case stockcenter.BUCKET:
-		for _, v := range viper.GetStringSlice("obojson") {
-			r, err := registry.GetS3Client().GetObject(
-				viper.GetString("s3-bucket"),
-				fmt.Sprintf("%s/%s", viper.GetString("s3-bucket-path"), v),
+		doneCh := make(chan struct{})
+		defer close(doneCh)
+		for oinfo := range registry.GetS3Client().ListObjects(
+			viper.GetString("s3-bucket"),
+			viper.GetString("s3-bucket-path"),
+			true, doneCh,
+		) {
+			obj, err := registry.GetS3Client().GetObject(
+				viper.GetString("s3-bucket"), oinfo.Key,
 				minio.GetObjectOptions{},
 			)
 			if err != nil {
-				return fmt.Errorf(
-					"error in getting file %s from bucket %s %s",
-					v, viper.GetString("s3-bucket-path"), err,
-				)
+				return fmt.Errorf("error in getting object %s", oinfo.Key)
 			}
-			rds[v] = r
+			rds[oinfo.Key] = obj
 		}
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
@@ -133,11 +139,11 @@ func setOboStorage() error {
 }
 
 func loadFlags() {
-	LoadCmd.Flags().StringSliceP(
-		"obojson",
-		"j",
-		[]string{""},
-		"input ontology files in obograph json format",
+	LoadCmd.Flags().StringP(
+		"folder",
+		"f",
+		"",
+		"input folder with obojson format files",
 	)
 	LoadCmd.Flags().String(
 		"obograph",
