@@ -65,6 +65,9 @@ func MagicBuild() error {
 	s := TermSpinner("building modware-import binary ...")
 	defer s.Stop()
 	s.Start()
+	if err := sh.Run("go", "mod", "download"); err != nil {
+		return err
+	}
 	err := sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 	if err != nil {
 		return err
