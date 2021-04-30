@@ -31,3 +31,25 @@ func Refresh() error {
 		"refresh",
 	)
 }
+
+// Load loads all obograph-json formatted ontologies
+func Load() error {
+	if err := env.ArangoEnvs(); err != nil {
+		return err
+	}
+	mg.Deps(Refresh)
+	s := runner.TermSpinner("loading obojson ontology files ...")
+	defer s.Stop()
+	s.Start()
+	return sh.Run(
+		fmt.Sprintf("./%s", runner.Command),
+		"--log-level",
+		runner.LogLevel,
+		"--access-key",
+		env.MinioAccessKey(),
+		"--secret-key",
+		env.MinioSecretKey(),
+		"ontology",
+		"load",
+	)
+}
