@@ -1,6 +1,5 @@
 FROM golang:1.16.3-alpine3.13
 LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
-ENV GOPROXY https://proxy.golang.org
 RUN apk add --no-cache git 
 # install mage
 RUN git clone https://github.com/magefile/mage \
@@ -17,8 +16,7 @@ ADD internal internal
 RUN go build -o app cmd/import/main.go
 RUN mage -compile ./gmake
 
-
-FROM alpine:3.13.2
+FROM golang:1.16.3-alpine3.13
 RUN apk --no-cache add ca-certificates tzdata \
     && cp /usr/share/zoneinfo/America/Chicago /etc/localtime \
     && echo "America/Chicago" > /etc/timezone
