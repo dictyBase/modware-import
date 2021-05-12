@@ -68,11 +68,7 @@ func MagicBuild() error {
 	if err := sh.Run("go", "mod", "download"); err != nil {
 		return err
 	}
-	err := sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
-	if err != nil {
-		return err
-	}
-	return os.Chdir(cloneDir)
+	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 }
 
 // Cleandb deletes data from arangodb database

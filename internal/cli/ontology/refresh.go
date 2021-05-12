@@ -53,7 +53,7 @@ func init() {
 func refreshFlags() {
 	RefreshCmd.Flags().String(
 		"repository",
-		"https://github.com/dictybase-playground/ontomania",
+		"https://github.com/dictyBase/migration-data",
 		"github repository source of obojson files",
 	)
 	RefreshCmd.Flags().String(
