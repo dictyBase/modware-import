@@ -99,6 +99,13 @@ func setOboReaders() error {
 			viper.GetString("s3-bucket-path"),
 			true, doneCh,
 		) {
+			v, ok := oinfo.UserTags["ontology-group"]
+			if !ok { // no tag
+				continue
+			}
+			if v != viper.GetString("group") { // did not match the group
+				continue
+			}
 			obj, err := registry.GetS3Client().GetObject(
 				viper.GetString("s3-bucket"), oinfo.Key,
 				minio.GetObjectOptions{},
@@ -164,5 +171,10 @@ func loadFlags() {
 		"term-collection",
 		"cvterm",
 		"arangodb collection for storing ontoloy terms",
+	)
+	LoadCmd.Flags().String(
+		"group",
+		"",
+		"file belong to this ontology group will be uploaded. Only works for S3 storage",
 	)
 }
