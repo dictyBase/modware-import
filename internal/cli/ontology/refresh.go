@@ -34,7 +34,11 @@ var RefreshCmd = &cobra.Command{
 			_, err := registry.GetS3Client().FPutObject(
 				viper.GetString("s3-bucket"),
 				viper.GetString("s3-bucket-path"),
-				e, minio.PutObjectOptions{},
+				e, minio.PutObjectOptions{
+					UserTags: map[string]string{
+						"ontology-group": viper.GetString("group"),
+					},
+				},
 			)
 			if err != nil {
 				return err
@@ -65,6 +69,11 @@ func refreshFlags() {
 		"subfolder",
 		"obograph-json",
 		"sub folder of clone repository for the source of obojson files",
+	)
+	RefreshCmd.Flags().String(
+		"group",
+		"",
+		"ontology group name",
 	)
 }
 
