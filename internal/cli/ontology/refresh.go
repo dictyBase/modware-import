@@ -62,7 +62,7 @@ func refreshFlags() {
 	)
 	RefreshCmd.Flags().String(
 		"branch",
-		"develop",
+		"master",
 		"branch of github repository",
 	)
 	RefreshCmd.Flags().String(
