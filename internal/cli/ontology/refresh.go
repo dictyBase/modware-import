@@ -33,7 +33,7 @@ var RefreshCmd = &cobra.Command{
 		for _, e := range files {
 			_, err := registry.GetS3Client().FPutObject(
 				viper.GetString("s3-bucket"),
-				viper.GetString("s3-bucket-path"),
+				fmt.Sprintf("%s/%s", viper.GetString("s3-bucket-path"), filepath.Base(e)),
 				e, minio.PutObjectOptions{
 					UserTags: map[string]string{
 						"ontology-group": viper.GetString("group"),
