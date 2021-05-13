@@ -9,9 +9,9 @@ import (
 	"github.com/magefile/mage/sh"
 )
 
-// Refresh gets all obojson files from source github repository
-// and stores in S3(minio) for later upload
-func Refresh() error {
+// Refresh gets all obojson formatted files from source github repository
+// and stores in S3(minio) for later upload. The ontology group have to be supplied.
+func Refresh(group string) error {
 	if err := env.MinioEnvs(); err != nil {
 		return err
 	}
@@ -29,15 +29,17 @@ func Refresh() error {
 		env.MinioSecretKey(),
 		"ontology",
 		"refresh",
+		"--group",
+		group,
 	)
 }
 
-// Load loads all obograph-json formatted ontologies
-func Load() error {
+// Load loads all obograph-json formatted ontologies. The ontology group have to be supplied.
+func Load(group string) error {
 	if err := env.ArangoEnvs(); err != nil {
 		return err
 	}
-	mg.Deps(Refresh)
+	mg.Deps(mg.F(Refresh, group))
 	s := runner.TermSpinner("loading obojson ontology files ...")
 	defer s.Stop()
 	s.Start()
@@ -51,5 +53,7 @@ func Load() error {
 		env.MinioSecretKey(),
 		"ontology",
 		"load",
+		"--group",
+		group,
 	)
 }
