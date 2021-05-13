@@ -35,7 +35,7 @@ var LoadCmd = &cobra.Command{
 				return err
 			}
 			if !ds.ExistsOboGraph(g) {
-				logger.Infof("obograph %s does not exist, have to be loaded", k)
+				logger.Debugf("obograph %s does not exist, have to be loaded", k)
 				err := ds.SaveOboGraphInfo(g)
 				if err != nil {
 					return fmt.Errorf("error in saving graph information %s", err)
@@ -44,15 +44,15 @@ var LoadCmd = &cobra.Command{
 				if err != nil {
 					return fmt.Errorf("error in saving terms %s", err)
 				}
-				logger.Infof("saved %d terms", nt)
+				logger.Debugf("saved %d terms", nt)
 				nr, err := ds.SaveRelationships(g)
 				if err != nil {
 					return fmt.Errorf("error in saving relationships %s", err)
 				}
-				logger.Infof("saved %d relationships", nr)
+				logger.Debugf("saved %d relationships", nr)
 				continue
 			}
-			logger.Infof("obograph %s exist, have to be updated", k)
+			logger.Debugf("obograph %s exist, have to be updated", k)
 			if err := ds.UpdateOboGraphInfo(g); err != nil {
 				return fmt.Errorf("error in updating graph information %s", err)
 			}
@@ -60,12 +60,12 @@ var LoadCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("error in updating terms %s", err)
 			}
-			logger.Infof("saved: %d and updated: %d terms", it, ut)
+			logger.Debugf("saved: %d and updated: %d terms", it, ut)
 			ur, err := ds.SaveNewRelationships(g)
 			if err != nil {
 				return fmt.Errorf("error in saving relationships %s", err)
 			}
-			logger.Infof("updated %d relationships", ur)
+			logger.Debugf("updated %d relationships", ur)
 		}
 		return nil
 	},
