@@ -35,7 +35,7 @@ func TermSpinner(prefix string) *spinner.Spinner {
 	return TermSpinnerWithPrefixColor(prefix, "fgHiGreen")
 }
 
-// Build is a standalone builder, it builds the binary
+// A standalone builder, it builds the binary
 // after checking out the source code from the given branch
 func BuildBranch(branch string) error {
 	if err := buildSetup(cloneDir, branch); err != nil {
@@ -47,7 +47,7 @@ func BuildBranch(branch string) error {
 	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 }
 
-// Build builds the modware-import binary. It is intended to run
+// Builds the modware-import binary. It is intended to run
 // from source folder
 func Build() error {
 	s := TermSpinner("building modware-import binary ...")
@@ -56,7 +56,7 @@ func Build() error {
 	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
 }
 
-// MagicBuild is a standalone builder, it builds the binary after
+// Another standalone builder, it builds the binary after
 // checking out the source code from develop branch
 func MagicBuild() error {
 	if err := buildSetup(cloneDir, branch); err != nil {
