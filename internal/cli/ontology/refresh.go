@@ -43,7 +43,7 @@ var RefreshCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			logger.Infof("uploaded %s file", filepath.Base(e))
+			logger.Debugf("uploaded %s file", filepath.Base(e))
 		}
 		return nil
 	},
