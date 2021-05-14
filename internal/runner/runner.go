@@ -84,10 +84,10 @@ func CleanDB(db string) error {
 	s.Start()
 	return sh.Run(
 		"./importer",
+		"arangodb",
 		"--log-level",
 		"info",
 		"--is-secure",
-		"arangodb",
 		"delete",
 		"-d",
 		db,
