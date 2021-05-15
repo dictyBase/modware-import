@@ -2,7 +2,7 @@ module github.com/dictyBase/modware-import
 
 require (
 	github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4
-	github.com/briandowns/spinner v1.12.0 // indirect
+	github.com/briandowns/spinner v1.12.0
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/dictyBase/aphgrpc v1.3.0
 	github.com/dictyBase/arangomanager v0.3.1
@@ -26,7 +26,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc // indirect
 	golang.org/x/sys v0.0.0-20210420072515-93ed5bcd2bfe // indirect
 	golang.org/x/text v0.3.6 // indirect
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.37.1
 )
 
 go 1.13
