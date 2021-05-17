@@ -9,6 +9,7 @@ func ArangoEnvs() error {
 	return checkErrors([]string{
 		"ARANGODB_PASS",
 		"ARANGODB_USER",
+		"ARANGODB_DATABASE",
 		"ARANGODB_SERVICE_HOST",
 		"ARANGODB_SERVICE_PORT",
 	})
