@@ -105,10 +105,7 @@ func buildAndClean(curr, dir string) error {
 	}
 	dst := filepath.Join(curr, Command)
 	src := filepath.Join(dir, Command)
-	if err := sh.Copy(dst, src); err != nil {
-		return err
-	}
-	return sh.Rm(dir)
+	return sh.Copy(dst, src)
 }
 
 func buildSetup(dir, branch string) error {
