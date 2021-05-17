@@ -18,7 +18,7 @@ var dbs = []string{"stock", "annotation", "order"}
 func CleanAllDB(branch string) error {
 	mg.Deps(mg.F(runner.BuildBranch, branch))
 	for _, db := range dbs {
-		mg.Deps(mg.F(runner.CleanDB(db)))
+		mg.Deps(mg.F(runner.CleanDB, db))
 	}
 	return nil
 }
