@@ -38,13 +38,14 @@ func TermSpinner(prefix string) *spinner.Spinner {
 // A standalone builder, it builds the binary
 // after checking out the source code from the given branch
 func BuildBranch(branch string) error {
+	currDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	if err := buildSetup(cloneDir, branch); err != nil {
 		return err
 	}
-	s := TermSpinner("building modware-import binary ...")
-	defer s.Stop()
-	s.Start()
-	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
+	return buildAndClean(currDir, cloneDir)
 }
 
 // Builds the modware-import binary. It is intended to run
@@ -53,7 +54,7 @@ func Build() error {
 	s := TermSpinner("building modware-import binary ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run("go", "build", "-o", "importer", "cmd/import/main.go")
+	return sh.Run("go", "build", "-o", Command, "cmd/import/main.go")
 }
 
 // Another standalone builder, it builds the binary after
@@ -88,10 +89,26 @@ func CleanDB(db string) error {
 		"--log-level",
 		"info",
 		"--is-secure",
+		"true",
 		"delete",
 		"-d",
 		db,
 	)
+}
+
+func buildAndClean(curr, dir string) error {
+	if err := Build(); err != nil {
+		return err
+	}
+	if err := os.Chdir(curr); err != nil {
+		return err
+	}
+	dst := filepath.Join(curr, Command)
+	src := filepath.Join(dir, Command)
+	if err := sh.Copy(dst, src); err != nil {
+		return err
+	}
+	return sh.Rm(dir)
 }
 
 func buildSetup(dir, branch string) error {
