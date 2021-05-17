@@ -91,7 +91,7 @@ func CleanDB(db string) error {
 		"--is-secure",
 		"true",
 		"delete",
-		"-d",
+		"--database",
 		db,
 	)
 }
