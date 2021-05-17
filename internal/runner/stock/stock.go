@@ -14,20 +14,20 @@ const (
 )
 
 // LoadAll loads all stock data
-func LoadAll() error {
-	mg.Deps(gwdi)
+func LoadAll(branch string) error {
+	mg.Deps(mg.F(gwdi, branch))
 	return nil
 }
 
 // Strain loads strain data including curator assignment
-func strain() error {
+func strain(branch string) error {
 	if err := env.MinioEnvs(); err != nil {
 		return err
 	}
 	if err := env.ServiceEnvs(); err != nil {
 		return err
 	}
-	mg.Deps(runner.MagicBuild)
+	mg.Deps(mg.F(runner.BuildBranch, branch))
 	s := runner.TermSpinner("Loading strain data ...")
 	defer s.Stop()
 	s.Start()
@@ -49,8 +49,8 @@ func strain() error {
 }
 
 // Plasmid loads plasmid data including curator assignment
-func plasmid() error {
-	mg.Deps(strainSyn)
+func plasmid(branch string) error {
+	mg.Deps(mg.F(strainSyn, branch))
 	s := runner.TermSpinner("Loading plasmid data ...")
 	defer s.Stop()
 	s.Start()
@@ -72,8 +72,8 @@ func plasmid() error {
 }
 
 // Characteristics loads strain characteristics
-func characteristics() error {
-	mg.Deps(strain)
+func characteristics(branch string) error {
+	mg.Deps(mg.F(strain, branch))
 	s := runner.TermSpinner("Loading strain characteristics ...")
 	defer s.Stop()
 	s.Start()
@@ -92,8 +92,8 @@ func characteristics() error {
 }
 
 // StrainProp loads strain property data
-func strainProp() error {
-	mg.Deps(strainInv)
+func strainProp(branch string) error {
+	mg.Deps(mg.F(strainInv, branch))
 	s := runner.TermSpinner("Loading strain properties ...")
 	defer s.Stop()
 	s.Start()
@@ -112,8 +112,8 @@ func strainProp() error {
 }
 
 // Genotype load strain genotype data
-func genotype() error {
-	mg.Deps(characteristics)
+func genotype(branch string) error {
+	mg.Deps(mg.F(characteristics, branch))
 	s := runner.TermSpinner("Loading strain genotype ...")
 	defer s.Stop()
 	s.Start()
@@ -132,8 +132,8 @@ func genotype() error {
 }
 
 // StrainSyn loads strain synonym data
-func strainSyn() error {
-	mg.Deps(strainProp)
+func strainSyn(branch string) error {
+	mg.Deps(mg.F(strainProp, branch))
 	s := runner.TermSpinner("Loading strain synonym ...")
 	defer s.Stop()
 	s.Start()
@@ -152,8 +152,8 @@ func strainSyn() error {
 }
 
 // StrainInv loads strain inventory data
-func strainInv() error {
-	mg.Deps(phenotype)
+func strainInv(branch string) error {
+	mg.Deps(mg.F(phenotype, branch))
 	s := runner.TermSpinner("Loading strain inventory ...")
 	defer s.Stop()
 	s.Start()
@@ -172,8 +172,8 @@ func strainInv() error {
 }
 
 // Phenotype loads strain phenotype data
-func phenotype() error {
-	mg.Deps(genotype)
+func phenotype(branch string) error {
+	mg.Deps(mg.F(genotype, branch))
 	s := runner.TermSpinner("Loading strain phenotype ...")
 	defer s.Stop()
 	s.Start()
@@ -192,8 +192,8 @@ func phenotype() error {
 }
 
 // PlasmidInv loads plasmid inventory data
-func plasmidInv() error {
-	mg.Deps(plasmid)
+func plasmidInv(branch string) error {
+	mg.Deps(mg.F(plasmid, branch))
 	s := runner.TermSpinner("Loading plasmid inventory ...")
 	defer s.Stop()
 	s.Start()
@@ -212,8 +212,8 @@ func plasmidInv() error {
 }
 
 // Gwdi loads GWDI strain mutant data
-func gwdi() error {
-	mg.Deps(plasmidInv)
+func gwdi(branch string) error {
+	mg.Deps(mg.F(plasmidInv, branch))
 	s := runner.TermSpinner("Loading gwdi strain ...")
 	defer s.Stop()
 	s.Start()

@@ -84,7 +84,7 @@ func CleanDB(db string) error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		"./importer",
+		fmt.Sprintf("./%s", Command),
 		"arangodb",
 		"--log-level",
 		"info",

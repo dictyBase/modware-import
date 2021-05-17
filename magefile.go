@@ -15,8 +15,8 @@ import (
 var dbs = []string{"stock", "annotation", "order"}
 
 // CleanAll deletes all data from stock,order and annotation databases
-func CleanAll() error {
-	mg.Deps(runner.Build)
+func CleanAllDB(branch string) error {
+	mg.Deps(mg.F(runner.BuildBranch, branch))
 	for _, db := range dbs {
 		mg.Deps(mg.F(runner.CleanDB(db)))
 	}
