@@ -89,7 +89,6 @@ func CleanDB(db string) error {
 		"--log-level",
 		"info",
 		"--is-secure",
-		"true",
 		"delete",
 		"--database",
 		db,
