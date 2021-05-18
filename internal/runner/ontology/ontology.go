@@ -40,12 +40,16 @@ func Load(group, branch string) error {
 	if err := env.ArangoEnvs(); err != nil {
 		return err
 	}
+	if err := env.ArangoDBName(); err != nil {
+		return err
+	}
 	mg.Deps(mg.F(Refresh, group, branch))
 	s := runner.TermSpinner("loading obojson ontology files ...")
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
 		fmt.Sprintf("./%s", runner.Command),
+		"ontology",
 		"--log-level",
 		runner.LogLevel,
 		"--access-key",
@@ -53,7 +57,6 @@ func Load(group, branch string) error {
 		"--secret-key",
 		env.MinioSecretKey(),
 		"--is-secure",
-		"ontology",
 		"load",
 		"--group",
 		group,
