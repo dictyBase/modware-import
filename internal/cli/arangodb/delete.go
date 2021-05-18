@@ -18,6 +18,7 @@ var DeleteCmd = &cobra.Command{
 	Short: "delete all data from all the collections",
 	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
+		tls, _ := cmd.Flags().GetBool("is-secure")
 		session, db, err := arangomanager.NewSessionDb(
 			&arangomanager.ConnectParams{
 				User:     viper.GetString("arangodb-user"),
@@ -25,7 +26,7 @@ var DeleteCmd = &cobra.Command{
 				Database: viper.GetString("database"),
 				Host:     viper.GetString("arangodb-host"),
 				Port:     viper.GetInt("arangodb-port"),
-				Istls:    viper.GetBool("is-secure"),
+				Istls:    tls,
 			},
 		)
 		if err != nil {
