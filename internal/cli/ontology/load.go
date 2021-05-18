@@ -24,7 +24,7 @@ var LoadCmd = &cobra.Command{
 		if err := setOboReaders(); err != nil {
 			return err
 		}
-		return setOboStorage()
+		return setOboStorage(cmd)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := registry.GetLogger()
@@ -122,14 +122,15 @@ func setOboReaders() error {
 	return nil
 }
 
-func setOboStorage() error {
+func setOboStorage(cmd *cobra.Command) error {
+	tls, _ := cmd.Flags().GetBool("is-secure")
 	cp := &araobo.ConnectParams{
 		User:     viper.GetString("arangodb-user"),
 		Pass:     viper.GetString("arangodb-pass"),
 		Database: viper.GetString("arangodb-database"),
 		Host:     viper.GetString("arangodb-host"),
 		Port:     viper.GetInt("arangodb-port"),
-		Istls:    viper.GetBool("is-secure"),
+		Istls:    tls,
 	}
 	clp := &araobo.CollectionParams{
 		Term:         viper.GetString("term-collection"),
