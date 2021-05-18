@@ -87,7 +87,7 @@ func CleanDB(db string) error {
 		fmt.Sprintf("./%s", Command),
 		"arangodb",
 		"--log-level",
-		"info",
+		LogLevel,
 		"--is-secure",
 		"delete",
 		"--database",
