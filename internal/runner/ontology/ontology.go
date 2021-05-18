@@ -52,6 +52,7 @@ func Load(group, branch string) error {
 		env.MinioAccessKey(),
 		"--secret-key",
 		env.MinioSecretKey(),
+		"--is-secure",
 		"ontology",
 		"load",
 		"--group",
