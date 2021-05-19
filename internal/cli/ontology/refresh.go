@@ -35,7 +35,7 @@ var RefreshCmd = &cobra.Command{
 				viper.GetString("s3-bucket"),
 				fmt.Sprintf("%s/%s", viper.GetString("s3-bucket-path"), filepath.Base(e)),
 				e, minio.PutObjectOptions{
-					UserTags: map[string]string{
+					UserMetadata: map[string]string{
 						"ontology-group": viper.GetString("group"),
 					},
 				},

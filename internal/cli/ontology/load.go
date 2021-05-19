@@ -99,21 +99,39 @@ func setOboReaders() error {
 			viper.GetString("s3-bucket-path"),
 			true, doneCh,
 		) {
-			v, ok := oinfo.UserTags["ontology-group"]
-			if !ok { // no tag
+			sinfo, err := registry.GetS3Client().StatObject(
+				viper.GetString("s3-bucket"), oinfo.Key,
+				minio.StatObjectOptions{},
+			)
+			if err != nil {
+				return fmt.Errorf(
+					"error in getting information for object %s %s",
+					oinfo.Key, err,
+				)
+			}
+			v, ok := sinfo.UserMetadata["ontology-group"]
+			if !ok {
+				registry.GetLogger().Warnf(
+					"ontology-group metadata is not present for %s",
+					sinfo.Key,
+				)
 				continue
 			}
-			if v != viper.GetString("group") { // did not match the group
+			if v != viper.GetString("group") {
+				registry.GetLogger().Warnf(
+					"ontology group metadata value %s did not match for %s",
+					v, sinfo.Key,
+				)
 				continue
 			}
 			obj, err := registry.GetS3Client().GetObject(
-				viper.GetString("s3-bucket"), oinfo.Key,
+				viper.GetString("s3-bucket"), sinfo.Key,
 				minio.GetObjectOptions{},
 			)
 			if err != nil {
 				return fmt.Errorf("error in getting object %s", oinfo.Key)
 			}
-			rds[oinfo.Key] = obj
+			rds[sinfo.Key] = obj
 		}
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
