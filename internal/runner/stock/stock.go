@@ -1,8 +1,6 @@
 package stock
 
 import (
-	"fmt"
-
 	"github.com/dictyBase/modware-import/internal/runner"
 	"github.com/dictyBase/modware-import/internal/runner/env"
 	"github.com/magefile/mage/mg"
@@ -14,219 +12,159 @@ const (
 )
 
 // LoadAll loads all stock data
-func LoadAll(branch string) error {
-	mg.Deps(mg.F(gwdi, branch))
+func LoadAll() error {
+	bin, err := runner.LookUp()
+	if err != nil {
+		return err
+	}
+	mg.Deps(mg.F(gwdi, bin))
 	return nil
 }
 
 // Strain loads strain data including curator assignment
-func strain(branch string) error {
+func strain(bin string) error {
 	if err := env.MinioEnvs(); err != nil {
 		return err
 	}
 	if err := env.ServiceEnvs(); err != nil {
 		return err
 	}
-	mg.Deps(mg.F(runner.BuildBranch, branch))
 	s := runner.TermSpinner("Loading strain data ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
-		"stockcenter",
-		"strain",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
+	cmd := append(baseCmd(), "strain")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{
+		"-i",
 		"-a", "strain_user_annotations.csv",
 		"-g", "strain_genes.tsv",
 		"-i", "strain_strain.tsv",
-		"-p", "strain_publications.tsv",
-	)
+		"-p", "strain_publications.tsv"}...)
+	return sh.Run(bin, cmd...)
 }
 
 // Plasmid loads plasmid data including curator assignment
-func plasmid(branch string) error {
-	mg.Deps(mg.F(strainSyn, branch))
+func plasmid(bin string) error {
+	mg.Deps(mg.F(strainSyn, bin))
 	s := runner.TermSpinner("Loading plasmid data ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
-		"stockcenter",
-		"plasmid",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
+	cmd := append(baseCmd(), "plasmid")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{
 		"-a", "plasmid_user_annotations.csv",
 		"-g", "plasmid_genes.tsv",
 		"-i", "plasmid_strain.tsv",
-		"-p", "plasmid_publications.tsv",
-	)
+		"-g", "plasmid_genes.tsv"}...)
+	return sh.Run(bin, cmd...)
 }
 
 // Characteristics loads strain characteristics
-func characteristics(branch string) error {
-	mg.Deps(mg.F(strain, branch))
+func characteristics(bin string) error {
+	mg.Deps(mg.F(strain, bin))
 	s := runner.TermSpinner("Loading strain characteristics ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
-		"stockcenter",
-		"strainchar",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
-		"-i", "strain_characteristics.tsv",
-	)
+	cmd := append(baseCmd(), "strainchar")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "strain_characteristics.tsv"}...)
+	return sh.Run(bin, cmd...)
 }
 
 // StrainProp loads strain property data
-func strainProp(branch string) error {
-	mg.Deps(mg.F(strainInv, branch))
+func strainProp(bin string) error {
+	mg.Deps(mg.F(strainInv, bin))
 	s := runner.TermSpinner("Loading strain properties ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
-		"stockcenter",
-		"strainprop",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
-		"-i", "strain_props.tsv",
-	)
+	cmd := append(baseCmd(), "strainprop")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "strain_props.tsv"}...)
+	return sh.Run(bin, cmd...)
 }
 
 // Genotype load strain genotype data
-func genotype(branch string) error {
-	mg.Deps(mg.F(characteristics, branch))
+func genotype(bin string) error {
+	mg.Deps(mg.F(characteristics, bin))
 	s := runner.TermSpinner("Loading strain genotype ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
-		"stockcenter",
-		"genotype",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
-		"-i", "strain_genotype.tsv",
-	)
+	cmd := append(baseCmd(), "genotype")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "strain_genotype.tsv"}...)
+	return sh.Run(bin, cmd...)
 }
 
 // StrainSyn loads strain synonym data
-func strainSyn(branch string) error {
-	mg.Deps(mg.F(strainProp, branch))
+func strainSyn(bin string) error {
+	mg.Deps(mg.F(strainProp, bin))
 	s := runner.TermSpinner("Loading strain synonym ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
-		"stockcenter",
-		"strainsyn",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
-		"-i", "strain_props.tsv",
-	)
+	cmd := append(baseCmd(), "strainsyn")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "strain_prop.tsv"}...)
+	return sh.Run(bin, cmd...)
 }
 
 // StrainInv loads strain inventory data
-func strainInv(branch string) error {
-	mg.Deps(mg.F(phenotype, branch))
+func strainInv(bin string) error {
+	mg.Deps(mg.F(phenotype, bin))
 	s := runner.TermSpinner("Loading strain inventory ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
-		"stockcenter",
-		"strain-inventory",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
-		"-i", "strain_inventory.tsv",
-	)
+	cmd := append(baseCmd(), "strain-inventory")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "strain_inventory.csv"}...)
+	return sh.Run(bin, cmd...)
 }
 
 // Phenotype loads strain phenotype data
-func phenotype(branch string) error {
-	mg.Deps(mg.F(genotype, branch))
+func phenotype(bin string) error {
+	mg.Deps(mg.F(genotype, bin))
 	s := runner.TermSpinner("Loading strain phenotype ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
-		"stockcenter",
-		"phenotype",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
-		"-i", "strain_phenotype.tsv",
-	)
+	cmd := append(baseCmd(), "phenotype")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "strain_phenotype.csv"}...)
+	return sh.Run(bin, cmd...)
 }
 
 // PlasmidInv loads plasmid inventory data
-func plasmidInv(branch string) error {
-	mg.Deps(mg.F(plasmid, branch))
+func plasmidInv(bin string) error {
+	mg.Deps(mg.F(plasmid, bin))
 	s := runner.TermSpinner("Loading plasmid inventory ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
-		"stockcenter",
-		"plasmid-inventory",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
-		"-i", "plasmid-inventory.tsv",
-	)
+	cmd := append(baseCmd(), "plasmid-inventory")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "plasmid-inventory.csv"}...)
+	return sh.Run(bin, cmd...)
 }
 
 // Gwdi loads GWDI strain mutant data
-func gwdi(branch string) error {
-	mg.Deps(mg.F(plasmidInv, branch))
+func gwdi(bin string) error {
+	mg.Deps(mg.F(plasmidInv, bin))
 	s := runner.TermSpinner("Loading gwdi strain ...")
 	defer s.Stop()
 	s.Start()
-	return sh.Run(
-		fmt.Sprintf("./%s", runner.Command),
-		"--log-level",
-		logLevel,
+	cmd := append(baseCmd(), "gwdi")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "gwdi_strain.csv"}...)
+	return sh.Run(bin, cmd...)
+}
+
+func baseCmd() []string {
+	return []string{
 		"stockcenter",
-		"gwdi",
-		"--access-key",
-		env.MinioAccessKey(),
-		"--secret-key",
-		env.MinioSecretKey(),
-		"-i", "gwdi_strain.csv",
-	)
+		"--log-level", logLevel,
+	}
+}
+
+func minioCmd() []string {
+	return []string{
+		"--access-key", env.MinioAccessKey(),
+		"--secret-key", env.MinioSecretKey(),
+	}
 }

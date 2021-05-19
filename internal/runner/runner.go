@@ -3,6 +3,7 @@ package runner
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -93,6 +94,19 @@ func CleanDB(db string) error {
 		"--database",
 		db,
 	)
+}
+
+// LookUp check for the presence of importer binary
+// in directories named by PATH variable
+func LookUp() (string, error) {
+	bin, err := exec.LookPath(Command)
+	if err != nil {
+		return bin, fmt.Errorf(
+			"Could not find %s binary in path. Build and copy it to path",
+			Command,
+		)
+	}
+	return bin, nil
 }
 
 func buildAndClean(curr, dir string) error {
