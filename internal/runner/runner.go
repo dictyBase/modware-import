@@ -75,6 +75,10 @@ func MagicBuild() error {
 
 // Cleandb deletes data from arangodb database
 func CleanDB(db string) error {
+	bin, err := LookUp()
+	if err != nil {
+		return err
+	}
 	if err := env.ArangoEnvs(); err != nil {
 		return err
 	}
@@ -85,14 +89,8 @@ func CleanDB(db string) error {
 	defer s.Stop()
 	s.Start()
 	return sh.Run(
-		fmt.Sprintf("./%s", Command),
-		"arangodb",
-		"--log-level",
-		LogLevel,
-		"--is-secure",
-		"delete",
-		"--database",
-		db,
+		bin, "arangodb", "--log-level", LogLevel,
+		"--is-secure", "delete", "--database", db,
 	)
 }
 
