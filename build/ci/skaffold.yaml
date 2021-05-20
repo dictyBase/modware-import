@@ -3,11 +3,8 @@ kind: Config
 build:
   artifacts:
   - image: dictybase/modware-import
-    docker:
-      dockerfile: build/package/Dockerfile
-      squash: true
-      buildArgs:
-        platform: linux/amd64
+    custom:
+      buildCommand: docker build --platform linux/amd64 --squash -t  $IMAGE -f build/package/Dockerfile . && docker push $IMAGE
   tagPolicy:
     gitCommit:
       variant: AbbrevCommitSha
