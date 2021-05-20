@@ -15,7 +15,7 @@ ADD internal /go/modware-import/internal/
 RUN cd /go/modware-import \
     && go mod download \
     && mage -compile ./gmake \
-    && ./gmake build
+    && go build -o importer cmd/import/main.go
 
 FROM alpine:3.13.5
 RUN apk --no-cache add ca-certificates tzdata \
