@@ -1,19 +1,15 @@
-apiVersion: skaffold/v2beta8
+apiVersion: skaffold/v2beta16
 kind: Config
 build:
   artifacts:
   - image: dictybase/modware-import
     docker:
       dockerfile: build/package/Dockerfile
+      squash: true
+      buildArgs:
+        platform: linux/amd64
   tagPolicy:
-    envTemplate:
-      template: '{{.IMAGE_NAME}}:{{.IMAGE_TAG}}'
-  local: {}
-deploy:
-  helm:
-    releases:
-    - name: modware-importer
-      chartPath: deployments/charts/modware-import
-      namespace: dictybase
-      setValueTemplates:
-        image.tag: '{{.IMAGE_TAG}}'
+    gitCommit:
+      variant: AbbrevCommitSha
+  local:
+    useBuildkit: true
