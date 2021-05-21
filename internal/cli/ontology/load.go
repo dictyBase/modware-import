@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/dictyBase/go-obograph/graph"
 	araobo "github.com/dictyBase/go-obograph/storage/arangodb"
@@ -109,18 +110,27 @@ func setOboReaders() error {
 					oinfo.Key, err,
 				)
 			}
-			v, ok := sinfo.UserMetadata["ontology-group"]
-			if !ok {
+			tagOk := false
+			var val string
+		INNER:
+			for t := range sinfo.UserMetadata {
+				if "ontology-group" == strings.ToLower(t) {
+					tagOk = true
+					val = sinfo.UserMetadata[t]
+					break INNER
+				}
+			}
+			if !tagOk {
 				registry.GetLogger().Warnf(
 					"ontology-group metadata is not present for %s",
 					sinfo.Key,
 				)
 				continue
 			}
-			if v != viper.GetString("group") {
+			if val != viper.GetString("group") {
 				registry.GetLogger().Warnf(
 					"ontology group metadata value %s did not match for %s",
-					v, sinfo.Key,
+					val, sinfo.Key,
 				)
 				continue
 			}
