@@ -22,7 +22,7 @@ var LoadCmd = &cobra.Command{
 	Short: "load an obojson formatted ontologies to arangodb",
 	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := setOboReaders(); err != nil {
+		if err := setOboReaders(cmd); err != nil {
 			return err
 		}
 		return setOboStorage(cmd)
@@ -77,7 +77,7 @@ func init() {
 	viper.BindPFlags(LoadCmd.Flags())
 }
 
-func setOboReaders() error {
+func setOboReaders(cmd *cobra.Command) error {
 	rds := make(map[string]io.Reader)
 	switch viper.GetString("input-source") {
 	case stockcenter.FOLDER:
@@ -127,10 +127,11 @@ func setOboReaders() error {
 				)
 				continue
 			}
-			if val != viper.GetString("group") {
+			group, _ := cmd.Flags().GetString("group")
+			if val != group {
 				registry.GetLogger().Warnf(
 					"ontology group metadata value %s did not match %s for %s",
-					val, viper.GetString("group"), sinfo.Key,
+					val, group, sinfo.Key,
 				)
 				continue
 			}
