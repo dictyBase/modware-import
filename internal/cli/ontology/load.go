@@ -129,8 +129,8 @@ func setOboReaders() error {
 			}
 			if val != viper.GetString("group") {
 				registry.GetLogger().Warnf(
-					"ontology group metadata value %s did not match for %s",
-					val, sinfo.Key,
+					"ontology group metadata value %s did not match %s for %s",
+					val, viper.GetString("group"), sinfo.Key,
 				)
 				continue
 			}
