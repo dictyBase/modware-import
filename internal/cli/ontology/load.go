@@ -118,18 +118,15 @@ func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 	for oinfo := range registry.GetS3Client().ListObjects(
-		viper.GetString("s3-bucket"),
-		viper.GetString("s3-bucket-path"),
+		viper.GetString("s3-bucket"), viper.GetString("s3-bucket-path"),
 		true, doneCh,
 	) {
 		sinfo, err := registry.GetS3Client().StatObject(
-			viper.GetString("s3-bucket"), oinfo.Key,
-			minio.StatObjectOptions{},
+			viper.GetString("s3-bucket"), oinfo.Key, minio.StatObjectOptions{},
 		)
 		if err != nil {
 			return rds, fmt.Errorf(
-				"error in getting information for object %s %s",
-				oinfo.Key, err,
+				"error in getting information for object %s %s", oinfo.Key, err,
 			)
 		}
 		tagOk := false
@@ -144,8 +141,7 @@ func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
 		}
 		if !tagOk {
 			registry.GetLogger().Warnf(
-				"ontology-group metadata is not present for %s",
-				sinfo.Key,
+				"ontology-group metadata is not present for %s", sinfo.Key,
 			)
 			continue
 		}
@@ -158,8 +154,7 @@ func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
 			continue
 		}
 		obj, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"), sinfo.Key,
-			minio.GetObjectOptions{},
+			viper.GetString("s3-bucket"), sinfo.Key, minio.GetObjectOptions{},
 		)
 		if err != nil {
 			return rds, fmt.Errorf("error in getting object %s", oinfo.Key)
