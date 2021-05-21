@@ -101,7 +101,7 @@ func LookUp() (string, error) {
 	if err != nil {
 		return bin, fmt.Errorf(
 			"Could not find %s binary in path. Build and copy it to path",
-			Command,
+			bin,
 		)
 	}
 	return bin, nil
