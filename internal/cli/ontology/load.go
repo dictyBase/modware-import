@@ -72,11 +72,6 @@ var LoadCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	loadFlags()
-	viper.BindPFlags(LoadCmd.Flags())
-}
-
 func setOboReaders(cmd *cobra.Command) error {
 	rds := make(map[string]io.Reader)
 	switch viper.GetString("input-source") {
@@ -114,7 +109,7 @@ func setOboReaders(cmd *cobra.Command) error {
 			var val string
 		INNER:
 			for t := range sinfo.UserMetadata {
-				if "ontology-group" == strings.ToLower(t) {
+				if strings.ToLower(t) == GroupTag {
 					tagOk = true
 					val = sinfo.UserMetadata[t]
 					break INNER
@@ -145,7 +140,10 @@ func setOboReaders(cmd *cobra.Command) error {
 			rds[sinfo.Key] = obj
 		}
 	default:
-		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
+		return fmt.Errorf(
+			"error input source %s not supported",
+			viper.GetString("input-source"),
+		)
 	}
 	registry.SetAllReaders(registry.OboReadersKey, rds)
 	return nil
@@ -173,6 +171,11 @@ func setOboStorage(cmd *cobra.Command) error {
 	}
 	registry.SetArangoOboStorage(ds)
 	return nil
+}
+
+func init() {
+	loadFlags()
+	viper.BindPFlags(LoadCmd.Flags())
 }
 
 func loadFlags() {

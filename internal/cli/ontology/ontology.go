@@ -5,6 +5,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	GroupTag = "ontology-group"
+)
+
 // OntologyCmd is the subcommand for managing ontology
 var OntologyCmd = &cobra.Command{
 	Use:   "ontology",
