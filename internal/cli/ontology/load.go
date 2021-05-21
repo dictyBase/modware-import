@@ -73,27 +73,25 @@ var LoadCmd = &cobra.Command{
 }
 
 func setOboReaders(cmd *cobra.Command) error {
-	rds := make(map[string]io.Reader)
 	switch viper.GetString("input-source") {
 	case stockcenter.FOLDER:
-		m, err := setFileReaders()
+		rds, err := setFileReaders()
 		if err != nil {
 			return err
 		}
-		rds = m
+		registry.SetAllReaders(registry.OboReadersKey, rds)
 	case stockcenter.BUCKET:
-		m, err := setBucketReaders(cmd)
+		rds, err := setBucketReaders(cmd)
 		if err != nil {
 			return err
 		}
-		rds = m
+		registry.SetAllReaders(registry.OboReadersKey, rds)
 	default:
 		return fmt.Errorf(
 			"error input source %s not supported",
 			viper.GetString("input-source"),
 		)
 	}
-	registry.SetAllReaders(registry.OboReadersKey, rds)
 	return nil
 }
 
