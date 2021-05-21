@@ -76,69 +76,17 @@ func setOboReaders(cmd *cobra.Command) error {
 	rds := make(map[string]io.Reader)
 	switch viper.GetString("input-source") {
 	case stockcenter.FOLDER:
-		files, err := obojsonFiles(viper.GetString("folder"))
+		m, err := setFileReaders()
 		if err != nil {
 			return err
 		}
-		for _, v := range files {
-			r, err := os.Open(v)
-			if err != nil {
-				return fmt.Errorf("error in opening file %s %s", v, err)
-			}
-			rds[filepath.Base(v)] = r
-		}
+		rds = m
 	case stockcenter.BUCKET:
-		doneCh := make(chan struct{})
-		defer close(doneCh)
-		for oinfo := range registry.GetS3Client().ListObjects(
-			viper.GetString("s3-bucket"),
-			viper.GetString("s3-bucket-path"),
-			true, doneCh,
-		) {
-			sinfo, err := registry.GetS3Client().StatObject(
-				viper.GetString("s3-bucket"), oinfo.Key,
-				minio.StatObjectOptions{},
-			)
-			if err != nil {
-				return fmt.Errorf(
-					"error in getting information for object %s %s",
-					oinfo.Key, err,
-				)
-			}
-			tagOk := false
-			var val string
-		INNER:
-			for t := range sinfo.UserMetadata {
-				if strings.ToLower(t) == GroupTag {
-					tagOk = true
-					val = sinfo.UserMetadata[t]
-					break INNER
-				}
-			}
-			if !tagOk {
-				registry.GetLogger().Warnf(
-					"ontology-group metadata is not present for %s",
-					sinfo.Key,
-				)
-				continue
-			}
-			group, _ := cmd.Flags().GetString("group")
-			if val != group {
-				registry.GetLogger().Warnf(
-					"ontology group metadata value %s did not match %s for %s",
-					val, group, sinfo.Key,
-				)
-				continue
-			}
-			obj, err := registry.GetS3Client().GetObject(
-				viper.GetString("s3-bucket"), sinfo.Key,
-				minio.GetObjectOptions{},
-			)
-			if err != nil {
-				return fmt.Errorf("error in getting object %s", oinfo.Key)
-			}
-			rds[sinfo.Key] = obj
+		m, err := setBucketReaders(cmd)
+		if err != nil {
+			return err
 		}
+		rds = m
 	default:
 		return fmt.Errorf(
 			"error input source %s not supported",
@@ -147,6 +95,78 @@ func setOboReaders(cmd *cobra.Command) error {
 	}
 	registry.SetAllReaders(registry.OboReadersKey, rds)
 	return nil
+}
+
+func setFileReaders() (map[string]io.Reader, error) {
+	rds := make(map[string]io.Reader)
+	files, err := obojsonFiles(viper.GetString("folder"))
+	if err != nil {
+		return rds, err
+	}
+	for _, v := range files {
+		r, err := os.Open(v)
+		if err != nil {
+			return rds, fmt.Errorf("error in opening file %s %s", v, err)
+		}
+		rds[filepath.Base(v)] = r
+	}
+	return rds, nil
+}
+
+func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
+	rds := make(map[string]io.Reader)
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+	for oinfo := range registry.GetS3Client().ListObjects(
+		viper.GetString("s3-bucket"),
+		viper.GetString("s3-bucket-path"),
+		true, doneCh,
+	) {
+		sinfo, err := registry.GetS3Client().StatObject(
+			viper.GetString("s3-bucket"), oinfo.Key,
+			minio.StatObjectOptions{},
+		)
+		if err != nil {
+			return rds, fmt.Errorf(
+				"error in getting information for object %s %s",
+				oinfo.Key, err,
+			)
+		}
+		tagOk := false
+		var val string
+	INNER:
+		for t := range sinfo.UserMetadata {
+			if strings.ToLower(t) == GroupTag {
+				tagOk = true
+				val = sinfo.UserMetadata[t]
+				break INNER
+			}
+		}
+		if !tagOk {
+			registry.GetLogger().Warnf(
+				"ontology-group metadata is not present for %s",
+				sinfo.Key,
+			)
+			continue
+		}
+		group, _ := cmd.Flags().GetString("group")
+		if val != group {
+			registry.GetLogger().Warnf(
+				"ontology group metadata value %s did not match %s for %s",
+				val, group, sinfo.Key,
+			)
+			continue
+		}
+		obj, err := registry.GetS3Client().GetObject(
+			viper.GetString("s3-bucket"), sinfo.Key,
+			minio.GetObjectOptions{},
+		)
+		if err != nil {
+			return rds, fmt.Errorf("error in getting object %s", oinfo.Key)
+		}
+		rds[sinfo.Key] = obj
+	}
+	return rds, nil
 }
 
 func setOboStorage(cmd *cobra.Command) error {
