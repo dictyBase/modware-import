@@ -30,6 +30,8 @@ var LoadCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := registry.GetLogger()
 		ds := registry.GetArangoOboStorage()
+		updated := 0
+		fresh := 0
 		for k, r := range registry.GetAllReaders(registry.OboReadersKey) {
 			g, err := graph.BuildGraph(r)
 			if err != nil {
@@ -51,6 +53,7 @@ var LoadCmd = &cobra.Command{
 					return fmt.Errorf("error in saving relationships %s", err)
 				}
 				logger.Debugf("saved %d relationships", nr)
+				fresh += 1
 				continue
 			}
 			logger.Debugf("obograph %s exist, have to be updated", k)
@@ -67,7 +70,12 @@ var LoadCmd = &cobra.Command{
 				return fmt.Errorf("error in saving relationships %s", err)
 			}
 			logger.Debugf("updated %d relationships", ur)
+			updated += 1
 		}
+		logger.Infof(
+			"loaded %d obo files, new %d updated %d",
+			fresh+updated, fresh, updated,
+		)
 		return nil
 	},
 }

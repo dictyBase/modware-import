@@ -45,6 +45,7 @@ var RefreshCmd = &cobra.Command{
 			}
 			logger.Debugf("uploaded %s file", filepath.Base(e))
 		}
+		logger.Infof("refreshed %d obo files", len(files))
 		return nil
 	},
 }
