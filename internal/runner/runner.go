@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -99,9 +100,8 @@ func CleanDB(db string) error {
 func LookUp() (string, error) {
 	bin, err := exec.LookPath(Command)
 	if err != nil {
-		return bin, fmt.Errorf(
-			"Could not find %s binary in path. Build and copy it to path",
-			bin,
+		return bin, errors.New(
+			"Could not find binary in path. Build and copy it to path",
 		)
 	}
 	return bin, nil
