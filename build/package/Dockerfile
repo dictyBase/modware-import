@@ -7,15 +7,15 @@ RUN git clone https://github.com/magefile/mage \
     && cd mage \
     && go run bootstrap.go \
     && mkdir -p /go/modware-import 
-COPY go.mod /go/modware-import
-COPY go.sum /go/modware-import
-COPY magefile.go /go/modware-import
-ADD cmd /go/modware-import/cmd/
-ADD internal /go/modware-import/internal/
-RUN cd /go/modware-import \
-    && go mod download \
-    && mage -compile ./gmake \
-    && go build -o importer cmd/import/main.go
+WORKDIR /go/modware-import
+COPY go.mod ./
+COPY go.sum ./
+COPY magefile.go ./
+RUN go mod download
+ADD cmd cmd
+ADD internal internal
+RUN mage -compile ./gmake 
+RUN go build -o importer cmd/import/main.go
 
 FROM alpine:3.13.5
 RUN apk --no-cache add ca-certificates tzdata \
