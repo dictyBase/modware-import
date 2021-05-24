@@ -1,6 +1,7 @@
 package stockcenter
 
 import (
+	"encoding/csv"
 	"fmt"
 	"os"
 
@@ -72,16 +73,15 @@ func setStrainInputReader() error {
 		registry.SetReader(regsc.STRAIN_GENE_READER, gr)
 		registry.SetReader(regsc.STRAIN_READER, sr)
 	case BUCKET:
+		objpath := fmt.Sprintf("%s/%s",
+			viper.GetString("s3-bucket-path"), viper.GetString("strain-annotator-input"),
+		)
+		registry.GetLogger().Infof("fetch object %s", objpath)
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
-			fmt.Sprintf(
-				"%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("strain-annotator-input"),
-			),
+			objpath,
 			minio.GetObjectOptions{},
 		)
-		registry.GetLogger().Infof("got annotator file %s", viper.GetString("strain-annotator-input"))
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",
@@ -90,6 +90,12 @@ func setStrainInputReader() error {
 				err,
 			)
 		}
+		csvr := csv.NewReader(ar)
+		records, err := csvr.ReadAll()
+		if err != nil {
+			return fmt.Errorf("cannot read all data directly %s", err)
+		}
+		registry.GetLogger().Infof("read %d lines from annotator", len(records))
 		gr, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
 			fmt.Sprintf(
@@ -141,7 +147,8 @@ func setStrainInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
+		//registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
+		registry.SetReader("spongebob", ar)
 		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
 		registry.SetReader(regsc.STRAIN_GENE_READER, gr)
 		registry.SetReader(regsc.STRAIN_READER, sr)
