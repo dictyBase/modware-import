@@ -35,9 +35,9 @@ func strain(bin string) error {
 	cmd := append(baseCmd(), "strain")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{
-		"-a", "strain_user_annotations.csv",
 		"-g", "strain_genes.tsv",
 		"-i", "strain_strain.tsv",
+		"--strain-annotator-input", "strain_user_annotations.csv",
 		"-p", "strain_publications.tsv"}...)
 	return sh.Run(bin, cmd...)
 }

@@ -17,10 +17,6 @@ import (
 )
 
 func LoadStrain(cmd *cobra.Command, args []string) error {
-	al, err := source.NewStockAnnotatorLookup(registry.GetReader(regs.STRAIN_ANNOTATOR_READER))
-	if err != nil {
-		return fmt.Errorf("error in opening annotation source %s", err)
-	}
 	pl, err := source.NewStockPubLookup(registry.GetReader(regs.STRAIN_PUB_READER))
 	if err != nil {
 		return fmt.Errorf("error in opening publication source %s", err)
@@ -28,6 +24,10 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 	gl, err := source.NewStockGeneLookp(registry.GetReader(regs.STRAIN_GENE_READER))
 	if err != nil {
 		return fmt.Errorf("error in opening gene source %s", err)
+	}
+	al, err := source.NewStockAnnotatorLookup(registry.GetReader(regs.STRAIN_ANNOTATOR_READER))
+	if err != nil {
+		return fmt.Errorf("error in opening annotation source %s", err)
 	}
 	sr := source.NewCsvStrainReader(
 		registry.GetReader(regs.STRAIN_READER),
