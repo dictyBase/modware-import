@@ -81,6 +81,7 @@ func setStrainInputReader() error {
 			),
 			minio.GetObjectOptions{},
 		)
+		registry.GetLogger().Infof("got annotator file %s", viper.GetString("strain-annotator-input"))
 		if err != nil {
 			return fmt.Errorf(
 				"error in getting file %s from bucket %s %s",

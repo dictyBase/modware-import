@@ -2,6 +2,7 @@ package stockcenter
 
 import (
 	"encoding/csv"
+	"errors"
 	"io"
 	"time"
 
@@ -45,7 +46,7 @@ func NewStockAnnotatorLookup(r io.Reader) (StockAnnotatorLookup, error) {
 			break
 		}
 		if err != nil {
-			return l, err
+			return l, errors.New("error in reading annotator file")
 		}
 		var usr string
 		if _, ok := annMap[record[1]]; !ok {
