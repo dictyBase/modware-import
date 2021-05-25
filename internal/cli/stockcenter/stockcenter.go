@@ -40,23 +40,9 @@ func init() {
 		ReadFileCmd,
 		GwdiCmd,
 	)
-	s3BucketFlags()
 	stockAPIFlags()
 	annoAPIFlags()
 	viper.BindPFlags(StockCenterCmd.PersistentFlags())
-}
-
-func s3BucketFlags() {
-	StockCenterCmd.PersistentFlags().String(
-		"s3-bucket",
-		"dictybase",
-		"S3 bucket for input files",
-	)
-	StockCenterCmd.PersistentFlags().String(
-		"s3-bucket-path",
-		"import/stockcenter",
-		"path inside S3 bucket for input files",
-	)
 }
 
 func stockAPIFlags() {

@@ -75,6 +75,7 @@ func setStrainInputReader() error {
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
 			fmt.Sprintf(
+				"%s/%s",
 				viper.GetString("s3-bucket-path"),
 				viper.GetString("strain-annotator-input"),
 			),
@@ -140,7 +141,7 @@ func setStrainInputReader() error {
 			)
 		}
 		//registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
-		registry.SetReader("spongebob", ar)
+		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
 		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
 		registry.SetReader(regsc.STRAIN_GENE_READER, gr)
 		registry.SetReader(regsc.STRAIN_READER, sr)

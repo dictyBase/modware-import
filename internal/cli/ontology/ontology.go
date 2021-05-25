@@ -55,16 +55,6 @@ func ontologyStorageFlags() {
 		false,
 		"flag for secured or unsecured arangodb endpoint",
 	)
-	OntologyCmd.PersistentFlags().String(
-		"s3-bucket",
-		"dictybase",
-		"S3 bucket for input files",
-	)
-	OntologyCmd.PersistentFlags().String(
-		"s3-bucket-path",
-		"import/obograph-json",
-		"path inside S3 bucket for obojson files",
-	)
 	viper.BindEnv("arangodb-pass", "ARANGODB_PASS")
 	viper.BindEnv("arangodb-user", "ARANGODB_USER")
 	viper.BindEnv("arangodb-host", "ARANGODB_SERVICE_HOST")

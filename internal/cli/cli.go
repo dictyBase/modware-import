@@ -118,22 +118,6 @@ func init() {
 	viper.BindPFlags(RootCmd.PersistentFlags())
 }
 
-// initConfig reads in config file and ENV variables if set.
-//func initConfig() {
-//if cfgFile != "" { // enable ability to specify config file via flag
-//viper.SetConfigFile(cfgFile)
-//}
-
-//viper.SetConfigName(".modware-import") // name of config file (without extension)
-//viper.AddConfigPath("$HOME")  // adding home directory as first search path
-//viper.AutomaticEnv()          // read in environment variables that match
-
-//// If a config file is found, read it in.
-//if err := viper.ReadInConfig(); err == nil {
-//fmt.Println("Using config file:", viper.ConfigFileUsed())
-//}
-//}
-
 func setLoggingArgs() {
 	RootCmd.PersistentFlags().StringP(
 		"log-level",
@@ -189,6 +173,16 @@ func setS3Args() {
 		"",
 		"minio",
 		"S3 server endpoint",
+	)
+	RootCmd.PersistentFlags().String(
+		"s3-bucket",
+		"dictybase",
+		"S3 bucket for input files",
+	)
+	RootCmd.PersistentFlags().String(
+		"s3-bucket-path",
+		"",
+		"path inside S3 bucket for input files",
 	)
 	viper.BindEnv("s3-server", "MINIO_SERVICE_HOST")
 }
