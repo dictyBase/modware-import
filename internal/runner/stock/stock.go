@@ -165,5 +165,6 @@ func minioCmd() []string {
 	return []string{
 		"--access-key", env.MinioAccessKey(),
 		"--secret-key", env.MinioSecretKey(),
+		"--s3-bucket-path", "import/stockcenter",
 	}
 }
