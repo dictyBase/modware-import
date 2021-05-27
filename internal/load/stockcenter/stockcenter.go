@@ -80,6 +80,7 @@ func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 }
 
 func createAnno(args *createAnnoArgs) error {
+	fmt.Printf("args %+v\n", args)
 	_, err := args.client.CreateAnnotation(
 		context.Background(),
 		&pb.NewTaggedAnnotation{
@@ -126,6 +127,7 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 			tag:      args.tag,
 			id:       args.id,
 			ontology: args.ontology,
+			client:   args.client,
 		})
 		if err != nil {
 			errVal = err
