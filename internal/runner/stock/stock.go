@@ -21,6 +21,24 @@ func LoadAll() error {
 	return nil
 }
 
+// LoadStrain load all strain and related data
+func LoadStrain() error {
+	bin, err := runner.LookUp()
+	if err != nil {
+		return err
+	}
+	mg.SerialDeps(
+		mg.F(strain, bin),
+		mg.F(characteristics, bin),
+		mg.F(strainProp, bin),
+		mg.F(strainSyn, bin),
+		mg.F(strainInv, bin),
+		mg.F(phenotype, bin),
+		mg.F(genotype, bin),
+	)
+	return nil
+}
+
 // Strain loads strain data including curator assignment
 func strain(bin string) error {
 	if err := env.MinioEnvs(); err != nil {
