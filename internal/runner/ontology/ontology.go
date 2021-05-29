@@ -20,6 +20,7 @@ func Refresh(bin, group string) error {
 		bin, "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
 		"--secret-key", env.MinioSecretKey(),
+		"--s3-bucket-path", "import/obograph-json",
 		"ontology", "refresh",
 		"--group", group,
 	)
@@ -46,6 +47,7 @@ func Load(group string) error {
 		bin, "ontology", "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
 		"--secret-key", env.MinioSecretKey(),
+		"--s3-bucket-path", "import/obograph-json",
 		"--is-secure", "load",
 		"--group", group,
 	)
