@@ -37,7 +37,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
 	golang.org/x/sys v0.0.0-20210521203332-0cec03c779c1 // indirect
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.38.0
 	gopkg.in/ini.v1 v1.62.0 // indirect
 )
 
