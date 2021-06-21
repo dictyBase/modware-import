@@ -11,7 +11,7 @@ require (
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.12.0
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
-	github.com/go-git/go-git/v5 v5.3.0
+	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.5.2
