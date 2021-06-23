@@ -76,7 +76,6 @@ func (d *dataFileManager) allFileReaders(dir string) (map[string]io.Reader, erro
 }
 
 func (d *dataFileManager) pathWalker(path string, info fs.FileInfo, err error) error {
-	fmt.Println(path)
 	if err != nil {
 		return fmt.Errorf("error in handling path %s %s", path, err)
 	}
