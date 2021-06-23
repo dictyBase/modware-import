@@ -11,8 +11,8 @@ import (
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/minio/minio-go/v6"
 
-	"github.com/dictyBase/modware-import/internal/cli"
 	"github.com/dictyBase/modware-import/internal/collection"
+	"github.com/dictyBase/modware-import/internal/git"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,7 +23,7 @@ var RefreshCmd = &cobra.Command{
 	Short: "updates data files in S3 storage",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dir, err := cli.CloneRepo(
+		dir, err := git.CloneRepo(
 			viper.GetString("repository"),
 			viper.GetString("branch"),
 		)
