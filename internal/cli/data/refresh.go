@@ -24,15 +24,14 @@ var RefreshCmd = &cobra.Command{
 	Short: "updates data files in S3 storage",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dir, err := git.CloneRepo(
-			viper.GetString("repository"),
-			viper.GetString("branch"),
-		)
+		repo, _ := cmd.Flags().GetString("repository")
+		branch, _ := cmd.Flags().GetString("branch")
+		subf, _ := cmd.Flags().GetString("subfolder")
+		dir, err := git.CloneRepo(repo, branch)
 		if err != nil {
 			return err
 		}
-		fmap, err := newdataFileManager(viper.GetString("subfolder")).
-			allFileReaders(dir)
+		fmap, err := newdataFileManager(subf).allFileReaders(dir)
 		if err != nil {
 			return err
 		}
@@ -77,11 +76,12 @@ func (d *dataFileManager) allFileReaders(dir string) (map[string]io.Reader, erro
 }
 
 func (d *dataFileManager) pathWalker(path string, info fs.FileInfo, err error) error {
+	fmt.Println(path)
 	if err != nil {
 		return fmt.Errorf("error in handling path %s %s", path, err)
 	}
 	if info.IsDir() {
-		return filepath.SkipDir
+		return nil
 	}
 	fh, err := os.Open(path)
 	if err != nil {
