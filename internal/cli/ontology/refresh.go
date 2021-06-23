@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dictyBase/modware-import/internal/git"
 	"github.com/dictyBase/modware-import/internal/registry"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/minio/minio-go/v6"
 
 	"github.com/spf13/cobra"
@@ -21,7 +20,10 @@ var RefreshCmd = &cobra.Command{
 	Short: "updates ontologies in S3 storage",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dir, err := cloneRepo()
+		dir, err := git.CloneRepo(
+			viper.GetString("repository"),
+			viper.GetString("branch"),
+		)
 		if err != nil {
 			return err
 		}
@@ -95,19 +97,4 @@ func obojsonFiles(dir string) ([]string, error) {
 		files = append(files, filepath.Join(fullPath, e.Name()))
 	}
 	return files, nil
-}
-
-func cloneRepo() (string, error) {
-	dir, err := os.MkdirTemp(os.TempDir(), "*-github")
-	if err != nil {
-		return dir, fmt.Errorf("error in making temp folder %s", err)
-	}
-	_, err = git.PlainClone(dir, false, &git.CloneOptions{
-		URL:          viper.GetString("repository"),
-		SingleBranch: true,
-		ReferenceName: plumbing.NewBranchReferenceName(
-			viper.GetString("branch"),
-		)},
-	)
-	return dir, err
 }
