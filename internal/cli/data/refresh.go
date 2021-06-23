@@ -1,6 +1,7 @@
 package data
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"io/fs"
@@ -30,7 +31,8 @@ var RefreshCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmap, err := allFileReaders(dir)
+		fmap, err := newdataFileManager(viper.GetString("subfolder")).
+			allFileReaders(dir)
 		if err != nil {
 			return err
 		}
@@ -55,33 +57,51 @@ var RefreshCmd = &cobra.Command{
 	},
 }
 
-func allFileReaders(dir string) (map[string]io.Reader, error) {
-	fullPath := filepath.Join(dir, viper.GetString("subfolder"))
-	fmap := make(map[string]io.Reader)
-	err := filepath.Walk(fullPath, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return fmt.Errorf("error in handling path %s %s", path, err)
-		}
-		if info.IsDir() {
-			return filepath.SkipDir
-		}
-		fh, err := os.Open(path)
-		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", path, err)
-		}
-		// logic to get parent dirs except the root
-		pathParts := strings.Split(
-			strings.TrimLeft(path, "/"),
-			string(os.PathSeparator),
-		)
-		idx := collection.Index(pathParts, viper.GetString("subfolder"))
-		if idx == -1 {
-			return fmt.Errorf("error in finding subfolder in path parts %s", path)
-		}
-		fmap[strings.Join(pathParts[idx+1:], "/")] = fh
-		return nil
-	})
-	return fmap, err
+type dataFileManager struct {
+	subFolder string
+	rdmap     map[string]io.Reader
+}
+
+func newdataFileManager(folder string) *dataFileManager {
+	return &dataFileManager{
+		subFolder: folder,
+		rdmap:     make(map[string]io.Reader),
+	}
+}
+
+func (d *dataFileManager) allFileReaders(dir string) (map[string]io.Reader, error) {
+	return d.rdmap, filepath.Walk(
+		filepath.Join(dir, d.subFolder),
+		d.pathWalker,
+	)
+}
+
+func (d *dataFileManager) pathWalker(path string, info fs.FileInfo, err error) error {
+	if err != nil {
+		return fmt.Errorf("error in handling path %s %s", path, err)
+	}
+	if info.IsDir() {
+		return filepath.SkipDir
+	}
+	fh, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("error in opening file %s %s", path, err)
+	}
+	subPath, err := d.pathWithoutFolder(path)
+	d.rdmap[subPath] = bufio.NewReader(fh)
+	return err
+}
+
+func (d *dataFileManager) pathWithoutFolder(path string) (string, error) {
+	pathParts := strings.Split(
+		strings.TrimLeft(path, "/"),
+		string(os.PathSeparator),
+	)
+	idx := collection.Index(pathParts, d.subFolder)
+	if idx == -1 {
+		return "", fmt.Errorf("error in finding subfolder in path parts %s", path)
+	}
+	return strings.Join(pathParts[idx+1:], "/"), nil
 }
 
 func init() {
