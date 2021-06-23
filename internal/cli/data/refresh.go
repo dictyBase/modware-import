@@ -27,6 +27,7 @@ var RefreshCmd = &cobra.Command{
 		repo, _ := cmd.Flags().GetString("repository")
 		branch, _ := cmd.Flags().GetString("branch")
 		subf, _ := cmd.Flags().GetString("subfolder")
+		bucketPath, _ := cmd.Flags().GetString("s3-bucket-path")
 		dir, err := git.CloneRepo(repo, branch)
 		if err != nil {
 			return err
@@ -39,7 +40,7 @@ var RefreshCmd = &cobra.Command{
 		for path, rd := range fmap {
 			_, err := registry.GetS3Client().PutObject(
 				viper.GetString("s3-bucket"),
-				fmt.Sprintf("%s/%s", viper.GetString("s3-bucket-path"), path),
+				fmt.Sprintf("%s/%s", bucketPath, path),
 				rd, -1, minio.PutObjectOptions{
 					UserMetadata: map[string]string{
 						GroupTag: viper.GetString("group"),
