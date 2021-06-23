@@ -14,8 +14,6 @@ import (
 	"github.com/dictyBase/modware-import/internal/datasource/s3"
 	"github.com/dictyBase/modware-import/internal/logger"
 	"github.com/dictyBase/modware-import/internal/registry"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -189,17 +187,4 @@ func setS3Args() {
 		"path inside S3 bucket for input files",
 	)
 	viper.BindEnv("s3-server", "MINIO_SERVICE_HOST")
-}
-
-func CloneRepo(repo, branch string) (string, error) {
-	dir, err := os.MkdirTemp(os.TempDir(), "*-github")
-	if err != nil {
-		return dir, fmt.Errorf("error in making temp folder %s", err)
-	}
-	_, err = git.PlainClone(dir, false, &git.CloneOptions{
-		ReferenceName: plumbing.NewBranchReferenceName(branch),
-		URL:           repo,
-		SingleBranch:  true,
-	})
-	return dir, err
 }
