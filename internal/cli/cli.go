@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/cli/arangodb"
+	"github.com/dictyBase/modware-import/internal/cli/data"
 	"github.com/dictyBase/modware-import/internal/cli/ontology"
 	"github.com/dictyBase/modware-import/internal/cli/stockcenter"
 	"github.com/dictyBase/modware-import/internal/cli/uniprot"
@@ -107,6 +108,7 @@ func init() {
 		uniprot.UniprotCmd,
 		arangodb.ArangodbCmd,
 		ontology.OntologyCmd,
+		data.DataCmd,
 	)
 	RootCmd.Flags().Bool("doc", false, "generate markdown documentation")
 	RootCmd.PersistentFlags().String(
