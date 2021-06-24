@@ -128,7 +128,7 @@ func strainInv(bin string) error {
 	s.Start()
 	cmd := append(baseCmd(), "strain-inventory")
 	cmd = append(cmd, minioCmd()...)
-	cmd = append(cmd, []string{"-i", "strain_inventory.csv"}...)
+	cmd = append(cmd, []string{"-i", "strain_inventory.tsv"}...)
 	return sh.Run(bin, cmd...)
 }
 
@@ -139,7 +139,7 @@ func phenotype(bin string) error {
 	s.Start()
 	cmd := append(baseCmd(), "phenotype")
 	cmd = append(cmd, minioCmd()...)
-	cmd = append(cmd, []string{"-i", "strain_phenotype.csv"}...)
+	cmd = append(cmd, []string{"-i", "strain_phenotype.tsv"}...)
 	return sh.Run(bin, cmd...)
 }
 
