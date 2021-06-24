@@ -80,7 +80,6 @@ func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 }
 
 func createAnno(args *createAnnoArgs) error {
-	fmt.Printf("args %+v\n", args)
 	_, err := args.client.CreateAnnotation(
 		context.Background(),
 		&pb.NewTaggedAnnotation{
