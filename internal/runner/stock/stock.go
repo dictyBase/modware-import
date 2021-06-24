@@ -35,6 +35,7 @@ func LoadStrain() error {
 		mg.F(strainInv, bin),
 		mg.F(phenotype, bin),
 		mg.F(genotype, bin),
+		mg.F(gwdi, bin),
 	)
 	return nil
 }
@@ -78,7 +79,6 @@ func plasmid(bin string) error {
 
 // Characteristics loads strain characteristics
 func characteristics(bin string) error {
-	mg.Deps(mg.F(strain, bin))
 	s := runner.TermSpinner("Loading strain characteristics ...")
 	defer s.Stop()
 	s.Start()
@@ -90,7 +90,6 @@ func characteristics(bin string) error {
 
 // StrainProp loads strain property data
 func strainProp(bin string) error {
-	mg.Deps(mg.F(strainInv, bin))
 	s := runner.TermSpinner("Loading strain properties ...")
 	defer s.Stop()
 	s.Start()
@@ -102,7 +101,6 @@ func strainProp(bin string) error {
 
 // Genotype load strain genotype data
 func genotype(bin string) error {
-	mg.Deps(mg.F(characteristics, bin))
 	s := runner.TermSpinner("Loading strain genotype ...")
 	defer s.Stop()
 	s.Start()
@@ -114,7 +112,6 @@ func genotype(bin string) error {
 
 // StrainSyn loads strain synonym data
 func strainSyn(bin string) error {
-	mg.Deps(mg.F(strainProp, bin))
 	s := runner.TermSpinner("Loading strain synonym ...")
 	defer s.Stop()
 	s.Start()
@@ -126,7 +123,6 @@ func strainSyn(bin string) error {
 
 // StrainInv loads strain inventory data
 func strainInv(bin string) error {
-	mg.Deps(mg.F(phenotype, bin))
 	s := runner.TermSpinner("Loading strain inventory ...")
 	defer s.Stop()
 	s.Start()
@@ -138,7 +134,6 @@ func strainInv(bin string) error {
 
 // Phenotype loads strain phenotype data
 func phenotype(bin string) error {
-	mg.Deps(mg.F(genotype, bin))
 	s := runner.TermSpinner("Loading strain phenotype ...")
 	defer s.Stop()
 	s.Start()
@@ -162,7 +157,6 @@ func plasmidInv(bin string) error {
 
 // Gwdi loads GWDI strain mutant data
 func gwdi(bin string) error {
-	mg.Deps(mg.F(plasmidInv, bin))
 	s := runner.TermSpinner("Loading gwdi strain ...")
 	defer s.Stop()
 	s.Start()
