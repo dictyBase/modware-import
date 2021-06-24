@@ -117,7 +117,7 @@ func strainSyn(bin string) error {
 	s.Start()
 	cmd := append(baseCmd(), "strainsyn")
 	cmd = append(cmd, minioCmd()...)
-	cmd = append(cmd, []string{"-i", "strain_prop.tsv"}...)
+	cmd = append(cmd, []string{"-i", "strain_props.tsv"}...)
 	return sh.Run(bin, cmd...)
 }
 
