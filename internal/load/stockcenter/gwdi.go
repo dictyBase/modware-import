@@ -72,6 +72,7 @@ func runConcurrentCreate(logger *logrus.Entry, gr stockcenter.GWDIMutantReader) 
 	ps := &parentStrain{
 		aclient: annclient,
 		sclient: stclient,
+		logger:  logger,
 	}
 	if err := ps.findOrCreateAX3(); err != nil {
 		return err

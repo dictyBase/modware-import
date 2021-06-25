@@ -7,6 +7,7 @@ import (
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	sreg "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -14,6 +15,7 @@ import (
 type parentStrain struct {
 	aclient annotation.TaggedAnnotationServiceClient
 	sclient pb.StockServiceClient
+	logger  *logrus.Entry
 }
 
 func (p *parentStrain) isPresent(id string) (bool, error) {
@@ -23,11 +25,13 @@ func (p *parentStrain) isPresent(id string) (bool, error) {
 	)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
+			p.logger.Infof("parent strain %s is absent", id)
 			return false, nil
 		}
 		return false,
 			fmt.Errorf("error in finding parent strain %s", err)
 	}
+	p.logger.Infof("parent strain %s is present", id)
 	return true, nil
 }
 
