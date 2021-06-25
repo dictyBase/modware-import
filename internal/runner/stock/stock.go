@@ -17,7 +17,7 @@ func LoadAll() error {
 	if err != nil {
 		return err
 	}
-	mg.Deps(mg.F(gwdi, bin))
+	mg.Deps(mg.F(Gwdi, bin))
 	return nil
 }
 
@@ -35,7 +35,6 @@ func LoadStrain() error {
 		mg.F(strainInv, bin),
 		mg.F(phenotype, bin),
 		mg.F(genotype, bin),
-		mg.F(gwdi, bin),
 	)
 	return nil
 }
@@ -156,7 +155,7 @@ func plasmidInv(bin string) error {
 }
 
 // Gwdi loads GWDI strain mutant data
-func gwdi(bin string) error {
+func Gwdi(bin string) error {
 	s := runner.TermSpinner("Loading gwdi strain ...")
 	defer s.Stop()
 	s.Start()

@@ -35,5 +35,10 @@ func LoadData() error {
 		mg.F(onto.Load, "obojson"),
 		stock.LoadStrain,
 	)
+	bin, err := runner.LookUp()
+	if err != nil {
+		return err
+	}
+	mg.F(stock.Gwdi, bin)
 	return nil
 }
