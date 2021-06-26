@@ -2,7 +2,7 @@ module github.com/dictyBase/modware-import
 
 require (
 	github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4
-	github.com/briandowns/spinner v1.15.0
+	github.com/briandowns/spinner v1.16.0
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cockroachdb/errors v1.8.5
 	github.com/dictyBase/aphgrpc v1.3.0
