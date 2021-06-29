@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	stockcenter "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter/gwdi"
@@ -218,7 +219,7 @@ func (gd *gwdiDel) strainsForDeletion() ([]string, error) {
 			if status.Code(err) == codes.NotFound {
 				break
 			}
-			return ids, fmt.Errorf("error getting list of strains %s", err)
+			return ids, errors.Errorf("error getting list of strains %s", err)
 		}
 		if sc.Meta.NextCursor == 0 {
 			ids = append(ids, gd.queueIds(sc)...)
@@ -253,7 +254,7 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 		if status.Code(err) == codes.NotFound {
 			return nil
 		}
-		return fmt.Errorf("error in finding any gwdi annotation for %s %s", id, err)
+		return errors.Errorf("error in finding any gwdi annotation for %s %s", id, err)
 	}
 	for _, ta := range tac.Data {
 		_, err := gd.aclient.DeleteAnnotation(
@@ -266,7 +267,7 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 			if status.Code(err) == codes.NotFound {
 				continue
 			}
-			return fmt.Errorf("unable to remove annotation for %s %s", id, err)
+			return errors.Errorf("unable to remove annotation for %s %s", id, err)
 		}
 	}
 	gd.logger.WithFields(logrus.Fields{
@@ -286,7 +287,7 @@ func (gd *gwdiDel) execute(id string) error {
 		if strings.Contains(err.Error(), "document not found") {
 			return nil
 		}
-		return fmt.Errorf("error in removing gwdi strain with id %s %s", id, err)
+		return errors.Errorf("error in removing gwdi strain with id %s %s", id, err)
 	}
 	gd.logger.WithFields(logrus.Fields{
 		"event": "delete",
@@ -310,7 +311,7 @@ type gwdiCreate struct {
 func (gc *gwdiCreate) execute(gwdi *stockcenter.GWDIStrain) error {
 	strain, err := gc.createGwdi(gwdi)
 	if err != nil {
-		return fmt.Errorf("error in creating new gwdi strain record  %s", err)
+		return errors.Errorf("error in creating new gwdi strain record  %s", err)
 	}
 	err = createAnno(&createAnnoArgs{
 		user:     gc.user,
@@ -321,7 +322,7 @@ func (gc *gwdiCreate) execute(gwdi *stockcenter.GWDIStrain) error {
 		value:    gwdi.Genotype,
 	})
 	if err != nil {
-		return fmt.Errorf("cannot create genotype of gwdi strain %s %s", strain.Data.Id, err)
+		return errors.Errorf("cannot create genotype of gwdi strain %s %s", strain.Data.Id, err)
 	}
 	if err := gc.createPropAndChar(strain.Data.Id, gwdi); err != nil {
 		return err
@@ -343,7 +344,7 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 			value:    gc.value,
 		})
 		if err != nil {
-			return fmt.Errorf("cannot create characteristic %s of gwdi strain %s %s",
+			return errors.Errorf("cannot create characteristic %s of gwdi strain %s %s",
 				char, id, err,
 			)
 		}
@@ -358,7 +359,7 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 			value:    prop.Value,
 		})
 		if err != nil {
-			return fmt.Errorf("cannot create property %s of gwdi strain %s %s",
+			return errors.Errorf("cannot create property %s of gwdi strain %s %s",
 				prop.Property, id, err,
 			)
 		}
@@ -373,7 +374,7 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 		id:       id,
 	})
 	if err != nil {
-		return fmt.Errorf("error in creating tag for GWDI strain %s", err)
+		return errors.Errorf("error in creating tag for GWDI strain %s", err)
 	}
 	// create presence of inventory annotation
 	return createAnno(&createAnnoArgs{
@@ -410,7 +411,7 @@ func (gc *gwdiCreate) createGwdi(gwdi *stockcenter.GWDIStrain) (*pb.Strain, erro
 		},
 	)
 	if err != nil {
-		return strain, fmt.Errorf("error in creating gwdi strain %s", err)
+		return strain, errors.Errorf("error in creating gwdi strain %s", err)
 	}
 	return strain, nil
 }

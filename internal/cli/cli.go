@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dictyBase/modware-import/internal/cli/arangodb"
 	"github.com/dictyBase/modware-import/internal/cli/data"
 	"github.com/dictyBase/modware-import/internal/cli/ontology"
@@ -33,7 +34,7 @@ or through a file that is kept in a particular bucket of a S3 server.`,
 		if len(viper.GetString("access-key")) > 0 && len(viper.GetString("secret-key")) > 0 {
 			client, err := s3.NewS3Client(cmd)
 			if err != nil {
-				return fmt.Errorf("error in getting instance of s3 client %s", err)
+				return errors.Errorf("error in getting instance of s3 client %s", err)
 			}
 			registry.SetS3Client(client)
 		}
@@ -63,7 +64,7 @@ or through a file that is kept in a particular bucket of a S3 server.`,
 			minio.PutObjectOptions{},
 		)
 		if err != nil {
-			return fmt.Errorf(
+			return errors.Errorf(
 				"error in uploading file %s with object name %s",
 				registry.GetValue(registry.LogFileKey),
 				name,

@@ -4,6 +4,7 @@ require (
 	github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4
 	github.com/briandowns/spinner v1.15.0
 	github.com/bwmarrin/snowflake v0.3.0
+	github.com/cockroachdb/errors v1.8.5
 	github.com/dictyBase/aphgrpc v1.3.0
 	github.com/dictyBase/arangomanager v0.3.1
 	github.com/dictyBase/go-genproto v0.0.0-20200122001226-b1ccbdee4aa3
@@ -27,8 +28,6 @@ require (
 	github.com/spf13/viper v1.8.0
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
-	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
-	golang.org/x/sys v0.0.0-20210521203332-0cec03c779c1 // indirect
 	google.golang.org/grpc v1.38.0
 )
 
