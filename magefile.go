@@ -30,15 +30,10 @@ func CleanAllDB() error {
 
 // LoadData will clean the collections, load ontologies and then load all the data
 func LoadData() error {
-	bin, err := runner.LookUp()
-	if err != nil {
-		return err
-	}
 	mg.SerialDeps(
 		CleanAllDB,
 		mg.F(onto.Load, "obojson"),
 		stock.LoadStrain,
-		mg.F(stock.Gwdi, bin),
 	)
 	return nil
 }
