@@ -11,13 +11,16 @@ const (
 	logLevel = "info"
 )
 
-// LoadAll loads all stock data
-func LoadAll() error {
+// LoadPlasmid load all plasmid and related data
+func LoadPlasmid() error {
 	bin, err := runner.LookUp()
 	if err != nil {
 		return err
 	}
-	mg.Deps(mg.F(Gwdi, bin))
+	mg.SerialDeps(
+		mg.F(plasmid, bin),
+		mg.F(plasmidInv, bin),
+	)
 	return nil
 }
 
@@ -35,6 +38,7 @@ func LoadStrain() error {
 		mg.F(strainInv, bin),
 		mg.F(phenotype, bin),
 		mg.F(genotype, bin),
+		mg.F(Gwdi, bin),
 	)
 	return nil
 }
@@ -62,7 +66,12 @@ func strain(bin string) error {
 
 // Plasmid loads plasmid data including curator assignment
 func plasmid(bin string) error {
-	mg.Deps(mg.F(strainSyn, bin))
+	if err := env.MinioEnvs(); err != nil {
+		return err
+	}
+	if err := env.ServiceEnvs(); err != nil {
+		return err
+	}
 	s := runner.TermSpinner("Loading plasmid data ...")
 	defer s.Stop()
 	s.Start()
@@ -73,6 +82,17 @@ func plasmid(bin string) error {
 		"-g", "plasmid_genes.tsv",
 		"-i", "plasmid_strain.tsv",
 		"-g", "plasmid_genes.tsv"}...)
+	return sh.Run(bin, cmd...)
+}
+
+// PlasmidInv loads plasmid inventory data
+func plasmidInv(bin string) error {
+	s := runner.TermSpinner("Loading plasmid inventory ...")
+	defer s.Stop()
+	s.Start()
+	cmd := append(baseCmd(), "plasmid-inventory")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "plasmid-inventory.csv"}...)
 	return sh.Run(bin, cmd...)
 }
 
@@ -139,18 +159,6 @@ func phenotype(bin string) error {
 	cmd := append(baseCmd(), "phenotype")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{"-i", "strain_phenotype.tsv"}...)
-	return sh.Run(bin, cmd...)
-}
-
-// PlasmidInv loads plasmid inventory data
-func plasmidInv(bin string) error {
-	mg.Deps(mg.F(plasmid, bin))
-	s := runner.TermSpinner("Loading plasmid inventory ...")
-	defer s.Stop()
-	s.Start()
-	cmd := append(baseCmd(), "plasmid-inventory")
-	cmd = append(cmd, minioCmd()...)
-	cmd = append(cmd, []string{"-i", "plasmid-inventory.csv"}...)
 	return sh.Run(bin, cmd...)
 }
 
