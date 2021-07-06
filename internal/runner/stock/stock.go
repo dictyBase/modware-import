@@ -80,7 +80,7 @@ func plasmid(bin string) error {
 	cmd = append(cmd, []string{
 		"-a", "plasmid_user_annotations.csv",
 		"-g", "plasmid_genes.tsv",
-		"-i", "plasmid_strain.tsv",
+		"-i", "plasmid_plasmid.tsv",
 		"-g", "plasmid_genes.tsv"}...)
 	return sh.Run(bin, cmd...)
 }
@@ -92,7 +92,7 @@ func plasmidInv(bin string) error {
 	s.Start()
 	cmd := append(baseCmd(), "plasmid-inventory")
 	cmd = append(cmd, minioCmd()...)
-	cmd = append(cmd, []string{"-i", "plasmid-inventory.csv"}...)
+	cmd = append(cmd, []string{"-i", "plasmid_inventory.tsv"}...)
 	return sh.Run(bin, cmd...)
 }
 
