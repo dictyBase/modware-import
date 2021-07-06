@@ -16,6 +16,7 @@ import (
 
 	// mage:import data
 	_ "github.com/dictyBase/modware-import/internal/runner/data"
+	data "github.com/dictyBase/modware-import/internal/runner/data"
 )
 
 var dbs = []string{"stock", "annotation", "order"}
@@ -28,12 +29,16 @@ func CleanAllDB() error {
 	return nil
 }
 
-// LoadData will clean the collections, load ontologies and then load all the data
+// LoadData will do the following steps...
+// i)   Refresh and load ontology
+// ii)  Refresh and load data in s3 storage
+// iii) Load data
 func LoadData() error {
 	mg.SerialDeps(
-		CleanAllDB,
 		mg.F(onto.Load, "obojson"),
+		data.Refresh,
 		stock.LoadStrain,
+		stock.LoadPlasmid,
 	)
 	return nil
 }
