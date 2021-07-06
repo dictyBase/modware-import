@@ -53,13 +53,16 @@ func validateAnnoTag(args *validateTagArgs) (bool, error) {
 }
 
 func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
+	if len(args.user) == 0 {
+		args.user = regs.DEFAULT_USER
+	}
 	ta, err := args.client.CreateAnnotation(
 		context.Background(),
 		&pb.NewTaggedAnnotation{
 			Data: &pb.NewTaggedAnnotation_Data{
 				Attributes: &pb.NewTaggedAnnotationAttributes{
 					Value:     args.value,
-					CreatedBy: regs.DEFAULT_USER,
+					CreatedBy: args.user,
 					Tag:       args.tag,
 					EntryId:   args.id,
 					Ontology:  args.ontology,
@@ -81,6 +84,9 @@ func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 }
 
 func createAnno(args *createAnnoArgs) error {
+	if len(args.user) == 0 {
+		args.user = regs.DEFAULT_USER
+	}
 	_, err := args.client.CreateAnnotation(
 		context.Background(),
 		&pb.NewTaggedAnnotation{
