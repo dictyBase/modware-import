@@ -79,7 +79,7 @@ func plasmid(bin string) error {
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{
 		"-a", "plasmid_user_annotations.csv",
-		"-g", "plasmid_genes.tsv",
+		"-p", "plasmid_publications.tsv",
 		"-i", "plasmid_plasmid.tsv",
 		"-g", "plasmid_genes.tsv"}...)
 	return sh.Run(bin, cmd...)
