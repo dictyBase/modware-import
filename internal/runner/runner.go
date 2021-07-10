@@ -12,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/magefile/mage/sh"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,6 +22,20 @@ const (
 	Command  = "importer"
 	LogLevel = "info"
 )
+
+func logger() *logrus.Entry {
+	log := logrus.New()
+	log.SetFormatter(&logrus.TextFormatter{
+		DisableColors:   true,
+		TimestampFormat: "02/Jan/2006:15:04:05",
+	})
+	log.SetOutput(os.Stderr)
+	return log.WithField("type", "runner")
+}
+
+func ConsoleLog(msg string) {
+	logger().Print(msg)
+}
 
 func TermSpinnerWithPrefixColor(prefix, color string) *spinner.Spinner {
 	s := spinner.New(
