@@ -25,8 +25,7 @@ const (
 
 func logger() *logrus.Entry {
 	log := logrus.New()
-	log.SetFormatter(&logrus.TextFormatter{
-		DisableColors:   true,
+	log.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat: "02/Jan/2006:15:04:05",
 	})
 	log.SetOutput(os.Stderr)
