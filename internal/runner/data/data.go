@@ -16,9 +16,8 @@ func Refresh() error {
 	if err := env.MinioEnvs(); err != nil {
 		return err
 	}
-	s := runner.TermSpinner("Refreshing data files ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Refreshing data files ...")
+	defer runner.ConsoleLog("Done refreshing data files ...")
 	return sh.Run(
 		bin, "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
