@@ -13,9 +13,8 @@ func Refresh(bin, group string) error {
 	if err := env.MinioEnvs(); err != nil {
 		return err
 	}
-	s := runner.TermSpinner("Refreshing objson files ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Refreshing objson files ...")
+	defer runner.ConsoleLog("Done refreshing objson files ...")
 	return sh.Run(
 		bin, "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
@@ -40,9 +39,8 @@ func Load(group string) error {
 		return err
 	}
 	mg.Deps(mg.F(Refresh, bin, group))
-	s := runner.TermSpinner("loading obojson ontology files ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("loading obojson ontology files ...")
+	defer runner.ConsoleLog("Done loading obojosn files ....")
 	return sh.Run(
 		bin, "ontology", "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
