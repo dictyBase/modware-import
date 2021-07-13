@@ -39,6 +39,7 @@ func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 			synMap[prop.Id] = append(synMap[prop.Id], prop)
 		}
 	}
+	logger.Debugf("going to load %d synonyms", len(synMap))
 	// load all the synonyms
 	for entryId, props := range synMap {
 		tac, err := client.ListAnnotations(

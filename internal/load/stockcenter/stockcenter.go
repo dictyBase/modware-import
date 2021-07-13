@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/sirupsen/logrus"
 
+	"github.com/cockroachdb/errors"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"google.golang.org/grpc/codes"
@@ -34,7 +35,7 @@ func validateAnnoTag(args *validateTagArgs) (bool, error) {
 				}).Warn("tag does not exist")
 			return false, nil
 		}
-		return false, fmt.Errorf("error in tag lookup %s", err)
+		return false, errors.Errorf("error in tag lookup %s", err)
 	}
 	if tag.IsObsolete {
 		args.logger.WithFields(
@@ -52,13 +53,16 @@ func validateAnnoTag(args *validateTagArgs) (bool, error) {
 }
 
 func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
+	if len(args.user) == 0 {
+		args.user = regs.DEFAULT_USER
+	}
 	ta, err := args.client.CreateAnnotation(
 		context.Background(),
 		&pb.NewTaggedAnnotation{
 			Data: &pb.NewTaggedAnnotation_Data{
 				Attributes: &pb.NewTaggedAnnotationAttributes{
 					Value:     args.value,
-					CreatedBy: regs.DEFAULT_USER,
+					CreatedBy: args.user,
 					Tag:       args.tag,
 					EntryId:   args.id,
 					Ontology:  args.ontology,
@@ -68,7 +72,7 @@ func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 		},
 	)
 	if err != nil {
-		return ta, fmt.Errorf(
+		return ta, errors.Errorf(
 			"error in creating annotation %s for id %s with rank %d %s",
 			args.tag,
 			args.id,
@@ -80,7 +84,9 @@ func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 }
 
 func createAnno(args *createAnnoArgs) error {
-	fmt.Printf("args %+v\n", args)
+	if len(args.user) == 0 {
+		args.user = regs.DEFAULT_USER
+	}
 	_, err := args.client.CreateAnnotation(
 		context.Background(),
 		&pb.NewTaggedAnnotation{
@@ -96,7 +102,7 @@ func createAnno(args *createAnnoArgs) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf(
+		return errors.Errorf(
 			"error in creating annotation %s for id %s with ontology %s %s",
 			args.tag,
 			args.id,
@@ -135,7 +141,7 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 			create = true
 		}
 	case err != nil:
-		errVal = fmt.Errorf(
+		errVal = errors.Errorf(
 			"error in finding annotation %s for id %s %s",
 			args.tag,
 			args.id,
@@ -172,7 +178,7 @@ func findOrCreateAnno(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 			},
 		)
 	}
-	return ta, fmt.Errorf(
+	return ta, errors.Errorf(
 		"error in finding annotation %s for id %s %s",
 		args.tag,
 		args.id,
@@ -199,7 +205,7 @@ func delAnnotationGroup(client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAn
 			&pb.GroupEntryId{GroupId: gcd.Group.GroupId},
 		)
 		if err != nil {
-			return fmt.Errorf("error in deleting annotation group %s %s", gcd.Group.GroupId, err)
+			return errors.Errorf("error in deleting annotation group %s %s", gcd.Group.GroupId, err)
 		}
 		// remove all annotations
 		for _, gd := range gcd.Group.Data {
@@ -208,7 +214,7 @@ func delAnnotationGroup(client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAn
 				&pb.DeleteAnnotationRequest{Id: gd.Id, Purge: true},
 			)
 			if err != nil {
-				return fmt.Errorf("error in deleting annotation %s %s", gd.Id, err)
+				return errors.Errorf("error in deleting annotation %s %s", gd.Id, err)
 			}
 		}
 	}
@@ -224,7 +230,7 @@ func handleAnnoRetrieval(args *annoParams) (bool, error) {
 	found := true
 	if args.err != nil {
 		if status.Code(args.err) != codes.NotFound { // error in lookup
-			return found, fmt.Errorf("error in getting %s of %s %s", args.loader, args.id, args.err)
+			return found, errors.Errorf("error in getting %s of %s %s", args.loader, args.id, args.err)
 		}
 		found = false
 		args.logger.WithFields(logrus.Fields{

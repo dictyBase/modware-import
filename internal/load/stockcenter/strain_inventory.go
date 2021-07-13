@@ -144,6 +144,7 @@ func createStrainInventory(args *strainInvArgs) error {
 			id:       args.id,
 			ontology: regs.StrainInvOnto,
 			value:    regs.InvExistValue,
+			user:     regs.DEFAULT_USER,
 		})
 	}
 	return nil

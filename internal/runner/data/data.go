@@ -7,8 +7,8 @@ import (
 )
 
 // Refresh gets all dictybase data files from source github repository
-// and stores in S3(minio) server.
-func Refresh() error {
+// and stores in S3(minio) server. Requires a git ref, branch, commit id or tag name.
+func Refresh(gitref string) error {
 	bin, err := runner.LookUp()
 	if err != nil {
 		return err
@@ -16,9 +16,8 @@ func Refresh() error {
 	if err := env.MinioEnvs(); err != nil {
 		return err
 	}
-	s := runner.TermSpinner("Refreshing data files ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Refreshing data files ...")
+	defer runner.ConsoleLog("Done refreshing data files ...")
 	return sh.Run(
 		bin, "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
@@ -26,5 +25,6 @@ func Refresh() error {
 		"--s3-bucket-path", "import",
 		"data", "refresh",
 		"--group", "migration-import-data",
+		"--branch", gitref,
 	)
 }

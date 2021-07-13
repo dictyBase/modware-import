@@ -11,13 +11,35 @@ const (
 	logLevel = "info"
 )
 
-// LoadAll loads all stock data
-func LoadAll() error {
+// LoadPlasmid load all plasmid and related data
+func LoadPlasmid() error {
 	bin, err := runner.LookUp()
 	if err != nil {
 		return err
 	}
-	mg.Deps(mg.F(gwdi, bin))
+	mg.SerialDeps(
+		mg.F(plasmid, bin),
+		mg.F(plasmidInv, bin),
+	)
+	return nil
+}
+
+// LoadStrain load all strain and related data
+func LoadStrain() error {
+	bin, err := runner.LookUp()
+	if err != nil {
+		return err
+	}
+	mg.SerialDeps(
+		mg.F(strain, bin),
+		mg.F(characteristics, bin),
+		mg.F(strainProp, bin),
+		mg.F(strainSyn, bin),
+		mg.F(strainInv, bin),
+		mg.F(phenotype, bin),
+		mg.F(genotype, bin),
+		mg.F(Gwdi, bin),
+	)
 	return nil
 }
 
@@ -29,9 +51,8 @@ func strain(bin string) error {
 	if err := env.ServiceEnvs(); err != nil {
 		return err
 	}
-	s := runner.TermSpinner("Loading strain data ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Loading strain data ...")
+	runner.ConsoleLog("Done loading strain data ...")
 	cmd := append(baseCmd(), "strain")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{
@@ -44,26 +65,38 @@ func strain(bin string) error {
 
 // Plasmid loads plasmid data including curator assignment
 func plasmid(bin string) error {
-	mg.Deps(mg.F(strainSyn, bin))
-	s := runner.TermSpinner("Loading plasmid data ...")
-	defer s.Stop()
-	s.Start()
+	if err := env.MinioEnvs(); err != nil {
+		return err
+	}
+	if err := env.ServiceEnvs(); err != nil {
+		return err
+	}
+	runner.ConsoleLog("Loading plasmid data ...")
+	defer runner.ConsoleLog("Done loading plasmid data ...")
 	cmd := append(baseCmd(), "plasmid")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{
 		"-a", "plasmid_user_annotations.csv",
-		"-g", "plasmid_genes.tsv",
-		"-i", "plasmid_strain.tsv",
+		"-p", "plasmid_publications.tsv",
+		"-i", "plasmid_plasmid.tsv",
 		"-g", "plasmid_genes.tsv"}...)
+	return sh.Run(bin, cmd...)
+}
+
+// PlasmidInv loads plasmid inventory data
+func plasmidInv(bin string) error {
+	runner.ConsoleLog("Loading plasmid inventory ...")
+	runner.ConsoleLog("Done loading plasmid inventory ...")
+	cmd := append(baseCmd(), "plasmid-inventory")
+	cmd = append(cmd, minioCmd()...)
+	cmd = append(cmd, []string{"-i", "plasmid_inventory.tsv"}...)
 	return sh.Run(bin, cmd...)
 }
 
 // Characteristics loads strain characteristics
 func characteristics(bin string) error {
-	mg.Deps(mg.F(strain, bin))
-	s := runner.TermSpinner("Loading strain characteristics ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Loading strain characteristics ...")
+	runner.ConsoleLog("Done loading strain characteristics ...")
 	cmd := append(baseCmd(), "strainchar")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{"-i", "strain_characteristics.tsv"}...)
@@ -72,10 +105,8 @@ func characteristics(bin string) error {
 
 // StrainProp loads strain property data
 func strainProp(bin string) error {
-	mg.Deps(mg.F(strainInv, bin))
-	s := runner.TermSpinner("Loading strain properties ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Loading strain properties ...")
+	defer runner.ConsoleLog("Done loading strain properties ....")
 	cmd := append(baseCmd(), "strainprop")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{"-i", "strain_props.tsv"}...)
@@ -84,10 +115,8 @@ func strainProp(bin string) error {
 
 // Genotype load strain genotype data
 func genotype(bin string) error {
-	mg.Deps(mg.F(characteristics, bin))
-	s := runner.TermSpinner("Loading strain genotype ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Loading strain genotype ...")
+	defer runner.ConsoleLog("Done loading strain genotype ...")
 	cmd := append(baseCmd(), "genotype")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{"-i", "strain_genotype.tsv"}...)
@@ -96,58 +125,38 @@ func genotype(bin string) error {
 
 // StrainSyn loads strain synonym data
 func strainSyn(bin string) error {
-	mg.Deps(mg.F(strainProp, bin))
-	s := runner.TermSpinner("Loading strain synonym ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Loading strain synonym ...")
+	defer runner.ConsoleLog("Done loading strain synonym ...")
 	cmd := append(baseCmd(), "strainsyn")
 	cmd = append(cmd, minioCmd()...)
-	cmd = append(cmd, []string{"-i", "strain_prop.tsv"}...)
+	cmd = append(cmd, []string{"-i", "strain_props.tsv"}...)
 	return sh.Run(bin, cmd...)
 }
 
 // StrainInv loads strain inventory data
 func strainInv(bin string) error {
-	mg.Deps(mg.F(phenotype, bin))
-	s := runner.TermSpinner("Loading strain inventory ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Loading strain inventory ...")
+	runner.ConsoleLog("Done loading strain inventory ...")
 	cmd := append(baseCmd(), "strain-inventory")
 	cmd = append(cmd, minioCmd()...)
-	cmd = append(cmd, []string{"-i", "strain_inventory.csv"}...)
+	cmd = append(cmd, []string{"-i", "strain_inventory.tsv"}...)
 	return sh.Run(bin, cmd...)
 }
 
 // Phenotype loads strain phenotype data
 func phenotype(bin string) error {
-	mg.Deps(mg.F(genotype, bin))
-	s := runner.TermSpinner("Loading strain phenotype ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Loading strain phenotype ...")
+	defer runner.ConsoleLog("Done loading strain phenotype ...")
 	cmd := append(baseCmd(), "phenotype")
 	cmd = append(cmd, minioCmd()...)
-	cmd = append(cmd, []string{"-i", "strain_phenotype.csv"}...)
-	return sh.Run(bin, cmd...)
-}
-
-// PlasmidInv loads plasmid inventory data
-func plasmidInv(bin string) error {
-	mg.Deps(mg.F(plasmid, bin))
-	s := runner.TermSpinner("Loading plasmid inventory ...")
-	defer s.Stop()
-	s.Start()
-	cmd := append(baseCmd(), "plasmid-inventory")
-	cmd = append(cmd, minioCmd()...)
-	cmd = append(cmd, []string{"-i", "plasmid-inventory.csv"}...)
+	cmd = append(cmd, []string{"-i", "strain_phenotype.tsv"}...)
 	return sh.Run(bin, cmd...)
 }
 
 // Gwdi loads GWDI strain mutant data
-func gwdi(bin string) error {
-	mg.Deps(mg.F(plasmidInv, bin))
-	s := runner.TermSpinner("Loading gwdi strain ...")
-	defer s.Stop()
-	s.Start()
+func Gwdi(bin string) error {
+	runner.ConsoleLog("Loading gwdi strain ...")
+	defer runner.ConsoleLog("Done loading gwdi strain ...")
 	cmd := append(baseCmd(), "gwdi")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{"-i", "gwdi_strain.csv"}...)
@@ -165,6 +174,6 @@ func minioCmd() []string {
 	return []string{
 		"--access-key", env.MinioAccessKey(),
 		"--secret-key", env.MinioSecretKey(),
-		"--s3-bucket-path", "import/stockcenter",
+		"--s3-bucket-path", "import/data/stockcenter",
 	}
 }

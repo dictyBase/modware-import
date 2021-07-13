@@ -8,26 +8,29 @@ import (
 )
 
 // Refresh gets all obojson formatted files from source github repository
-// and stores in S3(minio) for later upload. The ontology group and binary path have to be supplied.
-func Refresh(bin, group string) error {
+// and stores in S3(minio) for later upload.
+// The ontology group,binary path and git reference(tag,branch or commit id)
+// have to be supplied.
+func Refresh(bin, group, gitref string) error {
 	if err := env.MinioEnvs(); err != nil {
 		return err
 	}
-	s := runner.TermSpinner("Refreshing objson files ...")
-	defer s.Stop()
-	s.Start()
+	runner.ConsoleLog("Refreshing objson files ...")
+	defer runner.ConsoleLog("Done refreshing objson files ...")
 	return sh.Run(
 		bin, "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
 		"--secret-key", env.MinioSecretKey(),
+		"--s3-bucket-path", "import/obograph-json",
 		"ontology", "refresh",
 		"--group", group,
+		"--branch", gitref,
 	)
 }
 
 // Load loads all obograph-json formatted ontologies
 // The ontology group and git branch have to be supplied.
-func Load(group string) error {
+func Load(group, gitref string) error {
 	bin, err := runner.LookUp()
 	if err != nil {
 		return err
@@ -38,14 +41,14 @@ func Load(group string) error {
 	if err := env.ArangoDBName(); err != nil {
 		return err
 	}
-	mg.Deps(mg.F(Refresh, bin, group))
-	s := runner.TermSpinner("loading obojson ontology files ...")
-	defer s.Stop()
-	s.Start()
+	mg.Deps(mg.F(Refresh, bin, group, gitref))
+	runner.ConsoleLog("loading obojson ontology files ...")
+	defer runner.ConsoleLog("Done loading obojosn files ....")
 	return sh.Run(
 		bin, "ontology", "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
 		"--secret-key", env.MinioSecretKey(),
+		"--s3-bucket-path", "import/obograph-json",
 		"--is-secure", "load",
 		"--group", group,
 	)
