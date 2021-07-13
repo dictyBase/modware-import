@@ -30,13 +30,16 @@ func CleanAllDB() error {
 }
 
 // LoadData will do the following steps...
-// i)   Refresh and load ontology
-// ii)  Refresh and load data in s3 storage
-// iii) Load data
-func LoadData() error {
+// i)  Refresh ontology from github repository to s3 storage.
+//	   Requires a git ref.
+// ii) Load ontology in database
+// iii)  Refresh data from github repository to s3 storage.
+//	   Requires a git ref.
+// iv) Load data
+func LoadData(gitref string) error {
 	mg.SerialDeps(
-		mg.F(onto.Load, "obojson"),
-		data.Refresh,
+		mg.F(onto.Load, "obojson", gitref),
+		mg.F(data.Refresh, gitref),
 		stock.LoadStrain,
 		stock.LoadPlasmid,
 	)
