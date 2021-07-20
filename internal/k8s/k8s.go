@@ -5,22 +5,98 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+
+	"github.com/cockroachdb/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// RandomReleaseName geneates a random lowercase alphabetical name
-func RandomReleaseName() string {
-	aidx, _ := rand.Int(rand.Reader, big.NewInt(int64(len(Adjective()))))
-	pidx, _ := rand.Int(rand.Reader, big.NewInt(int64(len(PluralNoun()))))
-	vidx, _ := rand.Int(rand.Reader, big.NewInt(int64(len(Verb()))))
-	advidx, _ := rand.Int(rand.Reader, big.NewInt(int64(len(Adverb()))))
-	return strings.ToLower(
-		fmt.Sprintf(
-			"%s%s%s%s",
-			Adjective()[aidx.Int64()],
-			PluralNoun()[pidx.Int64()],
-			Verb()[vidx.Int64()],
-			Adverb()[advidx.Int64()],
-		))
+type AppParams struct {
+	Name, Description, Namespace string
+}
+
+type Application struct {
+	*metav1.ObjectMeta
+	description string
+	randomizer  map[string]func() []string
+}
+
+func NewApp(args *AppParams) (*Application, error) {
+	qname, err := QualifiedName(args.Name)
+	if err != nil {
+		return &Application{}, err
+	}
+	return &Application{
+		description: args.Description,
+		ObjectMeta: &metav1.ObjectMeta{
+			Name:            qname,
+			Namespace:       args.Namespace,
+			ResourceVersion: "v1.0.0",
+			Labels: map[string]string{
+				"heritage": "naml",
+			},
+		},
+	}, nil
+}
+
+// Meta returns the Kubernetes native ObjectMeta which is used to manage applications with naml.
+func (a *Application) Meta() *metav1.ObjectMeta {
+	return a.ObjectMeta
+}
+
+// Description returns the application description
+func (a *Application) Description() string {
+	return a.description
+}
+
+func (a *Application) RandContainerName(n int, suffix string) (string, error) {
+	const alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	cname := make([]byte, n)
+	for i := 0; i < n; i++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(alphabets))))
+		if err != nil {
+			return "", errors.Errorf("error in generating secure random number %s", err)
+		}
+		cname[i] = alphabets[num.Int64()]
+	}
+	return fmt.Sprintf(
+		"%s-%s-%s",
+		string(cname), a.Meta().Name, suffix,
+	), nil
+}
+
+func QualifiedName(name string) (string, error) {
+	qname := name
+	if len(qname) == 0 {
+		n, err := RandomAppName()
+		if err != nil {
+			return n, err
+		}
+		qname = n
+	}
+	return strings.TrimSuffix(Trunc(qname, 63), "-"), nil
+}
+
+// RandomAppName generates a random lowercase alphabetical name
+func RandomAppName() (string, error) {
+	var rstr *strings.Builder
+	rmapper := RandMapper()
+	for _, g := range []string{"adj", "plural", "verb", "adv"} {
+		bidx, err := rand.Int(rand.Reader, big.NewInt(int64(len(rmapper[g]()))))
+		if err != nil {
+			return "", errors.Errorf("error in generating secure random number %s", err)
+		}
+		rstr.WriteString(rmapper[g]()[bidx.Int64()])
+	}
+	return strings.ToLower(rstr.String()), nil
+}
+
+func RandMapper() map[string]func() []string {
+	return map[string]func() []string{
+		"adj":    Adjective,
+		"plural": PluralNoun,
+		"verb":   Verb,
+		"adv":    Adverb,
+	}
 }
 
 // Trunc truncates a string to the given length either
@@ -46,28 +122,4 @@ func Trunc(in string, ln int) string {
 		out = in[0:ln]
 	}
 	return out
-}
-
-type Release struct {
-	Namespace string
-	Service   string
-	Name      string
-}
-
-type Application struct {
-	Release     *Release
-	Version     string
-	Description string
-	Name        string
-}
-
-func (app *Application) QualifiedName() string {
-	var b *strings.Builder
-	b.WriteString(app.Name)
-	rname := app.Release.Name
-	if len(rname) == 0 {
-		rname = RandomReleaseName()
-	}
-	b.WriteString(fmt.Sprintf("%s-", rname))
-	return strings.TrimSuffix(Trunc(b.String(), 63), "-")
 }
