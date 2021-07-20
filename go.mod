@@ -12,6 +12,7 @@ require (
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.12.0
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
+	github.com/fatih/color v1.10.0 // indirect
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/golang/protobuf v1.5.2
@@ -29,6 +30,8 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 	google.golang.org/grpc v1.38.0
+	k8s.io/apimachinery v0.21.3
+	k8s.io/client-go v0.21.1
 )
 
 go 1.13
