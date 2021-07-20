@@ -12,22 +12,23 @@ import (
 
 type AppParams struct {
 	Name, Description, Namespace string
+	fragment                     string
 }
 
 type Application struct {
-	*metav1.ObjectMeta
+	metav1.ObjectMeta
 	description string
 	randomizer  map[string]func() []string
 }
 
 func NewApp(args *AppParams) (*Application, error) {
-	qname, err := QualifiedName(args.Name)
+	qname, err := RandomFullName(args.Name, args.fragment, 10)
 	if err != nil {
 		return &Application{}, err
 	}
 	return &Application{
 		description: args.Description,
-		ObjectMeta: &metav1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:            qname,
 			Namespace:       args.Namespace,
 			ResourceVersion: "v1.0.0",
@@ -40,7 +41,7 @@ func NewApp(args *AppParams) (*Application, error) {
 
 // Meta returns the Kubernetes native ObjectMeta which is used to manage applications with naml.
 func (a *Application) Meta() *metav1.ObjectMeta {
-	return a.ObjectMeta
+	return &a.ObjectMeta
 }
 
 // Description returns the application description
@@ -49,6 +50,17 @@ func (a *Application) Description() string {
 }
 
 func (a *Application) RandContainerName(n int, suffix string) (string, error) {
+	cname, err := RandomAlphaName(n)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"%s-%s-%s",
+		string(cname), a.Meta().Name, suffix,
+	), nil
+}
+
+func RandomAlphaName(n int) (string, error) {
 	const alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	cname := make([]byte, n)
 	for i := 0; i < n; i++ {
@@ -58,13 +70,10 @@ func (a *Application) RandContainerName(n int, suffix string) (string, error) {
 		}
 		cname[i] = alphabets[num.Int64()]
 	}
-	return fmt.Sprintf(
-		"%s-%s-%s",
-		string(cname), a.Meta().Name, suffix,
-	), nil
+	return string(cname), nil
 }
 
-func QualifiedName(name string) (string, error) {
+func RandomFullName(name, frag string, n int) (string, error) {
 	qname := name
 	if len(qname) == 0 {
 		n, err := RandomAppName()
@@ -73,10 +82,19 @@ func QualifiedName(name string) (string, error) {
 		}
 		qname = n
 	}
-	return strings.TrimSuffix(Trunc(qname, 63), "-"), nil
+	cname, err := RandomAlphaName(n)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"%s-%s-%s",
+		strings.TrimSuffix(Trunc(qname, 63), "-"),
+		frag, string(cname),
+	), nil
 }
 
 // RandomAppName generates a random lowercase alphabetical name
+// by combining various adjective, noun, verb and adverb.
 func RandomAppName() (string, error) {
 	var rstr *strings.Builder
 	rmapper := RandMapper()
