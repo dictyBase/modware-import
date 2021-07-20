@@ -17,17 +17,19 @@ type AppParams struct {
 
 type Application struct {
 	metav1.ObjectMeta
+	*ImageSpec
 	description string
 	randomizer  map[string]func() []string
 }
 
-func NewApp(args *AppParams) (*Application, error) {
+func NewApp(args *AppParams, ispec *ImageSpec) (*Application, error) {
 	qname, err := RandomFullName(args.Name, args.fragment, 10)
 	if err != nil {
 		return &Application{}, err
 	}
 	return &Application{
 		description: args.Description,
+		ImageSpec:   ispec,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            qname,
 			Namespace:       args.Namespace,
@@ -58,6 +60,18 @@ func (a *Application) RandContainerName(n int, suffix string) (string, error) {
 		"%s-%s-%s",
 		string(cname), a.Meta().Name, suffix,
 	), nil
+}
+
+type ImageSpec struct {
+	repo, tag string
+}
+
+func NewImageSpec(repo, tag string) *ImageSpec {
+	return &ImageSpec{repo: repo, tag: tag}
+}
+
+func (s *ImageSpec) ImageManifest() string {
+	return fmt.Sprintf("%s:%s", s.repo, s.tag)
 }
 
 func RandomAlphaName(n int) (string, error) {
