@@ -63,11 +63,16 @@ func (a *Application) RandContainerName(n int, suffix string) (string, error) {
 }
 
 type ImageSpec struct {
-	repo, tag string
+	repo, tag  string
+	PullPolicy string
 }
 
-func NewImageSpec(repo, tag string) *ImageSpec {
-	return &ImageSpec{repo: repo, tag: tag}
+func NewImageSpec(repo, tag, policy string) *ImageSpec {
+	return &ImageSpec{
+		repo:       repo,
+		tag:        tag,
+		PullPolicy: policy,
+	}
 }
 
 func (s *ImageSpec) ImageManifest() string {
