@@ -95,7 +95,7 @@ func (u *UniprotLoader) TemplatePodSpec() (apiv1.PodSpec, error) {
 				Image:   u.ImageManifest(),
 				Command: u.Command(),
 				Env: append(
-					k8s.MinioEnvManifest(),
+					k8s.MinioSecManifest(),
 					k8s.LogEnvManifest(u.LogLevel)...,
 				),
 			},
