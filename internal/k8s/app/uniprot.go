@@ -13,7 +13,7 @@ import (
 )
 
 type UniprotLoader struct {
-	*k8s.Application
+	*k8s.SimpleJobApp
 	LogLevel string
 }
 
@@ -23,8 +23,8 @@ func NewUniprotLoader(args *k8s.AppParams, ispec *k8s.ImageSpec, level string) (
 		return &UniprotLoader{}, err
 	}
 	return &UniprotLoader{
-		Application: app,
-		LogLevel:    level,
+		SimpleJobApp: app,
+		LogLevel:     level,
 	}, err
 }
 
@@ -69,7 +69,7 @@ func (u *UniprotLoader) Uninstall(client *kubernetes.Clientset) error {
 
 func (u *UniprotLoader) Command() []string {
 	return []string{
-		"/usr/local/bin/app",
+		"/usr/local/bin/importer",
 		"uniprot",
 		"mapping",
 	}
@@ -112,7 +112,7 @@ func (u *UniprotLoader) TemplatePodSpecMeta() metav1.ObjectMeta {
 }
 
 func (u *UniprotLoader) TemplatePodSpec() (apiv1.PodSpec, error) {
-	contName, err := u.RandContainerName(10, "import")
+	contName, err := k8s.RandContainerName(u.Meta().Name, "import", 10)
 	if err != nil {
 		return apiv1.PodSpec{}, err
 	}
