@@ -7,59 +7,11 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type AppParams struct {
 	Name, Description, Namespace string
 	fragment                     string
-}
-
-type Application struct {
-	metav1.ObjectMeta
-	*ImageSpec
-	description string
-	randomizer  map[string]func() []string
-}
-
-func NewApp(args *AppParams, ispec *ImageSpec) (*Application, error) {
-	qname, err := RandomFullName(args.Name, args.fragment, 10)
-	if err != nil {
-		return &Application{}, err
-	}
-	return &Application{
-		description: args.Description,
-		ImageSpec:   ispec,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            qname,
-			Namespace:       args.Namespace,
-			ResourceVersion: "v1.0.0",
-			Labels: map[string]string{
-				"heritage": "naml",
-			},
-		},
-	}, nil
-}
-
-// Meta returns the Kubernetes native ObjectMeta which is used to manage applications with naml.
-func (a *Application) Meta() *metav1.ObjectMeta {
-	return &a.ObjectMeta
-}
-
-// Description returns the application description
-func (a *Application) Description() string {
-	return a.description
-}
-
-func (a *Application) RandContainerName(n int, suffix string) (string, error) {
-	cname, err := RandomAlphaName(n)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf(
-		"%s-%s-%s",
-		string(cname), a.Meta().Name, suffix,
-	), nil
 }
 
 type ImageSpec struct {
@@ -77,6 +29,17 @@ func NewImageSpec(repo, tag, policy string) *ImageSpec {
 
 func (s *ImageSpec) ImageManifest() string {
 	return fmt.Sprintf("%s:%s", s.repo, s.tag)
+}
+
+func RandContainerName(name, frag string, n int) (string, error) {
+	cname, err := RandomAlphaName(n)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"%s-%s-%s",
+		string(cname), name, frag,
+	), nil
 }
 
 func RandomAlphaName(n int) (string, error) {
