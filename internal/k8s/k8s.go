@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	v1 "k8s.io/api/core/v1"
 )
 
 type AppParams struct {
@@ -122,4 +123,37 @@ func Trunc(in string, ln int) string {
 		out = in[0:ln]
 	}
 	return out
+}
+
+func MinioEnvManifest() []v1.EnvVar {
+	return []v1.EnvVar{
+		{
+			Name: "ACCESS_KEY",
+			ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: "dictybase-configuration"},
+					Key:                  "minio.accesskey",
+				},
+			},
+		},
+		{
+			Name: "SECRET_KEY",
+			ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: "dictybase-configuration"},
+					Key:                  "minio.secretkey",
+				},
+			},
+		},
+	}
+
+}
+
+func LogEnvManifest(level string) []v1.EnvVar {
+	return []v1.EnvVar{
+		{
+			Name:  "LOG_LEVEL",
+			Value: level,
+		},
+	}
 }

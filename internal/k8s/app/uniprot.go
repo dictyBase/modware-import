@@ -7,7 +7,6 @@ import (
 	"github.com/dictyBase/modware-import/internal/k8s"
 	batch "k8s.io/api/batch/v1"
 	apiv1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -75,33 +74,6 @@ func (u *UniprotLoader) Command() []string {
 	}
 }
 
-func (u *UniprotLoader) EnvManifest() []v1.EnvVar {
-	return []v1.EnvVar{
-		{
-			Name: "ACCESS_KEY",
-			ValueFrom: &v1.EnvVarSource{
-				SecretKeyRef: &v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{Name: "dictybase-configuration"},
-					Key:                  "minio.accesskey",
-				},
-			},
-		},
-		{
-			Name: "SECRET_KEY",
-			ValueFrom: &v1.EnvVarSource{
-				SecretKeyRef: &v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{Name: "dictybase-configuration"},
-					Key:                  "minio.secretkey",
-				},
-			},
-		},
-		{
-			Name:  "LOG_LEVEL",
-			Value: u.LogLevel,
-		},
-	}
-}
-
 func (u *UniprotLoader) TemplatePodSpecMeta() metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name: u.Meta().Name,
@@ -122,7 +94,10 @@ func (u *UniprotLoader) TemplatePodSpec() (apiv1.PodSpec, error) {
 				Name:    contName,
 				Image:   u.ImageManifest(),
 				Command: u.Command(),
-				Env:     u.EnvManifest(),
+				Env: append(
+					k8s.MinioEnvManifest(),
+					k8s.LogEnvManifest(u.LogLevel)...,
+				),
 			},
 		},
 	}, nil
