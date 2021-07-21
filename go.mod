@@ -30,6 +30,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 	google.golang.org/grpc v1.38.0
+	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.3
 	k8s.io/client-go v0.21.1
 )
