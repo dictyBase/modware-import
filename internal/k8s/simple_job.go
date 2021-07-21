@@ -15,7 +15,7 @@ type SimpleJobApp struct {
 	randomizer  map[string]func() []string
 }
 
-func NewApp(args *AppParams, ispec *ImageSpec, level string) (*SimpleJobApp, error) {
+func NewSimpleJobApp(args *AppParams, ispec *ImageSpec, level string) (*SimpleJobApp, error) {
 	qname, err := RandomFullName(args.Name, args.fragment, 10)
 	if err != nil {
 		return &SimpleJobApp{}, err
