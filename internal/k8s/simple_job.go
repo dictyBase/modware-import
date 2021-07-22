@@ -16,7 +16,7 @@ type SimpleJobApp struct {
 }
 
 func NewSimpleJobApp(args *AppParams, ispec *ImageSpec, level string) (*SimpleJobApp, error) {
-	qname, err := RandomFullName(args.Name, args.fragment, 10)
+	qname, err := RandomFullName(args.Name, args.Fragment, 10)
 	if err != nil {
 		return &SimpleJobApp{}, err
 	}

@@ -12,7 +12,7 @@ import (
 
 type AppParams struct {
 	Name, Description, Namespace string
-	fragment                     string
+	Fragment                     string
 }
 
 type ImageSpec struct {
