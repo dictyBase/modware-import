@@ -56,24 +56,12 @@ func RandomAlphaName(n int) (string, error) {
 	return string(cname), nil
 }
 
-func RandomFullName(name, frag string, n int) (string, error) {
-	qname := name
-	if len(qname) == 0 {
-		n, err := RandomAppName()
-		if err != nil {
-			return n, err
-		}
-		qname = n
-	}
-	cname, err := RandomAlphaName(n)
-	if err != nil {
-		return "", err
-	}
+func FullName(name, frag string) string {
 	return fmt.Sprintf(
-		"%s-%s-%s",
-		strings.TrimSuffix(Trunc(qname, 63), "-"),
-		frag, string(cname),
-	), nil
+		"%s-%s",
+		strings.TrimSuffix(Trunc(name, 63), "-"),
+		frag,
+	)
 }
 
 // RandomAppName generates a random lowercase alphabetical name
