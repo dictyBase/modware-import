@@ -12,20 +12,20 @@ import (
 func main() {
 	cleanerApp := app.NewDBCleaner(
 		&k8s.AppParams{
-			Name:        "db-cleaner",
+			Name:        "db",
 			Description: "app to flush all data in arangodb databases",
 			Namespace:   "dictybase",
-			Fragment:    "flush",
+			Fragment:    "cleaner",
 		},
 		k8s.NewImageSpec("dictybase/modware-import", "develop", "IfNotPresent"),
 		"debug",
 	)
 	uniportApp := app.NewUniprotLoader(
 		&k8s.AppParams{
-			Name:        "uniprot-loader",
+			Name:        "uniprot",
 			Description: "app to load uniprot data",
 			Namespace:   "dictybase",
-			Fragment:    "import",
+			Fragment:    "loader",
 		},
 		k8s.NewImageSpec("dictybase/modware-import", "develop", "IfNotPresent"),
 		"debug",
