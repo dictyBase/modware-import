@@ -15,24 +15,20 @@ type SimpleJobApp struct {
 	randomizer  map[string]func() []string
 }
 
-func NewSimpleJobApp(args *AppParams, ispec *ImageSpec, level string) (*SimpleJobApp, error) {
-	qname, err := RandomFullName(args.Name, args.Fragment, 10)
-	if err != nil {
-		return &SimpleJobApp{}, err
-	}
+func NewSimpleJobApp(args *AppParams, ispec *ImageSpec, level string) *SimpleJobApp {
 	return &SimpleJobApp{
 		level:       level,
 		description: args.Description,
 		ImageSpec:   ispec,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            qname,
+			Name:            FullName(args.Name, args.Fragment),
 			Namespace:       args.Namespace,
 			ResourceVersion: "v1.0.0",
 			Labels: map[string]string{
 				"heritage": "naml",
 			},
 		},
-	}, nil
+	}
 }
 
 // Meta returns the Kubernetes native ObjectMeta which is used to manage applications with naml.

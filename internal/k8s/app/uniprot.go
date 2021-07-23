@@ -16,14 +16,10 @@ type UniprotLoader struct {
 	*k8s.SimpleJobApp
 }
 
-func NewUniprotLoader(args *k8s.AppParams, ispec *k8s.ImageSpec, level string) (*UniprotLoader, error) {
-	app, err := k8s.NewSimpleJobApp(args, ispec, level)
-	if err != nil {
-		return &UniprotLoader{}, err
-	}
+func NewUniprotLoader(args *k8s.AppParams, ispec *k8s.ImageSpec, level string) *UniprotLoader {
 	return &UniprotLoader{
-		SimpleJobApp: app,
-	}, err
+		SimpleJobApp: k8s.NewSimpleJobApp(args, ispec, level),
+	}
 }
 
 func (u *UniprotLoader) Command() []string {

@@ -16,14 +16,10 @@ type DBCleaner struct {
 	*k8s.SimpleJobApp
 }
 
-func NewDBCleaner(args *k8s.AppParams, ispec *k8s.ImageSpec, level string) (*DBCleaner, error) {
-	app, err := k8s.NewSimpleJobApp(args, ispec, level)
-	if err != nil {
-		return &DBCleaner{}, err
-	}
+func NewDBCleaner(args *k8s.AppParams, ispec *k8s.ImageSpec, level string) *DBCleaner {
 	return &DBCleaner{
-		SimpleJobApp: app,
-	}, err
+		SimpleJobApp: k8s.NewSimpleJobApp(args, ispec, level),
+	}
 }
 
 func (d *DBCleaner) Command() []string {
