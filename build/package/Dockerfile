@@ -1,6 +1,5 @@
-FROM golang:1.16.4-buster AS builder
+FROM golang:1.17.0-buster AS builder
 LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
-LABEL maintainer="Eric Hartline <eric.hartline@northwestern.edu>"
 ENV GO111MODULE=auto \
     CGO_ENABLED=0 \
     GOOS=linux \
