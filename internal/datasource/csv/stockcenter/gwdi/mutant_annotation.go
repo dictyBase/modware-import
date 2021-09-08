@@ -63,7 +63,7 @@ func defaultGWDIStrain() *GWDIStrain {
 	return &GWDIStrain{
 		Parent:      "DBS0351471",
 		Plasmid:     "Blasticidin S resistance cassette",
-		Depositor:   "baldwinAJ@cardiff.ac.uk",
+		Depositor:   "christopher.thompson@ucl.ac.uk",
 		Species:     "Dictyostelium discoideum",
 		Publication: "doi:10.1101/582072",
 		Characters: []string{
