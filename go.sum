@@ -145,6 +145,8 @@ github.com/dictyBase/arangomanager v0.3.1 h1:wkEUMHIVU012sHZ3niqDDlYiiz2jVhdwwob
 github.com/dictyBase/arangomanager v0.3.1/go.mod h1:sSR7JRZpUWZaw8WzVZRiG2zA3gSgY7gIq84S4u2AQ0I=
 github.com/dictyBase/go-genproto v0.0.0-20200122001226-b1ccbdee4aa3 h1:rjYF6D06DyG92sJg9gnac9sjXuL7HGnFqahK9ExIwOc=
 github.com/dictyBase/go-genproto v0.0.0-20200122001226-b1ccbdee4aa3/go.mod h1:KY6iUqXl1lLq81WTW9u5DfZE58xM61PsGLSLwwtePlk=
+github.com/dictyBase/go-genproto v0.0.0-20210812210059-437a662da4f7 h1:azMIUX+v11QcuVJ5qfd/eUh3RyOHzlhhvARqx/HDlqQ=
+github.com/dictyBase/go-genproto v0.0.0-20210812210059-437a662da4f7/go.mod h1:KY6iUqXl1lLq81WTW9u5DfZE58xM61PsGLSLwwtePlk=
 github.com/dictyBase/go-obograph v1.1.0 h1:NHaH3KI1NUeN2N98RNWVkA7AIcg4sE29GiV/PhUa3+E=
 github.com/dictyBase/go-obograph v1.1.0/go.mod h1:M9Fvfq9T4nFw60jqQUDqe9YH7CFlE0BlYep+cmC7M5E=
 github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f h1:4iSwwwVRNLZDA1mc+RuuIU1lFHoUp/7MVDbsLC8tNiY=

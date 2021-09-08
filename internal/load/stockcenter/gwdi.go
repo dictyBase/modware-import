@@ -389,17 +389,18 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 
 func (gc *gwdiCreate) createGwdi(gwdi *stockcenter.GWDIStrain) (*pb.Strain, error) {
 	attr := &pb.NewStrainAttributes{
-		CreatedBy:    regs.DEFAULT_USER,
-		UpdatedBy:    regs.DEFAULT_USER,
-		Summary:      gwdi.Summary,
-		Genes:        gwdi.Genes,
-		Depositor:    gwdi.Depositor,
-		Label:        gwdi.Label,
-		Species:      gwdi.Species,
-		Plasmid:      gwdi.Plasmid,
-		Parent:       gwdi.Parent,
-		Publications: []string{gwdi.Publication},
-		Names:        []string{gwdi.Name},
+		CreatedBy:           regs.DEFAULT_USER,
+		UpdatedBy:           regs.DEFAULT_USER,
+		Summary:             gwdi.Summary,
+		Genes:               gwdi.Genes,
+		Depositor:           gwdi.Depositor,
+		Label:               gwdi.Label,
+		Species:             gwdi.Species,
+		Plasmid:             gwdi.Plasmid,
+		Parent:              gwdi.Parent,
+		Publications:        []string{gwdi.Publication},
+		Names:               []string{gwdi.Name},
+		DictyStrainProperty: regs.GWDIStrainTag,
 	}
 	strain, err := gc.sclient.CreateStrain(
 		context.Background(),
