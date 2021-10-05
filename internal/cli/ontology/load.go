@@ -198,11 +198,6 @@ func setOboStorage(cmd *cobra.Command) error {
 }
 
 func init() {
-	loadFlags()
-	viper.BindPFlags(LoadCmd.Flags())
-}
-
-func loadFlags() {
 	LoadCmd.Flags().StringP(
 		"folder",
 		"f",
@@ -210,28 +205,14 @@ func loadFlags() {
 		"input folder with obojson format files",
 	)
 	LoadCmd.Flags().String(
-		"obograph",
-		"obograph",
-		"arangodb named graph for managing ontology graph",
-	)
-	LoadCmd.Flags().String(
-		"cv-collection",
-		"cv",
-		"arangodb collection for storing ontology information",
-	)
-	LoadCmd.Flags().String(
-		"rel-collection",
-		"cvterm_relationship",
-		"arangodb collection for storing cvterm relationships",
-	)
-	LoadCmd.Flags().String(
-		"term-collection",
-		"cvterm",
-		"arangodb collection for storing ontoloy terms",
-	)
-	LoadCmd.Flags().String(
 		"group",
 		"",
 		"file belong to this ontology group will be uploaded. Only works for S3 storage",
 	)
+	LoadCmd.Flags().String(
+		"grpc-service-client",
+		"c",
+		"The grpc service client that will be used to upload obojson file",
+	)
+	viper.BindPFlags(LoadCmd.Flags())
 }
