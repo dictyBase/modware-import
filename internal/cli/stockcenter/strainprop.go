@@ -14,7 +14,7 @@ var StrainPropCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadStrainProp,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := setAnnoAPIClient(); err != nil {
+		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
 		if err := setReader(viper.GetString("strainprop-input"), regsc.STRAINPROP_READER); err != nil {

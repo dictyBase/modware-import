@@ -14,10 +14,10 @@ var GwdiCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadGwdi,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := setStrainAPIClient(); err != nil {
+		if err := SetStrainAPIClient(); err != nil {
 			return err
 		}
-		if err := setAnnoAPIClient(); err != nil {
+		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
 		if err := setReader(viper.GetString("gwdi-input"), regsc.GWDI_READER); err != nil {

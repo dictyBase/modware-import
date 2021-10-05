@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
+	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/minio/minio-go/v6"
@@ -75,7 +76,7 @@ func annoAPIFlags() {
 	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
 }
 
-func setAnnoAPIClient() error {
+func SetAnnoAPIClient() error {
 	conn, err := grpc.Dial(
 		fmt.Sprintf("%s:%s", viper.GetString("annotation-grpc-host"), viper.GetString("annotation-grpc-port")),
 		grpc.WithInsecure(),
@@ -85,6 +86,20 @@ func setAnnoAPIClient() error {
 	}
 	regsc.SetAnnotationAPIClient(
 		annotation.NewTaggedAnnotationServiceClient(conn),
+	)
+	return nil
+}
+
+func SetStrainAPIClient() error {
+	conn, err := grpc.Dial(
+		fmt.Sprintf("%s:%s", viper.GetString("stock-grpc-host"), viper.GetString("stock-grpc-port")),
+		grpc.WithInsecure(),
+	)
+	if err != nil {
+		return fmt.Errorf("error in connecting to stock grpc api server %s", err)
+	}
+	regsc.SetStockAPIClient(
+		stock.NewStockServiceClient(conn),
 	)
 	return nil
 }

@@ -15,7 +15,7 @@ var PlasmidInvCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadPlasmidInv,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := setAnnoAPIClient(); err != nil {
+		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
 		if err := setReader(viper.GetString("plasmid-inventory-input"), regsc.InvReader); err != nil {

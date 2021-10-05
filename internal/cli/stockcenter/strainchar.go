@@ -14,7 +14,7 @@ var StrainCharCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadStrainChar,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := setAnnoAPIClient(); err != nil {
+		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
 		if err := setReader(viper.GetString("strainchar-input"), regsc.STRAINCHAR_READER); err != nil {
