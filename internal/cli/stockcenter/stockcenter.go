@@ -79,7 +79,7 @@ func annoAPIFlags() {
 func SetAnnoAPIClient() error {
 	conn, err := grpc.Dial(
 		fmt.Sprintf("%s:%s", viper.GetString("annotation-grpc-host"), viper.GetString("annotation-grpc-port")),
-		grpc.WithInsecure(),
+		[]grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}...,
 	)
 	if err != nil {
 		return fmt.Errorf("error in connecting to annotation grpc api server %s", err)
@@ -93,7 +93,7 @@ func SetAnnoAPIClient() error {
 func SetStrainAPIClient() error {
 	conn, err := grpc.Dial(
 		fmt.Sprintf("%s:%s", viper.GetString("stock-grpc-host"), viper.GetString("stock-grpc-port")),
-		grpc.WithInsecure(),
+		[]grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}...,
 	)
 	if err != nil {
 		return fmt.Errorf("error in connecting to stock grpc api server %s", err)
