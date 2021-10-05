@@ -3,7 +3,9 @@ package stockcenter
 const (
 	ORDER_CLIENT_KEY           = "order-client"
 	STOCK_CLIENT_KEY           = "stock-client"
+	STOCK_CLIENT               = "stock"
 	ANNOTATION_CLIENT_KEY      = "annotation-client"
+	ANNOTATION_CLIENT          = "annotation"
 	PLASMID_ID_MAP_READER      = "plasmid-id-map-input"
 	PLASMID_ANNOTATOR_READER   = "plasmid-annotator-input"
 	PLASMID_PUB_READER         = "plasmid-pub-input"
