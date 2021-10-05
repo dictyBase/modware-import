@@ -14,7 +14,7 @@ var PhenoCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadPheno,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := setAnnoAPIClient(); err != nil {
+		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
 		if err := setReader(viper.GetString("phenotype-input"), regsc.PHENO_READER); err != nil {

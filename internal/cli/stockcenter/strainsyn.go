@@ -14,7 +14,7 @@ var StrainSynCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadStrainSynProp,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := setAnnoAPIClient(); err != nil {
+		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
 		if err := setReader(viper.GetString("strainsyn-input"), regsc.StrainSynReader); err != nil {
