@@ -9,9 +9,9 @@ import (
 
 // Refresh gets all obojson formatted files from source github repository
 // and stores in S3(minio) for later upload.
-// The ontology group,binary path and git reference(tag,branch or commit id)
-// have to be supplied.
-func Refresh(bin, group, gitref string) error {
+// The ontology group,binary path,git reference(tag,branch or commit id)
+// and bucket path have to be supplied.
+func Refresh(bin, group, gitref, path string) error {
 	if err := env.MinioEnvs(); err != nil {
 		return err
 	}
@@ -21,7 +21,7 @@ func Refresh(bin, group, gitref string) error {
 		bin, "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
 		"--secret-key", env.MinioSecretKey(),
-		"--s3-bucket-path", "import/obograph-json",
+		"--s3-bucket-path", path,
 		"ontology", "refresh",
 		"--group", group,
 		"--branch", gitref,
