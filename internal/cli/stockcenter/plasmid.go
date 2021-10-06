@@ -21,12 +21,20 @@ var PlasmidCmd = &cobra.Command{
 	PreRunE: setPlasmidPreRun,
 }
 
-func setPlasmidPreRun(cmd *cobra.Command, args []string) error {
-	if err := SetStrainAPIClient(); err != nil {
-		return err
+func plasmidInputMap() map[string]string {
+	return map[string]string{
+		"plasmid-annotator-input": regsc.PLASMID_ANNOTATOR_READER,
+		"plasmid-pub-input":       regsc.PLASMID_PUB_READER,
+		"plasmid-gene-input":      regsc.PLASMID_GENE_READER,
+		"plasmid-input":           regsc.PLASMID_READER,
 	}
-	if err := setPlasmidInputReader(); err != nil {
-		return err
+}
+
+func setPlasmidPreRun(cmd *cobra.Command, args []string) error {
+	for _, fn := range []func() error{SetStrainAPIClient, setPlasmidInputReader} {
+		if err := fn(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -34,95 +42,31 @@ func setPlasmidPreRun(cmd *cobra.Command, args []string) error {
 func setPlasmidInputReader() error {
 	switch viper.GetString("input-source") {
 	case FOLDER:
-		ar, err := os.Open(viper.GetString("plasmid-annotator-input"))
-		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-annotator-input"), err)
+		for k, v := range plasmidInputMap() {
+			reader, err := os.Open(viper.GetString(k))
+			if err != nil {
+				return fmt.Errorf(
+					"error in opening file %s %s", viper.GetString(k), err,
+				)
+			}
+			registry.SetReader(v, reader)
 		}
-		pr, err := os.Open(viper.GetString("plasmid-pub-input"))
-		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-pub-input"), err)
-		}
-		gr, err := os.Open(viper.GetString("plasmid-gene-input"))
-		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-gene-input"), err)
-		}
-		sr, err := os.Open(viper.GetString("plasmid-input"))
-		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-input"), err)
-		}
-		registry.SetReader(regsc.PLASMID_ANNOTATOR_READER, ar)
-		registry.SetReader(regsc.PLASMID_PUB_READER, pr)
-		registry.SetReader(regsc.PLASMID_GENE_READER, gr)
-		registry.SetReader(regsc.PLASMID_READER, sr)
 	case BUCKET:
-		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf("%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("plasmid-annotator-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("plasmid-annotator-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
+		for k, v := range plasmidInputMap() {
+			reader, err := registry.GetS3Client().GetObject(
+				viper.GetString("s3-bucket"),
+				fmt.Sprintf("%s/%s", viper.GetString("s3-bucket-path"), viper.GetString(k)),
+				minio.GetObjectOptions{},
 			)
+			if err != nil {
+				return fmt.Errorf(
+					"error in getting file %s from bucket %s %s",
+					viper.GetString("plasmid-annotator-input"),
+					viper.GetString(k), err,
+				)
+			}
+			registry.SetReader(v, reader)
 		}
-		gr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf("%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("plasmid-gene-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("plasmid-gene-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
-			)
-		}
-		pr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf("%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("plasmid-pub-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("plasmid-pub-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
-			)
-		}
-		sr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf("%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("plasmid-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("plasmid-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
-			)
-		}
-		registry.SetReader(regsc.PLASMID_ANNOTATOR_READER, ar)
-		registry.SetReader(regsc.PLASMID_PUB_READER, pr)
-		registry.SetReader(regsc.PLASMID_GENE_READER, gr)
-		registry.SetReader(regsc.PLASMID_READER, sr)
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
 	}
@@ -131,27 +75,17 @@ func setPlasmidInputReader() error {
 
 func init() {
 	PlasmidCmd.Flags().StringP(
-		"plasmid-annotator-input",
-		"a",
-		"",
+		"plasmid-annotator-input", "a", "",
 		"csv file that provides mapping among plasmid identifier, annotator and annotation timestamp",
 	)
 	PlasmidCmd.Flags().StringP(
-		"plasmid-gene-input",
-		"g",
-		"",
+		"plasmid-gene-input", "g", "",
 		"csv file that maps plasmids to gene identifiers",
 	)
-	PlasmidCmd.Flags().StringP(
-		"plasmid-pub-input",
-		"p",
-		"",
+	PlasmidCmd.Flags().StringP("plasmid-pub-input", "p", "",
 		"csv file that maps plasmids to publication identifiers",
 	)
-	PlasmidCmd.Flags().StringP(
-		"plasmid-input",
-		"i",
-		"",
+	PlasmidCmd.Flags().StringP("plasmid-input", "i", "",
 		"csv file with plasmid data",
 	)
 	viper.BindPFlags(PlasmidCmd.Flags())
