@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"google.golang.org/grpc"
-
-	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
@@ -25,26 +22,12 @@ var PlasmidCmd = &cobra.Command{
 }
 
 func setPlasmidPreRun(cmd *cobra.Command, args []string) error {
-	if err := setPlasmidAPIClient(); err != nil {
+	if err := SetStrainAPIClient(); err != nil {
 		return err
 	}
 	if err := setPlasmidInputReader(); err != nil {
 		return err
 	}
-	return nil
-}
-
-func setPlasmidAPIClient() error {
-	conn, err := grpc.Dial(
-		fmt.Sprintf("%s:%s", viper.GetString("stock-grpc-host"), viper.GetString("stock-grpc-port")),
-		grpc.WithInsecure(),
-	)
-	if err != nil {
-		return fmt.Errorf("error in connecting to stock grpc api server %s", err)
-	}
-	regsc.SetStockAPIClient(
-		stock.NewStockServiceClient(conn),
-	)
 	return nil
 }
 
