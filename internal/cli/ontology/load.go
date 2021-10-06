@@ -54,7 +54,7 @@ var LoadCmd = &cobra.Command{
 		switch viper.GetString("grpc-client") {
 		case sreg.ANNOTATION_CLIENT:
 			return streamToAnnotationServer(logger)
-		case sreg.STOCK_CLIENT:
+		case sreg.StockClient:
 			return streamToStockServer(logger)
 		}
 		logger.Infof(
