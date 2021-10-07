@@ -29,8 +29,9 @@ func Refresh(bin, group, gitref, path string) error {
 }
 
 // Load loads all obograph-json formatted ontologies
-// The ontology group, git branch and relative bucket path have to be supplied.
-func Load(group, gitref, path string) error {
+// The ontology group, git branch,relative bucket path
+// and grpc client name have to be supplied.
+func Load(group, gitref, path, client string) error {
 	bin, err := runner.LookUp()
 	if err != nil {
 		return err
@@ -51,5 +52,6 @@ func Load(group, gitref, path string) error {
 		"--s3-bucket-path", path,
 		"--is-secure", "load",
 		"--group", group,
+		"--grpc-client", client,
 	)
 }
