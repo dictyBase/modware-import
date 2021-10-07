@@ -29,8 +29,8 @@ func Refresh(bin, group, gitref, path string) error {
 }
 
 // Load loads all obograph-json formatted ontologies
-// The ontology group and git branch have to be supplied.
-func Load(group, gitref string) error {
+// The ontology group, git branch and relative bucket path have to be supplied.
+func Load(group, gitref, path string) error {
 	bin, err := runner.LookUp()
 	if err != nil {
 		return err
@@ -41,14 +41,14 @@ func Load(group, gitref string) error {
 	if err := env.ArangoDBName(); err != nil {
 		return err
 	}
-	mg.Deps(mg.F(Refresh, bin, group, gitref))
+	mg.Deps(mg.F(Refresh, bin, group, gitref, path))
 	runner.ConsoleLog("loading obojson ontology files ...")
 	defer runner.ConsoleLog("Done loading obojosn files ....")
 	return sh.Run(
 		bin, "ontology", "--log-level", runner.LogLevel,
 		"--access-key", env.MinioAccessKey(),
 		"--secret-key", env.MinioSecretKey(),
-		"--s3-bucket-path", "import/obograph-json",
+		"--s3-bucket-path", path,
 		"--is-secure", "load",
 		"--group", group,
 	)
