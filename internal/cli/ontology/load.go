@@ -53,9 +53,13 @@ var LoadCmd = &cobra.Command{
 		logger := registry.GetLogger()
 		switch viper.GetString("grpc-client") {
 		case sreg.ANNOTATION_CLIENT:
-			return streamToAnnotationServer(logger)
+			if err := streamToAnnotationServer(logger); err != nil {
+				return err
+			}
 		case sreg.StockClient:
-			return streamToStockServer(logger)
+			if err := streamToStockServer(logger); err != nil {
+				return err
+			}
 		}
 		logger.Infof(
 			"uploaded %d obojson files",
