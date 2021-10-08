@@ -52,6 +52,6 @@ func Load(group, gitref, path, client string) error {
 		"--s3-bucket-path", path,
 		"--is-secure", "load",
 		"--group", group,
-		"--grpc-client", client,
+		"--grpc-service-client", client,
 	)
 }
