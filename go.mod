@@ -10,7 +10,7 @@ require (
 	github.com/dictyBase/aphgrpc v1.3.0
 	github.com/dictyBase/arangomanager v0.3.1
 	github.com/dictyBase/go-genproto v0.0.0-20210812210059-437a662da4f7
-	github.com/dictyBase/go-obograph v1.1.0
+	github.com/dictyBase/go-obograph v1.4.0
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.12.0
 	github.com/evanphx/json-patch/v5 v5.5.0 // indirect
@@ -25,7 +25,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.6 // indirect
 	github.com/kris-nova/naml v0.2.6
-	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magefile/mage v1.11.0
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/minio-go/v6 v6.0.57
@@ -38,13 +37,11 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
-	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/sys v0.0.0-20210921065528-437939a70204 // indirect
 	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf // indirect
-	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.6 // indirect
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.27.1 // indirect
