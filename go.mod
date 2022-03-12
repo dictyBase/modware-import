@@ -46,7 +46,7 @@ require (
 	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.6 // indirect
-	google.golang.org/grpc v1.38.0
+	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.27.1 // indirect
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
