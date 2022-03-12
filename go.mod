@@ -6,7 +6,6 @@ require (
 	github.com/briandowns/spinner v1.16.0
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cockroachdb/errors v1.8.5
-	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/dictyBase/aphgrpc v1.3.0
 	github.com/dictyBase/arangomanager v0.3.1
 	github.com/dictyBase/go-genproto v0.0.0-20210812210059-437a662da4f7
@@ -35,7 +34,7 @@ require (
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/shurcooL/go-goon v0.0.0-20210110234559-7585751d9a17 // indirect
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.8.1
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
