@@ -12,7 +12,7 @@ require (
 	github.com/dictyBase/go-genproto v0.0.0-20210812210059-437a662da4f7
 	github.com/dictyBase/go-obograph v1.1.0
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
-	github.com/emirpasic/gods v1.12.0
+	github.com/emirpasic/gods v1.18.0
 	github.com/evanphx/json-patch/v5 v5.5.0 // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/fatih/color v1.13.0 // indirect
