@@ -20,7 +20,6 @@ require (
 	github.com/go-logr/logr v1.1.0 // indirect
 	github.com/go-redis/redis/v7 v7.4.0
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.6 // indirect
@@ -46,8 +45,7 @@ require (
 	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.6 // indirect
-	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.27.1 // indirect
+	google.golang.org/grpc v1.46.0
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go v0.22.2
