@@ -5,6 +5,9 @@ build:
   - image: dictybase/modware-import
     custom:
       buildCommand: docker build --platform linux/amd64 --squash -t  $IMAGE -f build/package/Dockerfile . && docker push $IMAGE
+  - image: dictybase/modware-dev-import
+    custom:
+      buildCommand: docker build --platform linux/amd64 --squash -t  $IMAGE -f build/package/Dockerfile.dev . && docker push $IMAGE
   tagPolicy:
     gitCommit:
       variant: AbbrevCommitSha
