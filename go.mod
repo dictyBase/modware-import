@@ -18,7 +18,7 @@ require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v1.2.0 // indirect
-	github.com/go-redis/redis/v7 v7.4.0
+	github.com/go-redis/redis/v7 v7.4.1
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
