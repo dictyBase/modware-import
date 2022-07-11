@@ -1,64 +1,55 @@
 package ontology
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
-	"github.com/dictyBase/go-genproto/dictybaseapis/api/upload"
+	"github.com/dictyBase/go-obograph/graph"
+	"github.com/dictyBase/go-obograph/storage"
+	araobo "github.com/dictyBase/go-obograph/storage/arangodb"
 	"github.com/dictyBase/modware-import/internal/cli/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
-	sreg "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 )
-
-const (
-	chunkSize int = 1024
-)
-
-type streamOboParams struct {
-	name    string
-	reader  io.Reader
-	gstream grpcStream
-	logger  *logrus.Entry
-}
-
-type grpcStream interface {
-	Send(*upload.FileUploadRequest) error
-	CloseAndRecv() (*upload.FileUploadResponse, error)
-	grpc.ClientStream
-}
 
 // LoadCmd obojson formmated ontologies to arangodb
 var LoadCmd = &cobra.Command{
 	Use:   "load",
-	Short: "load an obojson formatted ontologies to arangodb",
+	Short: "load obojson formatted ontologies to arangodb",
 	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		for _, fn := range []func() error{stockcenter.SetAnnoAPIClient, stockcenter.SetStrainAPIClient} {
-			if err := fn(); err != nil {
-				return err
-			}
-		}
 		return setOboReaders(cmd)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		dsa, err := araobo.NewDataSource(ConnectParams(), CollectParams())
+		if err != nil {
+			return fmt.Errorf("error in connecting to arangodb %s", err)
+		}
 		logger := registry.GetLogger()
-		switch viper.GetString("grpc-client") {
-		case sreg.ANNOTATION_CLIENT:
-			if err := streamToAnnotationServer(logger); err != nil {
-				return err
+		for name, rdr := range registry.GetAllReaders(registry.OboReadersKey) {
+			logger.Infof("going to load %s,", name)
+			grph, err := graph.BuildGraph(rdr)
+			if err != nil {
+				return fmt.Errorf("error in building graph from %s %s", name, err)
 			}
-		case sreg.StockClient:
-			if err := streamToStockServer(logger); err != nil {
-				return err
+			if !dsa.ExistsOboGraph(grph) {
+				logger.Infof("obograph %s does not exist, have to be loaded", name)
+				if err := saveNewGraph(dsa, grph, logger); err != nil {
+					return fmt.Errorf("error in saving new obograph %s %s", name, err)
+				}
+
+				continue
+			}
+			logger.Infof("obograph %s exist, have to be updated", name)
+			if err := saveExistentGraph(dsa, grph, logger); err != nil {
+				return fmt.Errorf("error in saving existing obograph %s %s", name, err)
 			}
 		}
 		logger.Infof(
@@ -69,69 +60,65 @@ var LoadCmd = &cobra.Command{
 	},
 }
 
-func streamToAnnotationServer(logger *logrus.Entry) error {
-	for name, reader := range registry.GetAllReaders(registry.OboReadersKey) {
-		stream, err := sreg.GetAnnotationAPIClient().
-			OboJSONFileUpload(context.Background())
-		if err != nil {
-			return err
-		}
-		err = streamOboToGrpcServer(&streamOboParams{
-			name:    name,
-			reader:  reader,
-			gstream: stream,
-			logger:  logger,
-		})
-		if err != nil {
-			return err
-		}
+func ConnectParams() *araobo.ConnectParams {
+	arPort, _ := strconv.Atoi(viper.GetString("arangodb-port"))
+
+	return &araobo.ConnectParams{
+		User:     viper.GetString("arangodb-user"),
+		Pass:     viper.GetString("arangodb-pass"),
+		Host:     viper.GetString("arangodb-host"),
+		Database: viper.GetString("arangodb-database"),
+		Port:     arPort,
+		Istls:    viper.GetBool("is-secure"),
 	}
-	return nil
 }
 
-func streamToStockServer(logger *logrus.Entry) error {
-	for name, reader := range registry.GetAllReaders(registry.OboReadersKey) {
-		stream, err := sreg.GetStockAPIClient().
-			OboJSONFileUpload(context.Background())
-		if err != nil {
-			return err
-		}
-		err = streamOboToGrpcServer(&streamOboParams{
-			name:    name,
-			reader:  reader,
-			gstream: stream,
-			logger:  logger,
-		})
-		if err != nil {
-			return err
-		}
+func CollectParams() *araobo.CollectionParams {
+	return &araobo.CollectionParams{
+		Term:         viper.GetString("term-collection"),
+		Relationship: viper.GetString("rel-collection"),
+		GraphInfo:    viper.GetString("cv-collection"),
+		OboGraph:     viper.GetString("obograph"),
 	}
-	return nil
 }
 
-func streamOboToGrpcServer(args *streamOboParams) error {
-	buff := make([]byte, chunkSize)
-	for {
-		count, err := args.reader.Read(buff)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return fmt.Errorf("error in reading file %s", err)
-		}
-		err = args.gstream.Send(&upload.FileUploadRequest{Content: buff[:count]})
-		if err != nil {
-			return fmt.Errorf("error in streaming file content %s", err)
-		}
-	}
-	ustatus, err := args.gstream.CloseAndRecv()
+func saveNewGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logrus.Entry) error {
+	err := dsa.SaveOboGraphInfo(grph)
 	if err != nil {
-		return fmt.Errorf("error in closing file stream %s", err)
+		return fmt.Errorf("error in saving graph %s", err)
 	}
-	args.logger.Debugf(
-		"upload %s obojson file with status %s",
-		args.name, ustatus.Status.String(),
+	nst, err := dsa.SaveTerms(grph)
+	if err != nil {
+		return fmt.Errorf("error in saving terms %s", err)
+	}
+	logger.Infof("saved %d terms", nst)
+	nsr, err := dsa.SaveRelationships(grph)
+	if err != nil {
+		return fmt.Errorf("error in saving relationships %s", err)
+	}
+	logger.Infof("saved %d relationships", nsr)
+
+	return nil
+}
+
+func saveExistentGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logrus.Entry) error {
+	if err := dsa.UpdateOboGraphInfo(grph); err != nil {
+		return fmt.Errorf("error in updating graph information %s", err)
+	}
+	stats, err := dsa.SaveOrUpdateTerms(grph)
+	if err != nil {
+		return fmt.Errorf("error in updating terms %s", err)
+	}
+	logger.Infof(
+		"saved::%d terms updated::%d terms obsoleted::%d terms",
+		stats.Created, stats.Updated, stats.Deleted,
 	)
+	urs, err := dsa.SaveNewRelationships(grph)
+	if err != nil {
+		return fmt.Errorf("error in saving relationships %s", err)
+	}
+	logger.Infof("updated %d relationships", urs)
+
 	return nil
 }
 
@@ -226,6 +213,26 @@ func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
 }
 
 func init() {
+	LoadCmd.Flags().String(
+		"term-collection",
+		"cvterm",
+		"arangodb collection for storing ontoloy terms",
+	)
+	LoadCmd.Flags().String(
+		"rel-collection",
+		"cvterm_relationship",
+		"arangodb collection for storing cvterm relationships",
+	)
+	LoadCmd.Flags().String(
+		"cv-collection",
+		"cv",
+		"arangodb collection for storing ontology information",
+	)
+	LoadCmd.Flags().String(
+		"obograph",
+		"obograph",
+		"arangodb named graph for managing ontology graph",
+	)
 	LoadCmd.Flags().StringP(
 		"folder",
 		"f",
@@ -237,38 +244,10 @@ func init() {
 		"",
 		"file belong to this ontology group will be uploaded. Only works for S3 storage",
 	)
-	grpcFlags()
+	LoadCmd.Flags().String(
+		"folder",
+		"",
+		"folder to read all obojson files",
+	)
 	viper.BindPFlags(LoadCmd.Flags())
-}
-
-func grpcFlags() {
-	LoadCmd.Flags().String(
-		"grpc-service-client",
-		"c",
-		"The grpc service client that will be used to upload obojson file, only annotation and stock are supported",
-	)
-	LoadCmd.Flags().String(
-		"annotation-grpc-host",
-		"annotation-api",
-		"grpc host address for annotation service",
-	)
-	LoadCmd.Flags().String(
-		"annotation-grpc-port",
-		"",
-		"grpc port for annotation service",
-	)
-	LoadCmd.Flags().String(
-		"stock-grpc-host",
-		"stock-api",
-		"grpc host address for stock service",
-	)
-	LoadCmd.Flags().String(
-		"stock-grpc-port",
-		"",
-		"grpc port for stock service",
-	)
-	viper.BindEnv("annotation-grpc-host", "ANNOTATION_API_SERVICE_HOST")
-	viper.BindEnv("annotation-grpc-port", "ANNOTATION_API_SERVICE_PORT")
-	viper.BindEnv("stock-grpc-port", "STOCK_API_SERVICE_PORT")
-	viper.BindEnv("stock-grpc-host", "STOCK_API_SERVICE_HOST")
 }
