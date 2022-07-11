@@ -2,6 +2,8 @@ package cli
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -10,10 +12,11 @@ import (
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 )
 
-func PreRun(cmd *cobra.Command) error {
+func PersistentPreRun(cmd *cobra.Command) error {
 	if len(viper.GetString("access-key")) > 0 && len(viper.GetString("secret-key")) > 0 {
 		client, err := s3.NewS3Client(cmd)
 		if err != nil {
@@ -29,7 +32,26 @@ func PreRun(cmd *cobra.Command) error {
 	return nil
 }
 
-func PostRun(cmd *cobra.Command) error {
+func RunDoc(cmd *cobra.Command) error {
+	mkdoc, _ := cmd.Flags().GetBool("doc")
+	if mkdoc {
+		dir, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		docDir := filepath.Join(dir, "docs")
+		if err := os.MkdirAll(docDir, 0700); err != nil {
+			return err
+		}
+		if err := doc.GenMarkdownTree(cmd, docDir); err != nil {
+			return err
+		}
+		fmt.Printf("created markdown docs in %s\n", docDir)
+	}
+	return nil
+}
+
+func PersistentPostRun(cmd *cobra.Command) error {
 	if len(viper.GetString("access-key")) == 0 {
 		return nil
 	}
