@@ -1,13 +1,13 @@
 package ontology
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dictyBase/go-obograph/graph"
 	"github.com/dictyBase/go-obograph/storage"
 	araobo "github.com/dictyBase/go-obograph/storage/arangodb"
@@ -30,26 +30,26 @@ var LoadCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dsa, err := araobo.NewDataSource(ConnectParams(), CollectParams())
 		if err != nil {
-			return fmt.Errorf("error in connecting to arangodb %s", err)
+			return errors.Errorf("error in connecting to arangodb %s", err)
 		}
 		logger := registry.GetLogger()
 		for name, rdr := range registry.GetAllReaders(registry.OboReadersKey) {
 			logger.Infof("going to load %s,", name)
 			grph, err := graph.BuildGraph(rdr)
 			if err != nil {
-				return fmt.Errorf("error in building graph from %s %s", name, err)
+				return errors.Errorf("error in building graph from %s %s", name, err)
 			}
 			if !dsa.ExistsOboGraph(grph) {
 				logger.Infof("obograph %s does not exist, have to be loaded", name)
 				if err := saveNewGraph(dsa, grph, logger); err != nil {
-					return fmt.Errorf("error in saving new obograph %s %s", name, err)
+					return errors.Errorf("error in saving new obograph %s %s", name, err)
 				}
 
 				continue
 			}
 			logger.Infof("obograph %s exist, have to be updated", name)
 			if err := saveExistentGraph(dsa, grph, logger); err != nil {
-				return fmt.Errorf("error in saving existing obograph %s %s", name, err)
+				return errors.Errorf("error in saving existing obograph %s %s", name, err)
 			}
 		}
 		logger.Infof(
@@ -85,16 +85,16 @@ func CollectParams() *araobo.CollectionParams {
 func saveNewGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logrus.Entry) error {
 	err := dsa.SaveOboGraphInfo(grph)
 	if err != nil {
-		return fmt.Errorf("error in saving graph %s", err)
+		return errors.Errorf("error in saving graph %s", err)
 	}
 	nst, err := dsa.SaveTerms(grph)
 	if err != nil {
-		return fmt.Errorf("error in saving terms %s", err)
+		return errors.Errorf("error in saving terms %s", err)
 	}
 	logger.Infof("saved %d terms", nst)
 	nsr, err := dsa.SaveRelationships(grph)
 	if err != nil {
-		return fmt.Errorf("error in saving relationships %s", err)
+		return errors.Errorf("error in saving relationships %s", err)
 	}
 	logger.Infof("saved %d relationships", nsr)
 
@@ -103,11 +103,11 @@ func saveNewGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logrus.En
 
 func saveExistentGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logrus.Entry) error {
 	if err := dsa.UpdateOboGraphInfo(grph); err != nil {
-		return fmt.Errorf("error in updating graph information %s", err)
+		return errors.Errorf("error in updating graph information %s", err)
 	}
 	stats, err := dsa.SaveOrUpdateTerms(grph)
 	if err != nil {
-		return fmt.Errorf("error in updating terms %s", err)
+		return errors.Errorf("error in updating terms %s", err)
 	}
 	logger.Infof(
 		"saved::%d terms updated::%d terms obsoleted::%d terms",
@@ -115,7 +115,7 @@ func saveExistentGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logr
 	)
 	urs, err := dsa.SaveNewRelationships(grph)
 	if err != nil {
-		return fmt.Errorf("error in saving relationships %s", err)
+		return errors.Errorf("error in saving relationships %s", err)
 	}
 	logger.Infof("updated %d relationships", urs)
 
@@ -137,7 +137,7 @@ func setOboReaders(cmd *cobra.Command) error {
 		}
 		registry.SetAllReaders(registry.OboReadersKey, rds)
 	default:
-		return fmt.Errorf(
+		return errors.Errorf(
 			"error input source %s not supported",
 			viper.GetString("input-source"),
 		)
@@ -154,7 +154,7 @@ func setFileReaders() (map[string]io.Reader, error) {
 	for _, v := range files {
 		r, err := os.Open(v)
 		if err != nil {
-			return rds, fmt.Errorf("error in opening file %s %s", v, err)
+			return rds, errors.Errorf("error in opening file %s %s", v, err)
 		}
 		rds[filepath.Base(v)] = r
 	}
@@ -173,7 +173,7 @@ func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
 			viper.GetString("s3-bucket"), oinfo.Key, minio.StatObjectOptions{},
 		)
 		if err != nil {
-			return rds, fmt.Errorf(
+			return rds, errors.Errorf(
 				"error in getting information for object %s %s", oinfo.Key, err,
 			)
 		}
@@ -205,7 +205,7 @@ func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
 			viper.GetString("s3-bucket"), sinfo.Key, minio.GetObjectOptions{},
 		)
 		if err != nil {
-			return rds, fmt.Errorf("error in getting object %s", oinfo.Key)
+			return rds, errors.Errorf("error in getting object %s", oinfo.Key)
 		}
 		rds[sinfo.Key] = obj
 	}
