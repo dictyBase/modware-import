@@ -6,8 +6,11 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dictyBase/modware-import/internal/cli"
+	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -18,6 +21,12 @@ var RootCmd = &cobra.Command{
 		if err := cli.PersistentPreRun(cmd); err != nil {
 			return errors.Errorf("error in executing pre run %s", err)
 		}
+		client, err := connectTok8s()
+		if err != nil {
+			return errors.Errorf("error in getting kubernetes client %s", err)
+		}
+		registry.SetKubeClient(registry.KubeClientKey, client)
+
 		return nil
 	},
 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
@@ -54,4 +63,20 @@ func init() {
 	cli.S3Args(RootCmd)
 	viper.BindPFlags(RootCmd.Flags())
 	viper.BindPFlags(RootCmd.PersistentFlags())
+}
+
+func connectTok8s() (*kubernetes.Clientset, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", viper.GetString("kubeconfig"))
+	if err != nil {
+		return &kubernetes.Clientset{}, errors.Errorf(
+			"error in parsing config %s",
+			err,
+		)
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return clientset, errors.Errorf("error in creating client from config %s", err)
+	}
+
+	return clientset, nil
 }
