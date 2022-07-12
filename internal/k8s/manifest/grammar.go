@@ -1,4 +1,4 @@
-package k8s
+package manifest
 
 func PluralNoun() []string {
 	return []string{

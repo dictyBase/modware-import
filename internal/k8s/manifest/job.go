@@ -1,4 +1,4 @@
-package k8s
+package manifest
 
 import (
 	"context"
@@ -6,6 +6,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
+
+type AppParams struct {
+	Name, Description, Namespace string
+	Fragment                     string
+}
 
 type SimpleJobApp struct {
 	metav1.ObjectMeta
