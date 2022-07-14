@@ -35,7 +35,7 @@ func LoadGwdi(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	mr, err := mutantGroups(registry.GetReader(regs.GWDI_READER))
+	mr, err := mutantGroups(registry.GetReader(regs.GwdiReader))
 	if err != nil {
 		return err
 	}
@@ -99,11 +99,11 @@ func runConcurrentCreate(logger *logrus.Entry, gr stockcenter.GWDIMutantReader) 
 			sclient:        stclient,
 			logger:         logger,
 			ctx:            ctx,
-			user:           regs.DEFAULT_USER,
+			user:           regs.DefaultUser,
 			value:          val,
 			genoTag:        genoTag,
-			annoOntology:   regs.DICTY_ANNO_ONTOLOGY,
-			strainCharOnto: regs.DICTY_STRAINCHAR_ONTOLOGY,
+			annoOntology:   regs.DictyAnnoOntology,
+			strainCharOnto: regs.DictyStraincharOntology,
 		},
 	})
 	errcList = append(errcList, errc)
@@ -370,7 +370,7 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 		tag:      regs.GWDIStrainTag,
 		ontology: regs.StrainPropOnto,
 		value:    regs.ExistValue,
-		user:     regs.DEFAULT_USER,
+		user:     regs.DefaultUser,
 		id:       id,
 	})
 	if err != nil {
@@ -382,15 +382,15 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 		tag:      regs.StrainInvTag,
 		ontology: regs.StrainInvOnto,
 		value:    regs.InvExistValue,
-		user:     regs.DEFAULT_USER,
+		user:     regs.DefaultUser,
 		id:       id,
 	})
 }
 
 func (gc *gwdiCreate) createGwdi(gwdi *stockcenter.GWDIStrain) (*pb.Strain, error) {
 	attr := &pb.NewStrainAttributes{
-		CreatedBy:           regs.DEFAULT_USER,
-		UpdatedBy:           regs.DEFAULT_USER,
+		CreatedBy:           regs.DefaultUser,
+		UpdatedBy:           regs.DefaultUser,
 		Summary:             gwdi.Summary,
 		Genes:               gwdi.Genes,
 		Depositor:           gwdi.Depositor,

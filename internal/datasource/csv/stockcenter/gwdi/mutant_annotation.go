@@ -43,7 +43,7 @@ var chrMap = map[string]string{
 	"DDB0232433": "chr 6",
 }
 
-//GWDIStrain is the container for GWDI strain
+// GWDIStrain is the container for GWDI strain
 type GWDIStrain struct {
 	Label       string                        `json:"label"`
 	Name        string                        `json:"name"`
@@ -72,11 +72,11 @@ func defaultGWDIStrain() *GWDIStrain {
 			"null mutant",
 		},
 		Properties: map[string]*tsource.StockProp{
-			regs.DICTY_ANNO_ONTOLOGY: {
+			regs.DictyAnnoOntology: {
 				Property: "mutant type",
 				Value:    "endogenous insertion",
 			},
-			regs.DICTY_MUTAGENESIS_ONTOLOGY: {
+			regs.DictyMutagenesisOntology: {
 				Property: "mutagenesis method",
 				Value:    "Restriction Enzyme-Mediated Integration",
 			},
@@ -107,7 +107,7 @@ func genelessMutantAnnotation(r []string) *GWDIStrain {
 	strain.Name = r[0]
 	strain.Genotype = fmt.Sprintf(genoTmpl, strain.Label)
 	strain.Characters[2] = mutant
-	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
+	strain.Properties[regs.DictyAnnoOntology] = &tsource.StockProp{
 		Property: "mutant type",
 		Value:    "exogenous insertion",
 	}
@@ -238,7 +238,7 @@ func intragenicSingleAnnotation(r []string) *GWDIStrain {
 
 func singleNaAnnotation(r []string) *GWDIStrain {
 	strain := genelessMutantAnnotation(r)
-	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
+	strain.Properties[regs.DictyAnnoOntology] = &tsource.StockProp{
 		Property: "mutant type",
 		Value:    "endogenous insertion",
 	}
@@ -252,7 +252,7 @@ func singleNaAnnotation(r []string) *GWDIStrain {
 
 func multipleNaAnnotation(r []string) *GWDIStrain {
 	strain := genelessMutantAnnotation(r)
-	strain.Properties[regs.DICTY_ANNO_ONTOLOGY] = &tsource.StockProp{
+	strain.Properties[regs.DictyAnnoOntology] = &tsource.StockProp{
 		Property: "mutant type",
 		Value:    "endogenous insertion",
 	}

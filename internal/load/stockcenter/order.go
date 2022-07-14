@@ -43,11 +43,11 @@ func (pm *plasmidIDMap) name2Id(name string) (string, bool) {
 }
 
 func LoadOrder(cmd *cobra.Command, args []string) error {
-	m, err := newPlasmidMap(registry.GetReader(regs.PLASMID_ID_MAP_READER))
+	m, err := newPlasmidMap(registry.GetReader(regs.PlasmidIdMapReader))
 	if err != nil {
 		return fmt.Errorf("error in making plasmid map %s", err)
 	}
-	or := stockcenter.NewCsvStockOrderReader(registry.GetReader(regs.ORDER_READER))
+	or := stockcenter.NewCsvStockOrderReader(registry.GetReader(regs.OrderReader))
 	client := regs.GetOrderAPIClient()
 	_, err = client.PrepareForOrder(context.Background(), &empty.Empty{})
 	if err != nil {

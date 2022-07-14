@@ -9,7 +9,7 @@ import (
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
 )
 
-//Strain is the container for strain data
+// Strain is the container for strain data
 type Strain struct {
 	Id           string
 	Descriptor   string
@@ -22,7 +22,7 @@ type Strain struct {
 	UpdatedOn    time.Time
 }
 
-//StrainReader is the defined interface for reading the strain data
+// StrainReader is the defined interface for reading the strain data
 type StrainReader interface {
 	datasource.IteratorWithoutValue
 	Value() (*Strain, error)
@@ -35,8 +35,13 @@ type csvStrainReader struct {
 	glookup StockGeneLookup
 }
 
-//NewCsvStrainReader is to get an instance of strain reader
-func NewCsvStrainReader(r io.Reader, al StockAnnotatorLookup, pl StockPubLookup, gl StockGeneLookup) StrainReader {
+// NewCsvStrainReader is to get an instance of strain reader
+func NewCsvStrainReader(
+	r io.Reader,
+	al StockAnnotatorLookup,
+	pl StockPubLookup,
+	gl StockGeneLookup,
+) StrainReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
@@ -48,7 +53,7 @@ func NewCsvStrainReader(r io.Reader, al StockAnnotatorLookup, pl StockPubLookup,
 	}
 }
 
-//Value gets a new Strain instance
+// Value gets a new Strain instance
 func (sr *csvStrainReader) Value() (*Strain, error) {
 	s := new(Strain)
 	if sr.Err != nil {

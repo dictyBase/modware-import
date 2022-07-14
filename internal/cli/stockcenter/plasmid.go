@@ -23,10 +23,10 @@ var PlasmidCmd = &cobra.Command{
 
 func plasmidInputMap() map[string]string {
 	return map[string]string{
-		"plasmid-annotator-input": regsc.PLASMID_ANNOTATOR_READER,
-		"plasmid-pub-input":       regsc.PLASMID_PUB_READER,
-		"plasmid-gene-input":      regsc.PLASMID_GENE_READER,
-		"plasmid-input":           regsc.PLASMID_READER,
+		"plasmid-annotator-input": regsc.PlasmidAnnotatorReader,
+		"plasmid-pub-input":       regsc.PlasmidPubReader,
+		"plasmid-gene-input":      regsc.PlasmidGeneReader,
+		"plasmid-input":           regsc.PlasmidReader,
 	}
 }
 

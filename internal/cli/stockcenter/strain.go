@@ -36,24 +36,36 @@ func setStrainInputReader() error {
 	case FOLDER:
 		ar, err := os.Open(viper.GetString("strain-annotator-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-annotator-input"), err)
+			return fmt.Errorf(
+				"error in opening file %s %s",
+				viper.GetString("strain-annotator-input"),
+				err,
+			)
 		}
 		pr, err := os.Open(viper.GetString("strain-pub-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-pub-input"), err)
+			return fmt.Errorf(
+				"error in opening file %s %s",
+				viper.GetString("strain-pub-input"),
+				err,
+			)
 		}
 		gr, err := os.Open(viper.GetString("strain-gene-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-gene-input"), err)
+			return fmt.Errorf(
+				"error in opening file %s %s",
+				viper.GetString("strain-gene-input"),
+				err,
+			)
 		}
 		sr, err := os.Open(viper.GetString("strain-input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-input"), err)
 		}
-		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
-		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
-		registry.SetReader(regsc.STRAIN_GENE_READER, gr)
-		registry.SetReader(regsc.STRAIN_READER, sr)
+		registry.SetReader(regsc.StrainAnnotatorReader, ar)
+		registry.SetReader(regsc.StrainPubReader, pr)
+		registry.SetReader(regsc.StrainGeneReader, gr)
+		registry.SetReader(regsc.StrainReader, sr)
 	case BUCKET:
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
@@ -124,10 +136,10 @@ func setStrainInputReader() error {
 			)
 		}
 		//registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
-		registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
-		registry.SetReader(regsc.STRAIN_PUB_READER, pr)
-		registry.SetReader(regsc.STRAIN_GENE_READER, gr)
-		registry.SetReader(regsc.STRAIN_READER, sr)
+		registry.SetReader(regsc.StrainAnnotatorReader, ar)
+		registry.SetReader(regsc.StrainPubReader, pr)
+		registry.SetReader(regsc.StrainGeneReader, gr)
+		registry.SetReader(regsc.StrainReader, sr)
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
 	}

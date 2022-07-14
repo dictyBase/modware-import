@@ -20,7 +20,7 @@ var GwdiCmd = &cobra.Command{
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
-		if err := setReader(viper.GetString("gwdi-input"), regsc.GWDI_READER); err != nil {
+		if err := setReader(viper.GetString("gwdi-input"), regsc.GwdiReader); err != nil {
 			return err
 		}
 		return nil

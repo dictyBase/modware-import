@@ -1,4 +1,4 @@
-//package datasource is for managing data from different source
+// package datasource is for managing data from different source
 
 package datasource
 

@@ -61,7 +61,10 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func cacheInvByStrainId(ir stockcenter.StrainInventoryReader, logger *logrus.Entry) (map[string][]*stockcenter.StrainInventory, error) {
+func cacheInvByStrainId(
+	ir stockcenter.StrainInventoryReader,
+	logger *logrus.Entry,
+) (map[string][]*stockcenter.StrainInventory, error) {
 	invMap := make(map[string][]*stockcenter.StrainInventory)
 	readCount := 0
 	for ir.Next() {
@@ -131,7 +134,10 @@ func createStrainInventory(args *strainInvArgs) error {
 			}
 			ids = append(ids, anno.Data.Id)
 		}
-		_, err := args.client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
+		_, err := args.client.CreateAnnotationGroup(
+			context.Background(),
+			&pb.AnnotationIdList{Ids: ids},
+		)
 		if err != nil {
 			return err
 		}
@@ -144,7 +150,7 @@ func createStrainInventory(args *strainInvArgs) error {
 			id:       args.id,
 			ontology: regs.StrainInvOnto,
 			value:    regs.InvExistValue,
-			user:     regs.DEFAULT_USER,
+			user:     regs.DefaultUser,
 		})
 	}
 	return nil

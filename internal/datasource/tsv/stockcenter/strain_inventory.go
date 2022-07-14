@@ -15,7 +15,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/regexp"
 )
 
-//StrainInventory is the container for strain inventory
+// StrainInventory is the container for strain inventory
 type StrainInventory struct {
 	StrainID         string
 	PrivateComment   string
@@ -28,7 +28,7 @@ type StrainInventory struct {
 	RecordLine       string
 }
 
-//StrainInventoryReader is the defined interface for reading the data
+// StrainInventoryReader is the defined interface for reading the data
 type StrainInventoryReader interface {
 	datasource.IteratorWithoutValue
 	Value() (*StrainInventory, error)
@@ -38,13 +38,13 @@ type tsvStrainInventoryReader struct {
 	*tsource.TsvReader
 }
 
-//NewTsvStrainInventoryReader is to get an instance of StrainInventoryReader
+// NewTsvStrainInventoryReader is to get an instance of StrainInventoryReader
 func NewTsvStrainInventoryReader(r io.Reader) StrainInventoryReader {
 	tr := bufio.NewScanner(r)
 	return &tsvStrainInventoryReader{&tsource.TsvReader{Reader: tr}}
 }
 
-//Value gets a new StrainInventory instance
+// Value gets a new StrainInventory instance
 func (sir *tsvStrainInventoryReader) Value() (*StrainInventory, error) {
 	inv := new(StrainInventory)
 	if sir.Err != nil {
@@ -78,7 +78,7 @@ func parseInvDate(date string) (time.Time, error) {
 		return time.Time{}, errors.New("error in parsing date string")
 	}
 	return time.Parse(
-		registry.STOCK_DATE_LAYOUT,
+		registry.StockDateLayout,
 		fmt.Sprintf("%s-%s-%s", m[1], ucFirstAllLower(m[2]), m[3]),
 	)
 }

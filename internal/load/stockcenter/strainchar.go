@@ -11,7 +11,7 @@ import (
 )
 
 func LoadStrainChar(cmd *cobra.Command, args []string) error {
-	scr := stockcenter.NewTsvCharacterReader(registry.GetReader(regs.STRAINCHAR_READER))
+	scr := stockcenter.NewTsvCharacterReader(registry.GetReader(regs.StraincharReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	count := 0
@@ -29,7 +29,7 @@ func LoadStrainChar(cmd *cobra.Command, args []string) error {
 			tag:      chs.Character,
 			id:       chs.Id,
 			value:    val,
-			ontology: regs.DICTY_STRAINCHAR_ONTOLOGY,
+			ontology: regs.DictyStraincharOntology,
 		})
 		if err != nil {
 			return err

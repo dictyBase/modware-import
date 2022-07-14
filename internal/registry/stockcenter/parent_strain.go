@@ -36,8 +36,8 @@ func AX4ParentStrain() *pb.ExistingStrain {
 			Attributes: &pb.ExistingStrainAttributes{
 				CreatedAt:    aphgrpc.TimestampProto(time.Now()),
 				UpdatedAt:    aphgrpc.TimestampProto(time.Now()),
-				CreatedBy:    DEFAULT_USER,
-				UpdatedBy:    DEFAULT_USER,
+				CreatedBy:    DefaultUser,
+				UpdatedBy:    DefaultUser,
 				Summary:      AX4Summary(),
 				Species:      ParentSpecies,
 				Label:        "AX4",
@@ -57,8 +57,8 @@ func AX3ParentStrain() *pb.ExistingStrain {
 			Attributes: &pb.ExistingStrainAttributes{
 				CreatedAt:    aphgrpc.TimestampProto(time.Now()),
 				UpdatedAt:    aphgrpc.TimestampProto(time.Now()),
-				CreatedBy:    DEFAULT_USER,
-				UpdatedBy:    DEFAULT_USER,
+				CreatedBy:    DefaultUser,
+				UpdatedBy:    DefaultUser,
 				Summary:      AX3Summary(),
 				Species:      ParentSpecies,
 				Label:        "AX3",

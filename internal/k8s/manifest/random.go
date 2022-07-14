@@ -3,9 +3,10 @@ package manifest
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/cockroachdb/errors"
 	"math/big"
 	"strings"
+
+	"github.com/cockroachdb/errors"
 )
 
 func RandContainerName(name, frag string, n int) (string, error) {

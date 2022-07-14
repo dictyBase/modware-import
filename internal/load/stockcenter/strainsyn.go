@@ -48,7 +48,7 @@ func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 				Limit: 20,
 				Filter: fmt.Sprintf(
 					"entry_id===%s;tag===%s;ontology===%s",
-					entryId, synTag, regs.DICTY_ANNO_ONTOLOGY,
+					entryId, synTag, regs.DictyAnnoOntology,
 				)})
 		if err != nil {
 			if status.Code(err) != codes.NotFound {
@@ -77,10 +77,10 @@ func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
 					Data: &annotation.NewTaggedAnnotation_Data{
 						Attributes: &annotation.NewTaggedAnnotationAttributes{
 							Value:     p.Value,
-							CreatedBy: regs.DEFAULT_USER,
+							CreatedBy: regs.DefaultUser,
 							Tag:       synTag,
 							EntryId:   entryId,
-							Ontology:  regs.DICTY_ANNO_ONTOLOGY,
+							Ontology:  regs.DictyAnnoOntology,
 							Rank:      int64(i),
 						},
 					},

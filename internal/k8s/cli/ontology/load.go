@@ -20,7 +20,7 @@ var LoadOntoCmd = &cobra.Command{
 			if err != nil {
 				return errors.Errorf("error in running job %s in database %s", err, dbname)
 			}
-			registry.GetLogger().Infof("deployed job %s in database", job.Name, dbname)
+			registry.GetLogger().Infof("deployed job %s in database %s", job.Name, dbname)
 		}
 
 		return nil

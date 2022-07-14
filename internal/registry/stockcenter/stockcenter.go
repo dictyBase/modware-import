@@ -10,28 +10,28 @@ import (
 var sv = viper.New()
 
 func SetOrderAPIClient(oc order.OrderServiceClient) {
-	sv.Set(ORDER_CLIENT_KEY, oc)
+	sv.Set(OrderClientKey, oc)
 }
 
 func SetStockAPIClient(sc stock.StockServiceClient) {
-	sv.Set(STOCK_CLIENT_KEY, sc)
+	sv.Set(StockClientKey, sc)
 }
 
 func SetAnnotationAPIClient(ac annotation.TaggedAnnotationServiceClient) {
-	sv.Set(ANNOTATION_CLIENT_KEY, ac)
+	sv.Set(AnnotationClientKey, ac)
 }
 
 func GetOrderAPIClient() order.OrderServiceClient {
-	oc, _ := sv.Get(ORDER_CLIENT_KEY).(order.OrderServiceClient)
+	oc, _ := sv.Get(OrderClientKey).(order.OrderServiceClient)
 	return oc
 }
 
 func GetStockAPIClient() stock.StockServiceClient {
-	sc, _ := sv.Get(STOCK_CLIENT_KEY).(stock.StockServiceClient)
+	sc, _ := sv.Get(StockClientKey).(stock.StockServiceClient)
 	return sc
 }
 
 func GetAnnotationAPIClient() annotation.TaggedAnnotationServiceClient {
-	ac, _ := sv.Get(ANNOTATION_CLIENT_KEY).(annotation.TaggedAnnotationServiceClient)
+	ac, _ := sv.Get(AnnotationClientKey).(annotation.TaggedAnnotationServiceClient)
 	return ac
 }
