@@ -1,17 +1,46 @@
-package manifest
+package job
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/cockroachdb/errors"
+	"github.com/dictyBase/modware-import/internal/k8s/cli/parameters"
+	"github.com/dictyBase/modware-import/internal/k8s/manifest"
+	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/spf13/cobra"
+
+	"github.com/cockroachdb/errors"
 	batch "k8s.io/api/batch/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type cmdFnT func() []string
+
 type Job struct {
 	args *JobParams
+}
+
+func Run(cli *cobra.Command, labels map[string]string, cFn cmdFnT) (*batch.Job, error) {
+	manifest, err := NewJob(&JobParams{
+		Cli:        cli,
+		Labels:     labels,
+		Command:    cFn(),
+		Fragment:   parameters.Fragment,
+		NameLength: parameters.NameLen,
+	}).MakeSpec()
+	if err != nil {
+		return &batch.Job{}, errors.Errorf("error in making job manifest %s", err)
+	}
+	namespace, _ := cli.Flags().GetString("namespace")
+	job, err := registry.GetKubeClient(registry.KubeClientKey).BatchV1().
+		Jobs(namespace).
+		Create(context.Background(), manifest, metav1.CreateOptions{})
+	if err != nil {
+		return job, errors.Errorf("error in deploying job %s", err)
+	}
+
+	return job, nil
 }
 
 type JobParams struct {
@@ -43,7 +72,7 @@ func (jobk *Job) objectMeta() metav1.ObjectMeta {
 	name, _ := jobk.args.Cli.Flags().GetString("name")
 	return metav1.ObjectMeta{
 		Namespace: namespace,
-		Name:      FullName(name, jobk.args.Fragment),
+		Name:      manifest.FullName(name, jobk.args.Fragment),
 		Labels:    jobk.args.Labels,
 	}
 }
@@ -78,7 +107,7 @@ func (jobk *Job) podSpec() (apiv1.PodSpec, error) {
 func (jobk *Job) containersSpec() ([]apiv1.Container, error) {
 	spec := make([]apiv1.Container, 0)
 	name, _ := jobk.args.Cli.Flags().GetString("name")
-	contName, err := RandContainerName(
+	contName, err := manifest.RandContainerName(
 		name,
 		jobk.args.Fragment,
 		jobk.args.NameLength,
@@ -104,12 +133,12 @@ func (jobk *Job) imageName() string {
 func (jobk *Job) containerEnvSpec() []apiv1.EnvVar {
 	level, _ := jobk.args.Cli.Flags().GetString("log-level")
 	return append(
-		MinioEnv(),
-		LogEnv(level)...,
+		manifest.MinioEnv(),
+		manifest.LogEnv(level)...,
 	)
 }
 
-func JobMetaLabel() map[string]string {
+func MetaLabel() map[string]string {
 	return map[string]string{
 		"command": "job",
 		"runner":  "dictybot",
