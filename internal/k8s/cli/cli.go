@@ -13,7 +13,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "k8s",
@@ -54,7 +53,7 @@ func Execute() {
 }
 
 func init() {
-	RootCmd.AddCommand(JobCmd)
+	RootCmd.AddCommand(SubCmd)
 	RootCmd.PersistentFlags().String(
 		"kubeconfig",
 		"",

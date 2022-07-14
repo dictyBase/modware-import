@@ -244,10 +244,5 @@ func init() {
 		"",
 		"file belong to this ontology group will be uploaded. Only works for S3 storage",
 	)
-	LoadCmd.Flags().String(
-		"folder",
-		"",
-		"folder to read all obojson files",
-	)
 	viper.BindPFlags(LoadCmd.Flags())
 }
