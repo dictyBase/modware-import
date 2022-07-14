@@ -14,7 +14,7 @@ var SubCmd = &cobra.Command{
 }
 
 func init() {
-	SubCmd.AddCommand(ontology.RefreshCmd)
+	SubCmd.AddCommand(ontology.RefreshCmd, ontology.LoadOntoCmd)
 	SubCmd.PersistentFlags().String("job", "", "name of the job")
 	SubCmd.PersistentFlags().
 		String("repo", "dictybase/modware-import", "container image repository")
