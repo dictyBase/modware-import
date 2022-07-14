@@ -3,13 +3,22 @@ linters-settings:
         lines: 80
     errcheck: 
         exclude: errcheck_excludes.txt
+    revive:
+      rules:
+        - name: var-naming
+          arguments: [["ID"]]
 linters:
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
   enable:
+    - asciicheck
     - bodyclose
+    - bidichk
+    - cyclop 
     - deadcode
     - depguard
+    - decorder
+    - dogsled
     # - dupl
     - errcheck
     - funlen
@@ -26,10 +35,10 @@ linters:
     - lll
     - misspell
     - nakedret
+    - revive
     - scopelint
     - staticcheck
     - structcheck
-    - stylecheck
     - typecheck
     - unconvert
     - unparam
