@@ -1,15 +1,11 @@
 package ontology
 
 import (
-	"context"
-
 	"github.com/cockroachdb/errors"
-	"github.com/dictyBase/modware-import/internal/k8s/cli"
-	"github.com/dictyBase/modware-import/internal/k8s/manifest"
+	cliJob "github.com/dictyBase/modware-import/internal/k8s/cli/job"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var RefreshCmd = &cobra.Command{
@@ -17,23 +13,11 @@ var RefreshCmd = &cobra.Command{
 	Short: "run ontology refresh command as a kubernetes job in the cluster",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		labels := cli.MetaLabel()
+		labels := cliJob.MetaLabel()
 		labels["subcommand"] = "refresh-ontology"
-		jobManifest, err := manifest.NewJob(&manifest.JobParams{
-			Cli:        cmd,
-			Labels:     labels,
-			Command:    RefreshCommand(),
-			Fragment:   cli.Fragment,
-			NameLength: cli.NameLen,
-		}).MakeSpec()
+		job, err := cliJob.Run(cmd, labels, RefreshCommand)
 		if err != nil {
-			return errors.Errorf("error in making job manifest %s", err)
-		}
-		job, err := registry.GetKubeClient(registry.KubeClientKey).BatchV1().
-			Jobs(viper.GetString("namespace")).
-			Create(context.Background(), jobManifest, metav1.CreateOptions{})
-		if err != nil {
-			return errors.Errorf("error in deploying job %s", err)
+			return errors.Errorf("error in running job %s", err)
 		}
 		registry.GetLogger().Infof("deployed job %s", job.Name)
 		return nil
@@ -43,7 +27,9 @@ var RefreshCmd = &cobra.Command{
 func init() {
 	RefreshCmd.Flags().String("branch", "master", "branch of github repository")
 	RefreshCmd.Flags().String("group", "", "ontology group name")
+	RefreshCmd.Flags().String("s3-bucket-path", "", "s3 bucket where files will be uploaded")
 	_ = RefreshCmd.MarkFlagRequired("group")
+	_ = RefreshCmd.MarkFlagRequired("s3-bucket-path")
 	viper.BindPFlags(RefreshCmd.Flags())
 }
 
@@ -56,5 +42,7 @@ func RefreshCommand() []string {
 		viper.GetString("group"),
 		"--branch",
 		viper.GetString("branch"),
+		"--s3-bucket-path",
+		viper.GetString("s3-bucket-path"),
 	}
 }
