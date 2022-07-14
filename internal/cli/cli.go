@@ -3,8 +3,6 @@ package cli
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dictyBase/modware-import/internal/cli/arangodb"
@@ -12,12 +10,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/cli/ontology"
 	"github.com/dictyBase/modware-import/internal/cli/stockcenter"
 	"github.com/dictyBase/modware-import/internal/cli/uniprot"
-	"github.com/dictyBase/modware-import/internal/datasource/s3"
-	"github.com/dictyBase/modware-import/internal/logger"
-	"github.com/dictyBase/modware-import/internal/registry"
-	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cobra"
-	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 )
 
@@ -31,63 +24,22 @@ own subcommands for importing different kind of data. Each loading sub-subcomman
 is generally expected to consume csv formatted data either directly from a source file
 or through a file that is kept in a particular bucket of a S3 server.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if len(viper.GetString("access-key")) > 0 && len(viper.GetString("secret-key")) > 0 {
-			client, err := s3.NewS3Client(cmd)
-			if err != nil {
-				return errors.Errorf("error in getting instance of s3 client %s", err)
-			}
-			registry.SetS3Client(client)
+		if err := PersistentPreRun(cmd); err != nil {
+			return errors.Errorf("error in executing pre run %s", err)
 		}
-		l, err := logger.NewLogger(cmd)
-		if err != nil {
-			return err
-		}
-		registry.SetLogger(l)
 		return nil
 	},
 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-		if len(viper.GetString("access-key")) == 0 {
-			return nil
-		}
-		if len(viper.GetString("secret-key")) == 0 {
-			return nil
-		}
-		name := fmt.Sprintf("%s-%s.log", cmd.CalledAs(), time.Now().Format("20060102-150405"))
-		_, err := registry.GetS3Client().FPutObject(
-			viper.GetString("log-file-bucket"),
-			fmt.Sprintf(
-				"%s/%s",
-				viper.GetString("log-file-bucket-path"),
-				name,
-			),
-			registry.GetValue(registry.LogFileKey),
-			minio.PutObjectOptions{},
-		)
-		if err != nil {
-			return errors.Errorf(
-				"error in uploading file %s with object name %s",
-				registry.GetValue(registry.LogFileKey),
-				name,
-			)
+		if err := PersistentPostRun(cmd); err != nil {
+			return errors.Errorf("error in executing post-run %s", err)
 		}
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		d, _ := cmd.Flags().GetBool("doc")
-		if d {
-			dir, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-			docDir := filepath.Join(dir, "docs")
-			if err := os.MkdirAll(docDir, 0700); err != nil {
-				return err
-			}
-			if err := doc.GenMarkdownTree(cmd, docDir); err != nil {
-				return err
-			}
-			fmt.Printf("created markdown docs in %s\n", docDir)
+		if err := RunDoc(cmd); err != nil {
+			return errors.Errorf("error in generating docs %s", err)
 		}
+
 		return nil
 	},
 }
