@@ -4,7 +4,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func MinioSecManifest() []v1.EnvVar {
+func MinioEnv() []v1.EnvVar {
 	return []v1.EnvVar{
 		{
 			Name: "ACCESS_KEY",
@@ -25,5 +25,4 @@ func MinioSecManifest() []v1.EnvVar {
 			},
 		},
 	}
-
 }

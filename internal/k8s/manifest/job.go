@@ -1,71 +1,110 @@
 package manifest
 
 import (
-	"context"
+	"fmt"
 
+	"github.com/cockroachdb/errors"
+	"github.com/spf13/cobra"
+	batch "k8s.io/api/batch/v1"
+	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
-type AppParams struct {
-	Name, Description, Namespace string
-	Fragment                     string
+type Job struct {
+	args *JobParams
 }
 
-type SimpleJobApp struct {
-	metav1.ObjectMeta
-	*ImageSpec
-	description string
-	level       string
-	randomizer  map[string]func() []string
+type JobParams struct {
+	Cli        *cobra.Command
+	Labels     map[string]string
+	Command    []string
+	NameLength int
+	Fragment   string
 }
 
-func NewSimpleJobApp(args *AppParams, ispec *ImageSpec, level string) *SimpleJobApp {
-	return &SimpleJobApp{
-		level:       level,
-		description: args.Description,
-		ImageSpec:   ispec,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            FullName(args.Name, args.Fragment),
-			Namespace:       args.Namespace,
-			ResourceVersion: "v1.0.0",
-			Labels: map[string]string{
-				"heritage": "naml",
-			},
-		},
+func NewJob(args *JobParams) *Job {
+	return &Job{args: args}
+}
+
+func (jobk *Job) MakeSpec() (*batch.Job, error) {
+	batchJobSpec, err := jobk.batchJobSpec()
+	if err != nil {
+		return &batch.Job{}, errors.Errorf("error in creating a job %s", err)
 	}
+
+	return &batch.Job{
+		ObjectMeta: jobk.objectMeta(),
+		Spec:       batchJobSpec,
+	}, nil
 }
 
-// Meta returns the Kubernetes native ObjectMeta which is used to manage applications with naml.
-func (a *SimpleJobApp) Meta() *metav1.ObjectMeta {
-	return &a.ObjectMeta
-}
-
-// Description returns the application description
-func (a *SimpleJobApp) Description() string {
-	return a.description
-}
-
-func (a *SimpleJobApp) TemplatePodSpecMeta() metav1.ObjectMeta {
+func (jobk *Job) objectMeta() metav1.ObjectMeta {
+	namespace, _ := jobk.args.Cli.Flags().GetString("namespace")
+	name, _ := jobk.args.Cli.Flags().GetString("name")
 	return metav1.ObjectMeta{
-		Name: a.Meta().Name,
-		Labels: map[string]string{
-			"app": a.Meta().Name,
-		},
+		Namespace: namespace,
+		Name:      FullName(name, jobk.args.Fragment),
+		Labels:    jobk.args.Labels,
 	}
 }
 
-// Uninstall will attempt to uninstall in Kubernetes
-func (a *SimpleJobApp) Uninstall(client *kubernetes.Clientset) error {
-	return client.BatchV1().
-		Jobs(a.Meta().Namespace).
-		Delete(
-			context.Background(),
-			a.Meta().Name,
-			metav1.DeleteOptions{},
-		)
+func (jobk *Job) batchJobSpec() (batch.JobSpec, error) {
+	podTemplSpec, err := jobk.podTemplateSpec()
+	if err != nil {
+		return batch.JobSpec{}, errors.Errorf("error in getting pod template spec %s", err)
+	}
+
+	return batch.JobSpec{Template: podTemplSpec}, nil
 }
 
-func (a *SimpleJobApp) LogLevel() string {
-	return a.level
+func (jobk *Job) podTemplateSpec() (apiv1.PodTemplateSpec, error) {
+	podSpec, err := jobk.podSpec()
+	if err != nil {
+		return apiv1.PodTemplateSpec{}, errors.Errorf("error in getting pod spec %s", err)
+	}
+
+	return apiv1.PodTemplateSpec{Spec: podSpec}, nil
+}
+
+func (jobk *Job) podSpec() (apiv1.PodSpec, error) {
+	contSpec, err := jobk.containersSpec()
+	if err != nil {
+		return apiv1.PodSpec{}, errors.Errorf("error in getting container spec %s", err)
+	}
+
+	return apiv1.PodSpec{Containers: contSpec, RestartPolicy: apiv1.RestartPolicyNever}, nil
+}
+
+func (jobk *Job) containersSpec() ([]apiv1.Container, error) {
+	spec := make([]apiv1.Container, 0)
+	name, _ := jobk.args.Cli.Flags().GetString("name")
+	contName, err := RandContainerName(
+		name,
+		jobk.args.Fragment,
+		jobk.args.NameLength,
+	)
+	if err != nil {
+		return spec, errors.Errorf("error in generating random container name %s", err)
+	}
+
+	return append(spec, apiv1.Container{
+		Name:    contName,
+		Image:   jobk.imageName(),
+		Command: jobk.args.Command,
+		Env:     jobk.containerEnvSpec(),
+	}), nil
+}
+
+func (jobk *Job) imageName() string {
+	repo, _ := jobk.args.Cli.Flags().GetString("repo")
+	tag, _ := jobk.args.Cli.Flags().GetString("tag")
+	return fmt.Sprintf("%s:%s", repo, tag)
+}
+
+func (jobk *Job) containerEnvSpec() []apiv1.EnvVar {
+	level, _ := jobk.args.Cli.Flags().GetString("log-level")
+	return append(
+		MinioEnv(),
+		LogEnv(level)...,
+	)
 }
