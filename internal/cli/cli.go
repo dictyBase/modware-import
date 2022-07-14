@@ -67,77 +67,8 @@ func init() {
 		"bucket",
 		"source of the file, could be one of bucket or folder",
 	)
-	setLoggingArgs()
-	setS3Args()
+	LoggingArgs(RootCmd)
+	S3Args(RootCmd)
 	viper.BindPFlags(RootCmd.Flags())
 	viper.BindPFlags(RootCmd.PersistentFlags())
-}
-
-func setLoggingArgs() {
-	RootCmd.PersistentFlags().StringP(
-		"log-level",
-		"",
-		"error",
-		"log level for the application",
-	)
-	RootCmd.PersistentFlags().StringP(
-		"log-format",
-		"",
-		"json",
-		"format of the logging out, either of json or text",
-	)
-	RootCmd.PersistentFlags().String(
-		"log-file",
-		"",
-		"file for log output other than standard output, written to a temp folder by default",
-	)
-	RootCmd.PersistentFlags().String(
-		"log-file-bucket",
-		"dictybase",
-		"S3 bucket for log file",
-	)
-	RootCmd.PersistentFlags().String(
-		"log-file-bucket-path",
-		"import/log",
-		"S3 path inside the bucket for storing log file",
-	)
-}
-
-func setS3Args() {
-	RootCmd.PersistentFlags().StringP(
-		"s3-server-port",
-		"",
-		"",
-		"S3 server port",
-	)
-	viper.BindEnv("s3-server-port", "MINIO_SERVICE_PORT")
-	RootCmd.PersistentFlags().StringP(
-		"access-key",
-		"",
-		"",
-		"access key for S3 server",
-	)
-	RootCmd.PersistentFlags().StringP(
-		"secret-key",
-		"",
-		"",
-		"secret key for S3 server",
-	)
-	RootCmd.PersistentFlags().StringP(
-		"s3-server",
-		"",
-		"minio",
-		"S3 server endpoint",
-	)
-	RootCmd.PersistentFlags().String(
-		"s3-bucket",
-		"dictybase",
-		"S3 bucket for input files",
-	)
-	RootCmd.PersistentFlags().String(
-		"s3-bucket-path",
-		"",
-		"path inside S3 bucket for input files",
-	)
-	viper.BindEnv("s3-server", "MINIO_SERVICE_HOST")
 }
