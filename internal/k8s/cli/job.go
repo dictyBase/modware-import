@@ -15,8 +15,15 @@ var JobCmd = &cobra.Command{
 func init() {
 	JobCmd.PersistentFlags().String("job", "", "name of the job")
 	JobCmd.PersistentFlags().
-		String("image", "dictybase/modware-import", "container image name")
+		String("repo", "dictybase/modware-import", "container image repository")
 	JobCmd.PersistentFlags().String("tag", "develop", "container image tag")
 	_ = JobCmd.MarkFlagRequired("job")
 	viper.BindPFlags(JobCmd.PersistentFlags())
+}
+
+func MetaLabel() map[string]string {
+	return map[string]string{
+		"command": "job",
+		"runner":  "dictybot",
+	}
 }

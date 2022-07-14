@@ -13,6 +13,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+const (
+	Fragment = "import"
+	NameLen  = 10
+)
+
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "k8s",
@@ -58,6 +63,7 @@ func init() {
 		"",
 		"path to the kubernetes client(kubeconfig) file[REQUIRED]",
 	)
+	RootCmd.PersistentFlags().String("namespace", "dictybase", "kubernetes namespace")
 	_ = RootCmd.MarkFlagRequired("kubeconfig")
 	cli.LoggingArgs(RootCmd)
 	cli.S3Args(RootCmd)
