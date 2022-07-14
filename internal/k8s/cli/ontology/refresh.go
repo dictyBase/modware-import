@@ -15,7 +15,7 @@ var RefreshCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		labels := cliJob.MetaLabel()
 		labels["subcommand"] = "refresh-ontology"
-		job, err := cliJob.Run(cmd, labels, RefreshCommand)
+		job, err := cliJob.Run(cmd, labels, RefreshCommand())
 		if err != nil {
 			return errors.Errorf("error in running job %s", err)
 		}

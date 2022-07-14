@@ -15,17 +15,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type cmdFnT func() []string
-
 type Job struct {
 	args *JobParams
 }
 
-func Run(cli *cobra.Command, labels map[string]string, cFn cmdFnT) (*batch.Job, error) {
+func Run(cli *cobra.Command, labels map[string]string, cmd []string) (*batch.Job, error) {
 	manifest, err := NewJob(&JobParams{
 		Cli:        cli,
 		Labels:     labels,
-		Command:    cFn(),
+		Command:    cmd,
 		Fragment:   parameters.Fragment,
 		NameLength: parameters.NameLen,
 	}).MakeSpec()
