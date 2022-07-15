@@ -17,7 +17,7 @@ var PhenoCmd = &cobra.Command{
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
-		if err := setReader(viper.GetString("phenotype-input"), regsc.PHENO_READER); err != nil {
+		if err := setReader(viper.GetString("phenotype-input"), regsc.PhenoReader); err != nil {
 			return err
 		}
 		return nil

@@ -75,8 +75,8 @@ func (b *leveldbListCache) CommonPrefixes() ([][]byte, error) {
 }
 
 func (b *leveldbListCache) IterateByPrefix(prefix []byte) iterator.Iterator {
-	p := append(prefix, []byte("/{LIST}/")...)
-	return b.db.NewIterator(util.BytesPrefix(p), nil)
+	prefix = append(prefix, []byte("/{LIST}/")...)
+	return b.db.NewIterator(util.BytesPrefix(prefix), nil)
 }
 
 func (b *leveldbListCache) PushAll(k []byte, allv ...[]byte) error {

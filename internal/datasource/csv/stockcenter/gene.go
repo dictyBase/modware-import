@@ -9,12 +9,12 @@ import (
 	"github.com/emirpasic/gods/maps/hashmap"
 )
 
-//StockGeneLookup is an interface for retrieving gene mapped to
-//a stock entry
+// StockGeneLookup is an interface for retrieving gene mapped to
+// a stock entry
 
 type StockGeneLookup interface {
-	//StockGene looks up a stock identifier and returns a slice
-	//with a list of gene identifiers
+	// StockGene looks up a stock identifier and returns a slice
+	// with a list of gene identifiers
 	StockGene(id string) []string
 }
 
@@ -22,7 +22,7 @@ type saGeneLookup struct {
 	smap *hashmap.Map
 }
 
-//NewStockGeneLookp returns a struct implementing StockGeneLookup interface
+// NewStockGeneLookp returns a struct implementing StockGeneLookup interface
 func NewStockGeneLookp(r io.Reader) (StockGeneLookup, error) {
 	l := new(saGeneLookup)
 	m := hashmap.New()

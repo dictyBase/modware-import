@@ -10,7 +10,7 @@ import (
 	tsource "github.com/dictyBase/modware-import/internal/datasource/tsv"
 )
 
-//PlasmidInventory is the container for plasmid inventory
+// PlasmidInventory is the container for plasmid inventory
 type PlasmidInventory struct {
 	PlasmidID        string
 	PrivateComment   string
@@ -21,7 +21,7 @@ type PlasmidInventory struct {
 	RecordLine       string
 }
 
-//PlasmidInventoryReader is the defined interface for reading the data
+// PlasmidInventoryReader is the defined interface for reading the data
 type PlasmidInventoryReader interface {
 	datasource.IteratorWithoutValue
 	Value() (*PlasmidInventory, error)
@@ -31,13 +31,13 @@ type tsvPlasmidInventoryReader struct {
 	*tsource.TsvReader
 }
 
-//NewTsvPlasmidInventoryReader is to get an instance of PlasmidInventoryReader
+// NewTsvPlasmidInventoryReader is to get an instance of PlasmidInventoryReader
 func NewTsvPlasmidInventoryReader(r io.Reader) PlasmidInventoryReader {
 	tr := bufio.NewScanner(r)
 	return &tsvPlasmidInventoryReader{&tsource.TsvReader{Reader: tr}}
 }
 
-//Value gets a new StrainInventory instance
+// Value gets a new StrainInventory instance
 func (pir *tsvPlasmidInventoryReader) Value() (*PlasmidInventory, error) {
 	inv := new(PlasmidInventory)
 	if pir.Err != nil {

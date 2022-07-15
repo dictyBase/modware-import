@@ -1,4 +1,4 @@
-//package stockcenter is the data source for stockcenter and related data
+// package stockcenter is the data source for stockcenter and related data
 package stockcenter
 
 import (
@@ -13,14 +13,14 @@ import (
 
 const orderDateLayout = "2006-01-02 15:04:05"
 
-//StockOrder is the container for order data
+// StockOrder is the container for order data
 type StockOrder struct {
 	CreatedAt time.Time
 	User      string
 	Items     []string
 }
 
-//StockOrderReader is the defined interface for reading the data
+// StockOrderReader is the defined interface for reading the data
 type StockOrderReader interface {
 	datasource.IteratorWithoutValue
 	Value() (*StockOrder, error)
@@ -30,14 +30,14 @@ type csvOrderReader struct {
 	*csource.CsvReader
 }
 
-//NewCsvStockOrderReader is to get an instance of order reader
+// NewCsvStockOrderReader is to get an instance of order reader
 func NewCsvStockOrderReader(r io.Reader) StockOrderReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	return &csvOrderReader{&csource.CsvReader{Reader: cr}}
 }
 
-//Value gets a new StockOrder instance
+// Value gets a new StockOrder instance
 func (or *csvOrderReader) Value() (*StockOrder, error) {
 	so := new(StockOrder)
 	if or.Err != nil {

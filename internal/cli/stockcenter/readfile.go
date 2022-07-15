@@ -23,7 +23,7 @@ var ReadFileCmd = &cobra.Command{
 
 // LoadReadFile reads at least first 10 lines of the file
 func LoadReadFile(cmd *cobra.Command, args []string) error {
-	r := registry.GetReader(regsc.READFILE_READER)
+	r := registry.GetReader(regsc.ReadfileReader)
 	logger := registry.GetLogger()
 	scanner := bufio.NewScanner(r)
 	count := 1
@@ -54,7 +54,7 @@ func setReadFileInputReader() error {
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("readfile-input"), err)
 		}
-		registry.SetReader(regsc.READFILE_READER, pr)
+		registry.SetReader(regsc.ReadfileReader, pr)
 	case BUCKET:
 		ar, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"),
@@ -73,7 +73,7 @@ func setReadFileInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.READFILE_READER, ar)
+		registry.SetReader(regsc.ReadfileReader, ar)
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
 	}

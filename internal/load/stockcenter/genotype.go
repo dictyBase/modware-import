@@ -16,7 +16,7 @@ import (
 )
 
 func LoadGeno(cmd *cobra.Command, args []string) error {
-	gr := stockcenter.NewTsvGenotypeReader(registry.GetReader(regs.GENO_READER))
+	gr := stockcenter.NewTsvGenotypeReader(registry.GetReader(regs.GenoReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	count := 0
@@ -36,8 +36,8 @@ func LoadGeno(cmd *cobra.Command, args []string) error {
 			&genoArgs{
 				tag:      genoTag,
 				id:       geno.StrainId,
-				user:     regs.DEFAULT_USER,
-				ontology: regs.DICTY_ANNO_ONTOLOGY,
+				user:     regs.DefaultUser,
+				ontology: regs.DictyAnnoOntology,
 				value:    geno.Genotype,
 			})
 		if err != nil {

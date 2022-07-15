@@ -9,6 +9,7 @@ import (
 	"github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 	Arangodb           = "arangodb"
 	OboStorageKey      = "obostorage"
 	OboReadersKey      = "oboreaders"
+	KubeClientKey      = "kubeconfig"
 )
 
 var v = viper.New()
@@ -62,6 +64,10 @@ func SetWriter(key string, w io.Writer) {
 
 func SetRedisClient(redis *r.Client) {
 	v.Set(RedisKey, redis)
+}
+
+func SetKubeClient(key string, client *kubernetes.Clientset) {
+	v.Set(key, client)
 }
 
 func GetArangoOboStorage() storage.DataSource {
@@ -112,4 +118,9 @@ func GetValue(key string) string {
 func GetRedisClient() *r.Client {
 	redis, _ := v.Get(RedisKey).(*r.Client)
 	return redis
+}
+
+func GetKubeClient(key string) *kubernetes.Clientset {
+	client, _ := v.Get(key).(*kubernetes.Clientset)
+	return client
 }

@@ -54,7 +54,7 @@ func validateAnnoTag(args *validateTagArgs) (bool, error) {
 
 func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 	if len(args.user) == 0 {
-		args.user = regs.DEFAULT_USER
+		args.user = regs.DefaultUser
 	}
 	ta, err := args.client.CreateAnnotation(
 		context.Background(),
@@ -85,7 +85,7 @@ func createAnnoWithRank(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 
 func createAnno(args *createAnnoArgs) error {
 	if len(args.user) == 0 {
-		args.user = regs.DEFAULT_USER
+		args.user = regs.DefaultUser
 	}
 	_, err := args.client.CreateAnnotation(
 		context.Background(),
@@ -129,7 +129,7 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 	case status.Code(err) == codes.NotFound:
 		err = createAnno(&createAnnoArgs{
 			value:    args.value,
-			user:     regs.DEFAULT_USER,
+			user:     regs.DefaultUser,
 			tag:      args.tag,
 			id:       args.id,
 			ontology: args.ontology,
@@ -169,7 +169,7 @@ func findOrCreateAnno(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 				Data: &pb.NewTaggedAnnotation_Data{
 					Attributes: &pb.NewTaggedAnnotationAttributes{
 						Value:     args.value,
-						CreatedBy: regs.DEFAULT_USER,
+						CreatedBy: regs.DefaultUser,
 						Tag:       args.tag,
 						EntryId:   args.id,
 						Ontology:  args.ontology,
@@ -186,7 +186,11 @@ func findOrCreateAnno(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 	)
 }
 
-func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto string) (*pb.TaggedAnnotationGroupCollection, error) {
+func getInventory(
+	id string,
+	client pb.TaggedAnnotationServiceClient,
+	onto string,
+) (*pb.TaggedAnnotationGroupCollection, error) {
 	return client.ListAnnotationGroups(
 		context.Background(),
 		&pb.ListGroupParameters{
@@ -197,7 +201,10 @@ func getInventory(id string, client pb.TaggedAnnotationServiceClient, onto strin
 		})
 }
 
-func delAnnotationGroup(client pb.TaggedAnnotationServiceClient, gc *pb.TaggedAnnotationGroupCollection) error {
+func delAnnotationGroup(
+	client pb.TaggedAnnotationServiceClient,
+	gc *pb.TaggedAnnotationGroupCollection,
+) error {
 	for _, gcd := range gc.Data {
 		// remove annotations group
 		_, err := client.DeleteAnnotationGroup(
@@ -230,7 +237,12 @@ func handleAnnoRetrieval(args *annoParams) (bool, error) {
 	found := true
 	if args.err != nil {
 		if status.Code(args.err) != codes.NotFound { // error in lookup
-			return found, errors.Errorf("error in getting %s of %s %s", args.loader, args.id, args.err)
+			return found, errors.Errorf(
+				"error in getting %s of %s %s",
+				args.loader,
+				args.id,
+				args.err,
+			)
 		}
 		found = false
 		args.logger.WithFields(logrus.Fields{

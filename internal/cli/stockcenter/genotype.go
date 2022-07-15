@@ -17,7 +17,7 @@ var GenoCmd = &cobra.Command{
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
-		if err := setReader(viper.GetString("genotype-input"), regsc.GENO_READER); err != nil {
+		if err := setReader(viper.GetString("genotype-input"), regsc.GenoReader); err != nil {
 			return err
 		}
 		return nil

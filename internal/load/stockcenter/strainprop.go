@@ -11,7 +11,7 @@ import (
 )
 
 func LoadStrainProp(cmd *cobra.Command, args []string) error {
-	pr := stockcenter.NewTsvStockPropReader(registry.GetReader(regs.STRAINPROP_READER))
+	pr := stockcenter.NewTsvStockPropReader(registry.GetReader(regs.StrainpropReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
 	pcount := 0
@@ -23,11 +23,11 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 		var onto string
 		switch prop.Property {
 		case muttypeTag:
-			onto = regs.DICTY_ANNO_ONTOLOGY
+			onto = regs.DictyAnnoOntology
 		case sysnameTag:
-			onto = regs.DICTY_ANNO_ONTOLOGY
+			onto = regs.DictyAnnoOntology
 		case mutmethodTag:
-			onto = regs.DICTY_MUTAGENESIS_ONTOLOGY
+			onto = regs.DictyMutagenesisOntology
 		case synTag:
 			// it is loaded by the synonym loader
 			continue

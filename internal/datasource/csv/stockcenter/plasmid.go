@@ -11,13 +11,13 @@ import (
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
 )
 
-//PlasmidGenbank is the container for genbank link for plasmid
+// PlasmidGenbank is the container for genbank link for plasmid
 type PlasmidGenbank struct {
 	Id      string
 	Genbank string
 }
 
-//PlasmidGenbankReader is the defined interface for reading the data
+// PlasmidGenbankReader is the defined interface for reading the data
 type PlasmidGenbankReader interface {
 	datasource.IteratorWithoutValue
 	Value() (*PlasmidGenbank, error)
@@ -27,7 +27,7 @@ type csvPlasmidGenbankReader struct {
 	*csource.CsvReader
 }
 
-//NewPlasmidGenbankReader is to get an instance of PlasmidGenbankReader
+// NewPlasmidGenbankReader is to get an instance of PlasmidGenbankReader
 func NewPlasmidGenbankReader(r io.Reader) PlasmidGenbankReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
@@ -35,7 +35,7 @@ func NewPlasmidGenbankReader(r io.Reader) PlasmidGenbankReader {
 	return &csvPlasmidGenbankReader{&csource.CsvReader{Reader: cr}}
 }
 
-//Value gets a new PlasmidGenbank instance
+// Value gets a new PlasmidGenbank instance
 func (pgr *csvPlasmidGenbankReader) Value() (*PlasmidGenbank, error) {
 	g := new(PlasmidGenbank)
 	if pgr.Err != nil {
@@ -46,7 +46,7 @@ func (pgr *csvPlasmidGenbankReader) Value() (*PlasmidGenbank, error) {
 	return g, nil
 }
 
-//Plasmid is the container for plasmid data
+// Plasmid is the container for plasmid data
 type Plasmid struct {
 	Id           string
 	Summary      string
@@ -58,7 +58,7 @@ type Plasmid struct {
 	Genes        []string
 }
 
-//PlasmidReader is the defined interface for reading the plasmid data
+// PlasmidReader is the defined interface for reading the plasmid data
 type PlasmidReader interface {
 	datasource.IteratorWithoutValue
 	Value() (*Plasmid, error)
@@ -71,8 +71,13 @@ type csvPlasmidReader struct {
 	glookup StockGeneLookup
 }
 
-//NewCsvPlasmidReader is to get an instance of PlasmidReader instance
-func NewCsvPlasmidReader(r io.Reader, al StockAnnotatorLookup, pl StockPubLookup, gl StockGeneLookup) PlasmidReader {
+// NewCsvPlasmidReader is to get an instance of PlasmidReader instance
+func NewCsvPlasmidReader(
+	r io.Reader,
+	al StockAnnotatorLookup,
+	pl StockPubLookup,
+	gl StockGeneLookup,
+) PlasmidReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
@@ -84,7 +89,7 @@ func NewCsvPlasmidReader(r io.Reader, al StockAnnotatorLookup, pl StockPubLookup
 	}
 }
 
-//Value gets a new Plasmid instance
+// Value gets a new Plasmid instance
 func (plr *csvPlasmidReader) Value() (*Plasmid, error) {
 	p := new(Plasmid)
 	if plr.Err != nil {

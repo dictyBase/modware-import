@@ -9,7 +9,7 @@ import (
 	tsource "github.com/dictyBase/modware-import/internal/datasource/tsv"
 )
 
-//Phenotype is the container for strain phenotype
+// Phenotype is the container for strain phenotype
 type Phenotype struct {
 	StrainID     string
 	Observation  string
@@ -19,7 +19,7 @@ type Phenotype struct {
 	LiteratureID string
 }
 
-//PhenotypeReader is the defined interface for reading the data
+// PhenotypeReader is the defined interface for reading the data
 type PhenotypeReader interface {
 	datasource.IteratorWithoutValue
 	Value() (*Phenotype, error)
@@ -29,13 +29,13 @@ type tsvPhenotypeReader struct {
 	*tsource.TsvReader
 }
 
-//NewPhenotypeReader is to get an instance of PhenotypeReader
+// NewPhenotypeReader is to get an instance of PhenotypeReader
 func NewPhenotypeReader(r io.Reader) PhenotypeReader {
 	cr := bufio.NewScanner(r)
 	return &tsvPhenotypeReader{&tsource.TsvReader{Reader: cr}}
 }
 
-//Value gets a new Phenotype instance
+// Value gets a new Phenotype instance
 func (cp *tsvPhenotypeReader) Value() (*Phenotype, error) {
 	p := new(Phenotype)
 	if cp.Err != nil {

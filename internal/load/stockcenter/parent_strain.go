@@ -68,36 +68,36 @@ func (p *parentStrain) createAX3() error {
 }
 
 func (p *parentStrain) insertAX4Props() error {
-	//systematic name
+	// systematic name
 	err := createAnno(&createAnnoArgs{
 		client:   p.aclient,
-		ontology: sreg.DICTY_ANNO_ONTOLOGY,
+		ontology: sreg.DictyAnnoOntology,
 		id:       sreg.AX4ParentID,
 		tag:      sysnameTag,
-		user:     sreg.DEFAULT_USER,
+		user:     sreg.DefaultUser,
 		value:    sreg.AX4ParentID,
 	})
 	if err != nil {
 		return err
 	}
-	//mutagenesis method
+	// mutagenesis method
 	err = createAnno(&createAnnoArgs{
 		client:   p.aclient,
-		ontology: sreg.DICTY_MUTAGENESIS_ONTOLOGY,
+		ontology: sreg.DictyMutagenesisOntology,
 		id:       sreg.AX4ParentID,
 		tag:      mutmethodTag,
-		user:     sreg.DEFAULT_USER,
+		user:     sreg.DefaultUser,
 		value:    "Spontaneous",
 	})
 	if err != nil {
 		return err
 	}
-	//genetic modification
+	// genetic modification
 	return createAnno(&createAnnoArgs{
 		client:   p.aclient,
-		ontology: sreg.DICTY_ANNO_ONTOLOGY,
+		ontology: sreg.DictyAnnoOntology,
 		id:       sreg.AX4ParentID,
-		user:     sreg.DEFAULT_USER,
+		user:     sreg.DefaultUser,
 		tag:      muttypeTag,
 		value:    "endogenous mutation",
 	})
@@ -126,46 +126,46 @@ func (p *parentStrain) findOrCreateAX3() error {
 }
 
 func (p *parentStrain) insertAX3Props() error {
-	//systematic name
+	// systematic name
 	err := createAnno(&createAnnoArgs{
 		client:   p.aclient,
-		ontology: sreg.DICTY_ANNO_ONTOLOGY,
+		ontology: sreg.DictyAnnoOntology,
 		id:       sreg.AX3ParentID,
 		tag:      sysnameTag,
-		user:     sreg.DEFAULT_USER,
+		user:     sreg.DefaultUser,
 		value:    "AX3",
 	})
 	if err != nil {
 		return err
 	}
-	//mutagenesis method
+	// mutagenesis method
 	err = createAnno(&createAnnoArgs{
 		client:   p.aclient,
-		ontology: sreg.DICTY_MUTAGENESIS_ONTOLOGY,
+		ontology: sreg.DictyMutagenesisOntology,
 		id:       sreg.AX3ParentID,
 		tag:      mutmethodTag,
-		user:     sreg.DEFAULT_USER,
+		user:     sreg.DefaultUser,
 		value:    "N-Methyl-N-Nitro-N-Nitrosoguanidine",
 	})
 	if err != nil {
 		return err
 	}
-	//genetic modification
+	// genetic modification
 	return createAnno(&createAnnoArgs{
 		client:   p.aclient,
-		ontology: sreg.DICTY_ANNO_ONTOLOGY,
+		ontology: sreg.DictyAnnoOntology,
 		id:       sreg.AX3ParentID,
-		user:     sreg.DEFAULT_USER,
+		user:     sreg.DefaultUser,
 		tag:      muttypeTag,
 		value:    "endogenous mutation",
 	})
 }
 
 func (p *parentStrain) createExtraProps(id string) error {
-	//genotype
+	// genotype
 	_, err := NewOrReloadGeno(p.aclient, &genoArgs{
-		ontology: sreg.DICTY_ANNO_ONTOLOGY,
-		user:     sreg.DEFAULT_USER,
+		ontology: sreg.DictyAnnoOntology,
+		user:     sreg.DefaultUser,
 		value:    "axeA1,axeB1,axeC1",
 		tag:      genoTag,
 		id:       id,
@@ -173,10 +173,10 @@ func (p *parentStrain) createExtraProps(id string) error {
 	if err != nil {
 		return err
 	}
-	//strain characteristics
+	// strain characteristics
 	return createAnno(&createAnnoArgs{
-		ontology: sreg.DICTY_STRAINCHAR_ONTOLOGY,
-		user:     sreg.DEFAULT_USER,
+		ontology: sreg.DictyStraincharOntology,
+		user:     sreg.DefaultUser,
 		client:   p.aclient,
 		tag:      "axenic",
 		id:       id,

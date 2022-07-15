@@ -9,11 +9,11 @@ import (
 	"github.com/emirpasic/gods/maps/hashmap"
 )
 
-//StockPubLookup is an interface for retrieving publication
-//linked to a stock record
+// StockPubLookup is an interface for retrieving publication
+// linked to a stock record
 type StockPubLookup interface {
-	//StockPub looks up a stock identifier and returns a slice
-	//with a list of publication identifiers
+	// StockPub looks up a stock identifier and returns a slice
+	// with a list of publication identifiers
 	StockPub(id string) []string
 }
 
@@ -21,7 +21,7 @@ type saPubLookup struct {
 	smap *hashmap.Map
 }
 
-//NewStockPubLookup returns an StockPubLookup implementing struct
+// NewStockPubLookup returns an StockPubLookup implementing struct
 func NewStockPubLookup(r io.Reader) (StockPubLookup, error) {
 	l := new(saPubLookup)
 	m := hashmap.New()

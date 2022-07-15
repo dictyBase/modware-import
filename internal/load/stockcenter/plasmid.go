@@ -16,20 +16,20 @@ import (
 )
 
 func LoadPlasmid(cmd *cobra.Command, args []string) error {
-	al, err := source.NewStockAnnotatorLookup(registry.GetReader(regs.PLASMID_ANNOTATOR_READER))
+	al, err := source.NewStockAnnotatorLookup(registry.GetReader(regs.PlasmidAnnotatorReader))
 	if err != nil {
 		return fmt.Errorf("error in opening annotation source %s", err)
 	}
-	pl, err := source.NewStockPubLookup(registry.GetReader(regs.PLASMID_PUB_READER))
+	pl, err := source.NewStockPubLookup(registry.GetReader(regs.PlasmidPubReader))
 	if err != nil {
 		return fmt.Errorf("error in opening publication source %s", err)
 	}
-	gl, err := source.NewStockGeneLookp(registry.GetReader(regs.PLASMID_GENE_READER))
+	gl, err := source.NewStockGeneLookp(registry.GetReader(regs.PlasmidGeneReader))
 	if err != nil {
 		return fmt.Errorf("error in opening gene source %s", err)
 	}
 	sr := source.NewCsvPlasmidReader(
-		registry.GetReader(regs.PLASMID_READER),
+		registry.GetReader(regs.PlasmidReader),
 		al, pl, gl,
 	)
 	logger := registry.GetLogger()

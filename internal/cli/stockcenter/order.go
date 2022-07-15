@@ -36,7 +36,11 @@ func setOrderPreRun(cmd *cobra.Command, args []string) error {
 
 func setOrderAPIClient() error {
 	conn, err := grpc.Dial(
-		fmt.Sprintf("%s:%s", viper.GetString("order-grpc-host"), viper.GetString("order-grpc-port")),
+		fmt.Sprintf(
+			"%s:%s",
+			viper.GetString("order-grpc-host"),
+			viper.GetString("order-grpc-port"),
+		),
 		grpc.WithInsecure(),
 	)
 	if err != nil {
@@ -53,14 +57,18 @@ func setOrderInputReader() error {
 	case FOLDER:
 		pr, err := os.Open(viper.GetString("plasmid-map-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("plasmid-map-input"), err)
+			return fmt.Errorf(
+				"error in opening file %s %s",
+				viper.GetString("plasmid-map-input"),
+				err,
+			)
 		}
-		registry.SetReader(regsc.PLASMID_ID_MAP_READER, pr)
+		registry.SetReader(regsc.PlasmidIdMapReader, pr)
 		or, err := os.Open(viper.GetString("order-input"))
 		if err != nil {
 			return fmt.Errorf("error in opening file %s %s", viper.GetString("order-input"), err)
 		}
-		registry.SetReader(regsc.ORDER_READER, or)
+		registry.SetReader(regsc.OrderReader, or)
 	case BUCKET:
 		pr, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
@@ -75,7 +83,7 @@ func setOrderInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.PLASMID_ID_MAP_READER, pr)
+		registry.SetReader(regsc.PlasmidIdMapReader, pr)
 		or, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
 			viper.GetString("order-input"),
@@ -89,7 +97,7 @@ func setOrderInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.ORDER_READER, or)
+		registry.SetReader(regsc.OrderReader, or)
 	default:
 		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
 	}

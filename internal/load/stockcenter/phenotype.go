@@ -13,7 +13,7 @@ import (
 )
 
 func LoadPheno(cmd *cobra.Command, args []string) error {
-	pr := stockcenter.NewPhenotypeReader(registry.GetReader(regs.PHENO_READER))
+	pr := stockcenter.NewPhenotypeReader(registry.GetReader(regs.PhenoReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger().WithFields(logrus.Fields{
 		"type":  "phenotype",
@@ -89,7 +89,7 @@ func createMorePhenoAnno(args *createPhenoArgs) ([]string, error) {
 			continue
 		}
 		anno, err := createAnnoWithRank(&createAnnoArgs{
-			ontology: regs.DICTY_ANNO_ONTOLOGY,
+			ontology: regs.DictyAnnoOntology,
 			client:   args.client,
 			tag:      dataSlice[0],
 			value:    dataSlice[1],
