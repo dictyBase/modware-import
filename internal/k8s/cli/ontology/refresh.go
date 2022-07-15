@@ -42,5 +42,7 @@ func RefreshCommand() []string {
 		viper.GetString("branch"),
 		"--s3-bucket-path",
 		viper.GetString("s3-bucket-path"),
+		"--log-level",
+		viper.GetString("log-level"),
 	}
 }
