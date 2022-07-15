@@ -121,11 +121,13 @@ func S3Args(cmd *cobra.Command) {
 		"",
 		"access key for S3 server",
 	)
+	viper.BindEnv("access-key","ACCESS_KEY")
 	cmd.PersistentFlags().String(
 		"secret-key",
 		"",
 		"secret key for S3 server",
 	)
+	viper.BindEnv("access-key","SECRET_KEY")
 	cmd.PersistentFlags().String(
 		"s3-server",
 		"minio",
