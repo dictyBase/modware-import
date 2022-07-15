@@ -22,6 +22,10 @@ var RootCmd = &cobra.Command{
 		if err := cli.PersistentPreRun(cmd); err != nil {
 			return errors.Errorf("error in executing pre run %s", err)
 		}
+		kcfg, _ := cmd.Flags().GetString("kubeconfig")
+		if len(kcfg) == 0 {
+			return nil
+		}
 		client, err := connectTok8s()
 		if err != nil {
 			return errors.Errorf("error in getting kubernetes client %s", err)
@@ -55,13 +59,13 @@ func Execute() {
 
 func init() {
 	RootCmd.AddCommand(SubCmd)
+	RootCmd.Flags().Bool("doc", false, "generate markdown documentation")
 	RootCmd.PersistentFlags().String(
 		"kubeconfig",
 		"",
 		"path to the kubernetes client(kubeconfig) file[REQUIRED]",
 	)
 	RootCmd.PersistentFlags().String("namespace", "dictybase", "kubernetes namespace")
-	_ = RootCmd.MarkFlagRequired("kubeconfig")
 	cli.LoggingArgs(RootCmd)
 	cli.S3Args(RootCmd)
 	viper.BindPFlags(RootCmd.Flags())
