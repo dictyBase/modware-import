@@ -67,7 +67,7 @@ func (jobk *Job) MakeSpec() (*batch.Job, error) {
 
 func (jobk *Job) objectMeta() metav1.ObjectMeta {
 	namespace, _ := jobk.args.Cli.Flags().GetString("namespace")
-	name, _ := jobk.args.Cli.Flags().GetString("name")
+	name, _ := jobk.args.Cli.Flags().GetString("job")
 	return metav1.ObjectMeta{
 		Namespace: namespace,
 		Name:      manifest.FullName(name, jobk.args.Fragment),
