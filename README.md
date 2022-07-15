@@ -5,7 +5,11 @@
 ![Last commit](https://badgen.net/github/last-commit/dictyBase/modware-import/develop)   
 [![Funding](https://badgen.net/badge/Funding/Rex%20L%20Chisholm,dictyBase,DCR/yellow?list=|)](https://reporter.nih.gov/project-details/10024726)
 
-Cli application for importing dictybase data.The documentation is [here](docs/import.md)
+Cli application for importing dictybase data.
+
+## Documentation 
+* [Importer](docs/import.md)
+* [k8s](docs/k8s.md)
 
 
 # Misc Badges
