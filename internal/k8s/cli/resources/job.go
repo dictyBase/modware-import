@@ -2,10 +2,11 @@ package resources
 
 import (
 	"context"
-	"fmt"
+	"os"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dictyBase/modware-import/internal/registry"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,9 +25,12 @@ var ListJobCmd = &cobra.Command{
 		if err != nil {
 			return errors.Errorf("error in retrieving job list %s", err)
 		}
+		tbl := createTable()
 		for _, job := range jobList.Items {
-			fmt.Printf("name: %s ==== status: %s\n", job.ObjectMeta.Name, status(job))
+			tbl.AppendRow(table.Row{job.ObjectMeta.Name, status(job)})
 		}
+		tbl.SetStyle(table.StyleColoredYellowWhiteOnBlack)
+		tbl.Render()
 
 		return nil
 	},
@@ -41,4 +45,12 @@ func status(job batchv1.Job) string {
 	}
 
 	return "active"
+}
+
+func createTable() table.Writer {
+	tbl := table.NewWriter()
+	tbl.SetOutputMirror(os.Stdout)
+	tbl.AppendHeader(table.Row{"Name", "Status"})
+
+	return tbl
 }
