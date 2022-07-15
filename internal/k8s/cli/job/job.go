@@ -104,7 +104,7 @@ func (jobk *Job) podSpec() (apiv1.PodSpec, error) {
 
 func (jobk *Job) containersSpec() ([]apiv1.Container, error) {
 	spec := make([]apiv1.Container, 0)
-	name, _ := jobk.args.Cli.Flags().GetString("name")
+	name, _ := jobk.args.Cli.Flags().GetString("job")
 	contName, err := manifest.RandContainerName(
 		name,
 		jobk.args.Fragment,
