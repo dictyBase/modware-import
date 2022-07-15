@@ -16,7 +16,7 @@ func RandContainerName(name, frag string, n int) (string, error) {
 	}
 	return fmt.Sprintf(
 		"%s-%s-%s",
-		cname, name, frag,
+		strings.ToLower(cname), name, frag,
 	), nil
 }
 
