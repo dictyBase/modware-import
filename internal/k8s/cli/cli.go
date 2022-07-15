@@ -34,12 +34,6 @@ var RootCmd = &cobra.Command{
 
 		return nil
 	},
-	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-		if err := cli.PersistentPostRun(cmd); err != nil {
-			return errors.Errorf("error in executing post-run %s", err)
-		}
-		return nil
-	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cli.RunDoc(cmd); err != nil {
 			return errors.Errorf("error in generating docs %s", err)

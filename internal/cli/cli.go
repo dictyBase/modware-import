@@ -29,12 +29,12 @@ or through a file that is kept in a particular bucket of a S3 server.`,
 		}
 		return nil
 	},
-	/* PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
 		if err := PersistentPostRun(cmd); err != nil {
 			return errors.Errorf("error in executing post-run %s", err)
 		}
 		return nil
-	}, */
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := RunDoc(cmd); err != nil {
 			return errors.Errorf("error in generating docs %s", err)
