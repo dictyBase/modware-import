@@ -139,7 +139,8 @@ func S3Args(cmd *cobra.Command) {
 	cmd.PersistentFlags().String(
 		"s3-bucket-path",
 		"",
-		"path inside S3 bucket for input files",
+		"path inside S3 bucket for input files[REQUIRED]",
 	)
+	_ = cmd.MarkFlagRequired("s3-bucket-path")
 	viper.BindEnv("s3-server", "MINIO_SERVICE_HOST")
 }
