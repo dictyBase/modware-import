@@ -48,7 +48,7 @@ require (
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 )
 
-require github.com/jedib0t/go-pretty/v6 v6.3.4
+require github.com/jedib0t/go-pretty/v6 v6.3.5
 
 require (
 	cloud.google.com/go/compute v1.6.1 // indirect
