@@ -33,12 +33,21 @@ func RandomAlphaName(n int) (string, error) {
 	return string(cname), nil
 }
 
-func FullName(name, frag string) string {
-	return fmt.Sprintf(
-		"%s-%s",
-		strings.TrimSuffix(Trunc(name, 63), "-"),
+func FullName(name, frag string, nameLen int) (string, error) {
+	appNameLen := nameLen - (len(name) + len(frag))
+	if appNameLen < 0 {
+		appNameLen *= -1
+	}
+	rndName, err := RandomAppName(appNameLen)
+	if err != nil {
+		return rndName, fmt.Errorf("error in generating random app name %s", err)
+	}
+	return Trunc(fmt.Sprintf(
+		"%s-%s-%s",
+		rndName,
+		strings.TrimSuffix(name, "-"),
 		frag,
-	)
+	), nameLen), nil
 }
 
 // RandomAppName generates a random lowercase alphabetical name of fixed length
