@@ -41,9 +41,9 @@ func FullName(name, frag string) string {
 	)
 }
 
-// RandomAppName generates a random lowercase alphabetical name
+// RandomAppName generates a random lowercase alphabetical name of fixed length
 // by combining various adjective, noun, verb and adverb.
-func RandomAppName() (string, error) {
+func RandomAppName(nameLen int) (string, error) {
 	var rstr *strings.Builder
 	rmapper := RandMapper()
 	for _, g := range []string{"adj", "plural", "verb", "adv"} {
@@ -53,7 +53,7 @@ func RandomAppName() (string, error) {
 		}
 		rstr.WriteString(rmapper[g]()[bidx.Int64()])
 	}
-	return strings.ToLower(rstr.String()), nil
+	return strings.ToLower(Trunc(rstr.String(), -1*nameLen)), nil
 }
 
 func RandMapper() map[string]func() []string {
