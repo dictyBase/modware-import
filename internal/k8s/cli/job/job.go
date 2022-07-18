@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const nameLen = 62
+const nameLen = 30
 
 type Job struct {
 	args *JobParams
