@@ -15,6 +15,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const nameLen = 62
+
 type Job struct {
 	args *JobParams
 }
@@ -58,21 +60,31 @@ func (jobk *Job) MakeSpec() (*batch.Job, error) {
 	if err != nil {
 		return &batch.Job{}, errors.Errorf("error in creating a job %s", err)
 	}
-
+	objMeta, err := jobk.objectMeta()
+	if err != nil {
+		return &batch.Job{}, fmt.Errorf("error in getting a meta object %s", err)
+	}
 	return &batch.Job{
-		ObjectMeta: jobk.objectMeta(),
+		ObjectMeta: objMeta,
 		Spec:       batchJobSpec,
 	}, nil
 }
 
-func (jobk *Job) objectMeta() metav1.ObjectMeta {
+func (jobk *Job) objectMeta() (metav1.ObjectMeta, error) {
 	namespace, _ := jobk.args.Cli.Flags().GetString("namespace")
 	name, _ := jobk.args.Cli.Flags().GetString("job")
+	fullName, err := manifest.FullName(name, jobk.args.Fragment, nameLen)
+	if err != nil {
+		return metav1.ObjectMeta{}, fmt.Errorf(
+			"error in manifesting for making the full name %s",
+			err,
+		)
+	}
 	return metav1.ObjectMeta{
 		Namespace: namespace,
-		Name:      manifest.FullName(name, jobk.args.Fragment),
+		Name:      fullName,
 		Labels:    jobk.args.Labels,
-	}
+	}, nil
 }
 
 func (jobk *Job) batchJobSpec() (batch.JobSpec, error) {
