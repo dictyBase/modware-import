@@ -1,16 +1,16 @@
 package manifest
 
 import (
-	v1 "k8s.io/api/core/v1"
+	apiv1 "k8s.io/api/core/v1"
 )
 
-func ArangoSecManifest() []v1.EnvVar {
-	return []v1.EnvVar{
+func ArangoSecManifest() []apiv1.EnvVar {
+	return []apiv1.EnvVar{
 		{
 			Name: "ARANGODB_PASS",
-			ValueFrom: &v1.EnvVarSource{
-				SecretKeyRef: &v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{Name: "dictybase-configuration"},
+			ValueFrom: &apiv1.EnvVarSource{
+				SecretKeyRef: &apiv1.SecretKeySelector{
+					LocalObjectReference: apiv1.LocalObjectReference{Name: "dictybase-configuration"},
 					Key:                  "arangodb.password",
 				},
 			},
@@ -18,13 +18,13 @@ func ArangoSecManifest() []v1.EnvVar {
 	}
 }
 
-func ArangoConfigManifest() []v1.EnvVar {
-	return []v1.EnvVar{
+func ArangoConfigManifest() []apiv1.EnvVar {
+	return []apiv1.EnvVar{
 		{
 			Name: "ARANGODB_USER",
-			ValueFrom: &v1.EnvVarSource{
-				ConfigMapKeyRef: &v1.ConfigMapKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{Name: "dictybase-configuration"},
+			ValueFrom: &apiv1.EnvVarSource{
+				ConfigMapKeyRef: &apiv1.ConfigMapKeySelector{
+					LocalObjectReference: apiv1.LocalObjectReference{Name: "dictybase-configuration"},
 					Key:                  "arangodb.user",
 				},
 			},

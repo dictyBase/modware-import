@@ -142,10 +142,12 @@ func (jobk *Job) imageName() string {
 
 func (jobk *Job) containerEnvSpec() []apiv1.EnvVar {
 	level, _ := jobk.args.Cli.Flags().GetString("log-level")
-	return append(
-		manifest.MinioEnv(),
-		manifest.LogEnv(level)...,
-	)
+	envSpec := manifest.MinioEnv()
+	envSpec = append(envSpec, manifest.ArangoConfigManifest()...)
+	envSpec = append(envSpec, manifest.ArangoSecManifest()...)
+	envSpec = append(envSpec, manifest.LogEnv(level)...)
+
+	return envSpec
 }
 
 func MetaLabel() map[string]string {
