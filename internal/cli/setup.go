@@ -17,6 +17,11 @@ import (
 )
 
 func PersistentPreRun(cmd *cobra.Command) error {
+	l, err := logger.NewLogger(cmd)
+	if err != nil {
+		return errors.Errorf("erron in getting a new logger %s", err)
+	}
+	registry.SetLogger(l)
 	if len(viper.GetString("access-key")) > 0 && len(viper.GetString("secret-key")) > 0 {
 		client, err := s3.NewS3Client(cmd)
 		if err != nil {
@@ -24,11 +29,6 @@ func PersistentPreRun(cmd *cobra.Command) error {
 		}
 		registry.SetS3Client(client)
 	}
-	l, err := logger.NewLogger(cmd)
-	if err != nil {
-		return errors.Errorf("erron in getting a new logger %s", err)
-	}
-	registry.SetLogger(l)
 	return nil
 }
 
