@@ -22,13 +22,11 @@ func PersistentPreRun(cmd *cobra.Command) error {
 		return errors.Errorf("erron in getting a new logger %s", err)
 	}
 	registry.SetLogger(l)
-	if len(viper.GetString("access-key")) > 0 && len(viper.GetString("secret-key")) > 0 {
-		client, err := s3.NewS3Client(cmd)
-		if err != nil {
-			return errors.Errorf("error in getting instance of s3 client %s", err)
-		}
-		registry.SetS3Client(client)
+	client, err := s3.NewS3Client(cmd)
+	if err != nil {
+		return errors.Errorf("error in getting instance of s3 client %s", err)
 	}
+	registry.SetS3Client(client)
 	return nil
 }
 
@@ -127,7 +125,7 @@ func S3Args(cmd *cobra.Command) {
 		"",
 		"secret key for S3 server",
 	)
-	viper.BindEnv("access-key", "SECRET_KEY")
+	viper.BindEnv("secret-key", "SECRET_KEY")
 	cmd.PersistentFlags().String(
 		"s3-server",
 		"minio",
