@@ -29,14 +29,5 @@ func ArangoConfigManifest() []v1.EnvVar {
 				},
 			},
 		},
-		{
-			Name: "ARANGODB_DATABASE",
-			ValueFrom: &v1.EnvVarSource{
-				ConfigMapKeyRef: &v1.ConfigMapKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{Name: "dictybase-configuration"},
-					Key:                  "arangodb.modware-annotation",
-				},
-			},
-		},
 	}
 }

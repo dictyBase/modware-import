@@ -31,7 +31,7 @@ func init() {
 	LoadOntoCmd.Flags().
 		StringArray("databases", []string{"stock", "annotation"}, "databases for loading ontologies")
 	LoadOntoCmd.Flags().String("group", "", "ontology group name")
-	LoadOntoCmd.Flags().String("s3-bucket-path", "", "s3 bucket where files will be uploaded")
+	LoadOntoCmd.Flags().String("s3-bucket-path", "", "s3 bucket from where files will be uploaded")
 	_ = LoadOntoCmd.MarkFlagRequired("group")
 	_ = LoadOntoCmd.MarkFlagRequired("s3-bucket-path")
 	viper.BindPFlags(LoadOntoCmd.Flags())
