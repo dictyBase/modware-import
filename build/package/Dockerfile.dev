@@ -1,4 +1,4 @@
-FROM golang:1.18.3-buster AS builder
+FROM golang:1.18.4-buster AS builder
 LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
 ENV GO111MODULE=auto \
     CGO_ENABLED=0 \
