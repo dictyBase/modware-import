@@ -48,7 +48,10 @@ require (
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 )
 
-require github.com/jedib0t/go-pretty/v6 v6.3.5
+require (
+	github.com/jedib0t/go-pretty/v6 v6.3.4
+	github.com/stretchr/testify v1.8.0
+)
 
 require (
 	cloud.google.com/go/compute v1.6.1 // indirect
@@ -104,6 +107,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
