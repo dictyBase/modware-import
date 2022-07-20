@@ -9,7 +9,7 @@ import (
 )
 
 var LoadStockCmd = &cobra.Command{
-	Use:   "load-ontology",
+	Use:   "load-stock",
 	Short: "run stock load command as a kubernetes job in the cluster",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
