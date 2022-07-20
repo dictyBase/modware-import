@@ -25,9 +25,10 @@ var RefreshCmd = &cobra.Command{
 }
 
 func init() {
+	RefreshCmd.Flags().String("s3-bucket-path", "", "bucket path to look for files")
+	_ = RefreshCmd.MarkFlagRequired("s3-bucket-path")
 	RefreshCmd.Flags().String("branch", "master", "branch of github repository")
-	RefreshCmd.Flags().String("group", "", "ontology group name[REQUIRED]")
-	_ = RefreshCmd.MarkFlagRequired("group")
+	RefreshCmd.Flags().String("group", "obojson", "ontology group name")
 	viper.BindPFlags(RefreshCmd.Flags())
 }
 

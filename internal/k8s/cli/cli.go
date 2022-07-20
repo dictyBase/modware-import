@@ -19,7 +19,7 @@ var RootCmd = &cobra.Command{
 	Use:   "k8s",
 	Short: "cli for deploying and running import commands in kubernetes cluster",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := cli.PersistentPreRun(cmd); err != nil {
+		if err := cli.PreRunLogger(cmd); err != nil {
 			return errors.Errorf("error in executing pre run %s", err)
 		}
 		kcfg, _ := cmd.Flags().GetString("kubeconfig")
@@ -61,7 +61,6 @@ func init() {
 	)
 	RootCmd.PersistentFlags().String("namespace", "dictybase", "kubernetes namespace")
 	cli.LoggingArgs(RootCmd)
-	cli.S3Args(RootCmd)
 	viper.BindPFlags(RootCmd.Flags())
 	viper.BindPFlags(RootCmd.PersistentFlags())
 }

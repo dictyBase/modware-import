@@ -1,25 +1,25 @@
 package manifest
 
 import (
-	v1 "k8s.io/api/core/v1"
+	apiv1 "k8s.io/api/core/v1"
 )
 
-func MinioEnv() []v1.EnvVar {
-	return []v1.EnvVar{
+func MinioEnv() []apiv1.EnvVar {
+	return []apiv1.EnvVar{
 		{
 			Name: "ACCESS_KEY",
-			ValueFrom: &v1.EnvVarSource{
-				SecretKeyRef: &v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{Name: "dictybase-configuration"},
+			ValueFrom: &apiv1.EnvVarSource{
+				SecretKeyRef: &apiv1.SecretKeySelector{
+					LocalObjectReference: apiv1.LocalObjectReference{Name: "dictybase-configuration"},
 					Key:                  "minio.accesskey",
 				},
 			},
 		},
 		{
 			Name: "SECRET_KEY",
-			ValueFrom: &v1.EnvVarSource{
-				SecretKeyRef: &v1.SecretKeySelector{
-					LocalObjectReference: v1.LocalObjectReference{Name: "dictybase-configuration"},
+			ValueFrom: &apiv1.EnvVarSource{
+				SecretKeyRef: &apiv1.SecretKeySelector{
+					LocalObjectReference: apiv1.LocalObjectReference{Name: "dictybase-configuration"},
 					Key:                  "minio.secretkey",
 				},
 			},

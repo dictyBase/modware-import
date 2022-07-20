@@ -1,6 +1,8 @@
 package ontology
 
 import (
+	"fmt"
+
 	"github.com/cockroachdb/errors"
 	cliJob "github.com/dictyBase/modware-import/internal/k8s/cli/job"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -16,7 +18,12 @@ var LoadOntoCmd = &cobra.Command{
 		labels := cliJob.MetaLabel()
 		labels["subcommand"] = "load-ontology"
 		for _, dbname := range viper.GetStringSlice("databases") {
-			job, err := cliJob.Run(cmd, labels, LoadCommand(dbname))
+			bucketPath, _ := cmd.Flags().GetString("s3-bucket-path-prefix")
+			job, err := cliJob.Run(
+				cmd,
+				labels,
+				LoadCommand(dbname, fmt.Sprintf("%s/%s", bucketPath, dbname)),
+			)
 			if err != nil {
 				return errors.Errorf("error in running job %s in database %s", err, dbname)
 			}
@@ -30,23 +37,26 @@ var LoadOntoCmd = &cobra.Command{
 func init() {
 	LoadOntoCmd.Flags().
 		StringArray("databases", []string{"stock", "annotation"}, "databases for loading ontologies")
-	LoadOntoCmd.Flags().String("group", "", "ontology group name")
-	LoadOntoCmd.Flags().String("s3-bucket-path", "", "s3 bucket where files will be uploaded")
-	_ = LoadOntoCmd.MarkFlagRequired("group")
-	_ = LoadOntoCmd.MarkFlagRequired("s3-bucket-path")
+	LoadOntoCmd.Flags().String("group", "obojson", "ontology group name")
+	LoadOntoCmd.Flags().
+		String("s3-bucket-path-prefix", "import/obograph-json",
+			"prefix of s3 bucket path from where the obojson files will be uploaded")
 	viper.BindPFlags(LoadOntoCmd.Flags())
 }
 
-func LoadCommand(dbname string) []string {
+func LoadCommand(dbname, path string) []string {
 	return []string{
 		"/usr/local/bin/importer",
 		"ontology",
 		"load",
+		"--log-level",
+		viper.GetString("log-level"),
 		"--group",
 		viper.GetString("group"),
 		"--s3-bucket-path",
-		viper.GetString("s3-bucket-path"),
+		path,
 		"--arangodb-database",
 		dbname,
+		"--is-secure",
 	}
 }
