@@ -1,6 +1,8 @@
 package stock
 
 import (
+	"fmt"
+
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/runner"
 	"github.com/dictyBase/modware-import/internal/runner/env"
@@ -18,6 +20,9 @@ func LoadPlasmid() error {
 	if err != nil {
 		return err
 	}
+	if err := env.CheckWithoutDB(); err != nil {
+		return fmt.Errorf("error in checking for env vars %s", err)
+	}
 	mg.SerialDeps(
 		mg.F(plasmid, bin),
 		mg.F(plasmidInv, bin),
@@ -30,6 +35,9 @@ func LoadStrain() error {
 	bin, err := runner.LookUp()
 	if err != nil {
 		return err
+	}
+	if err := env.CheckWithoutDB(); err != nil {
+		return fmt.Errorf("error in checking for env vars %s", err)
 	}
 	mg.SerialDeps(
 		mg.F(strain, bin),
@@ -46,12 +54,6 @@ func LoadStrain() error {
 
 // Strain loads strain data including curator assignment
 func strain(bin string) error {
-	if err := env.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := env.ServiceEnvs(); err != nil {
-		return err
-	}
 	runner.ConsoleLog("Loading strain data ...")
 	defer runner.ConsoleLog("Done loading strain data ...")
 	cmd := collection.Extend(append(baseCmd(), "strain"), minioCmd(), []string{
@@ -64,12 +66,6 @@ func strain(bin string) error {
 
 // Plasmid loads plasmid data including curator assignment
 func plasmid(bin string) error {
-	if err := env.MinioEnvs(); err != nil {
-		return err
-	}
-	if err := env.ServiceEnvs(); err != nil {
-		return err
-	}
 	runner.ConsoleLog("Loading plasmid data ...")
 	defer runner.ConsoleLog("Done loading plasmid data ...")
 	cmd := collection.Extend(

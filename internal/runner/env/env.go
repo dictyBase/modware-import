@@ -5,6 +5,17 @@ import (
 	"os"
 )
 
+func CheckWithoutDB() error {
+	if err := MinioEnvs(); err != nil {
+		return fmt.Errorf("error in checking minio env %s", err)
+	}
+	if err := ServiceEnvs(); err != nil {
+		return fmt.Errorf("error in checking service env %s", err)
+	}
+
+	return nil
+}
+
 func ArangoDBName() error {
 	return checkErrors([]string{
 		"ARANGODB_DATABASE",
