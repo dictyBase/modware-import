@@ -37,11 +37,10 @@ var LoadOntoCmd = &cobra.Command{
 func init() {
 	LoadOntoCmd.Flags().
 		StringArray("databases", []string{"stock", "annotation"}, "databases for loading ontologies")
-	LoadOntoCmd.Flags().String("group", "", "ontology group name")
+	LoadOntoCmd.Flags().String("group", "obojson", "ontology group name")
 	LoadOntoCmd.Flags().
 		String("s3-bucket-path-prefix", "import/obograph-json",
 			"prefix of s3 bucket path from where the obojson files will be uploaded")
-	_ = LoadOntoCmd.MarkFlagRequired("group")
 	viper.BindPFlags(LoadOntoCmd.Flags())
 }
 
