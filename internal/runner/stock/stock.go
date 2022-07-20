@@ -52,7 +52,7 @@ func strain(bin string) error {
 		return err
 	}
 	runner.ConsoleLog("Loading strain data ...")
-	runner.ConsoleLog("Done loading strain data ...")
+	defer runner.ConsoleLog("Done loading strain data ...")
 	cmd := append(baseCmd(), "strain")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{
@@ -86,7 +86,7 @@ func plasmid(bin string) error {
 // PlasmidInv loads plasmid inventory data
 func plasmidInv(bin string) error {
 	runner.ConsoleLog("Loading plasmid inventory ...")
-	runner.ConsoleLog("Done loading plasmid inventory ...")
+	defer runner.ConsoleLog("Done loading plasmid inventory ...")
 	cmd := append(baseCmd(), "plasmid-inventory")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{"-i", "plasmid_inventory.tsv"}...)
@@ -96,7 +96,7 @@ func plasmidInv(bin string) error {
 // Characteristics loads strain characteristics
 func characteristics(bin string) error {
 	runner.ConsoleLog("Loading strain characteristics ...")
-	runner.ConsoleLog("Done loading strain characteristics ...")
+	defer runner.ConsoleLog("Done loading strain characteristics ...")
 	cmd := append(baseCmd(), "strainchar")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{"-i", "strain_characteristics.tsv"}...)
@@ -136,7 +136,7 @@ func strainSyn(bin string) error {
 // StrainInv loads strain inventory data
 func strainInv(bin string) error {
 	runner.ConsoleLog("Loading strain inventory ...")
-	runner.ConsoleLog("Done loading strain inventory ...")
+	defer runner.ConsoleLog("Done loading strain inventory ...")
 	cmd := append(baseCmd(), "strain-inventory")
 	cmd = append(cmd, minioCmd()...)
 	cmd = append(cmd, []string{"-i", "strain_inventory.tsv"}...)
