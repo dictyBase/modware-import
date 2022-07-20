@@ -32,3 +32,12 @@ func Index(a []string, s string) int {
 	}
 	return -1
 }
+
+// Extend appends all the elements of slices to a new slice
+func Extend[T any](elems ...[]T) []T {
+	aslice := make([]T, 0)
+	for _, parts := range elems {
+		aslice = append(aslice, parts...)
+	}
+	return aslice
+}
