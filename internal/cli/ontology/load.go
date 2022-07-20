@@ -34,20 +34,20 @@ var LoadCmd = &cobra.Command{
 		}
 		logger := registry.GetLogger()
 		for name, rdr := range registry.GetAllReaders(registry.OboReadersKey) {
-			logger.Infof("going to load %s,", name)
+			logger.Debugf("going to load %s,", name)
 			grph, err := graph.BuildGraph(rdr)
 			if err != nil {
 				return errors.Errorf("error in building graph from %s %s", name, err)
 			}
 			if !dsa.ExistsOboGraph(grph) {
-				logger.Infof("obograph %s does not exist, have to be loaded", name)
+				logger.Debugf("obograph %s does not exist, have to be loaded", name)
 				if err := saveNewGraph(dsa, grph, logger); err != nil {
 					return errors.Errorf("error in saving new obograph %s %s", name, err)
 				}
 
 				continue
 			}
-			logger.Infof("obograph %s exist, have to be updated", name)
+			logger.Debugf("obograph %s exist, have to be updated", name)
 			if err := saveExistentGraph(dsa, grph, logger); err != nil {
 				return errors.Errorf("error in saving existing obograph %s %s", name, err)
 			}
@@ -91,12 +91,12 @@ func saveNewGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logrus.En
 	if err != nil {
 		return errors.Errorf("error in saving terms %s", err)
 	}
-	logger.Infof("saved %d terms", nst)
+	logger.Debugf("saved %d terms", nst)
 	nsr, err := dsa.SaveRelationships(grph)
 	if err != nil {
 		return errors.Errorf("error in saving relationships %s", err)
 	}
-	logger.Infof("saved %d relationships", nsr)
+	logger.Debugf("saved %d relationships", nsr)
 
 	return nil
 }
@@ -109,7 +109,7 @@ func saveExistentGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logr
 	if err != nil {
 		return errors.Errorf("error in updating terms %s", err)
 	}
-	logger.Infof(
+	logger.Debugf(
 		"saved::%d terms updated::%d terms obsoleted::%d terms",
 		stats.Created, stats.Updated, stats.Deleted,
 	)
@@ -117,7 +117,7 @@ func saveExistentGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logr
 	if err != nil {
 		return errors.Errorf("error in saving relationships %s", err)
 	}
-	logger.Infof("updated %d relationships", urs)
+	logger.Debugf("updated %d relationships", urs)
 
 	return nil
 }
