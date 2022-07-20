@@ -49,6 +49,8 @@ func LoadCommand(dbname, path string) []string {
 		"/usr/local/bin/importer",
 		"ontology",
 		"load",
+		"--log-level",
+		viper.GetString("log-level"),
 		"--group",
 		viper.GetString("group"),
 		"--s3-bucket-path",
