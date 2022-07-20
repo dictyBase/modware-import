@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/k8s/cli/parameters"
 	"github.com/dictyBase/modware-import/internal/k8s/manifest"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -142,12 +143,12 @@ func (jobk *Job) imageName() string {
 
 func (jobk *Job) containerEnvSpec() []apiv1.EnvVar {
 	level, _ := jobk.args.Cli.Flags().GetString("log-level")
-	envSpec := manifest.MinioEnv()
-	envSpec = append(envSpec, manifest.ArangoConfigManifest()...)
-	envSpec = append(envSpec, manifest.ArangoSecManifest()...)
-	envSpec = append(envSpec, manifest.LogEnv(level)...)
-
-	return envSpec
+	return collection.Extend(
+		manifest.MinioEnv(),
+		manifest.ArangoConfigManifest(),
+		manifest.ArangoSecManifest(),
+		manifest.LogEnv(level),
+	)
 }
 
 func MetaLabel() map[string]string {
