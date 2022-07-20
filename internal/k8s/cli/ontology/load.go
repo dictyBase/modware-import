@@ -48,5 +48,6 @@ func LoadCommand(dbname string) []string {
 		viper.GetString("s3-bucket-path"),
 		"--arangodb-database",
 		dbname,
+		"--is-secure",
 	}
 }
