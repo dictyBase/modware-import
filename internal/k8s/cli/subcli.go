@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/dictyBase/modware-import/internal/k8s/cli/arangodb"
 	"github.com/dictyBase/modware-import/internal/k8s/cli/ontology"
 	"github.com/dictyBase/modware-import/internal/k8s/cli/resources"
 	"github.com/dictyBase/modware-import/internal/k8s/cli/stock"
@@ -21,6 +22,7 @@ func init() {
 		ontology.LoadOntoCmd,
 		resources.ListJobCmd,
 		stock.LoadStockCmd,
+		arangodb.TruncateCmd,
 	)
 	SubCmd.PersistentFlags().String("job", "", "name of the job[REQUIRED]")
 	SubCmd.PersistentFlags().
