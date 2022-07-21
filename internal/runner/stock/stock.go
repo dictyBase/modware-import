@@ -47,7 +47,7 @@ func LoadPartialStrain() error {
 		mg.F(strainInv, bin),
 		// mg.F(phenotype, bin),
 		mg.F(genotype, bin),
-		mg.F(Gwdi, bin),
+		// mg.F(Gwdi, bin),
 	)
 	return nil
 }
