@@ -30,6 +30,28 @@ func LoadPlasmid() error {
 	return nil
 }
 
+// LoadStrain load partial strain and related data
+func LoadPartialStrain() error {
+	bin, err := runner.LookUp()
+	if err != nil {
+		return err
+	}
+	if err := env.CheckWithoutDB(); err != nil {
+		return fmt.Errorf("error in checking for env vars %s", err)
+	}
+	mg.SerialDeps(
+		mg.F(strain, bin),
+		// mg.F(characteristics, bin),
+		mg.F(strainProp, bin),
+		mg.F(strainSyn, bin),
+		mg.F(strainInv, bin),
+		mg.F(phenotype, bin),
+		mg.F(genotype, bin),
+		mg.F(Gwdi, bin),
+	)
+	return nil
+}
+
 // LoadStrain load all strain and related data
 func LoadStrain() error {
 	bin, err := runner.LookUp()
