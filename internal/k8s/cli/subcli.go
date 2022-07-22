@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"github.com/dictyBase/modware-import/internal/k8s/cli/arangodb"
 	"github.com/dictyBase/modware-import/internal/k8s/cli/ontology"
 	"github.com/dictyBase/modware-import/internal/k8s/cli/resources"
+	"github.com/dictyBase/modware-import/internal/k8s/cli/stock"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,7 +17,13 @@ var SubCmd = &cobra.Command{
 }
 
 func init() {
-	SubCmd.AddCommand(ontology.RefreshCmd, ontology.LoadOntoCmd, resources.ListJobCmd)
+	SubCmd.AddCommand(
+		ontology.RefreshCmd,
+		ontology.LoadOntoCmd,
+		resources.ListJobCmd,
+		stock.LoadStockCmd,
+		arangodb.TruncateCmd,
+	)
 	SubCmd.PersistentFlags().String("job", "", "name of the job[REQUIRED]")
 	SubCmd.PersistentFlags().
 		String("repo", "dictybase/modware-import", "container image repository")

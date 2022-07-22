@@ -16,7 +16,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const nameLen = 30
+const nameLen = 50
+
+var backOffLimit int32 = 0
 
 type Job struct {
 	args *JobParams
@@ -94,7 +96,7 @@ func (jobk *Job) batchJobSpec() (batch.JobSpec, error) {
 		return batch.JobSpec{}, errors.Errorf("error in getting pod template spec %s", err)
 	}
 
-	return batch.JobSpec{Template: podTemplSpec}, nil
+	return batch.JobSpec{Template: podTemplSpec, BackoffLimit: &backOffLimit}, nil
 }
 
 func (jobk *Job) podTemplateSpec() (apiv1.PodTemplateSpec, error) {
