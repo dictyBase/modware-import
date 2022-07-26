@@ -83,7 +83,7 @@ func LoadPartialStrain() error {
 	}
 	mg.SerialDeps(
 		mg.F(strain, bin),
-		// mg.F(characteristics, bin),
+		mg.F(characteristics, bin),
 		mg.F(strainProp, bin),
 		mg.F(strainSyn, bin),
 		mg.F(strainInv, bin),
