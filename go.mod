@@ -41,7 +41,7 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.0 // indirect
-	k8s.io/api v0.25.0
+	k8s.io/api v0.25.1
 	k8s.io/apimachinery v0.25.1
 	k8s.io/client-go v0.25.0
 	k8s.io/klog/v2 v2.70.1 // indirect
