@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func CreateDatabaseToken(c *cli.Context) error {
+func CreateAccessToken(c *cli.Context) error {
 	conf := client.NewConfiguration()
 	conf.Host = c.String("server")
 	conf.Scheme = "https"
@@ -36,7 +36,7 @@ func CreateDatabaseToken(c *cli.Context) error {
 	return nil
 }
 
-func CreateDatabaseTokenFlag() []cli.Flag {
+func CreateAccessTokenFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:     "email",

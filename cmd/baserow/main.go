@@ -22,10 +22,10 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:   "create-database-token",
-				Usage:  "Create a new baserow database token",
-				Flags:  baserow.CreateDatabaseTokenFlag(),
-				Action: baserow.CreateDatabaseToken,
+				Name:   "create-access-token",
+				Usage:  "Create a new baserow access token",
+				Flags:  baserow.CreateAccessTokenFlag(),
+				Action: baserow.CreateAccessToken,
 			},
 		},
 	}
