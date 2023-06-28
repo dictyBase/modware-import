@@ -48,20 +48,6 @@ require (
 )
 
 require (
-	github.com/deepmap/oapi-codegen v1.13.0
-	github.com/getkin/kin-openapi v0.117.0
-	github.com/gin-gonic/gin v1.9.1
-	github.com/go-chi/chi/v5 v5.0.8
-	github.com/gofiber/fiber/v2 v2.46.0
-	github.com/gorilla/mux v1.8.0
-	github.com/jedib0t/go-pretty/v6 v6.4.6
-	github.com/labstack/echo/v4 v4.10.2
-	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.4
-	gopkg.in/yaml.v2 v2.4.0
-)
-
-require (
 	cloud.google.com/go/compute v1.18.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
