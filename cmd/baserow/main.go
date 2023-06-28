@@ -12,6 +12,14 @@ func main() {
 	app := &cli.App{
 		Name:  "baserow",
 		Usage: "A command line application for managing baserow instance",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "server",
+				Usage:    "address of api server",
+				Required: true,
+				Aliases:  []string{"s"},
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:   "create-database-token",
