@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"net/http"
@@ -10,29 +11,49 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func CreateAccessToken(c *cli.Context) error {
+type accessTokenProperties struct {
+	email, password, server string
+}
+
+func baserowClient(server string) *client.APIClient {
 	conf := client.NewConfiguration()
-	conf.Host = c.String("server")
+	conf.Host = server
 	conf.Scheme = "https"
-	bclient := client.NewAPIClient(conf)
-	req := bclient.UserApi.TokenAuth(context.Background())
+	return client.NewAPIClient(conf)
+}
+
+func accessToken(args *accessTokenProperties) (string, error) {
+	req := baserowClient(
+		args.server,
+	).UserApi.TokenAuth(
+		context.Background(),
+	)
 	resp, r, err := req.TokenObtainPairWithUser(
 		client.TokenObtainPairWithUser{
-			Email:    client.PtrString(c.String("email")),
-			Password: c.String("password"),
+			Email:    &args.email,
+			Password: args.password,
 		},
 	).Execute()
 	defer r.Body.Close()
 	if err != nil {
-		return cli.Exit(
-			fmt.Sprintf("error in executing API call %s", err),
-			2,
-		)
+		return "", fmt.Errorf("error in executing API call %s", err)
 	}
 	if r != nil && r.StatusCode == http.StatusUnauthorized {
-		return cli.Exit("unauthrorized access", 2)
+		return "", errors.New("unauthrorized access")
 	}
-	fmt.Printf("access token %s\n", resp.GetAccessToken())
+	return resp.GetAccessToken(), nil
+}
+
+func CreateAccessToken(c *cli.Context) error {
+	token, err := accessToken(&accessTokenProperties{
+		email:    c.String("email"),
+		password: c.String("password"),
+		server:   c.String("server"),
+	})
+	if err != nil {
+		return cli.Exit(err, 2)
+	}
+	fmt.Println(token)
 	return nil
 }
 
