@@ -27,6 +27,12 @@ func main() {
 				Flags:  baserow.CreateAccessTokenFlag(),
 				Action: baserow.CreateAccessToken,
 			},
+			{
+				Name:   "create-database-token",
+				Usage:  "Create a baserow database token",
+				Flags:  baserow.CreateDatabaseTokenFlag(),
+				Action: baserow.CreateDatabaseToken,
+			},
 		},
 	}
 

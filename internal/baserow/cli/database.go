@@ -57,6 +57,54 @@ func CreateAccessToken(c *cli.Context) error {
 	return nil
 }
 
+func CreateDatabaseToken(c *cli.Context) error {
+	atoken, err := accessToken(&accessTokenProperties{
+		email:    c.String("email"),
+		password: c.String("password"),
+		server:   c.String("server"),
+	})
+	if err != nil {
+		return cli.Exit(fmt.Errorf("error in creating access token %s", err), 2)
+	}
+	bclient := baserowClient(c.String("server"))
+	authCtx := context.WithValue(
+		context.Background(),
+		client.ContextAccessToken,
+		atoken,
+	)
+	wlist, r, err := bclient.WorkspacesApi.ListWorkspaces(authCtx).
+		Execute()
+	defer r.Body.Close()
+	if err != nil {
+		return cli.Exit(
+			fmt.Errorf("error in executing list workspaces API call %s", err),
+			2,
+		)
+	}
+	for _, v := range wlist {
+		fmt.Println(v.GetName())
+	}
+	return nil
+}
+
+func CreateDatabaseTokenFlag() []cli.Flag {
+	aflags := CreateAccessTokenFlag()
+	return append(aflags, []cli.Flag{
+		&cli.StringFlag{
+			Name:     "workspace",
+			Aliases:  []string{"w"},
+			Usage:    "Only tables under this workspaces can be accessed",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:     "name",
+			Aliases:  []string{"n"},
+			Usage:    "token name",
+			Required: true,
+		},
+	}...)
+}
+
 func CreateAccessTokenFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
