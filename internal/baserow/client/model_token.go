@@ -22,7 +22,7 @@ type Token struct {
 	Id int32 `json:"id"`
 	// The human readable name of the database token for the user.
 	Name string `json:"name"`
-	Group string `json:"group"`
+	Group int32 `json:"group"`
 	// Only the tables of the workspace can be accessed.
 	Workspace int32 `json:"workspace"`
 	// The unique token key that can be used to authorize for the table row endpoints.
@@ -34,7 +34,7 @@ type Token struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewToken(id int32, name string, group string, workspace int32, key string, permissions PatchedTokenUpdatePermissions) *Token {
+func NewToken(id int32, name string, group int32, workspace int32, key string, permissions PatchedTokenUpdatePermissions) *Token {
 	this := Token{}
 	this.Id = id
 	this.Name = name
@@ -102,9 +102,9 @@ func (o *Token) SetName(v string) {
 }
 
 // GetGroup returns the Group field value
-func (o *Token) GetGroup() string {
+func (o *Token) GetGroup() int32 {
 	if o == nil {
-		var ret string
+		var ret int32
 		return ret
 	}
 
@@ -113,7 +113,7 @@ func (o *Token) GetGroup() string {
 
 // GetGroupOk returns a tuple with the Group field value
 // and a boolean to check if the value has been set.
-func (o *Token) GetGroupOk() (*string, bool) {
+func (o *Token) GetGroupOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -121,7 +121,7 @@ func (o *Token) GetGroupOk() (*string, bool) {
 }
 
 // SetGroup sets field value
-func (o *Token) SetGroup(v string) {
+func (o *Token) SetGroup(v int32) {
 	o.Group = v
 }
 
