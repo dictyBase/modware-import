@@ -8,7 +8,9 @@ import (
 	"net/http"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
+	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/urfave/cli/v2"
+	"k8s.io/utils/strings/slices"
 )
 
 type accessTokenProperties struct {
@@ -81,9 +83,31 @@ func CreateDatabaseToken(c *cli.Context) error {
 			2,
 		)
 	}
-	for _, v := range wlist {
-		fmt.Println(v.GetName())
+	wnames := collection.Map(
+		wlist,
+		func(w client.WorkspaceUserWorkspace) string { return w.GetName() },
+	)
+	idx := slices.Index(wnames, c.String("workspace"))
+	if idx == -1 {
+		return cli.Exit(
+			fmt.Errorf("workspace %s cannot be found", c.String("workspace")),
+			2,
+		)
 	}
+	tok, r, err := bclient.DatabaseTokensApi.CreateDatabaseToken(authCtx).
+		TokenCreate(client.TokenCreate{
+			Name:      c.String("name"),
+			Workspace: wlist[idx].GetId(),
+		}).
+		Execute()
+	defer r.Body.Close()
+	if err != nil {
+		return cli.Exit(
+			fmt.Errorf("error in creating token %s", err),
+			2,
+		)
+	}
+	fmt.Printf("database token %s\n", tok.GetKey())
 	return nil
 }
 
