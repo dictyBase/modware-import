@@ -1,5 +1,15 @@
 package collection
 
+// Map returns the slice obtained after applying the given function over every
+// element in the given slice
+func Map[T1, T2 any](s []T1, fn func(T1) T2) []T2 {
+	ret := make([]T2, 0, len(s))
+	for _, e := range s {
+		ret = append(ret, fn(e))
+	}
+	return ret
+}
+
 // Remove removes items from the given(a) slice
 func Remove(a []string, items ...string) []string {
 	var s []string
