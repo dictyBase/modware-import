@@ -41,7 +41,7 @@ func accessToken(args *accessTokenProperties) (string, error) {
 	if r != nil && r.StatusCode == http.StatusUnauthorized {
 		return "", errors.New("unauthrorized access")
 	}
-	return resp.GetAccessToken(), nil
+	return resp.GetToken(), nil
 }
 
 func CreateAccessToken(c *cli.Context) error {
