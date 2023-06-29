@@ -15,8 +15,8 @@ func Map[T1, T2 any](s []T1, fn func(T1) T2) []T2 {
 }
 
 // Remove removes items from the given(a) slice
-func Remove(a []string, items ...string) []string {
-	var s []string
+func Remove[T comparable](a []T, items ...T) []T {
+	var s []T
 	for _, v := range a {
 		if !slices.Contains(items, v) {
 			s = append(s, v)
