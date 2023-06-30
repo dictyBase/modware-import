@@ -10,7 +10,33 @@ import (
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 )
+
+func NewCliLogger(c *cli.Context) (*logrus.Entry, error) {
+	format := c.String("log-format")
+	name := c.String("log-level")
+	fname := c.String("log-file")
+	lfmt, err := getLogFmt(format)
+	if err != nil {
+		return &logrus.Entry{}, err
+	}
+	level, err := getLogLevel(name)
+	if err != nil {
+		return &logrus.Entry{}, err
+	}
+	logger := logrus.New()
+	logger.SetOutput(os.Stderr)
+	logger.SetFormatter(lfmt)
+	logger.SetLevel(level)
+	// set hook to write to local file
+	if len(fname) != 0 {
+		logger.Hooks.Add(lfshook.NewHook(fname, lfmt))
+		registry.SetValue(registry.LogFileKey, fname)
+	}
+	logger.Hooks.Add(logrus_stack.StandardHook())
+	return logrus.NewEntry(logger), nil
+}
 
 func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	format, _ := cmd.Flags().GetString("log-format")
