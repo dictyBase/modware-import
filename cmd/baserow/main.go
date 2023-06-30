@@ -5,6 +5,8 @@ import (
 	"os"
 
 	baserow "github.com/dictyBase/modware-import/internal/baserow/cli"
+	"github.com/dictyBase/modware-import/internal/logger"
+	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
 )
 
@@ -33,6 +35,14 @@ func main() {
 				Name:  "log-file",
 				Usage: "log file for output in addition to stderr",
 			},
+		},
+		Before: func(c *cli.Context) error {
+			l, err := logger.NewCliLogger(c)
+			if err != nil {
+				return fmt.Errorf("error in getting a new logger %s", err)
+			}
+			registry.SetLogger(l)
+			return nil
 		},
 		Commands: []*cli.Command{
 			{
