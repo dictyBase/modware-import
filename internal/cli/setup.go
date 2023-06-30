@@ -30,7 +30,7 @@ func PersistentPreRun(cmd *cobra.Command) error {
 func PreRunLogger(cmd *cobra.Command) error {
 	l, err := logger.NewLogger(cmd)
 	if err != nil {
-		return fmt.Errorf("erron in getting a new logger %s", err)
+		return fmt.Errorf("error in getting a new logger %s", err)
 	}
 	registry.SetLogger(l)
 

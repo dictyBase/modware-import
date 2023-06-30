@@ -19,6 +19,20 @@ func main() {
 				Required: true,
 				Aliases:  []string{"s"},
 			},
+			&cli.StringFlag{
+				Name:  "log-level",
+				Usage: "Logging level, should be one of debug,warn,info or error",
+				Value: "error",
+			},
+			&cli.StringFlag{
+				Name:  "log-format",
+				Usage: "Format of log, either of json or text",
+				Value: "json",
+			},
+			&cli.StringFlag{
+				Name:  "log-file",
+				Usage: "log file for output in addition to stderr",
+			},
 		},
 		Commands: []*cli.Command{
 			{
