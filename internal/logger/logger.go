@@ -13,11 +13,14 @@ import (
 )
 
 func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
-	lfmt, err := getLogFmt(cmd)
+	format, _ := cmd.Flags().GetString("log-format")
+	name, _ := cmd.Flags().GetString("log-level")
+	fname, _ := cmd.Flags().GetString("log-file")
+	lfmt, err := getLogFmt(format)
 	if err != nil {
 		return &logrus.Entry{}, err
 	}
-	level, err := getLogLevel(cmd)
+	level, err := getLogLevel(name)
 	if err != nil {
 		return &logrus.Entry{}, err
 	}
@@ -26,11 +29,13 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	logger.SetFormatter(lfmt)
 	logger.SetLevel(level)
 	// set hook to write to local file
-	fname, _ := cmd.Flags().GetString("log-file")
 	if len(fname) == 0 {
 		f, err := ioutil.TempFile(os.TempDir(), "loader")
 		if err != nil {
-			return &logrus.Entry{}, fmt.Errorf("error in creating temp file for logging %s", err)
+			return &logrus.Entry{}, fmt.Errorf(
+				"error in creating temp file for logging %s",
+				err,
+			)
 		}
 		fname = f.Name()
 	}
@@ -40,9 +45,8 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	return logrus.NewEntry(logger), nil
 }
 
-func getLogLevel(cmd *cobra.Command) (logrus.Level, error) {
+func getLogLevel(name string) (logrus.Level, error) {
 	var level logrus.Level
-	name, _ := cmd.Flags().GetString("log-level")
 	switch name {
 	case "debug":
 		level = logrus.DebugLevel
@@ -65,9 +69,8 @@ func getLogLevel(cmd *cobra.Command) (logrus.Level, error) {
 	return level, nil
 }
 
-func getLogFmt(cmd *cobra.Command) (logrus.Formatter, error) {
+func getLogFmt(format string) (logrus.Formatter, error) {
 	var lfmt logrus.Formatter
-	format, _ := cmd.Flags().GetString("log-format")
 	switch format {
 	case "text":
 		lfmt = &logrus.TextFormatter{
