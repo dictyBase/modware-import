@@ -5,17 +5,19 @@ import (
 	"fmt"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
+	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
 )
 
 func CreateTable(c *cli.Context) error {
+	logger := registry.GetLogger()
 	bclient := baserowClient(c.String("server"))
 	authCtx := context.WithValue(
 		context.Background(),
 		client.ContextAccessToken,
 		c.String("token"),
 	)
-	_, resp, err := bclient.DatabaseTablesApi.CreateDatabaseTable(authCtx, int32(c.Int("database-id"))).
+	tbl, resp, err := bclient.DatabaseTablesApi.CreateDatabaseTable(authCtx, int32(c.Int("database-id"))).
 		Execute()
 	defer resp.Body.Close()
 	if err != nil {
@@ -23,6 +25,7 @@ func CreateTable(c *cli.Context) error {
 			fmt.Errorf("error in creating table %s", err), 2,
 		)
 	}
+	logger.Infof("created table %s", tbl.GetName())
 	return nil
 }
 
