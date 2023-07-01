@@ -9,7 +9,7 @@ require (
 	github.com/dictyBase/aphgrpc v1.4.2
 	github.com/dictyBase/arangomanager v0.3.4
 	github.com/dictyBase/go-genproto v0.0.0-20211001224012-6cf691015622
-	github.com/dictyBase/go-obograph v1.4.1
+	github.com/dictyBase/go-obograph v1.4.2
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.18.1
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
@@ -59,7 +59,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
-	github.com/arangodb/go-driver v0.0.0-20210804111724-721038b2c5bd // indirect
+	github.com/arangodb/go-driver v1.6.0 // indirect
 	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
@@ -77,7 +77,7 @@ require (
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.14.0 // indirect
+	github.com/go-playground/validator/v10 v10.14.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -115,7 +115,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
-	github.com/urfave/cli v1.22.9 // indirect
+	github.com/urfave/cli v1.22.14 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/time v0.3.0 // indirect
