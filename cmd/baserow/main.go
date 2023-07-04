@@ -58,6 +58,12 @@ func main() {
 				Action: baserow.CreateTable,
 			},
 			{
+				Name:   "load-ontology",
+				Usage:  "load ontology in a baserow table",
+				Flags:  baserow.LoadOntologyToTableFlag(),
+				Action: baserow.LoadOntologyToTable,
+			},
+			{
 				Name:   "create-database-token",
 				Usage:  "Create a baserow database token",
 				Flags:  baserow.CreateDatabaseTokenFlag(),
