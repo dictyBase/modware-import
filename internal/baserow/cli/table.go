@@ -47,6 +47,8 @@ func LoadOntologyToTable(c *cli.Context) error {
 				2,
 			)
 		}
+		logger.Info("created field Is_obsolete")
+
 		defer trsp.Body.Close()
 		for _, field := range []string{"Name", "Id"} {
 			_, frsp, err := bclient.
@@ -68,6 +70,7 @@ func LoadOntologyToTable(c *cli.Context) error {
 				)
 			}
 			defer frsp.Body.Close()
+			logger.Infof("created field %s", field)
 		}
 	}
 	return nil
