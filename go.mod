@@ -40,7 +40,7 @@ require (
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.30.0 // indirect
-	k8s.io/api v0.27.3
+	k8s.io/api v0.27.4
 	k8s.io/apimachinery v0.27.4
 	k8s.io/client-go v0.27.3
 	k8s.io/klog/v2 v2.90.1 // indirect
@@ -106,7 +106,7 @@ require (
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/skeema/knownhosts v1.1.1 // indirect
