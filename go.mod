@@ -7,9 +7,9 @@ require (
 	github.com/cockroachdb/errors v1.10.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/dictyBase/aphgrpc v1.4.2
-	github.com/dictyBase/arangomanager v0.3.4
+	github.com/dictyBase/arangomanager v0.4.0
 	github.com/dictyBase/go-genproto v0.0.0-20211001224012-6cf691015622
-	github.com/dictyBase/go-obograph v1.4.2
+	github.com/dictyBase/go-obograph v1.5.1
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.18.1
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
