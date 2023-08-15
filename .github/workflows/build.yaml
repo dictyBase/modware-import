@@ -5,7 +5,6 @@ on:
      - develop
 jobs:
   call-docker-build:
-    needs: test
     uses: dictyBase/workflows/.github/workflows/docker-build-push.yaml@develop
     secrets: inherit
     with:
