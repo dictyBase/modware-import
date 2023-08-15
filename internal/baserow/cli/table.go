@@ -14,7 +14,7 @@ func LoadOntologyToTable(c *cli.Context) error {
 	bclient := baserowClient(c.String("server"))
 	authCtx := context.WithValue(
 		context.Background(),
-		client.ContextAccessToken,
+		client.ContextDatabaseToken,
 		c.String("token"),
 	)
 	tlist, resp, err := bclient.
@@ -23,7 +23,7 @@ func LoadOntologyToTable(c *cli.Context) error {
 		Execute()
 	if err != nil {
 		return cli.Exit(
-			fmt.Errorf("error in getting list of table fields %s", err), 2,
+			fmt.Sprintf("error in getting list of table fields %s", err), 2,
 		)
 	}
 	defer resp.Body.Close()
