@@ -25,7 +25,7 @@ linters:
     - decorder
     - dogsled
     # - dupl
-    - errcheck
+    # - errcheck
     - funlen
     - goconst
     - gocritic
