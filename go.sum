@@ -93,8 +93,8 @@ github.com/dictyBase/arangomanager v0.4.0 h1:+HgmadUY0qXFMLfZocktynbERkX/FgWzC3v
 github.com/dictyBase/arangomanager v0.4.0/go.mod h1:SmElsQJN3EbTjfYCkjS7/uyUkNVwaO2qJB9Mqrs0ND8=
 github.com/dictyBase/go-genproto v0.0.0-20211001224012-6cf691015622 h1:UqICH4tshsyfhtwFv/0i48bddx9cJXcPsYEbZFVyULE=
 github.com/dictyBase/go-genproto v0.0.0-20211001224012-6cf691015622/go.mod h1:KY6iUqXl1lLq81WTW9u5DfZE58xM61PsGLSLwwtePlk=
-github.com/dictyBase/go-obograph v1.5.1 h1:3ad8yM57n06zG7sCAKe9xI3YZY7gq68AVV0Klbxlk9c=
-github.com/dictyBase/go-obograph v1.5.1/go.mod h1:osNZ7PRqai1OTnrLy8SoDavKIMaDp7Sw8CFh52ddBkY=
+github.com/dictyBase/go-obograph v1.6.0 h1:otuiEadRCJ25o6X/5tWhDjiiAbK0R8LBLQpBxVREotc=
+github.com/dictyBase/go-obograph v1.6.0/go.mod h1:osNZ7PRqai1OTnrLy8SoDavKIMaDp7Sw8CFh52ddBkY=
 github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f h1:4iSwwwVRNLZDA1mc+RuuIU1lFHoUp/7MVDbsLC8tNiY=
 github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f/go.mod h1:tgtpNvmqm9PKRUngOmENSKnBkJ0ftd5urirHjleEh+k=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
@@ -463,8 +463,6 @@ golang.org/x/exp v0.0.0-20200207192155-f17229e696bd/go.mod h1:J/WKrq2StrnmMY6+EH
 golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6/go.mod h1:3jZMyOhIsHpP37uCMkUooju7aAi5cS1Q23tOzKc+0MU=
 golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df h1:UA2aFVmmsIlefxMk29Dp2juaUSth8Pyn3Tq5Y5mJGME=
 golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df/go.mod h1:FXUEEKJgO7OQYeo8N01OfiKP8RXMtf6e8aTskBGqWdc=
-golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb h1:mIKbk8weKhSeLH2GmUTrvx8CjkyJmnU1wFmg59CUjFA=
-golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb/go.mod h1:FXUEEKJgO7OQYeo8N01OfiKP8RXMtf6e8aTskBGqWdc=
 golang.org/x/image v0.0.0-20190227222117-0694c2d4d067/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
 golang.org/x/image v0.0.0-20190802002840-cff245a6509b/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
 golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
