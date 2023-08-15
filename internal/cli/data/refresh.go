@@ -12,10 +12,10 @@ import (
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/minio/minio-go/v6"
 
-	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/git"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 )
 
 // RefreshCmd updates dictybase data files in S3(minio) storage
@@ -69,14 +69,20 @@ func newdataFileManager(folder string) *dataFileManager {
 	}
 }
 
-func (d *dataFileManager) allFileReaders(dir string) (map[string]io.Reader, error) {
+func (d *dataFileManager) allFileReaders(
+	dir string,
+) (map[string]io.Reader, error) {
 	return d.rdmap, filepath.Walk(
 		filepath.Join(dir, d.subFolder),
 		d.pathWalker,
 	)
 }
 
-func (d *dataFileManager) pathWalker(path string, info fs.FileInfo, err error) error {
+func (d *dataFileManager) pathWalker(
+	path string,
+	info fs.FileInfo,
+	err error,
+) error {
 	if err != nil {
 		return fmt.Errorf("error in handling path %s %s", path, err)
 	}
@@ -97,9 +103,12 @@ func (d *dataFileManager) pathWithoutFolder(path string) (string, error) {
 		strings.TrimLeft(path, "/"),
 		string(os.PathSeparator),
 	)
-	idx := collection.Index(pathParts, d.subFolder)
+	idx := slices.Index(pathParts, d.subFolder)
 	if idx == -1 {
-		return "", fmt.Errorf("error in finding subfolder in path parts %s", path)
+		return "", fmt.Errorf(
+			"error in finding subfolder in path parts %s",
+			path,
+		)
 	}
 	return strings.Join(pathParts[idx+1:], "/"), nil
 }
