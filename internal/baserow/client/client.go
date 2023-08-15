@@ -436,7 +436,10 @@ func (c *APIClient) prepareRequest(
 		localVarRequest = localVarRequest.WithContext(ctx)
 
 		// Walk through any authentication.
-
+		// Database token authentication
+		if auth, ok := ctx.Value(ContextDatabaseToken).(string); ok {
+			localVarRequest.Header.Add("Authorization", "Token "+auth)
+		}
 		// AccessToken Authentication
 		if auth, ok := ctx.Value(ContextAccessToken).(string); ok {
 			localVarRequest.Header.Add("Authorization", "JWT "+auth)
