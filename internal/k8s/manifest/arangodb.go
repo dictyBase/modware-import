@@ -10,8 +10,10 @@ func ArangoSecManifest() []apiv1.EnvVar {
 			Name: "ARANGODB_PASS",
 			ValueFrom: &apiv1.EnvVarSource{
 				SecretKeyRef: &apiv1.SecretKeySelector{
-					LocalObjectReference: apiv1.LocalObjectReference{Name: "dictybase-configuration"},
-					Key:                  "arangodb.password",
+					LocalObjectReference: apiv1.LocalObjectReference{
+						Name: "dictycr-sercet-dev",
+					},
+					Key: "arangodb.password",
 				},
 			},
 		},
@@ -23,9 +25,11 @@ func ArangoConfigManifest() []apiv1.EnvVar {
 		{
 			Name: "ARANGODB_USER",
 			ValueFrom: &apiv1.EnvVarSource{
-				ConfigMapKeyRef: &apiv1.ConfigMapKeySelector{
-					LocalObjectReference: apiv1.LocalObjectReference{Name: "dictybase-configuration"},
-					Key:                  "arangodb.user",
+				SecretKeyRef: &apiv1.SecretKeySelector{
+					LocalObjectReference: apiv1.LocalObjectReference{
+						Name: "dictycr-sercet-dev",
+					},
+					Key: "arangodb.user",
 				},
 			},
 		},
