@@ -22,7 +22,7 @@ func MinioEnv() []apiv1.EnvVar {
 			ValueFrom: &apiv1.EnvVarSource{
 				SecretKeyRef: &apiv1.SecretKeySelector{
 					LocalObjectReference: apiv1.LocalObjectReference{
-						Name: "dictycr-sercet-dev",
+						Name: "dictycr-secret-dev",
 					},
 					Key: "minio.secretkey",
 				},
