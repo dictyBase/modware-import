@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -78,11 +79,21 @@ func annoAPIFlags() {
 
 func SetAnnoAPIClient() error {
 	conn, err := grpc.Dial(
-		fmt.Sprintf("%s:%s", viper.GetString("annotation-grpc-host"), viper.GetString("annotation-grpc-port")),
-		[]grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}...,
+		fmt.Sprintf(
+			"%s:%s",
+			viper.GetString("annotation-grpc-host"),
+			viper.GetString("annotation-grpc-port"),
+		),
+		[]grpc.DialOption{
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithBlock(),
+		}...,
 	)
 	if err != nil {
-		return fmt.Errorf("error in connecting to annotation grpc api server %s", err)
+		return fmt.Errorf(
+			"error in connecting to annotation grpc api server %s",
+			err,
+		)
 	}
 	regsc.SetAnnotationAPIClient(
 		annotation.NewTaggedAnnotationServiceClient(conn),
@@ -92,11 +103,21 @@ func SetAnnoAPIClient() error {
 
 func SetStrainAPIClient() error {
 	conn, err := grpc.Dial(
-		fmt.Sprintf("%s:%s", viper.GetString("stock-grpc-host"), viper.GetString("stock-grpc-port")),
-		[]grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}...,
+		fmt.Sprintf(
+			"%s:%s",
+			viper.GetString("stock-grpc-host"),
+			viper.GetString("stock-grpc-port"),
+		),
+		[]grpc.DialOption{
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithBlock(),
+		}...,
 	)
 	if err != nil {
-		return fmt.Errorf("error in connecting to stock grpc api server %s", err)
+		return fmt.Errorf(
+			"error in connecting to stock grpc api server %s",
+			err,
+		)
 	}
 	regsc.SetStockAPIClient(
 		stock.NewStockServiceClient(conn),

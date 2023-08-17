@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/order"
 	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
@@ -41,10 +42,13 @@ func setOrderAPIClient() error {
 			viper.GetString("order-grpc-host"),
 			viper.GetString("order-grpc-port"),
 		),
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		return fmt.Errorf("error in connecting to order grpc api server %s", err)
+		return fmt.Errorf(
+			"error in connecting to order grpc api server %s",
+			err,
+		)
 	}
 	regsc.SetOrderAPIClient(
 		order.NewOrderServiceClient(conn),
@@ -66,7 +70,11 @@ func setOrderInputReader() error {
 		registry.SetReader(regsc.PlasmidIdMapReader, pr)
 		or, err := os.Open(viper.GetString("order-input"))
 		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("order-input"), err)
+			return fmt.Errorf(
+				"error in opening file %s %s",
+				viper.GetString("order-input"),
+				err,
+			)
 		}
 		registry.SetReader(regsc.OrderReader, or)
 	case BUCKET:
@@ -99,7 +107,10 @@ func setOrderInputReader() error {
 		}
 		registry.SetReader(regsc.OrderReader, or)
 	default:
-		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
+		return fmt.Errorf(
+			"error input source %s not supported",
+			viper.GetString("input-source"),
+		)
 	}
 	return nil
 }
