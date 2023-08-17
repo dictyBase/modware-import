@@ -17,15 +17,21 @@ import (
 )
 
 func LoadStrain(cmd *cobra.Command, args []string) error {
-	pl, err := source.NewStockPubLookup(registry.GetReader(regs.StrainPubReader))
+	pl, err := source.NewStockPubLookup(
+		registry.GetReader(regs.StrainPubReader),
+	)
 	if err != nil {
 		return fmt.Errorf("error in opening publication source %s", err)
 	}
-	gl, err := source.NewStockGeneLookp(registry.GetReader(regs.StrainGeneReader))
+	gl, err := source.NewStockGeneLookp(
+		registry.GetReader(regs.StrainGeneReader),
+	)
 	if err != nil {
 		return fmt.Errorf("error in opening gene source %s", err)
 	}
-	al, err := source.NewStockAnnotatorLookup(registry.GetReader(regs.StrainAnnotatorReader))
+	al, err := source.NewStockAnnotatorLookup(
+		registry.GetReader(regs.StrainAnnotatorReader),
+	)
 	if err != nil {
 		return fmt.Errorf("error in opening annotation source %s", err)
 	}
@@ -41,14 +47,23 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 	for sr.Next() {
 		strain, err := sr.Value()
 		if err != nil {
-			logger.Errorf("error in reading strain value from datasource %s", err)
+			logger.Errorf(
+				"error in reading strain value from datasource %s",
+				err,
+			)
 			continue
 		}
 		if len(strain.User) == 0 {
-			logger.Errorf("strain %s does not have a user assignment, skipping the load", strain.Id)
+			logger.Errorf(
+				"strain %s does not have a user assignment, skipping the load",
+				strain.Id,
+			)
 			continue
 		}
-		_, err = client.GetStrain(context.Background(), &pb.StockId{Id: strain.Id})
+		_, err = client.GetStrain(
+			context.Background(),
+			&pb.StockId{Id: strain.Id},
+		)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				// create new strain entry
@@ -79,9 +94,14 @@ func LoadStrain(cmd *cobra.Command, args []string) error {
 						},
 					})
 				if err != nil {
-					return fmt.Errorf("error in creating strain %s %s", strain.Id, err)
+					return fmt.Errorf(
+						"error in creating strain %s %s",
+						strain.Id,
+						err,
+					)
 				}
 				logger.Debugf("created strain %s", nstr.Data.Id)
+				count += 1
 				continue
 			}
 			return fmt.Errorf("error in finding strain %s %s", strain.Id, err)
