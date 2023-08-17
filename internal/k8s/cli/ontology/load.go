@@ -57,6 +57,5 @@ func LoadCommand(dbname, path string) []string {
 		path,
 		"--arangodb-database",
 		dbname,
-		"--is-secure",
 	}
 }
