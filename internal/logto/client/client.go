@@ -53,12 +53,18 @@ func (clnt *Client) AccessToken(user, pass, resource string) (string, error) {
 	}
 	req.SetBasicAuth(user, pass)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	res, err := clnt.httpClient.Do(req)
+	res, err := clnt.reqToResponse(req)
 	if err != nil {
-		return "", fmt.Errorf("error in making request %s", err)
+		return "", err
 	}
-	if res.StatusCode != 200 {
-		cnt, err := io.ReadAll(res.Body)
+	defer res.Body.Close()
+	acresp := &accessTokenResp{}
+	if err := json.NewDecoder(res.Body).Decode(acresp); err != nil {
+		return "", fmt.Errorf("error in decoding json response %s", err)
+	}
+	return acresp.AccessToken, nil
+}
+
 func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
 	uresp, err := clnt.httpClient.Do(creq)
 	if err != nil {
@@ -79,10 +85,6 @@ func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
 			string(cnt),
 		)
 	}
-	defer res.Body.Close()
-	acresp := &accessTokenResp{}
-	if err := json.NewDecoder(res.Body).Decode(acresp); err != nil {
-		return "", fmt.Errorf("error in decoding json response %s", err)
 	return uresp, nil
 }
 
