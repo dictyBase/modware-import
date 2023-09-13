@@ -20,6 +20,18 @@ type accessTokenResp struct {
 	TokenType   string `json:"token_type"`
 }
 
+type APIUsersPostReq struct {
+	PrimaryPhone string `json:"primaryPhone"`
+	PrimaryEmail string `json:"primaryEmail"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Name         string `json:"name"`
+}
+
+type APIUsersPostRes struct {
+	Id string `json:"id"`
+}
+
 // NewClient creates a new instance of the Client struct.
 // It takes an endpoint string as a parameter and returns a pointer to the Client struct.
 func NewClient(endpoint string) *Client {
@@ -63,6 +75,34 @@ func (clnt *Client) AccessToken(user, pass, resource string) (string, error) {
 	acresp := &accessTokenResp{}
 	if err := json.NewDecoder(res.Body).Decode(acresp); err != nil {
 		return "", fmt.Errorf("error in decoding json response %s", err)
+func (clnt *Client) CreateUser(
+	token string,
+	user *APIUsersPostReq,
+) (string, error) {
+	var userId string
+	content, err := json.Marshal(user)
+	if err != nil {
+		return userId, fmt.Errorf("error in converting to json %s", err)
 	}
-	return acresp.AccessToken, nil
+	ureq, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/api/users", clnt.baseURL),
+		bytes.NewBuffer(content),
+	)
+	if err != nil {
+		return userId, fmt.Errorf("error in making new request %s", err)
+	}
+	ureq.Header.Set("Content-Type", "application/json")
+	ureq.Header.Set("Accept", "application/json")
+	ureq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	uresp, err := clnt.reqToResponse(ureq)
+	if err != nil {
+		return userId, err
+	}
+	defer uresp.Body.Close()
+	usr := &APIUsersPostRes{}
+	if err := json.NewDecoder(uresp.Body).Decode(usr); err != nil {
+		return userId, fmt.Errorf("error in decoding json response %s", err)
+	}
+	return usr.Id, nil
 }
