@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -58,16 +59,23 @@ func (clnt *Client) AccessToken(user, pass, resource string) (string, error) {
 	}
 	if res.StatusCode != 200 {
 		cnt, err := io.ReadAll(res.Body)
+func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
+	uresp, err := clnt.httpClient.Do(creq)
+	if err != nil {
+		return uresp, fmt.Errorf("error in making request %s", err)
+	}
+	if uresp.StatusCode != 200 {
+		cnt, err := io.ReadAll(uresp.Body)
 		if err != nil {
-			return "", fmt.Errorf(
+			return uresp, fmt.Errorf(
 				"error in response and the reading the body %d %s",
-				res.StatusCode,
+				uresp.StatusCode,
 				err,
 			)
 		}
-		return "", fmt.Errorf(
+		return uresp, fmt.Errorf(
 			"unexpected error response %d %s",
-			res.StatusCode,
+			uresp.StatusCode,
 			string(cnt),
 		)
 	}
@@ -75,6 +83,9 @@ func (clnt *Client) AccessToken(user, pass, resource string) (string, error) {
 	acresp := &accessTokenResp{}
 	if err := json.NewDecoder(res.Body).Decode(acresp); err != nil {
 		return "", fmt.Errorf("error in decoding json response %s", err)
+	return uresp, nil
+}
+
 func (clnt *Client) CreateUser(
 	token string,
 	user *APIUsersPostReq,
