@@ -48,7 +48,7 @@ func SetLogger(l *logrus.Entry) {
 	v.Set(LogrusKey, l)
 }
 
-func SetTTLCache(tcache *ttlcache.Cache[string, int]) {
+func SetTTLCache(tcache *ttlcache.Cache[string, string]) {
 	v.Set(TTLCacheKey, tcache)
 }
 
@@ -131,7 +131,7 @@ func GetKubeClient(key string) *kubernetes.Clientset {
 	return client
 }
 
-func GetTTLCache(key string) *ttlcache.Cache[string, any] {
-	ttlCache, _ := v.Get(TTLCacheKey).(*ttlcache.Cache[string, any])
+func GetTTLCache() *ttlcache.Cache[string, string] {
+	ttlCache, _ := v.Get(TTLCacheKey).(*ttlcache.Cache[string, string])
 	return ttlCache
 }

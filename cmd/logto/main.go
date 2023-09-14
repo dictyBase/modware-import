@@ -61,7 +61,7 @@ func main() {
 				return fmt.Errorf("error in getting a new logger %s", err)
 			}
 			registry.SetLogger(l)
-			tcache := ttlcache.New[string, int]()
+			tcache := ttlcache.New[string, string]()
 			registry.SetTTLCache(tcache)
 			return nil
 		},
