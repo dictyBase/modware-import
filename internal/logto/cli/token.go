@@ -9,7 +9,7 @@ import (
 
 func CreateAccessToken(cltx *cli.Context) error {
 	lclient := logto.NewClient(cltx.String("endpoint"))
-	atoken, err := lclient.AccessToken(
+	aresp, err := lclient.AccessToken(
 		cltx.String("app-id"),
 		cltx.String("app-secret"),
 		cltx.String("api-resource"),
@@ -17,6 +17,6 @@ func CreateAccessToken(cltx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err, 2)
 	}
-	fmt.Printf("access token %s\n", atoken)
+	fmt.Printf("access token %s\n", aresp.AccessToken)
 	return nil
 }

@@ -9,7 +9,7 @@ import (
 func ImportUser(cltx *cli.Context) error {
 	logger := registry.GetLogger()
 	lclient := logto.NewClient(cltx.String("endpoint"))
-	atoken, err := lclient.AccessToken(
+	aresp, err := lclient.AccessToken(
 		cltx.String("app-id"),
 		cltx.String("app-secret"),
 		cltx.String("api-resource"),
@@ -18,7 +18,7 @@ func ImportUser(cltx *cli.Context) error {
 		return cli.Exit(err.Error(), 2)
 	}
 	userId, err := lclient.CreateUser(
-		atoken,
+		aresp.AccessToken,
 		&logto.APIUsersPostReq{
 			PrimaryEmail: "bola@bola.com",
 			PrimaryPhone: "19343049303438",
