@@ -48,7 +48,7 @@ func SetLogger(l *logrus.Entry) {
 	v.Set(LogrusKey, l)
 }
 
-func SetTTLCache(tcache *ttlcache.Cache[string, any]) {
+func SetTTLCache(tcache *ttlcache.Cache[string, int]) {
 	v.Set(TTLCacheKey, tcache)
 }
 

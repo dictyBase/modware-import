@@ -7,6 +7,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/logger"
 	logto "github.com/dictyBase/modware-import/internal/logto/cli"
 	"github.com/dictyBase/modware-import/internal/registry"
+	"github.com/jellydator/ttlcache/v3"
 	"github.com/urfave/cli/v2"
 )
 
@@ -60,6 +61,8 @@ func main() {
 				return fmt.Errorf("error in getting a new logger %s", err)
 			}
 			registry.SetLogger(l)
+			tcache := ttlcache.New[string, int]()
+			registry.SetTTLCache(tcache)
 			return nil
 		},
 		Commands: []*cli.Command{
