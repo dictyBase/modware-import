@@ -15,7 +15,7 @@ type Client struct {
 	httpClient *http.Client
 }
 
-type accessTokenResp struct {
+type AccessTokenResp struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
 	TokenType   string `json:"token_type"`
@@ -39,30 +39,33 @@ func NewClient(endpoint string) *Client {
 	return &Client{baseURL: endpoint, httpClient: &http.Client{}}
 }
 
-func (clnt *Client) AccessToken(user, pass, resource string) (string, error) {
+func (clnt *Client) AccessToken(
+	user, pass, resource string,
+) (*AccessTokenResp, error) {
+	acresp := &AccessTokenResp{}
 	params := url.Values{}
 	params.Set("grant_type", "client_credentials")
 	params.Set("resource", resource)
+	params.Set("scope", "all")
 	req, err := http.NewRequest(
 		"POST",
 		fmt.Sprintf("%s/oidc/token", clnt.baseURL),
 		strings.NewReader(params.Encode()),
 	)
 	if err != nil {
-		return "", fmt.Errorf("error in creating request %s ", err)
+		return acresp, fmt.Errorf("error in creating request %s ", err)
 	}
 	req.SetBasicAuth(user, pass)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	res, err := clnt.reqToResponse(req)
 	if err != nil {
-		return "", err
+		return acresp, err
 	}
 	defer res.Body.Close()
-	acresp := &accessTokenResp{}
 	if err := json.NewDecoder(res.Body).Decode(acresp); err != nil {
-		return "", fmt.Errorf("error in decoding json response %s", err)
+		return acresp, fmt.Errorf("error in decoding json response %s", err)
 	}
-	return acresp.AccessToken, nil
+	return acresp, nil
 }
 
 func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
