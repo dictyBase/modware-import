@@ -68,6 +68,11 @@ func main() {
 				Usage:  "Create a new logto access token",
 				Action: logto.CreateAccessToken,
 			},
+			{
+				Name:   "import-user",
+				Usage:  "Import user from an input file",
+				Action: logto.ImportUser,
+			},
 		},
 	}
 
