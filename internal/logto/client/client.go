@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"golang.org/x/exp/slices"
 )
 
 type Client struct {
@@ -31,6 +33,10 @@ type APIUsersPostReq struct {
 
 type APIUsersPostRes struct {
 	Id string `json:"id"`
+}
+
+type APIUsersSearchRes struct {
+	Email string `json:"primaryEmail"`
 }
 
 // NewClient creates a new instance of the Client struct.
@@ -89,6 +95,46 @@ func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
 		)
 	}
 	return uresp, nil
+}
+
+func (clnt *Client) CheckUser(
+	token string, email string,
+) (bool, error) {
+	params := url.Values{}
+	params.Set("search.primaryEmail", email)
+	params.Set("mode.name", "exact")
+	parsedURL, err := url.Parse(fmt.Sprintf("%s/api/users", clnt.baseURL))
+	if err != nil {
+		return false, fmt.Errorf("error in parsing url for query %s", err)
+	}
+	parsedURL.RawQuery = params.Encode()
+	ureq, err := http.NewRequest(
+		"GET",
+		parsedURL.String(),
+		nil,
+	)
+	if err != nil {
+		return false, fmt.Errorf("error in making new request %s", err)
+	}
+	ureq.Header.Set("Content-Type", "application/json")
+	ureq.Header.Set("Accept", "application/json")
+	ureq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	uresp, err := clnt.reqToResponse(ureq)
+	if err != nil {
+		return false, err
+	}
+	defer uresp.Body.Close()
+	usrs := make([]*APIUsersSearchRes, 0)
+	if err := json.NewDecoder(uresp.Body).Decode(&usrs); err != nil {
+		return false, fmt.Errorf("error in decoding json response %s", err)
+	}
+	index := slices.IndexFunc(usrs, func(usr *APIUsersSearchRes) bool {
+		return usr.Email == email
+	})
+	if index == -1 {
+		return false, nil
+	}
+	return true, nil
 }
 
 func (clnt *Client) CreateUser(
