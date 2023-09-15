@@ -61,8 +61,6 @@ func main() {
 				return fmt.Errorf("error in getting a new logger %s", err)
 			}
 			registry.SetLogger(l)
-			tcache := ttlcache.New[string, string]()
-			registry.SetTTLCache(tcache)
 			return nil
 		},
 		Commands: []*cli.Command{
@@ -75,6 +73,24 @@ func main() {
 				Name:   "import-user",
 				Usage:  "Import user from an input file",
 				Action: logto.ImportUser,
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "input",
+						Usage:    "input csv file with users information",
+						Aliases:  []string{"i"},
+						Required: true,
+					},
+				},
+				Before: func(cltx *cli.Context) error {
+					tcache := ttlcache.New[string, string]()
+					registry.SetTTLCache(tcache)
+					reader, err := os.Open(cltx.String("input"))
+					if err != nil {
+						return fmt.Errorf("error in reading file %s", err)
+					}
+					registry.SetReader("USER_INPUT", reader)
+					return nil
+				},
 			},
 		},
 	}
