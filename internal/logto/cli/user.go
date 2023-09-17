@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"time"
 
 	logto "github.com/dictyBase/modware-import/internal/logto/client"
@@ -12,6 +14,42 @@ import (
 )
 
 const TokenKey = "token"
+
+// Generate a random number using crypto/rand.
+func RandomInt(num int) (int, error) {
+	randomValue, err := rand.Int(rand.Reader, big.NewInt(int64(num)))
+	if err != nil {
+		return 0, err
+	}
+
+	return int(randomValue.Int64()), nil
+}
+
+func FixedLenRandomInt(length int) string {
+	num := []byte("123456789")
+	byt := make([]byte, 0)
+	alen := len(num)
+	for i := 0; i < length; i++ {
+		pos, _ := RandomInt(alen)
+		byt = append(byt, num[pos])
+	}
+
+	return string(byt)
+}
+
+func FixedLenRandomString(length int) string {
+	alphanum := []byte(
+		"123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+	)
+	byt := make([]byte, 0)
+	alen := len(alphanum)
+	for i := 0; i < length; i++ {
+		pos, _ := RandomInt(alen)
+		byt = append(byt, alphanum[pos])
+	}
+
+	return string(byt)
+}
 
 type retrieveTokenProperties struct {
 	Lclient *logto.Client
