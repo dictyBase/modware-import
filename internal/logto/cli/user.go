@@ -34,6 +34,8 @@ func RandomInt(num int) (int, error) {
 	return int(randomValue.Int64()), nil
 }
 
+// FixedLenRandomInt generates a random string of fixed length using digits 1-9.
+// It takes an integer length as input and returns the generated string.
 func FixedLenRandomInt(length int) string {
 	num := []byte("123456789")
 	byt := make([]byte, 0)
@@ -46,6 +48,7 @@ func FixedLenRandomInt(length int) string {
 	return string(byt)
 }
 
+// FixedLenRandomString generates a random string of fixed length.
 func FixedLenRandomString(length int) string {
 	alphanum := []byte(
 		"123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -97,31 +100,45 @@ func retrieveToken(args *retrieveTokenProperties) (string, error) {
 	return aresp.AccessToken, nil
 }
 
+// ImportUser is a function that imports user data from a CSV file and creates users in a logto system.
+// It takes a cli.Context parameter and returns an error if an error occurs during execution.
 func ImportUser(cltx *cli.Context) error {
+	// Retrieve the logger and TTL cache from the registry
 	logger := registry.GetLogger()
 	tcache := registry.GetTTLCache()
+	// Create a CSV reader using the USER_INPUT reader from the registry
 	reader := csv.NewReader(registry.GetReader("USER_INPUT"))
+	// Create a new logto client using the endpoint specified in the cli.Context
 	lclient := logto.NewClient(cltx.String("endpoint"))
+	// Initialize a boolean flag to track if the CSV file has a header
 	header := false
+	// Iterate over each record in the CSV file
 	for {
+		// Read the next record from the CSV reader
 		record, err := reader.Read()
 		if err != nil {
+			// Check if the end of file has been reached
 			if err == io.EOF {
 				break
 			}
+			// Return an error with the specific message if reading the CSV record failed
 			return cli.Exit(
 				fmt.Sprintf("error in reading csv record %s", err),
 				2,
 			)
 		}
+		// Skip the header row
 		if !header {
 			header = true
 			continue
 		}
+		// Check if the user record is valid
 		if record[1] != "Valid" {
 			logger.Debugf("user with email %s in not valid", record[0])
 			continue
 		}
+
+		// Retrieve the authentication token using the retrieveToken function
 		token, err := retrieveToken(&retrieveTokenProperties{
 			Lclient: lclient,
 			Logger:  logger,
@@ -131,6 +148,7 @@ func ImportUser(cltx *cli.Context) error {
 		if err != nil {
 			return cli.Exit(err.Error(), 2)
 		}
+		// Check if the user already exists by email
 		ok, _, err := lclient.CheckUser(
 			token,
 			record[0],
@@ -145,7 +163,9 @@ func ImportUser(cltx *cli.Context) error {
 			)
 			continue
 		}
+		// Normalize the username
 		normUser := normalizeUserName(record[2], record[3])
+		// Check if the user already exists by username
 		ok, _, err = lclient.CheckUserWithUserName(
 			token,
 			normUser,
@@ -161,6 +181,7 @@ func ImportUser(cltx *cli.Context) error {
 			continue
 		}
 		logger.Debugf("username %s does not exist, going to create", record[0])
+		// Create the user in the logto system
 		userId, err := lclient.CreateUser(
 			token,
 			&logto.APIUsersPostReq{
@@ -179,5 +200,6 @@ func ImportUser(cltx *cli.Context) error {
 		}
 		logger.Infof("created user with email %s id %s\n", record[0], userId)
 	}
+
 	return nil
 }
