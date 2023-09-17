@@ -103,10 +103,8 @@ func (clnt *Client) CheckUserWithUserName(
 ) (bool, string, error) {
 	var userId string
 	params := url.Values{}
-	params.Set("search.primaryEmail", email)
 	params.Set("search.username", username)
 	params.Set("mode.name", "exact")
-	params.Set("join", "and")
 	parsedURL, err := url.Parse(fmt.Sprintf("%s/api/users", clnt.baseURL))
 	if err != nil {
 		return false, userId, fmt.Errorf(
