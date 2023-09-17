@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"regexp"
 	"time"
 
 	logto "github.com/dictyBase/modware-import/internal/logto/client"
@@ -14,6 +15,12 @@ import (
 )
 
 const TokenKey = "token"
+
+var unameRgxp = regexp.MustCompile(`\s+|[.\-\'\(\)\,\?\"]`)
+
+func normalizeUserName(first, last string) string {
+	return unameRgxp.ReplaceAllString(fmt.Sprintf("%s%s", first, last), "")
+}
 
 // Generate a random number using crypto/rand.
 func RandomInt(num int) (int, error) {
