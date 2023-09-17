@@ -36,8 +36,9 @@ type APIUsersPostRes struct {
 }
 
 type APIUsersSearchRes struct {
-	Email string `json:"primaryEmail"`
-	Id    string `json:"id"`
+	Email    string `json:"primaryEmail"`
+	Id       string `json:"id"`
+	UserName string `json:"username"`
 }
 
 // NewClient creates a new instance of the Client struct.
@@ -99,7 +100,7 @@ func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
 }
 
 func (clnt *Client) CheckUserWithUserName(
-	token, email, username string,
+	token, username string,
 ) (bool, string, error) {
 	var userId string
 	params := url.Values{}
@@ -137,7 +138,7 @@ func (clnt *Client) CheckUserWithUserName(
 		)
 	}
 	index := slices.IndexFunc(usrs, func(usr *APIUsersSearchRes) bool {
-		return usr.Email == email
+		return usr.UserName == username
 	})
 	if index == -1 {
 		return false, userId, nil
