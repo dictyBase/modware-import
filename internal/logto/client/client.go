@@ -98,6 +98,55 @@ func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
 	return uresp, nil
 }
 
+func (clnt *Client) CheckUserWithUserName(
+	token, email, username string,
+) (bool, string, error) {
+	var userId string
+	params := url.Values{}
+	params.Set("search.primaryEmail", email)
+	params.Set("search.username", username)
+	params.Set("mode.name", "exact")
+	params.Set("join", "and")
+	parsedURL, err := url.Parse(fmt.Sprintf("%s/api/users", clnt.baseURL))
+	if err != nil {
+		return false, userId, fmt.Errorf(
+			"error in parsing url for query %s",
+			err,
+		)
+	}
+	parsedURL.RawQuery = params.Encode()
+	ureq, err := http.NewRequest(
+		"GET",
+		parsedURL.String(),
+		nil,
+	)
+	if err != nil {
+		return false, userId, fmt.Errorf("error in making new request %s", err)
+	}
+	ureq.Header.Set("Content-Type", "application/json")
+	ureq.Header.Set("Accept", "application/json")
+	ureq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	uresp, err := clnt.reqToResponse(ureq)
+	if err != nil {
+		return false, userId, err
+	}
+	defer uresp.Body.Close()
+	usrs := make([]*APIUsersSearchRes, 0)
+	if err := json.NewDecoder(uresp.Body).Decode(&usrs); err != nil {
+		return false, userId, fmt.Errorf(
+			"error in decoding json response %s",
+			err,
+		)
+	}
+	index := slices.IndexFunc(usrs, func(usr *APIUsersSearchRes) bool {
+		return usr.Email == email
+	})
+	if index == -1 {
+		return false, userId, nil
+	}
+	return true, usrs[index].Id, nil
+}
+
 func (clnt *Client) CheckUser(
 	token string, email string,
 ) (bool, string, error) {
