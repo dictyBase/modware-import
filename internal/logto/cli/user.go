@@ -2,7 +2,9 @@ package cli
 
 import (
 	"crypto/rand"
+	"encoding/csv"
 	"fmt"
+	"io"
 	"math/big"
 	"regexp"
 	"time"
@@ -97,29 +99,85 @@ func retrieveToken(args *retrieveTokenProperties) (string, error) {
 
 func ImportUser(cltx *cli.Context) error {
 	logger := registry.GetLogger()
+	tcache := registry.GetTTLCache()
+	reader := csv.NewReader(registry.GetReader("USER_INPUT"))
 	lclient := logto.NewClient(cltx.String("endpoint"))
-	token, err := retrieveToken(&retrieveTokenProperties{
-		Lclient: lclient,
-		Logger:  logger,
-		Cltx:    cltx,
-		Tcache:  registry.GetTTLCache(),
-	})
-	if err != nil {
-		return cli.Exit(err.Error(), 2)
+	header := false
+	for {
+		record, err := reader.Read()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return cli.Exit(
+				fmt.Sprintf("error in reading csv record %s", err),
+				2,
+			)
+		}
+		if !header {
+			header = true
+			continue
+		}
+		if record[1] != "Valid" {
+			logger.Debugf("user with email %s in not valid", record[0])
+			continue
+		}
+		token, err := retrieveToken(&retrieveTokenProperties{
+			Lclient: lclient,
+			Logger:  logger,
+			Cltx:    cltx,
+			Tcache:  tcache,
+		})
+		if err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+		ok, _, err := lclient.CheckUser(
+			token,
+			record[0],
+		)
+		if err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+		if ok {
+			logger.Infof(
+				"user with email %s exist, skipping creation",
+				record[0],
+			)
+			continue
+		}
+		normUser := normalizeUserName(record[2], record[3])
+		ok, _, err = lclient.CheckUserWithUserName(
+			token,
+			normUser,
+		)
+		if err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+		if ok {
+			logger.Infof(
+				"user with username %s exist, skipping creation",
+				normUser,
+			)
+			continue
+		}
+		logger.Debugf("username %s does not exist, going to create", record[0])
+		userId, err := lclient.CreateUser(
+			token,
+			&logto.APIUsersPostReq{
+				PrimaryEmail: record[0],
+				Username:     normUser,
+				Name:         fmt.Sprintf("%s %s", record[2], record[3]),
+				PrimaryPhone: FixedLenRandomInt(10),
+				Password:     FixedLenRandomString(80),
+			},
+		)
+		if err != nil {
+			return cli.Exit(
+				fmt.Sprintf("error in creating user %s %s", record[0], err),
+				2,
+			)
+		}
+		logger.Infof("created user with email %s id %s\n", record[0], userId)
 	}
-	userId, err := lclient.CreateUser(
-		token,
-		&logto.APIUsersPostReq{
-			PrimaryEmail: "bola@bola.com",
-			PrimaryPhone: "19343049303438",
-			Username:     "hello",
-			Password:     "r93r938493*7043",
-			Name:         "bola",
-		},
-	)
-	if err != nil {
-		return cli.Exit(err.Error(), 2)
-	}
-	logger.Infof("got user id %s\n", userId)
 	return nil
 }
