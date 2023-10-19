@@ -196,6 +196,35 @@ func (clnt *Client) CheckUser(
 	return true, usrs[index].Id, nil
 }
 
+func (clnt *Client) AddCustomUserInformation(
+	token,
+	userId string,
+	user *APIUsersPatchCustomData,
+) error {
+	content, err := json.Marshal(user)
+	if err != nil {
+		return fmt.Errorf("error in converting to json %s", err)
+	}
+	ureq, err := http.NewRequest(
+		"PATCH",
+		fmt.Sprintf("%s/api/users/%s/custom-data", userId, clnt.baseURL),
+		bytes.NewBuffer(content),
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error in making new request for user custom data%s ",
+			err,
+		)
+	}
+	commonHeader(ureq, token)
+	uresp, err := clnt.reqToResponse(ureq)
+	if err != nil {
+		return fmt.Errorf("error in adding user custom information %s", err)
+	}
+	defer uresp.Body.Close()
+	return nil
+}
+
 func (clnt *Client) CreateUser(
 	token string,
 	user *APIUsersPostReq,
