@@ -41,6 +41,21 @@ type APIUsersSearchRes struct {
 	UserName string `json:"username"`
 }
 
+type APIUsersPatchCustomData struct {
+	Profession       string `json:"profession"`
+	JobTitle         string `json:"job_title"`
+	Institution      string `json:"institution"`
+	Address          string `json:"address"`
+	SecondaryAddress string `json:"secondary_address"`
+	City             string `json:"city"`
+	State            string `json:"state"`
+	Region           string `json:"region"`
+	Contry           string `json:"country"`
+	Zipcode          string `json:"zipcode"`
+	Subscribed       bool   `json:"subscribed"`
+	ResearchInterest string `json:"research_interest"`
+}
+
 // NewClient creates a new instance of the Client struct.
 // It takes an endpoint string as a parameter and returns a pointer to the Client struct.
 func NewClient(endpoint string) *Client {
