@@ -50,10 +50,11 @@ type APIUsersPatchCustomData struct {
 	City             string `json:"city"`
 	State            string `json:"state"`
 	Region           string `json:"region"`
-	Contry           string `json:"country"`
+	Country           string `json:"country"`
 	Zipcode          string `json:"zipcode"`
 	Subscribed       bool   `json:"subscribed"`
 	ResearchInterest string `json:"research_interest"`
+	Phone            string `json:"phone"`
 }
 
 // NewClient creates a new instance of the Client struct.
