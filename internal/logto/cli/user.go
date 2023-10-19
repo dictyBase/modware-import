@@ -199,6 +199,37 @@ func ImportUser(cltx *cli.Context) error {
 			)
 		}
 		logger.Infof("created user with email %s id %s\n", record[0], userId)
+		isSubscribed := false
+		if record[15] == "Y" {
+			isSubscribed = true
+		}
+		err = lclient.AddCustomUserInformation(
+			token,
+			userId,
+			&logto.APIUsersPatchCustomData{
+				Profession:       record[5],
+				JobTitle:         record[6],
+				Institution:      record[7],
+				Address:          record[8],
+				SecondaryAddress: record[9],
+				City:             record[10],
+				State:            record[11],
+				Region:           record[12],
+				Country:          record[13],
+				Zipcode:          record[14],
+				Subscribed:       isSubscribed,
+				Phone:            record[16],
+				ResearchInterest: record[17],
+			},
+		)
+		if err != nil {
+			return cli.Exit(err.Error(), 1)
+		}
+		logger.Debugf(
+			"created custom data for user with email %s id %s\n",
+			record[0],
+			userId,
+		)
 	}
 
 	return nil
