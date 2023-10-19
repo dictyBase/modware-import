@@ -114,17 +114,11 @@ func (clnt *Client) CheckUserWithUserName(
 		)
 	}
 	parsedURL.RawQuery = params.Encode()
-	ureq, err := http.NewRequest(
-		"GET",
-		parsedURL.String(),
-		nil,
-	)
+	ureq, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return false, userId, fmt.Errorf("error in making new request %s", err)
 	}
-	ureq.Header.Set("Content-Type", "application/json")
-	ureq.Header.Set("Accept", "application/json")
-	ureq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	commonHeader(ureq, token)
 	uresp, err := clnt.reqToResponse(ureq)
 	if err != nil {
 		return false, userId, err
@@ -161,17 +155,11 @@ func (clnt *Client) CheckUser(
 		)
 	}
 	parsedURL.RawQuery = params.Encode()
-	ureq, err := http.NewRequest(
-		"GET",
-		parsedURL.String(),
-		nil,
-	)
+	ureq, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return false, userId, fmt.Errorf("error in making new request %s", err)
 	}
-	ureq.Header.Set("Content-Type", "application/json")
-	ureq.Header.Set("Accept", "application/json")
-	ureq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	commonHeader(ureq, token)
 	uresp, err := clnt.reqToResponse(ureq)
 	if err != nil {
 		return false, userId, err
@@ -210,9 +198,7 @@ func (clnt *Client) CreateUser(
 	if err != nil {
 		return userId, fmt.Errorf("error in making new request %s", err)
 	}
-	ureq.Header.Set("Content-Type", "application/json")
-	ureq.Header.Set("Accept", "application/json")
-	ureq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	commonHeader(ureq, token)
 	uresp, err := clnt.reqToResponse(ureq)
 	if err != nil {
 		return userId, err
