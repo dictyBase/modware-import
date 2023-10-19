@@ -42,6 +42,10 @@ type APIUsersSearchRes struct {
 }
 
 type APIUsersPatchCustomData struct {
+	CustomData AdditionalUserInformation `json:"customData"`
+}
+
+type AdditionalUserInformation struct {
 	Profession       string `json:"profession"`
 	JobTitle         string `json:"job_title"`
 	Institution      string `json:"institution"`
@@ -50,7 +54,7 @@ type APIUsersPatchCustomData struct {
 	City             string `json:"city"`
 	State            string `json:"state"`
 	Region           string `json:"region"`
-	Country           string `json:"country"`
+	Country          string `json:"country"`
 	Zipcode          string `json:"zipcode"`
 	Subscribed       bool   `json:"subscribed"`
 	ResearchInterest string `json:"research_interest"`
@@ -208,7 +212,7 @@ func (clnt *Client) AddCustomUserInformation(
 	}
 	ureq, err := http.NewRequest(
 		"PATCH",
-		fmt.Sprintf("%s/api/users/%s/custom-data", userId, clnt.baseURL),
+		fmt.Sprintf("%s/api/users/%s/custom-data", clnt.baseURL, userId),
 		bytes.NewBuffer(content),
 	)
 	if err != nil {
