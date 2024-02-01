@@ -13,8 +13,9 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:  "logto",
-		Usage: "A command line application for logto instance management",
+		Name:   "logto",
+		Usage:  "A command line application for logto instance management",
+		Before: setupCliLogger,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "endpoint",
@@ -55,14 +56,6 @@ func main() {
 				Usage: "log file for output in addition to stderr",
 			},
 		},
-		Before: func(c *cli.Context) error {
-			l, err := logger.NewCliLogger(c)
-			if err != nil {
-				return fmt.Errorf("error in getting a new logger %s", err)
-			}
-			registry.SetLogger(l)
-			return nil
-		},
 		Commands: []*cli.Command{
 			{
 				Name:   "create-access-token",
@@ -73,6 +66,7 @@ func main() {
 				Name:   "import-user",
 				Usage:  "Import user from an input file",
 				Action: logto.ImportUser,
+				Before: setupTTLCache,
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "input",
@@ -80,16 +74,6 @@ func main() {
 						Aliases:  []string{"i"},
 						Required: true,
 					},
-				},
-				Before: func(cltx *cli.Context) error {
-					tcache := ttlcache.New[string, string]()
-					registry.SetTTLCache(tcache)
-					reader, err := os.Open(cltx.String("input"))
-					if err != nil {
-						return fmt.Errorf("error in reading file %s", err)
-					}
-					registry.SetReader("USER_INPUT", reader)
-					return nil
 				},
 			},
 		},
@@ -100,4 +84,24 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func setupTTLCache(cltx *cli.Context) error {
+	tcache := ttlcache.New[string, string]()
+	registry.SetTTLCache(tcache)
+	reader, err := os.Open(cltx.String("input"))
+	if err != nil {
+		return fmt.Errorf("error in reading file %s", err)
+	}
+	registry.SetReader("USER_INPUT", reader)
+	return nil
+}
+
+func setupCliLogger(cltx *cli.Context) error {
+	l, err := logger.NewCliLogger(cltx)
+	if err != nil {
+		return fmt.Errorf("error in getting a new logger %s", err)
+	}
+	registry.SetLogger(l)
+	return nil
 }
