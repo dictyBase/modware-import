@@ -2,6 +2,7 @@ package stockcenter
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
@@ -27,121 +28,6 @@ func setStrainPreRun(cmd *cobra.Command, args []string) error {
 	}
 	if err := setStrainInputReader(); err != nil {
 		return err
-	}
-	return nil
-}
-
-func setStrainInputReader() error {
-	switch viper.GetString("input-source") {
-	case FOLDER:
-		ar, err := os.Open(viper.GetString("strain-annotator-input"))
-		if err != nil {
-			return fmt.Errorf(
-				"error in opening file %s %s",
-				viper.GetString("strain-annotator-input"),
-				err,
-			)
-		}
-		pr, err := os.Open(viper.GetString("strain-pub-input"))
-		if err != nil {
-			return fmt.Errorf(
-				"error in opening file %s %s",
-				viper.GetString("strain-pub-input"),
-				err,
-			)
-		}
-		gr, err := os.Open(viper.GetString("strain-gene-input"))
-		if err != nil {
-			return fmt.Errorf(
-				"error in opening file %s %s",
-				viper.GetString("strain-gene-input"),
-				err,
-			)
-		}
-		sr, err := os.Open(viper.GetString("strain-input"))
-		if err != nil {
-			return fmt.Errorf("error in opening file %s %s", viper.GetString("strain-input"), err)
-		}
-		registry.SetReader(regsc.StrainAnnotatorReader, ar)
-		registry.SetReader(regsc.StrainPubReader, pr)
-		registry.SetReader(regsc.StrainGeneReader, gr)
-		registry.SetReader(regsc.StrainReader, sr)
-	case BUCKET:
-		ar, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf(
-				"%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("strain-annotator-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("strain-annotator-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
-			)
-		}
-		gr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf(
-				"%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("strain-gene-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("strain-gene-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
-			)
-		}
-		pr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf(
-				"%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("strain-pub-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("strain-pub-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
-			)
-		}
-		sr, err := registry.GetS3Client().GetObject(
-			viper.GetString("s3-bucket"),
-			fmt.Sprintf(
-				"%s/%s",
-				viper.GetString("s3-bucket-path"),
-				viper.GetString("strain-input"),
-			),
-			minio.GetObjectOptions{},
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"error in getting file %s from bucket %s %s",
-				viper.GetString("strain-input"),
-				viper.GetString("s3-bucket-path"),
-				err,
-			)
-		}
-		//registry.SetReader(regsc.STRAIN_ANNOTATOR_READER, ar)
-		registry.SetReader(regsc.StrainAnnotatorReader, ar)
-		registry.SetReader(regsc.StrainPubReader, pr)
-		registry.SetReader(regsc.StrainGeneReader, gr)
-		registry.SetReader(regsc.StrainReader, sr)
-	default:
-		return fmt.Errorf("error input source %s not supported", viper.GetString("input-source"))
 	}
 	return nil
 }
@@ -172,4 +58,98 @@ func init() {
 		"csv file with strain data",
 	)
 	viper.BindPFlags(StrainCmd.Flags())
+}
+
+func setStrainInputReader() error {
+	switch viper.GetString("input-source") {
+	case FOLDER:
+		if err := openLocalFiles(); err != nil {
+			return err
+		}
+	case BUCKET:
+		if err := getS3Files(); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf(
+			"error input source %s not supported",
+			viper.GetString("input-source"),
+		)
+	}
+
+	return nil
+}
+
+func openLocalFiles() error {
+	ar, err := openFile(viper.GetString("strain-annotator-input"))
+	if err != nil {
+		return err
+	}
+	pr, err := openFile(viper.GetString("strain-pub-input"))
+	if err != nil {
+		return err
+	}
+	gr, err := openFile(viper.GetString("strain-gene-input"))
+	if err != nil {
+		return err
+	}
+	sr, err := openFile(viper.GetString("strain-input"))
+	if err != nil {
+		return err
+	}
+	setRegistryReaders(ar, pr, gr, sr)
+	return nil
+}
+
+func getS3Files() error {
+	ar, err := getS3Object(viper.GetString("strain-annotator-input"))
+	if err != nil {
+		return err
+	}
+	pr, err := getS3Object(viper.GetString("strain-pub-input"))
+	if err != nil {
+		return err
+	}
+	gr, err := getS3Object(viper.GetString("strain-gene-input"))
+	if err != nil {
+		return err
+	}
+	sr, err := getS3Object(viper.GetString("strain-input"))
+	if err != nil {
+		return err
+	}
+	setRegistryReaders(ar, pr, gr, sr)
+	return nil
+}
+
+func openFile(filePath string) (*os.File, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error in opening file %s %s", filePath, err)
+	}
+	return file, nil
+}
+
+func getS3Object(filePath string) (*minio.Object, error) {
+	object, err := registry.GetS3Client().GetObject(
+		viper.GetString("s3-bucket"),
+		fmt.Sprintf("%s/%s", viper.GetString("s3-bucket-path"), filePath),
+		minio.GetObjectOptions{},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error in getting file %s from bucket %s %s",
+			filePath,
+			viper.GetString("s3-bucket-path"),
+			err,
+		)
+	}
+	return object, nil
+}
+
+func setRegistryReaders(ar, pr, gr, sr io.Reader) {
+	registry.SetReader(regsc.StrainAnnotatorReader, ar)
+	registry.SetReader(regsc.StrainPubReader, pr)
+	registry.SetReader(regsc.StrainGeneReader, gr)
+	registry.SetReader(regsc.StrainReader, sr)
 }
