@@ -103,136 +103,155 @@ func retrieveToken(args *retrieveTokenProperties) (string, error) {
 // ImportUser is a function that imports user data from a CSV file and creates users in a logto system.
 // It takes a cli.Context parameter and returns an error if an error occurs during execution.
 func ImportUser(cltx *cli.Context) error {
-	// Retrieve the logger and TTL cache from the registry
 	logger := registry.GetLogger()
 	tcache := registry.GetTTLCache()
-	// Create a CSV reader using the USER_INPUT reader from the registry
 	reader := csv.NewReader(registry.GetReader("USER_INPUT"))
-	// Create a new logto client using the endpoint specified in the cli.Context
 	lclient := logto.NewClient(cltx.String("endpoint"))
-	// Initialize a boolean flag to track if the CSV file has a header
 	header := false
-	// Iterate over each record in the CSV file
 	for {
-		// Read the next record from the CSV reader
 		record, err := reader.Read()
 		if err != nil {
-			// Check if the end of file has been reached
 			if err == io.EOF {
 				break
 			}
-			// Return an error with the specific message if reading the CSV record failed
 			return cli.Exit(
 				fmt.Sprintf("error in reading csv record %s", err),
 				2,
 			)
 		}
-		// Skip the header row
 		if !header {
 			header = true
 			continue
 		}
-		// Check if the user record is valid
 		if record[1] != "Valid" {
 			logger.Debugf("user with email %s in not valid", record[0])
 			continue
 		}
-
-		// Retrieve the authentication token using the retrieveToken function
-		token, err := retrieveToken(&retrieveTokenProperties{
-			Lclient: lclient,
-			Logger:  logger,
-			Cltx:    cltx,
-			Tcache:  tcache,
-		})
+		err = processCSVRecord(record, lclient, logger, cltx, tcache)
 		if err != nil {
 			return cli.Exit(err.Error(), 2)
 		}
-		// Check if the user already exists by email
-		ok, _, err := lclient.CheckUser(
-			token,
+	}
+
+	return nil
+}
+
+func addCustomUserInformation(
+	lclient *logto.Client,
+	token string,
+	userId string,
+	record []string,
+) error {
+	isSubscribed := false
+	if record[15] == "Y" {
+		isSubscribed = true
+	}
+	// Call lclient.AddCustomUserInformation with provided token, userId, and custom data
+	err := lclient.AddCustomUserInformation(
+		token,
+		userId,
+		&logto.APIUsersPatchCustomData{
+			CustomData: logto.AdditionalUserInformation{
+				Profession:       record[5],
+				JobTitle:         record[6],
+				Institution:      record[7],
+				Address:          record[8],
+				SecondaryAddress: record[9],
+				City:             record[10],
+				State:            record[11],
+				Region:           record[12],
+				Country:          record[13],
+				Zipcode:          record[14],
+				Subscribed:       isSubscribed,
+				Phone:            record[16],
+				ResearchInterest: record[17],
+			},
+		},
+	)
+
+	return err
+}
+
+func createUser(
+	lclient *logto.Client,
+	token string,
+	record []string,
+	normUser string,
+) (string, error) {
+	userId, err := lclient.CreateUser(
+		token,
+		&logto.APIUsersPostReq{
+			PrimaryEmail: record[0],
+			Username:     normUser,
+			Name:         fmt.Sprintf("%s %s", record[2], record[3]),
+			PrimaryPhone: FixedLenRandomInt(10),
+			Password:     FixedLenRandomString(80),
+		},
+	)
+
+	return userId, err
+}
+
+func processCSVRecord(
+	record []string,
+	lclient *logto.Client,
+	logger *logrus.Entry,
+	cltx *cli.Context,
+	tcache *ttlcache.Cache[string, string],
+) error {
+	token, err := retrieveToken(&retrieveTokenProperties{
+		Lclient: lclient,
+		Logger:  logger,
+		Cltx:    cltx,
+		Tcache:  tcache,
+	})
+	if err != nil {
+		return err
+	}
+	ok, _, err := lclient.CheckUser(
+		token,
+		record[0],
+	)
+	if err != nil {
+		return err
+	}
+	if ok {
+		logger.Infof(
+			"user with email %s exist, skipping creation",
 			record[0],
 		)
-		if err != nil {
-			return cli.Exit(err.Error(), 2)
-		}
-		if ok {
-			logger.Infof(
-				"user with email %s exist, skipping creation",
-				record[0],
-			)
-			continue
-		}
-		// Normalize the username
-		normUser := normalizeUserName(record[2], record[3])
-		// Check if the user already exists by username
-		ok, _, err = lclient.CheckUserWithUserName(
-			token,
+		return nil
+	}
+	normUser := normalizeUserName(record[2], record[3])
+	ok, _, err = lclient.CheckUserWithUserName(
+		token,
+		normUser,
+	)
+	if err != nil {
+		return err
+	}
+	if ok {
+		logger.Infof(
+			"user with username %s exist, skipping creation",
 			normUser,
 		)
-		if err != nil {
-			return cli.Exit(err.Error(), 2)
-		}
-		if ok {
-			logger.Infof(
-				"user with username %s exist, skipping creation",
-				normUser,
-			)
-			continue
-		}
-		logger.Debugf("username %s does not exist, going to create", record[0])
-		// Create the user in the logto system
-		userId, err := lclient.CreateUser(
-			token,
-			&logto.APIUsersPostReq{
-				PrimaryEmail: record[0],
-				Username:     normUser,
-				Name:         fmt.Sprintf("%s %s", record[2], record[3]),
-				PrimaryPhone: FixedLenRandomInt(10),
-				Password:     FixedLenRandomString(80),
-			},
-		)
-		if err != nil {
-			return cli.Exit(
-				fmt.Sprintf("error in creating user %s %s", record[0], err),
-				2,
-			)
-		}
-		logger.Infof("created user with email %s id %s\n", record[0], userId)
-		isSubscribed := false
-		if record[15] == "Y" {
-			isSubscribed = true
-		}
-		err = lclient.AddCustomUserInformation(
-			token,
-			userId,
-			&logto.APIUsersPatchCustomData{
-				CustomData: logto.AdditionalUserInformation{
-					Profession:       record[5],
-					JobTitle:         record[6],
-					Institution:      record[7],
-					Address:          record[8],
-					SecondaryAddress: record[9],
-					City:             record[10],
-					State:            record[11],
-					Region:           record[12],
-					Country:          record[13],
-					Zipcode:          record[14],
-					Subscribed:       isSubscribed,
-					Phone:            record[16],
-					ResearchInterest: record[17],
-				},
-			},
-		)
-		if err != nil {
-			return cli.Exit(err.Error(), 1)
-		}
-		logger.Debugf(
-			"created custom data for user with email %s id %s\n",
-			record[0],
-			userId,
-		)
+		return nil
 	}
+	logger.Debugf("username %s does not exist, going to create", record[0])
+	userId, err := createUser(lclient, token, record, normUser)
+	if err != nil {
+		return fmt.Errorf("error in creating user %s %s", record[0], err)
+	}
+	logger.Infof("created user with email %s id %s\n", record[0], userId)
+	err = addCustomUserInformation(lclient, token, userId, record)
+	if err != nil {
+		return err
+	}
+	logger.Debugf(
+		"created custom data for user with email %s id %s\n",
+		record[0],
+		userId,
+	)
 
 	return nil
 }
