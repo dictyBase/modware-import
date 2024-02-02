@@ -15,7 +15,7 @@ func main() {
 	app := &cli.App{
 		Name:   "logto",
 		Usage:  "A command line application for logto instance management",
-		Before: setupCliLogger,
+		Before: logger.SetupCliLogger,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "endpoint",
@@ -94,14 +94,5 @@ func setupTTLCache(cltx *cli.Context) error {
 		return fmt.Errorf("error in reading file %s", err)
 	}
 	registry.SetReader("USER_INPUT", reader)
-	return nil
-}
-
-func setupCliLogger(cltx *cli.Context) error {
-	l, err := logger.NewCliLogger(cltx)
-	if err != nil {
-		return fmt.Errorf("error in getting a new logger %s", err)
-	}
-	registry.SetLogger(l)
 	return nil
 }

@@ -12,6 +12,15 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func SetupCliLogger(cltx *cli.Context) error {
+	l, err := NewCliLogger(cltx)
+	if err != nil {
+		return fmt.Errorf("error in getting a new logger %s", err)
+	}
+	registry.SetLogger(l)
+	return nil
+}
+
 func NewCliLogger(c *cli.Context) (*logrus.Entry, error) {
 	format := c.String("log-format")
 	name := c.String("log-level")
