@@ -6,6 +6,8 @@ const (
 	StockClient              = "stock"
 	AnnotationClientKey      = "annotation-client"
 	AnnotationClient         = "annotation"
+	ContentClientKey         = "content-client"
+	ContentClient            = "content"
 	PlasmidIdMapReader       = "plasmid-id-map-input"
 	PlasmidAnnotatorReader   = "plasmid-annotator-input"
 	PlasmidPubReader         = "plasmid-pub-input"
