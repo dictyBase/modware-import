@@ -63,7 +63,7 @@ require (
 	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/arangodb/go-driver v1.6.0 // indirect
 	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
-	github.com/cloudflare/circl v1.3.3 // indirect
+	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
