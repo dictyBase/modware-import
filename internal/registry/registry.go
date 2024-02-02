@@ -6,6 +6,7 @@ import (
 	"github.com/dictyBase/arangomanager"
 	"github.com/dictyBase/go-obograph/storage"
 	r "github.com/go-redis/redis/v7"
+	"github.com/jellydator/ttlcache/v3"
 	"github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -21,6 +22,7 @@ const (
 	Arangodb           = "arangodb"
 	OboStorageKey      = "obostorage"
 	OboReadersKey      = "oboreaders"
+	TTLCacheKey        = "ttlcache"
 	KubeClientKey      = "kubeconfig"
 )
 
@@ -44,6 +46,10 @@ func SetArangodbConnection(c *arangomanager.Database) {
 
 func SetLogger(l *logrus.Entry) {
 	v.Set(LogrusKey, l)
+}
+
+func SetTTLCache(tcache *ttlcache.Cache[string, string]) {
+	v.Set(TTLCacheKey, tcache)
 }
 
 func SetS3Client(s3c *minio.Client) {
@@ -123,4 +129,9 @@ func GetRedisClient() *r.Client {
 func GetKubeClient(key string) *kubernetes.Clientset {
 	client, _ := v.Get(key).(*kubernetes.Clientset)
 	return client
+}
+
+func GetTTLCache() *ttlcache.Cache[string, string] {
+	ttlCache, _ := v.Get(TTLCacheKey).(*ttlcache.Cache[string, string])
+	return ttlCache
 }

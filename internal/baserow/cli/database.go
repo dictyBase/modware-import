@@ -10,7 +10,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/urfave/cli/v2"
-	"k8s.io/utils/strings/slices"
+	"golang.org/x/exp/slices"
 )
 
 type accessTokenProperties struct {

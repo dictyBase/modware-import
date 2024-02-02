@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/sirupsen/logrus"
 
 	"github.com/cockroachdb/errors"
@@ -15,6 +13,7 @@ import (
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func validateAnnoTag(args *validateTagArgs) (bool, error) {
@@ -212,7 +211,11 @@ func delAnnotationGroup(
 			&pb.GroupEntryId{GroupId: gcd.Group.GroupId},
 		)
 		if err != nil {
-			return errors.Errorf("error in deleting annotation group %s %s", gcd.Group.GroupId, err)
+			return errors.Errorf(
+				"error in deleting annotation group %s %s",
+				gcd.Group.GroupId,
+				err,
+			)
 		}
 		// remove all annotations
 		for _, gd := range gcd.Group.Data {
@@ -221,16 +224,19 @@ func delAnnotationGroup(
 				&pb.DeleteAnnotationRequest{Id: gd.Id, Purge: true},
 			)
 			if err != nil {
-				return errors.Errorf("error in deleting annotation %s %s", gd.Id, err)
+				return errors.Errorf(
+					"error in deleting annotation %s %s",
+					gd.Id,
+					err,
+				)
 			}
 		}
 	}
 	return nil
 }
 
-func TimestampProto(t time.Time) *timestamp.Timestamp {
-	ts, _ := ptypes.TimestampProto(t)
-	return ts
+func TimestampProto(t time.Time) *timestamppb.Timestamp {
+	return timestamppb.New(t)
 }
 
 func handleAnnoRetrieval(args *annoParams) (bool, error) {

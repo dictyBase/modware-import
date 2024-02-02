@@ -14,7 +14,9 @@ import (
 )
 
 func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
-	ir := stockcenter.NewTsvPlasmidInventoryReader(registry.GetReader(regs.InvReader))
+	ir := stockcenter.NewTsvPlasmidInventoryReader(
+		registry.GetReader(regs.InvReader),
+	)
 	logger := registry.GetLogger()
 	invMap, err := cacheInvByPlasmidId(ir, logger)
 	if err != nil {
@@ -65,7 +67,10 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func cacheInvByPlasmidId(ir stockcenter.PlasmidInventoryReader, logger *logrus.Entry) (map[string][]*stockcenter.PlasmidInventory, error) {
+func cacheInvByPlasmidId(
+	ir stockcenter.PlasmidInventoryReader,
+	logger *logrus.Entry,
+) (map[string][]*stockcenter.PlasmidInventory, error) {
 	invMap := make(map[string][]*stockcenter.PlasmidInventory)
 	for ir.Next() {
 		inv, err := ir.Value()
@@ -94,7 +99,9 @@ func cacheInvByPlasmidId(ir stockcenter.PlasmidInventoryReader, logger *logrus.E
 	return invMap, nil
 }
 
-func organizePlasmidInvAnno(inv *stockcenter.PlasmidInventory) map[string]string {
+func organizePlasmidInvAnno(
+	inv *stockcenter.PlasmidInventory,
+) map[string]string {
 	return map[string]string{
 		regs.InvLocationTag:    inv.PhysicalLocation,
 		regs.InvStoredAsTag:    inv.StoredAs,
@@ -128,7 +135,10 @@ func createPlasmidInventory(args *plasmidInvArgs) error {
 			}
 			ids = append(ids, anno.Data.Id)
 		}
-		_, err := args.client.CreateAnnotationGroup(context.Background(), &pb.AnnotationIdList{Ids: ids})
+		_, err := args.client.CreateAnnotationGroup(
+			context.Background(),
+			&pb.AnnotationIdList{Ids: ids},
+		)
 		if err != nil {
 			return err
 		}

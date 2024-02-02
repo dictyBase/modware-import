@@ -21,7 +21,7 @@ linters:
     - bodyclose
     - bidichk
     - cyclop 
-    - depguard
+    # - depguard
     - decorder
     - dogsled
     # - dupl
