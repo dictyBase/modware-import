@@ -2,7 +2,6 @@ package logger
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	logrus_stack "github.com/Gurpartap/logrus-stack"
@@ -56,7 +55,7 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	logger.SetLevel(level)
 	// set hook to write to local file
 	if len(fname) == 0 {
-		f, err := ioutil.TempFile(os.TempDir(), "loader")
+		f, err := os.CreateTemp(os.TempDir(), "loader")
 		if err != nil {
 			return &logrus.Entry{}, fmt.Errorf(
 				"error in creating temp file for logging %s",
