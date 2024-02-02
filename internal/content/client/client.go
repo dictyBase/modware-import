@@ -12,6 +12,17 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+func CliSetup(cltx *cli.Context) error {
+	if err := SetS3Client(cltx); err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+	if err := SetContentAPIClient(cltx); err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+
+	return nil
+}
+
 func SetS3Client(cltx *cli.Context) error {
 	client, err := s3.NewCliS3Client(cltx)
 	if err != nil {
