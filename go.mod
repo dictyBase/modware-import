@@ -50,7 +50,7 @@ require (
 require (
 	github.com/IBM/fp-go v1.0.110
 	github.com/jedib0t/go-pretty/v6 v6.5.4
-	github.com/jellydator/ttlcache/v3 v3.1.0
+	github.com/jellydator/ttlcache/v3 v3.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.27.1
