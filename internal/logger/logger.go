@@ -2,7 +2,6 @@ package logger
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	logrus_stack "github.com/Gurpartap/logrus-stack"
@@ -12,6 +11,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/urfave/cli/v2"
 )
+
+func SetupCliLogger(cltx *cli.Context) error {
+	l, err := NewCliLogger(cltx)
+	if err != nil {
+		return fmt.Errorf("error in getting a new logger %s", err)
+	}
+	registry.SetLogger(l)
+	return nil
+}
 
 func NewCliLogger(c *cli.Context) (*logrus.Entry, error) {
 	format := c.String("log-format")
@@ -56,7 +64,7 @@ func NewLogger(cmd *cobra.Command) (*logrus.Entry, error) {
 	logger.SetLevel(level)
 	// set hook to write to local file
 	if len(fname) == 0 {
-		f, err := ioutil.TempFile(os.TempDir(), "loader")
+		f, err := os.CreateTemp(os.TempDir(), "loader")
 		if err != nil {
 			return &logrus.Entry{}, fmt.Errorf(
 				"error in creating temp file for logging %s",

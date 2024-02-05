@@ -2,12 +2,17 @@ package stockcenter
 
 import (
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
+	"github.com/dictyBase/go-genproto/dictybaseapis/content"
 	"github.com/dictyBase/go-genproto/dictybaseapis/order"
 	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/spf13/viper"
 )
 
 var sv = viper.New()
+
+func SetContentAPIClient(cnt content.ContentServiceClient) {
+	sv.Set(ContentClientKey, cnt)
+}
 
 func SetOrderAPIClient(oc order.OrderServiceClient) {
 	sv.Set(OrderClientKey, oc)
@@ -34,4 +39,9 @@ func GetStockAPIClient() stock.StockServiceClient {
 func GetAnnotationAPIClient() annotation.TaggedAnnotationServiceClient {
 	ac, _ := sv.Get(AnnotationClientKey).(annotation.TaggedAnnotationServiceClient)
 	return ac
+}
+
+func GetContentAPIClient() content.ContentServiceClient {
+	cnt, _ := sv.Get(ContentClientKey).(content.ContentServiceClient)
+	return cnt
 }

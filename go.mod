@@ -8,7 +8,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/dictyBase/aphgrpc v1.4.2
 	github.com/dictyBase/arangomanager v0.4.0
-	github.com/dictyBase/go-genproto v0.0.0-20211001224012-6cf691015622
+	github.com/dictyBase/go-genproto v0.0.0-20231030202356-522cb6f9976a
 	github.com/dictyBase/go-obograph v1.6.0
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.18.1
@@ -48,11 +48,12 @@ require (
 )
 
 require (
+	github.com/IBM/fp-go v1.0.110
 	github.com/jedib0t/go-pretty/v6 v6.5.4
 	github.com/jellydator/ttlcache/v3 v3.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.4
-	github.com/urfave/cli/v2 v2.25.7
+	github.com/urfave/cli/v2 v2.27.1
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 )
 
@@ -120,7 +121,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/urfave/cli v1.22.14 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
-	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	github.com/xrash/smetrics v0.0.0-20231213231151-1d8dd44e695e // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
