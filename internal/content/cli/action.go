@@ -135,7 +135,7 @@ func storeOrUpdateContent(
 	logger *logrus.Entry,
 	sinfo minio.ObjectInfo,
 ) error {
-	sct, err := client.GetContentBySlug(
+	_, err := client.GetContentBySlug(
 		context.Background(),
 		&content.ContentRequest{
 			Slug: slug,
@@ -154,10 +154,11 @@ func storeOrUpdateContent(
 			)
 		}
 		return fmt.Errorf(
-			"error in fetching content %s %s %s",
+			"error in fetching content %s %s %s %s",
 			sinfo.Key,
-			sct.Data.Attributes.Name,
-			sct.Data.Attributes.Namespace,
+			name,
+			namespace,
+			err,
 		)
 	}
 	logger.Infof("found existing content %s %s %s", sinfo.Key, name, namespace)
@@ -187,10 +188,11 @@ func createStoreContent(
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"error in creating content %s %s %s",
+			"error in creating content %s %s %s %s",
 			sinfo.Key,
 			name,
 			namespace,
+			err,
 		)
 	}
 	logger.Infof(
