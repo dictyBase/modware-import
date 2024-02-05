@@ -2,7 +2,7 @@ package fasta
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,24 +22,32 @@ type PlasmidSeqReader interface {
 }
 
 type dirSeqReader struct {
-	fasFiles []os.FileInfo
+	fasFiles []fs.FileInfo
 	idx      int
 	dir      string
 	currFile string
 }
 
 func NewPlasmidSeqReader(dir string) (PlasmidSeqReader, error) {
-	info, err := ioutil.ReadDir(dir)
+	info, err := os.ReadDir(dir)
 	if err != nil {
-		return &dirSeqReader{}, fmt.Errorf("error in reading dir %s %s", dir, err)
+		return &dirSeqReader{}, fmt.Errorf(
+			"error in reading dir %s %s",
+			dir,
+			err,
+		)
 	}
-	var files []os.FileInfo
+	var files []fs.FileInfo
 	for _, entry := range info {
 		if entry.IsDir() {
 			continue
 		}
+		finfo, err := entry.Info()
+		if err != nil {
+			return nil, err
+		}
 		if strings.HasSuffix(entry.Name(), "fasta") {
-			files = append(files, entry)
+			files = append(files, finfo)
 		}
 	}
 	return &dirSeqReader{fasFiles: files, idx: 0, dir: dir}, nil
@@ -64,7 +72,10 @@ func (seqr *dirSeqReader) Value() (*PlasmidSeq, error) {
 		if err := reader.Err(); err != nil {
 			return pseq, err
 		}
-		return pseq, fmt.Errorf("error in reading fasta entry from file %s", seqr.currFile)
+		return pseq, fmt.Errorf(
+			"error in reading fasta entry from file %s",
+			seqr.currFile,
+		)
 	}
 	pseq.Id = strings.Split(filepath.Base(seqr.currFile), ".")[0]
 	pseq.Seq = string(reader.NextEntry().Sequence)
