@@ -87,7 +87,7 @@ func processS3Object(
 	}
 
 	name, namespace := nameAndNamespace(sinfo.Key)
-	slug := Slugify(fmt.Sprintf("%s %s", name, namespace))
+	slug := Slugify(fmt.Sprintf("%s %s", namespace, name))
 
 	err = storeOrUpdateContent(
 		client,
