@@ -87,7 +87,7 @@ func processS3Object(
 	}
 
 	name, namespace := nameAndNamespace(sinfo.Key)
-	slug := Slugify(fmt.Sprintf("%s %s", name, namespace))
+	slug := Slugify(fmt.Sprintf("%s %s", namespace, name))
 
 	err = storeOrUpdateContent(
 		client,
@@ -205,6 +205,13 @@ func createStoreContent(
 	return nil
 }
 
+func namespaceMap() map[string]string {
+	return map[string]string{
+		"dfp": "frontpage",
+		"dsc": "stockcenter",
+	}
+}
+
 func nameAndNamespace(input string) (string, string) {
 	output := Fn.Pipe4(
 		strings.Split(input, "/"),
@@ -214,5 +221,6 @@ func nameAndNamespace(input string) (string, string) {
 		O.Map(func(val string) []string { return strings.Split(val, "-") }),
 	)
 	data, _ := O.Unwrap(output)
-	return data[1], data[0]
+	nsmap := namespaceMap()
+	return data[1], nsmap[data[0]]
 }
