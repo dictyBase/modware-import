@@ -19,10 +19,11 @@ type CreateFieldProperties struct {
 }
 
 type OntologyTableFieldsProperties struct {
-	Client  *client.APIClient
-	Ctx     context.Context
-	Logger  *logrus.Entry
-	TableId int
+	Client   *client.APIClient
+	Ctx      context.Context
+	Logger   *logrus.Entry
+	TableId  int
+	FieldMap map[string]client.Type712Enum
 }
 
 func MapFieldTypeToFn() map[client.Type712Enum]fieldFn {
@@ -66,11 +67,6 @@ func CreateOntologyTableFields(args *OntologyTableFieldsProperties) error {
 	logger := args.Logger
 	bclient := args.Client
 	authCtx := args.Ctx
-	fieldMap := map[string]client.Type712Enum{
-		"Name":        client.TEXT,
-		"Id":          client.TEXT,
-		"Is_obsolete": client.BOOLEAN,
-	}
 	tlist, resp, err := bclient.
 		DatabaseTableFieldsApi.
 		ListDatabaseTableFields(authCtx, int32(args.TableId)).
@@ -84,7 +80,7 @@ func CreateOntologyTableFields(args *OntologyTableFieldsProperties) error {
 		return nil
 	}
 	logger.Debug("need to create fields in the table")
-	for field, fieldType := range fieldMap {
+	for field, fieldType := range args.FieldMap {
 		err := CreateTableField(&CreateFieldProperties{
 			Client:    bclient,
 			Ctx:       authCtx,

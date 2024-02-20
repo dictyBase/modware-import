@@ -43,7 +43,10 @@ func CreateDatabaseToken(cltx *cli.Context) error {
 	idx := slices.Index(wnames, cltx.String("workspace"))
 	if idx == -1 {
 		return cli.Exit(
-			fmt.Errorf("workspace %s cannot be found", cltx.String("workspace")),
+			fmt.Errorf(
+				"workspace %s cannot be found",
+				cltx.String("workspace"),
+			),
 			2,
 		)
 	}
@@ -85,12 +88,18 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		client.ContextDatabaseToken,
 		cltx.String("token"),
 	)
+	fields := map[string]client.Type712Enum{
+		"Name":        client.TEXT,
+		"Id":          client.TEXT,
+		"Is_obsolete": client.BOOLEAN,
+	}
 	err := database.CreateOntologyTableFields(
 		&database.OntologyTableFieldsProperties{
-			Client:  bclient,
-			Logger:  logger,
-			Ctx:     authCtx,
-			TableId: cltx.Int("table-id"),
+			Client:   bclient,
+			Logger:   logger,
+			Ctx:      authCtx,
+			FieldMap: fields,
+			TableId:  cltx.Int("table-id"),
 		},
 	)
 	if err != nil {
