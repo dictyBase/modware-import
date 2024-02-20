@@ -38,7 +38,7 @@ func MapFieldTypeToFn() map[client.Type712Enum]fieldFn {
 	return fieldFnMap
 }
 
-func createFields(args *CreateFieldProperties) error {
+func CreateTableField(args *CreateFieldProperties) error {
 	mapper := MapFieldTypeToFn()
 	if _, ok := mapper[args.FieldType]; !ok {
 		return fmt.Errorf("cannot find field type %s", args.FieldType)
@@ -56,13 +56,13 @@ func createFields(args *CreateFieldProperties) error {
 	return nil
 }
 
-func LoadOntologyToTable(c *cli.Context) error {
+func LoadOntologyToTable(cltx *cli.Context) error {
 	logger := registry.GetLogger()
-	bclient := baserowClient(c.String("server"))
+	bclient := baserowClient(cltx.String("server"))
 	authCtx := context.WithValue(
 		context.Background(),
 		client.ContextDatabaseToken,
-		c.String("token"),
+		cltx.String("token"),
 	)
 	fieldMap := map[string]client.Type712Enum{
 		"Name":        client.TEXT,
@@ -71,7 +71,7 @@ func LoadOntologyToTable(c *cli.Context) error {
 	}
 	tlist, resp, err := bclient.
 		DatabaseTableFieldsApi.
-		ListDatabaseTableFields(authCtx, int32(c.Int("table-id"))).
+		ListDatabaseTableFields(authCtx, int32(cltx.Int("table-id"))).
 		Execute()
 	if err != nil {
 		return cli.Exit(
@@ -86,10 +86,10 @@ func LoadOntologyToTable(c *cli.Context) error {
 	}
 	logger.Debug("need to create fields in the table")
 	for field, fieldType := range fieldMap {
-		err := createFields(&CreateFieldProperties{
+		err := CreateTableField(&CreateFieldProperties{
 			Client:    bclient,
 			Ctx:       authCtx,
-			TableId:   c.Int("table-id"),
+			TableId:   cltx.Int("table-id"),
 			Field:     field,
 			FieldType: fieldType,
 		})
