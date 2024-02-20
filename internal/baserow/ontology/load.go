@@ -1,9 +1,45 @@
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"github.com/dictyBase/go-obograph/graph"
+	"github.com/dictyBase/modware-import/internal/baserow/client"
 )
+func addTermRow(args *addTermRowProperties) error {
+	term := args.Term
+	payload := map[string]interface{}{
+		"Id":          term.ID(),
+		"Name":        term.Label(),
+		"Is_obsolete": termStatus(term),
+	}
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("error in encoding body %s", err)
+	}
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf(
+			"%s/api/database/rows/table/%d/?user_field_names=true",
+			args.Host,
+			args.TableId,
+		),
+		bytes.NewBuffer(jsonData),
+	)
+	if err != nil {
+		return fmt.Errorf("error in creating request %s ", err)
+	}
+	commonHeader(req, args.Token)
+	res, err := reqToResponse(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return nil
+}
+
 func reqToResponse(creq *http.Request) (*http.Response, error) {
 	client := &http.Client{}
 	uresp, err := client.Do(creq)
