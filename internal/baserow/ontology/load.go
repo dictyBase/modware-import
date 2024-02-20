@@ -1,12 +1,62 @@
+package ontology
+
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+
 	"github.com/dictyBase/go-obograph/graph"
 	"github.com/dictyBase/modware-import/internal/baserow/client"
+	"github.com/sirupsen/logrus"
 )
+
+type LoadProperties struct {
+	File    string
+	TableId int
+	Token   string
+	Client  *client.APIClient
+	Logger  *logrus.Entry
+}
+
+type addTermRowProperties struct {
+	Term    graph.Term
+	Host    string
+	Token   string
+	TableId int
+}
+
+func LoadNew(args *LoadProperties) error {
+	rdr, err := os.Open(args.File)
+	if err != nil {
+		return fmt.Errorf("error in opening file %s %s", args.File, err)
+	}
+	defer rdr.Close()
+	grph, err := graph.BuildGraph(rdr)
+	if err != nil {
+		return fmt.Errorf(
+			"error in building graph from file %s %s",
+			args.File,
+			err,
+		)
+	}
+	for _, term := range grph.Terms() {
+		err := addTermRow(&addTermRowProperties{
+			Term:    term,
+			Host:    args.Client.GetConfig().Host,
+			Token:   args.Token,
+			TableId: args.TableId,
+		})
+		if err != nil {
+			return err
+		}
+		args.Logger.Infof("add row with id %s", term.ID())
+	}
+	return nil
+}
+
 func addTermRow(args *addTermRowProperties) error {
 	term := args.Term
 	payload := map[string]interface{}{
