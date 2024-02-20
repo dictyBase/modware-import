@@ -2,6 +2,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"github.com/dictyBase/go-obograph/graph"
 )
 func reqToResponse(creq *http.Request) (*http.Response, error) {
 	client := &http.Client{}
@@ -31,4 +32,11 @@ func commonHeader(lreq *http.Request, token string) {
 	lreq.Header.Set("Content-Type", "application/json")
 	lreq.Header.Set("Accept", "application/json")
 	lreq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+}
+
+func termStatus(term graph.Term) string {
+	if term.IsDeprecated() {
+		return "true"
+	}
+	return "false"
 }
