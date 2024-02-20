@@ -50,6 +50,12 @@ func LoadOntologyToTableFlag() []cli.Flag {
 			Usage:    "Database table id",
 			Required: true,
 		},
+		&cli.StringFlag{
+			Name:     "input",
+			Aliases:  []string{"i"},
+			Usage:    "input json formatted ontology file",
+			Required: true,
+		},
 	}
 }
 
