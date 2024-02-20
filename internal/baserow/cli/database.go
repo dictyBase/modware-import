@@ -110,38 +110,3 @@ func CreateDatabaseToken(c *cli.Context) error {
 	fmt.Printf("database token %s\n", tok.GetKey())
 	return nil
 }
-
-func CreateDatabaseTokenFlag() []cli.Flag {
-	aflags := CreateAccessTokenFlag()
-	return append(aflags, []cli.Flag{
-		&cli.StringFlag{
-			Name:     "workspace",
-			Aliases:  []string{"w"},
-			Usage:    "Only tables under this workspaces can be accessed",
-			Required: true,
-		},
-		&cli.StringFlag{
-			Name:     "name",
-			Aliases:  []string{"n"},
-			Usage:    "token name",
-			Required: true,
-		},
-	}...)
-}
-
-func CreateAccessTokenFlag() []cli.Flag {
-	return []cli.Flag{
-		&cli.StringFlag{
-			Name:     "email",
-			Aliases:  []string{"e"},
-			Usage:    "Email of the user",
-			Required: true,
-		},
-		&cli.StringFlag{
-			Name:     "password",
-			Aliases:  []string{"p"},
-			Usage:    "Database password",
-			Required: true,
-		},
-	}
-}
