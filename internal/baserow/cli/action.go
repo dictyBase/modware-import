@@ -3,9 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/dictyBase/go-obograph/graph"
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/dictyBase/modware-import/internal/collection"
@@ -84,10 +82,6 @@ func CreateAccessToken(cltx *cli.Context) error {
 
 func LoadOntologyToTable(cltx *cli.Context) error {
 	logger := registry.GetLogger()
-	oboGraph, err := loadOntology(cltx.String("input"))
-	if err != nil {
-		return cli.Exit(err.Error(), 2)
-	}
 	bclient := database.BaserowClient(cltx.String("server"))
 	authCtx := context.WithValue(
 		context.Background(),
@@ -99,7 +93,7 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		"Id":          client.TEXT,
 		"Is_obsolete": client.BOOLEAN,
 	}
-	err = database.CreateOntologyTableFields(
+	err := database.CreateOntologyTableFields(
 		&database.OntologyTableFieldsProperties{
 			Client:   bclient,
 			Logger:   logger,
@@ -136,20 +130,4 @@ func CreateTable(cltx *cli.Context) error {
 	defer resp.Body.Close()
 	logger.Infof("created table %s", tbl.GetName())
 	return nil
-}
-
-func loadOntology(name string) (graph.OboGraph, error) {
-	rdr, err := os.Open(name)
-	if err != nil {
-		return nil, fmt.Errorf("error in opening file %s %s", name, err)
-	}
-	grph, err := graph.BuildGraph(rdr)
-	if err != nil {
-		return grph, fmt.Errorf(
-			"error in building graph from file %s %s",
-			name,
-			err,
-		)
-	}
-	return grph, nil
 }
