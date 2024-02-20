@@ -12,16 +12,16 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func CreateDatabaseToken(c *cli.Context) error {
+func CreateDatabaseToken(cltx *cli.Context) error {
 	atoken, err := database.AccessToken(&database.AccessTokenProperties{
-		Email:    c.String("email"),
-		Password: c.String("password"),
-		Server:   c.String("server"),
+		Email:    cltx.String("email"),
+		Password: cltx.String("password"),
+		Server:   cltx.String("server"),
 	})
 	if err != nil {
 		return cli.Exit(fmt.Errorf("error in creating access token %s", err), 2)
 	}
-	bclient := database.BaserowClient(c.String("server"))
+	bclient := database.BaserowClient(cltx.String("server"))
 	authCtx := context.WithValue(
 		context.Background(),
 		client.ContextAccessToken,
@@ -40,16 +40,16 @@ func CreateDatabaseToken(c *cli.Context) error {
 		wlist,
 		func(w client.WorkspaceUserWorkspace) string { return w.GetName() },
 	)
-	idx := slices.Index(wnames, c.String("workspace"))
+	idx := slices.Index(wnames, cltx.String("workspace"))
 	if idx == -1 {
 		return cli.Exit(
-			fmt.Errorf("workspace %s cannot be found", c.String("workspace")),
+			fmt.Errorf("workspace %s cannot be found", cltx.String("workspace")),
 			2,
 		)
 	}
 	tok, r, err := bclient.DatabaseTokensApi.CreateDatabaseToken(authCtx).
 		TokenCreate(client.TokenCreate{
-			Name:      c.String("name"),
+			Name:      cltx.String("name"),
 			Workspace: wlist[idx].GetId(),
 		}).
 		Execute()
@@ -64,11 +64,11 @@ func CreateDatabaseToken(c *cli.Context) error {
 	return nil
 }
 
-func CreateAccessToken(c *cli.Context) error {
+func CreateAccessToken(cltx *cli.Context) error {
 	token, err := database.AccessToken(&database.AccessTokenProperties{
-		Email:    c.String("email"),
-		Password: c.String("password"),
-		Server:   c.String("server"),
+		Email:    cltx.String("email"),
+		Password: cltx.String("password"),
+		Server:   cltx.String("server"),
 	})
 	if err != nil {
 		return cli.Exit(err, 2)
@@ -100,18 +100,18 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 	return nil
 }
 
-func CreateTable(c *cli.Context) error {
+func CreateTable(cltx *cli.Context) error {
 	logger := registry.GetLogger()
-	bclient := database.BaserowClient(c.String("server"))
+	bclient := database.BaserowClient(cltx.String("server"))
 	authCtx := context.WithValue(
 		context.Background(),
 		client.ContextAccessToken,
-		c.String("token"),
+		cltx.String("token"),
 	)
 	tbl, resp, err := bclient.
 		DatabaseTablesApi.
-		CreateDatabaseTable(authCtx, int32(c.Int("database-id"))).
-		TableCreate(client.TableCreate{Name: c.String("table")}).
+		CreateDatabaseTable(authCtx, int32(cltx.Int("database-id"))).
+		TableCreate(client.TableCreate{Name: cltx.String("table")}).
 		Execute()
 	if err != nil {
 		return cli.Exit(
