@@ -6,6 +6,7 @@ import (
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/registry"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -17,6 +18,13 @@ type CreateFieldProperties struct {
 	TableId   int
 	Field     string
 	FieldType client.Type712Enum
+}
+
+type OntologyTableFieldsProperties struct {
+	Client  *client.APIClient
+	Ctx     context.Context
+	Logger  *logrus.Entry
+	TableId int
 }
 
 func MapFieldTypeToFn() map[client.Type712Enum]fieldFn {
@@ -56,14 +64,10 @@ func CreateTableField(args *CreateFieldProperties) error {
 	return nil
 }
 
-func LoadOntologyToTable(cltx *cli.Context) error {
-	logger := registry.GetLogger()
-	bclient := baserowClient(cltx.String("server"))
-	authCtx := context.WithValue(
-		context.Background(),
-		client.ContextDatabaseToken,
-		cltx.String("token"),
-	)
+func CreateOntologyTableFields(args *OntologyTableFieldsProperties) error {
+	logger := args.Logger
+	bclient := args.Client
+	authCtx := args.Ctx
 	fieldMap := map[string]client.Type712Enum{
 		"Name":        client.TEXT,
 		"Id":          client.TEXT,
@@ -71,13 +75,10 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 	}
 	tlist, resp, err := bclient.
 		DatabaseTableFieldsApi.
-		ListDatabaseTableFields(authCtx, int32(cltx.Int("table-id"))).
+		ListDatabaseTableFields(authCtx, int32(args.TableId)).
 		Execute()
 	if err != nil {
-		return cli.Exit(
-			fmt.Sprintf("error in getting list of table fields %s", err),
-			2,
-		)
+		return fmt.Errorf("error in getting list of table fields %s", err)
 	}
 	defer resp.Body.Close()
 	if len(tlist) != 0 {
@@ -89,14 +90,35 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		err := CreateTableField(&CreateFieldProperties{
 			Client:    bclient,
 			Ctx:       authCtx,
-			TableId:   cltx.Int("table-id"),
+			TableId:   args.TableId,
 			Field:     field,
 			FieldType: fieldType,
 		})
 		if err != nil {
-			return cli.Exit(err.Error(), 2)
+			return err
 		}
 		logger.Infof("created field %s", field)
+	}
+
+	return nil
+}
+
+func LoadOntologyToTable(cltx *cli.Context) error {
+	logger := registry.GetLogger()
+	bclient := baserowClient(cltx.String("server"))
+	authCtx := context.WithValue(
+		context.Background(),
+		client.ContextDatabaseToken,
+		cltx.String("token"),
+	)
+	err := CreateOntologyTableFields(&OntologyTableFieldsProperties{
+		Client:  bclient,
+		Logger:  logger,
+		Ctx:     authCtx,
+		TableId: cltx.Int("table-id"),
+	})
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
 	}
 
 	return nil
