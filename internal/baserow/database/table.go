@@ -1,13 +1,11 @@
-package cli
+package database
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
-	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
 )
 
 type fieldFn func(string) client.FieldCreateField
@@ -100,49 +98,5 @@ func CreateOntologyTableFields(args *OntologyTableFieldsProperties) error {
 		logger.Infof("created field %s", field)
 	}
 
-	return nil
-}
-
-func LoadOntologyToTable(cltx *cli.Context) error {
-	logger := registry.GetLogger()
-	bclient := baserowClient(cltx.String("server"))
-	authCtx := context.WithValue(
-		context.Background(),
-		client.ContextDatabaseToken,
-		cltx.String("token"),
-	)
-	err := CreateOntologyTableFields(&OntologyTableFieldsProperties{
-		Client:  bclient,
-		Logger:  logger,
-		Ctx:     authCtx,
-		TableId: cltx.Int("table-id"),
-	})
-	if err != nil {
-		return cli.Exit(err.Error(), 2)
-	}
-
-	return nil
-}
-
-func CreateTable(c *cli.Context) error {
-	logger := registry.GetLogger()
-	bclient := baserowClient(c.String("server"))
-	authCtx := context.WithValue(
-		context.Background(),
-		client.ContextAccessToken,
-		c.String("token"),
-	)
-	tbl, resp, err := bclient.
-		DatabaseTablesApi.
-		CreateDatabaseTable(authCtx, int32(c.Int("database-id"))).
-		TableCreate(client.TableCreate{Name: c.String("table")}).
-		Execute()
-	if err != nil {
-		return cli.Exit(
-			fmt.Errorf("error in creating table %s", err), 2,
-		)
-	}
-	defer resp.Body.Close()
-	logger.Infof("created table %s", tbl.GetName())
 	return nil
 }
