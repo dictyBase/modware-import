@@ -2,7 +2,6 @@ package ontology
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,18 +21,13 @@ type LoadProperties struct {
 	Logger  *logrus.Entry
 }
 
-type addTermRowProperties struct {
+type termRowProperties struct {
 	Term    graph.Term
 	Host    string
 	Token   string
 	TableId int
 }
 
-type existTermRowProperties struct {
-	Term    graph.Term
-	TableId int
-	Client  *client.APIClient
-	Ctx     context.Context
 }
 
 func LoadNew(args *LoadProperties) error {
@@ -84,12 +78,40 @@ func existTermRow(args *existTermRowProperties) (bool, error) {
 	defer resp.Body.Close()
 	if rows.Count > 0 {
 		ok = true
+func updateTermRow(args *updateTermRowProperties) error {
+	term := args.Term
+	payload := map[string]interface{}{
+		"Name":        term.Label(),
+		"Is_obsolete": termStatus(term),
 	}
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("error in encoding body %s", err)
+	}
+	req, err := http.NewRequest(
+		"PATCH",
+		fmt.Sprintf(
+			"%s/api/database/rows/table/%d/%d/?user_field_names=true",
+			args.Host,
+			args.TableId,
+			args.RowId,
+		),
+		bytes.NewBuffer(jsonData),
+	)
+	if err != nil {
+		return fmt.Errorf("error in creating requst %s", err)
+	}
+	commonHeader(req, args.Token)
+	res, err := reqToResponse(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
 
-	return ok, nil
+	return nil
 }
 
-func addTermRow(args *addTermRowProperties) error {
+func existTermRow(args *termRowProperties) (*exisTermRowResp, error) {
 	term := args.Term
 	payload := map[string]interface{}{
 		"Id":          term.ID(),
