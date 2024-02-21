@@ -28,9 +28,32 @@ type termRowProperties struct {
 	TableId int
 }
 
+type updateTermRowProperties struct {
+	*termRowProperties
+	RowId int32
 }
 
 func LoadNew(args *LoadProperties) error {
+type exisTermRowResp struct {
+	Exist        bool
+	IsDeprecated bool
+	RowId        int32
+}
+
+type ontologyRow struct {
+	Id         int32    `json:"id"`
+	Order      *float64 `json:"order,omitempty"`
+	TermId     string   `json:"Id"`
+	IsObsolete bool     `json:"Is_obsolete"`
+}
+
+type ontologyListRows struct {
+	Count    int32                 `json:"count"`
+	Next     client.NullableString `json:"next"`
+	Previous client.NullableString `json:"previous"`
+	Results  []*ontologyRow        `json:"results"`
+}
+
 	rdr, err := os.Open(args.File)
 	if err != nil {
 		return fmt.Errorf("error in opening file %s %s", args.File, err)
@@ -112,6 +135,38 @@ func updateTermRow(args *updateTermRowProperties) error {
 }
 
 func existTermRow(args *termRowProperties) (*exisTermRowResp, error) {
+	term := string(args.Term.ID())
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"%s/api/database/rows/table/%d/?user_field_names=true&size=1&search=%s",
+			args.Host,
+			args.TableId,
+			term,
+		), nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error in creating requst %s", err)
+	}
+	commonHeader(req, args.Token)
+	res, err := reqToResponse(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	rowsResp := &ontologyListRows{}
+	if err := json.NewDecoder(res.Body).Decode(rowsResp); err != nil {
+		return nil, fmt.Errorf("error in decoding json response %s", err)
+	}
+	existResp := &exisTermRowResp{Exist: false}
+	if rowsResp.Count > 0 {
+		existResp.Exist = true
+		existResp.IsDeprecated = rowsResp.Results[0].IsObsolete
+		existResp.RowId = rowsResp.Results[0].Id
+	}
+	return existResp, nil
+}
+
 	term := args.Term
 	payload := map[string]interface{}{
 		"Id":          term.ID(),
