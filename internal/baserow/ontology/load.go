@@ -2,6 +2,7 @@ package ontology
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,6 +27,13 @@ type addTermRowProperties struct {
 	Host    string
 	Token   string
 	TableId int
+}
+
+type existTermRowProperties struct {
+	Term    graph.Term
+	TableId int
+	Client  *client.APIClient
+	Ctx     context.Context
 }
 
 func LoadNew(args *LoadProperties) error {
@@ -55,6 +63,30 @@ func LoadNew(args *LoadProperties) error {
 		args.Logger.Infof("add row with id %s", term.ID())
 	}
 	return nil
+}
+
+func existTermRow(args *existTermRowProperties) (bool, error) {
+	ok := false
+	term := args.Term
+	rows, resp, err := args.Client.DatabaseTableRowsApi.
+		ListDatabaseTableRows(args.Ctx, int32(args.TableId)).
+		Size(1).
+		UserFieldNames(true).
+		Search(string(term.ID())).
+		Execute()
+	if err != nil {
+		return ok, fmt.Errorf(
+			"error in checking presence of term %s %s",
+			string(term.ID()),
+			err,
+		)
+	}
+	defer resp.Body.Close()
+	if rows.Count > 0 {
+		ok = true
+	}
+
+	return ok, nil
 }
 
 func addTermRow(args *addTermRowProperties) error {
