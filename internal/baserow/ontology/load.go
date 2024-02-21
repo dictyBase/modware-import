@@ -68,7 +68,36 @@ func LoadNewOrUpdate(args *LoadProperties) error {
 		)
 	}
 	for _, term := range grph.Terms() {
-		err := addTermRow(&termRowProperties{
+		existResp, err := existTermRow(&termRowProperties{
+			Term:    term,
+			Host:    args.Client.GetConfig().Host,
+			Token:   args.Token,
+			TableId: args.TableId,
+		})
+		if err != nil {
+			return err
+		}
+		if existResp.Exist {
+			if existResp.IsDeprecated == term.IsDeprecated() {
+				args.Logger.Debugf("term %s has no change", string(term.ID()))
+				continue
+			}
+			err = updateTermRow(&updateTermRowProperties{
+				RowId: existResp.RowId,
+				termRowProperties: &termRowProperties{
+					Term:    term,
+					Host:    args.Client.GetConfig().Host,
+					Token:   args.Token,
+					TableId: args.TableId,
+				},
+			})
+			if err != nil {
+				return err
+			}
+			args.Logger.Infof("updated row with term %s", string(term.ID()))
+			continue
+		}
+		err = addTermRow(&termRowProperties{
 			Term:    term,
 			Host:    args.Client.GetConfig().Host,
 			Token:   args.Token,
