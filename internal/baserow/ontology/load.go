@@ -112,10 +112,8 @@ func LoadNew(args *LoadProperties) error {
 }
 
 func updateTermRow(args *updateTermRowProperties) error {
-	term := args.Term
 	payload := map[string]interface{}{
-		"Name":        term.Label(),
-		"Is_obsolete": termStatus(term),
+		"Is_obsolete": termStatus(args.Term),
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
