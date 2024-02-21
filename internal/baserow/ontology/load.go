@@ -82,15 +82,6 @@ type ontologyListRows struct {
 	return nil
 }
 
-func existTermRow(args *existTermRowProperties) (bool, error) {
-	ok := false
-	term := args.Term
-	rows, resp, err := args.Client.DatabaseTableRowsApi.
-		ListDatabaseTableRows(args.Ctx, int32(args.TableId)).
-		Size(1).
-		UserFieldNames(true).
-		Search(string(term.ID())).
-		Execute()
 	if err != nil {
 		return ok, fmt.Errorf(
 			"error in checking presence of term %s %s",
@@ -167,9 +158,10 @@ func existTermRow(args *termRowProperties) (*exisTermRowResp, error) {
 	return existResp, nil
 }
 
+func addTermRow(args *termRowProperties) error {
 	term := args.Term
 	payload := map[string]interface{}{
-		"Id":          term.ID(),
+		"Id":          string(term.ID()),
 		"Name":        term.Label(),
 		"Is_obsolete": termStatus(term),
 	}
