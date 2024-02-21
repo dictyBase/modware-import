@@ -63,23 +63,27 @@ func CreateTableField(args *CreateFieldProperties) error {
 	return nil
 }
 
-func CreateOntologyTableFields(args *OntologyTableFieldsProperties) error {
+func CreateOntologyTableFields(
+	args *OntologyTableFieldsProperties,
+) (bool, error) {
 	logger := args.Logger
 	bclient := args.Client
 	authCtx := args.Ctx
+	ok := false
 	tlist, resp, err := bclient.
 		DatabaseTableFieldsApi.
 		ListDatabaseTableFields(authCtx, int32(args.TableId)).
 		Execute()
 	if err != nil {
-		return fmt.Errorf("error in getting list of table fields %s", err)
+		return ok, fmt.Errorf("error in getting list of table fields %s", err)
 	}
 	defer resp.Body.Close()
 	if len(tlist) != 0 {
 		logger.Debug("fields exists in the database table")
-		return nil
+		return ok, nil
 	}
 	logger.Debug("need to create fields in the table")
+	ok = true
 	for field, fieldType := range args.FieldMap {
 		err := CreateTableField(&CreateFieldProperties{
 			Client:    bclient,
@@ -89,10 +93,10 @@ func CreateOntologyTableFields(args *OntologyTableFieldsProperties) error {
 			FieldType: fieldType,
 		})
 		if err != nil {
-			return err
+			return ok, err
 		}
 		logger.Infof("created field %s", field)
 	}
 
-	return nil
+	return ok, nil
 }
