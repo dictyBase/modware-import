@@ -6,6 +6,7 @@ import (
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
+	"github.com/dictyBase/modware-import/internal/baserow/ontology"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
@@ -93,7 +94,7 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		"Id":          client.TEXT,
 		"Is_obsolete": client.BOOLEAN,
 	}
-	err := database.CreateOntologyTableFields(
+	ok, err := database.CreateOntologyTableFields(
 		&database.OntologyTableFieldsProperties{
 			Client:   bclient,
 			Logger:   logger,
@@ -103,6 +104,22 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		},
 	)
 	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+	props := &ontology.LoadProperties{
+		File:    cltx.String("input"),
+		TableId: cltx.Int("table-id"),
+		Token:   cltx.String("token"),
+		Client:  bclient,
+		Logger:  logger,
+	}
+	if ok {
+		if err := ontology.LoadNewOrUpdate(props); err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+		return nil
+	}
+	if err := ontology.LoadNew(props); err != nil {
 		return cli.Exit(err.Error(), 2)
 	}
 
