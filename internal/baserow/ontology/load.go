@@ -33,7 +33,6 @@ type updateTermRowProperties struct {
 	RowId int32
 }
 
-func LoadNew(args *LoadProperties) error {
 type exisTermRowResp struct {
 	Exist        bool
 	IsDeprecated bool
@@ -54,6 +53,7 @@ type ontologyListRows struct {
 	Results  []*ontologyRow        `json:"results"`
 }
 
+func LoadNewOrUpdate(args *LoadProperties) error {
 	rdr, err := os.Open(args.File)
 	if err != nil {
 		return fmt.Errorf("error in opening file %s %s", args.File, err)
@@ -68,7 +68,7 @@ type ontologyListRows struct {
 		)
 	}
 	for _, term := range grph.Terms() {
-		err := addTermRow(&addTermRowProperties{
+		err := addTermRow(&termRowProperties{
 			Term:    term,
 			Host:    args.Client.GetConfig().Host,
 			Token:   args.Token,
@@ -82,16 +82,35 @@ type ontologyListRows struct {
 	return nil
 }
 
+func LoadNew(args *LoadProperties) error {
+	rdr, err := os.Open(args.File)
 	if err != nil {
-		return ok, fmt.Errorf(
-			"error in checking presence of term %s %s",
-			string(term.ID()),
+		return fmt.Errorf("error in opening file %s %s", args.File, err)
+	}
+	defer rdr.Close()
+	grph, err := graph.BuildGraph(rdr)
+	if err != nil {
+		return fmt.Errorf(
+			"error in building graph from file %s %s",
+			args.File,
 			err,
 		)
 	}
-	defer resp.Body.Close()
-	if rows.Count > 0 {
-		ok = true
+	for _, term := range grph.Terms() {
+		err := addTermRow(&termRowProperties{
+			Term:    term,
+			Host:    args.Client.GetConfig().Host,
+			Token:   args.Token,
+			TableId: args.TableId,
+		})
+		if err != nil {
+			return err
+		}
+		args.Logger.Infof("add row with id %s", term.ID())
+	}
+	return nil
+}
+
 func updateTermRow(args *updateTermRowProperties) error {
 	term := args.Term
 	payload := map[string]interface{}{
