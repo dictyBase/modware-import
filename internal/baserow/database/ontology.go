@@ -48,14 +48,13 @@ func (ont *OntologyTableManager) CreateFields(tbl *client.Table) error {
 }
 
 func (ont *OntologyTableManager) CheckAllTableFields(
-	tableId int32,
-	fields []string,
+	tbl *client.Table,
 ) (bool, error) {
 	ok := false
 	reqURL := fmt.Sprintf(
 		"https://%s/api/database/fields/table/%d/",
 		ont.Client.GetConfig().Host,
-		tableId,
+		tbl.GetId(),
 	)
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
@@ -75,7 +74,7 @@ func (ont *OntologyTableManager) CheckAllTableFields(
 		existing,
 		func(input tableFieldsResponse) string { return input.Name },
 	)
-	for _, fld := range fields {
+	for _, fld := range FieldNames() {
 		if num := slices.Index(exFields, fld); num == -1 {
 			return ok, nil
 		}
