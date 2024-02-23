@@ -96,11 +96,10 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		Ctx:        authCtx,
 		DatabaseId: int32(cltx.Int("database-id")),
 	}
-	fields := make([]string, 0)
-	for key := range database.TableFieldMap() {
-		fields = append(fields, key)
-	}
-	ok, err := ontTbl.CheckAllTableFields(int32(cltx.Int("table-id")), fields)
+	ok, err := ontTbl.CheckAllTableFields(
+		int32(cltx.Int("table-id")),
+		database.FieldNames(),
+	)
 	if err != nil {
 		return cli.Exit(err.Error(), 2)
 	}
