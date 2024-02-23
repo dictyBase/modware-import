@@ -40,10 +40,10 @@ type exisTermRowResp struct {
 }
 
 type ontologyRow struct {
-	Id         int32    `json:"id"`
-	Order      *float64 `json:"order,omitempty"`
-	TermId     string   `json:"Id"`
-	IsObsolete bool     `json:"Is_obsolete"`
+	Id         int32  `json:"id"`
+	TermId     string `json:"term_id"`
+	Name       string `json:"name"`
+	IsObsolete bool   `json:"is_obsolete"`
 }
 
 type ontologyListRows struct {
