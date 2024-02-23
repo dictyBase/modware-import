@@ -91,15 +91,16 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		cltx.String("token"),
 	)
 	ontTbl := &database.OntologyTableManager{
-		Client:     bclient,
-		Logger:     logger,
-		Ctx:        authCtx,
-		Token:      cltx.String("token"),
-		DatabaseId: int32(cltx.Int("database-id")),
+		TableManager: &database.TableManager{
+			Client:     bclient,
+			Logger:     logger,
+			Ctx:        authCtx,
+			Token:      cltx.String("token"),
+			DatabaseId: int32(cltx.Int("database-id")),
+		},
 	}
 	ok, err := ontTbl.CheckAllTableFields(
-		int32(cltx.Int("table-id")),
-		database.FieldNames(),
+		&client.Table{Id: int32(cltx.Int("table-id"))},
 	)
 	if err != nil {
 		return cli.Exit(err.Error(), 2)
@@ -130,11 +131,13 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 		cltx.String("token"),
 	)
 	ontTbl := &database.OntologyTableManager{
-		Client:     bclient,
-		Logger:     logger,
-		Ctx:        authCtx,
-		Token:      cltx.String("token"),
-		DatabaseId: int32(cltx.Int("database-id")),
+		TableManager: &database.TableManager{
+			Client:     bclient,
+			Logger:     logger,
+			Ctx:        authCtx,
+			Token:      cltx.String("token"),
+			DatabaseId: int32(cltx.Int("database-id")),
+		},
 	}
 	tbl, err := ontTbl.CreateTable(cltx.String("table"))
 	if err != nil {
