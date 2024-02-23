@@ -59,7 +59,7 @@ func LoadOntologyToTableFlag() []cli.Flag {
 	}
 }
 
-func CreateTableFlag() []cli.Flag {
+func CreateOntologyTableFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:     "token",
@@ -74,7 +74,7 @@ func CreateTableFlag() []cli.Flag {
 		},
 		&cli.StringFlag{
 			Name:     "table",
-			Usage:    "Database table",
+			Usage:    "Ontology table name",
 			Required: true,
 		},
 	}
