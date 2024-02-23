@@ -51,17 +51,7 @@ func (ont *OntologyTableManager) CheckAllTableFields(
 	tbl *client.Table,
 ) (bool, error) {
 	ok := false
-	reqURL := fmt.Sprintf(
-		"https://%s/api/database/fields/table/%d/",
-		ont.Client.GetConfig().Host,
-		tbl.GetId(),
-	)
-	req, err := http.NewRequest("GET", reqURL, nil)
-	if err != nil {
-		return ok, fmt.Errorf("error in creating request %s ", err)
-	}
-	httpapi.CommonHeader(req, ont.Token, "Token")
-	res, err := httpapi.ReqToResponse(req)
+	res, err := ont.TableFieldsResp(tbl)
 	if err != nil {
 		return ok, err
 	}
