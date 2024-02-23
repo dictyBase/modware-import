@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"slices"
+
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/dictyBase/modware-import/internal/baserow/ontology"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/exp/slices"
 )
 
 func CreateDatabaseToken(cltx *cli.Context) error {
@@ -89,22 +90,22 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		client.ContextDatabaseToken,
 		cltx.String("token"),
 	)
-	fields := map[string]client.Type712Enum{
-		"Name":        client.TEXT,
-		"Id":          client.TEXT,
-		"Is_obsolete": client.BOOLEAN,
+	ontTbl := &database.OntologyTableManager{
+		Client:     bclient,
+		Logger:     logger,
+		Ctx:        authCtx,
+		DatabaseId: int32(cltx.Int("database-id")),
 	}
-	ok, err := database.CreateOntologyTableFields(
-		&database.OntologyTableFieldsProperties{
-			Client:   bclient,
-			Logger:   logger,
-			Ctx:      authCtx,
-			FieldMap: fields,
-			TableId:  cltx.Int("table-id"),
-		},
-	)
+	fields := make([]string, 0)
+	for key := range database.TableFieldMap() {
+		fields = append(fields, key)
+	}
+	ok, err := ontTbl.CheckAllTableFields(int32(cltx.Int("table-id")), fields)
 	if err != nil {
 		return cli.Exit(err.Error(), 2)
+	}
+	if !ok {
+		return cli.Exit("table %s does not have the required fields", 2)
 	}
 	props := &ontology.LoadProperties{
 		File:    cltx.String("input"),
@@ -113,20 +114,14 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		Client:  bclient,
 		Logger:  logger,
 	}
-	if ok {
-		if err := ontology.LoadNewOrUpdate(props); err != nil {
-			return cli.Exit(err.Error(), 2)
-		}
-		return nil
-	}
-	if err := ontology.LoadNew(props); err != nil {
+	if err := ontology.LoadNewOrUpdate(props); err != nil {
 		return cli.Exit(err.Error(), 2)
 	}
 
 	return nil
 }
 
-func CreateTable(cltx *cli.Context) error {
+func CreateOntologyTableHandler(cltx *cli.Context) error {
 	logger := registry.GetLogger()
 	bclient := database.BaserowClient(cltx.String("server"))
 	authCtx := context.WithValue(
@@ -134,17 +129,22 @@ func CreateTable(cltx *cli.Context) error {
 		client.ContextAccessToken,
 		cltx.String("token"),
 	)
-	tbl, resp, err := bclient.
-		DatabaseTablesApi.
-		CreateDatabaseTable(authCtx, int32(cltx.Int("database-id"))).
-		TableCreate(client.TableCreate{Name: cltx.String("table")}).
-		Execute()
-	if err != nil {
-		return cli.Exit(
-			fmt.Errorf("error in creating table %s", err), 2,
-		)
+	ontTbl := &database.OntologyTableManager{
+		Client:     bclient,
+		Logger:     logger,
+		Ctx:        authCtx,
+		DatabaseId: int32(cltx.Int("database-id")),
+		Token: cltx.String("token"),
 	}
-	defer resp.Body.Close()
+	tbl, err := ontTbl.CreateTable(cltx.String("table"))
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
 	logger.Infof("created table %s", tbl.GetName())
+	if err := ontTbl.CreateFields(tbl); err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+	logger.Infof("created all fields in the ontology table %s", tbl.GetName())
+
 	return nil
 }
