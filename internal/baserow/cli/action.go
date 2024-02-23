@@ -94,6 +94,7 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		Client:     bclient,
 		Logger:     logger,
 		Ctx:        authCtx,
+		Token:      cltx.String("token"),
 		DatabaseId: int32(cltx.Int("database-id")),
 	}
 	ok, err := ontTbl.CheckAllTableFields(
