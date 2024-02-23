@@ -10,6 +10,7 @@ import (
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
+	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,6 +20,10 @@ type OntologyTableManager struct {
 	Ctx        context.Context
 	Token      string
 	DatabaseId int32
+}
+
+type tableFieldsResponse struct {
+	Name string `json:"name"`
 }
 
 func (ont *OntologyTableManager) CreateTable(
@@ -47,24 +52,36 @@ func (ont *OntologyTableManager) CheckAllTableFields(
 	fields []string,
 ) (bool, error) {
 	ok := false
-	tlist, resp, err := ont.Client.
-		DatabaseTableFieldsApi.
-		ListDatabaseTableFields(ont.Ctx, tableId).
-		Execute()
+	reqURL := fmt.Sprintf(
+		"https://%s/api/database/fields/table/%d/",
+		ont.Client.GetConfig().Host,
+		tableId,
+	)
+	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
-		return ok, fmt.Errorf(
-			"error in getting list of table fields %s",
-			err,
-		)
+		return ok, fmt.Errorf("error in creating request %s ", err)
 	}
-	defer resp.Body.Close()
-	existFields := toFieldNames(tlist)
-	slices.Sort(existFields)
-	slices.Sort(fields)
-	return slices.Equal(
-		fields,
-		toFieldNames(tlist),
-	), nil
+	httpapi.CommonHeader(req, ont.Token, "Token")
+	res, err := httpapi.ReqToResponse(req)
+	if err != nil {
+		return ok, err
+	}
+	defer res.Body.Close()
+	existing := make([]tableFieldsResponse, 0)
+	if err := json.NewDecoder(res.Body).Decode(&existing); err != nil {
+		return ok, fmt.Errorf("error in decoding response %s", err)
+	}
+	exFields := collection.Map(
+		existing,
+		func(input tableFieldsResponse) string { return input.Name },
+	)
+	for _, fld := range fields {
+		if num := slices.Index(exFields, fld); num == -1 {
+			return ok, nil
+		}
+	}
+
+	return true, nil
 }
 
 func (ont *OntologyTableManager) RemoveInitialFields(tbl *client.Table) error {
