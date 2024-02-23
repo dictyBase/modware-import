@@ -97,6 +97,10 @@ func (ont *OntologyTableManager) CreateFields(tbl *client.Table) error {
 	return nil
 }
 
+func FieldNames() []string {
+	return []string{"term_id", "name", "is_obsolete"}
+}
+
 func fieldInformation(field client.FieldField) (int32, string) {
 	if field.TextFieldField != nil {
 		return field.TextFieldField.Id, field.TextFieldField.Name
