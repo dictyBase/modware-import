@@ -151,7 +151,7 @@ func updateTermRow(args *updateTermRowProperties) error {
 	req, err := http.NewRequest(
 		"PATCH",
 		fmt.Sprintf(
-			"%s/api/database/rows/table/%d/%d/?user_field_names=true",
+			"https://%s/api/database/rows/table/%d/%d/?user_field_names=true",
 			args.Host,
 			args.TableId,
 			args.RowId,
@@ -176,7 +176,7 @@ func existTermRow(args *termRowProperties) (*exisTermRowResp, error) {
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf(
-			"%s/api/database/rows/table/%d/?user_field_names=true&size=1&search=%s",
+			"https://%s/api/database/rows/table/%d/?user_field_names=true&size=1&search=%s",
 			args.Host,
 			args.TableId,
 			term,
@@ -218,7 +218,7 @@ func addTermRow(args *termRowProperties) error {
 	req, err := http.NewRequest(
 		"POST",
 		fmt.Sprintf(
-			"%s/api/database/rows/table/%d/?user_field_names=true",
+			"https://%s/api/database/rows/table/%d/?user_field_names=true",
 			args.Host,
 			args.TableId,
 		),
