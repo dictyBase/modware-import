@@ -142,7 +142,7 @@ func LoadNew(args *LoadProperties) error {
 
 func updateTermRow(args *updateTermRowProperties) error {
 	payload := map[string]interface{}{
-		"Is_obsolete": termStatus(args.Term),
+		"is_obsolete": termStatus(args.Term),
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
@@ -207,9 +207,9 @@ func existTermRow(args *termRowProperties) (*exisTermRowResp, error) {
 func addTermRow(args *termRowProperties) error {
 	term := args.Term
 	payload := map[string]interface{}{
-		"Id":          string(term.ID()),
-		"Name":        term.Label(),
-		"Is_obsolete": termStatus(term),
+		"term_id":     string(term.ID()),
+		"name":        term.Label(),
+		"is_obsolete": termStatus(term),
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
