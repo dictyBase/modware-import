@@ -161,7 +161,7 @@ func updateTermRow(args *updateTermRowProperties) error {
 	if err != nil {
 		return fmt.Errorf("error in creating requst %s", err)
 	}
-	httpapi.CommonHeader(req, args.Token, "Bearer")
+	httpapi.CommonHeader(req, args.Token, "Token")
 	res, err := httpapi.ReqToResponse(req)
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func existTermRow(args *termRowProperties) (*exisTermRowResp, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error in creating requst %s", err)
 	}
-	httpapi.CommonHeader(req, args.Token, "Bearer")
+	httpapi.CommonHeader(req, args.Token, "Token")
 	res, err := httpapi.ReqToResponse(req)
 	if err != nil {
 		return nil, err
@@ -227,7 +227,7 @@ func addTermRow(args *termRowProperties) error {
 	if err != nil {
 		return fmt.Errorf("error in creating request %s ", err)
 	}
-	httpapi.CommonHeader(req, args.Token, "Bearer")
+	httpapi.CommonHeader(req, args.Token, "Token")
 	res, err := httpapi.ReqToResponse(req)
 	if err != nil {
 		return err
