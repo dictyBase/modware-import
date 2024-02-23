@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 
 	"github.com/dictyBase/go-obograph/graph"
 	"github.com/dictyBase/modware-import/internal/baserow/client"
+	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -161,8 +161,8 @@ func updateTermRow(args *updateTermRowProperties) error {
 	if err != nil {
 		return fmt.Errorf("error in creating requst %s", err)
 	}
-	commonHeader(req, args.Token)
-	res, err := reqToResponse(req)
+	httpapi.CommonHeader(req, args.Token, "Bearer")
+	res, err := httpapi.ReqToResponse(req)
 	if err != nil {
 		return err
 	}
@@ -185,8 +185,8 @@ func existTermRow(args *termRowProperties) (*exisTermRowResp, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error in creating requst %s", err)
 	}
-	commonHeader(req, args.Token)
-	res, err := reqToResponse(req)
+	httpapi.CommonHeader(req, args.Token, "Bearer")
+	res, err := httpapi.ReqToResponse(req)
 	if err != nil {
 		return nil, err
 	}
@@ -227,44 +227,14 @@ func addTermRow(args *termRowProperties) error {
 	if err != nil {
 		return fmt.Errorf("error in creating request %s ", err)
 	}
-	commonHeader(req, args.Token)
-	res, err := reqToResponse(req)
+	httpapi.CommonHeader(req, args.Token, "Bearer")
+	res, err := httpapi.ReqToResponse(req)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
 	return nil
-}
-
-func reqToResponse(creq *http.Request) (*http.Response, error) {
-	client := &http.Client{}
-	uresp, err := client.Do(creq)
-	if err != nil {
-		return uresp, fmt.Errorf("error in making request %s", err)
-	}
-	if uresp.StatusCode != 200 {
-		cnt, err := io.ReadAll(uresp.Body)
-		if err != nil {
-			return uresp, fmt.Errorf(
-				"error in response and the reading the body %d %s",
-				uresp.StatusCode,
-				err,
-			)
-		}
-		return uresp, fmt.Errorf(
-			"unexpected error response %d %s",
-			uresp.StatusCode,
-			string(cnt),
-		)
-	}
-	return uresp, nil
-}
-
-func commonHeader(lreq *http.Request, token string) {
-	lreq.Header.Set("Content-Type", "application/json")
-	lreq.Header.Set("Accept", "application/json")
-	lreq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 }
 
 func termStatus(term graph.Term) string {
