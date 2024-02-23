@@ -105,7 +105,7 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		return cli.Exit(err.Error(), 2)
 	}
 	if !ok {
-		return cli.Exit("table %s does not have the required fields", 2)
+		return cli.Exit("table does not have the required fields", 2)
 	}
 	props := &ontology.LoadProperties{
 		File:    cltx.String("input"),
