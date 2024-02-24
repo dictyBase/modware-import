@@ -48,7 +48,7 @@ require (
 )
 
 require (
-	github.com/IBM/fp-go v1.0.133
+	github.com/IBM/fp-go v1.0.139
 	github.com/jedib0t/go-pretty/v6 v6.5.4
 	github.com/jellydator/ttlcache/v3 v3.2.0
 	github.com/pkg/errors v0.9.1
