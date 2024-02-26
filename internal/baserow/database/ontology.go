@@ -59,8 +59,8 @@ func (ont *OntologyTableManager) onFieldDelReqFeedbackSome(
 	)
 }
 
-func (ont *OntologyTableManager) RemoveExtraField(
-	tbl *client.Table,
+func (ont *OntologyTableManager) RemoveField(
+	tbl *client.Table, field string,
 ) (string, error) {
 	var empty string
 	fields, err := ont.ListTableFields(tbl)
@@ -69,7 +69,7 @@ func (ont *OntologyTableManager) RemoveExtraField(
 	}
 	delOutput := F.Pipe2(
 		fields,
-		A.FindFirst(hasExtraField),
+		A.FindFirst(HasField(field)),
 		O.Fold[tableFieldsResponse](
 			onFieldDelReqFeedbackNone,
 			ont.onFieldDelReqFeedbackSome,
@@ -92,10 +92,6 @@ func (ont *OntologyTableManager) FieldDefs() []map[string]interface{} {
 		{"name": "term_id", "type": "text"},
 		{"name": "is_obsolete", "type": "boolean"},
 	}
-}
-
-func hasExtraField(elem tableFieldsResponse) bool {
-	return elem.Name == "Field 1"
 }
 
 func onFieldDelReqFeedbackSuccess(
