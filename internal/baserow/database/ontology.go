@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
 	"slices"
 
 	A "github.com/IBM/fp-go/array"
@@ -57,7 +56,7 @@ func (ont *OntologyTableManager) CreateFields(tbl *client.Table) error {
 		ont.Client.GetConfig().Host,
 		tbl.GetId(),
 	)
-	for _, payload := range FieldDefs() {
+	for _, payload := range ont.FieldDefs() {
 		jsonData, err := json.Marshal(payload)
 		if err != nil {
 			return fmt.Errorf("error in encoding body %s", err)
@@ -148,7 +147,7 @@ func (ont *OntologyTableManager) CheckAllTableFields(
 		existing,
 		func(input tableFieldsResponse) string { return input.Name },
 	)
-	for _, fld := range FieldNames() {
+	for _, fld := range ont.FieldNames() {
 		if num := slices.Index(exFields, fld); num == -1 {
 			return ok, nil
 		}
@@ -157,11 +156,11 @@ func (ont *OntologyTableManager) CheckAllTableFields(
 	return true, nil
 }
 
-func FieldNames() []string {
+func (ont *OntologyTableManager) FieldNames() []string {
 	return []string{"term_id", "name", "is_obsolete"}
 }
 
-func FieldDefs() []map[string]interface{} {
+func (ont *OntologyTableManager) FieldDefs() []map[string]interface{} {
 	return []map[string]interface{}{
 		{"name": "name", "type": "text"},
 		{"name": "term_id", "type": "text"},
