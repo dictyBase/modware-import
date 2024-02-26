@@ -18,7 +18,7 @@ type TableManager struct {
 	DatabaseId int32
 }
 
-func (tbm *TableManager) TableFieldsDelURL(field tableFieldsResponse) string {
+func (tbm *TableManager) TableFieldsChangeURL(field tableFieldsResponse) string {
 	return fmt.Sprintf(
 		"https://%s/api/database/fields/%d/",
 		tbm.Client.GetConfig().Host,
