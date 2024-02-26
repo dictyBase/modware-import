@@ -139,15 +139,14 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 			DatabaseId: int32(cltx.Int("database-id")),
 		},
 	}
-	tbl, err := ontTbl.CreateTable(cltx.String("table"))
+	tbl, err := ontTbl.CreateTable(cltx.String("table"), ontTbl.FieldNames())
 	if err != nil {
 		return cli.Exit(err.Error(), 2)
 	}
-	logger.Infof("created table %s", tbl.GetName())
+	logger.Infof("created table with fields %s", tbl.GetName())
 	if err := ontTbl.CreateFields(tbl); err != nil {
 		return cli.Exit(err.Error(), 2)
 	}
-	logger.Infof("created all fields in the ontology table %s", tbl.GetName())
 
 	return nil
 }
