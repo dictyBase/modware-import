@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"net/http"
 
+	A "github.com/IBM/fp-go/array"
+	O "github.com/IBM/fp-go/option"
+
 	"github.com/dictyBase/modware-import/internal/collection"
 	"golang.org/x/exp/slices"
 
@@ -162,6 +165,29 @@ func (tbm *OntologyTableManager) CheckAllTableFields(
 	}
 
 	return true, nil
+}
+
+func (tbm *OntologyTableManager) RemoveField(
+	tbl *client.Table, field string,
+) (string, error) {
+	var empty string
+	fields, err := tbm.ListTableFields(tbl)
+	if err != nil {
+		return empty, err
+	}
+	delOutput := F.Pipe2(
+		fields,
+		A.FindFirst(HasField(field)),
+		O.Fold[tableFieldsResponse](
+			onFieldDelReqFeedbackNone,
+			tbm.onFieldDelReqFeedbackSome,
+		),
+	)
+	if delOutput.Error != nil {
+		return empty, delOutput.Error
+	}
+
+	return delOutput.Msg, nil
 }
 
 func uncurriedHasField(name string, fieldResp tableFieldsResponse) bool {
