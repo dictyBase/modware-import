@@ -23,6 +23,28 @@ import (
 	F "github.com/IBM/fp-go/function"
 )
 
+type tableFieldDelResponse struct {
+	RelatedFields []struct {
+		ID      int `json:"id"`
+		TableID int `json:"table_id"`
+	} `json:"related_fields,omitempty"`
+}
+
+type fieldsReqFeedback struct {
+	Error  error
+	Fields []tableFieldsResponse
+	Msg    string
+}
+
+var (
+	readFieldDelResp = H.ReadJson[tableFieldDelResponse](
+		H.MakeClient(http.DefaultClient),
+	)
+	readFieldsResp = H.ReadJson[[]tableFieldsResponse](
+		H.MakeClient(http.DefaultClient),
+	)
+)
+
 type tableFieldsResponse struct {
 	Name string `json:"name"`
 	Id   int    `json:"id"`
@@ -190,6 +212,25 @@ func (tbm *OntologyTableManager) RemoveField(
 	return delOutput.Msg, nil
 }
 
+func (ont *OntologyTableManager) onFieldDelReqFeedbackSome(
+	field tableFieldsResponse,
+) fieldsReqFeedback {
+	resp := F.Pipe3(
+		ont.TableFieldsChangeURL(field),
+		F.Bind13of3(H.MakeRequest)("DELETE", nil),
+		R.Map(httpapi.SetHeaderWithJWT(ont.Token)),
+		readFieldDelResp,
+	)(context.Background())
+
+	return F.Pipe1(
+		resp(),
+		E.Fold[error, tableFieldDelResponse, fieldsReqFeedback](
+			onFieldsReqFeedbackError,
+			onFieldDelReqFeedbackSuccess,
+		),
+	)
+}
+
 func uncurriedHasField(name string, fieldResp tableFieldsResponse) bool {
 	return fieldResp.Name == name
 }
@@ -200,4 +241,14 @@ func onFieldsReqFeedbackError(err error) fieldsReqFeedback {
 
 func onFieldsReqFeedbackSuccess(resp []tableFieldsResponse) fieldsReqFeedback {
 	return fieldsReqFeedback{Fields: resp}
+}
+
+func onFieldDelReqFeedbackSuccess(
+	resp tableFieldDelResponse,
+) fieldsReqFeedback {
+	return fieldsReqFeedback{Msg: "deleted field"}
+}
+
+func onFieldDelReqFeedbackNone() fieldsReqFeedback {
+	return fieldsReqFeedback{Msg: "no field found to delete"}
 }
