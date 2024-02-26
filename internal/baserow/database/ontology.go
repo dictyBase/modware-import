@@ -80,7 +80,7 @@ func (ont *OntologyTableManager) onFieldDelReqFeedbackSome(
 	field tableFieldsResponse,
 ) fieldsReqFeedback {
 	resp := F.Pipe3(
-		ont.TableFieldsDelURL(field),
+		ont.TableFieldsChangeURL(field),
 		F.Bind13of3(H.MakeRequest)("DELETE", nil),
 		R.Map(httpapi.SetHeaderWithJWT(ont.Token)),
 		readFieldDelResp,
@@ -95,10 +95,9 @@ func (ont *OntologyTableManager) onFieldDelReqFeedbackSome(
 	)
 }
 
-func (ont *OntologyTableManager) RemoveExtraField(
+func (ont *OntologyTableManager) ListTableFields(
 	tbl *client.Table,
-) (string, error) {
-	var empty string
+) ([]tableFieldsResponse, error) {
 	resp := F.Pipe3(
 		ont.TableFieldsURL(tbl),
 		H.MakeGetRequest,
@@ -112,11 +111,19 @@ func (ont *OntologyTableManager) RemoveExtraField(
 			onFieldsReqFeedbackSuccess,
 		),
 	)
-	if output.Error != nil {
-		return empty, output.Error
+	return output.Fields, output.Error
+}
+
+func (ont *OntologyTableManager) RemoveExtraField(
+	tbl *client.Table,
+) (string, error) {
+	var empty string
+	fields, err := ont.ListTableFields(tbl)
+	if err != nil {
+		return empty, err
 	}
 	delOutput := F.Pipe2(
-		output.Fields,
+		fields,
 		A.FindFirst(hasExtraField),
 		O.Fold[tableFieldsResponse](
 			onFieldDelReqFeedbackNone,
