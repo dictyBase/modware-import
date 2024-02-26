@@ -35,14 +35,15 @@ func (tbm *TableManager) TableFieldsURL(tbl *client.Table) string {
 }
 
 func (tbm *TableManager) CreateTable(
-	table string,
+	table string, fields []string,
 ) (*client.Table, error) {
+	isTrue := true
 	var row []interface{}
-	row = append(row, []string{""})
+	row = append(row, fields)
 	tbl, resp, err := tbm.Client.
 		DatabaseTablesApi.
 		CreateDatabaseTable(tbm.Ctx, tbm.DatabaseId).
-		TableCreate(client.TableCreate{Name: table, Data: row}).
+		TableCreate(client.TableCreate{Name: table, Data: row, FirstRowHeader: &isTrue}).
 		Execute()
 	if err != nil {
 		return tbl, fmt.Errorf(
