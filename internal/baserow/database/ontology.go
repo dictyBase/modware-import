@@ -71,7 +71,7 @@ func (ont *OntologyTableManager) FieldDefs() []map[string]interface{} {
 func onFieldDelReqFeedbackSuccess(
 	resp tableFieldDelResponse,
 ) fieldsReqFeedback {
-	return fieldsReqFeedback{Msg: "deleted extra field"}
+	return fieldsReqFeedback{Msg: "deleted field"}
 }
 
 func onFieldDelReqFeedbackNone() fieldsReqFeedback {
