@@ -50,7 +50,13 @@ type tableFieldsResponse struct {
 	Id   int    `json:"id"`
 }
 
+type FieldDefinition interface {
+	FieldNames() []string
+	FieldDefs() map[string]interface{}
+}
+
 type TableManager struct {
+	FieldDefinition
 	Logger     *logrus.Entry
 	Client     *client.APIClient
 	Ctx        context.Context
@@ -118,7 +124,7 @@ func (tbm *TableManager) TableFieldsResp(
 	return httpapi.ReqToResponse(req)
 }
 
-func (tbm *OntologyTableManager) ListTableFields(
+func (tbm *TableManager) ListTableFields(
 	tbl *client.Table,
 ) ([]tableFieldsResponse, error) {
 	resp := F.Pipe3(
@@ -189,7 +195,11 @@ func (tbm *OntologyTableManager) CheckAllTableFields(
 	return true, nil
 }
 
-func (tbm *OntologyTableManager) RemoveField(
+func (tbm *TableManager) method() {
+
+}
+
+func (tbm *TableManager) RemoveField(
 	tbl *client.Table, field string,
 ) (string, error) {
 	var empty string
@@ -212,7 +222,7 @@ func (tbm *OntologyTableManager) RemoveField(
 	return delOutput.Msg, nil
 }
 
-func (ont *OntologyTableManager) onFieldDelReqFeedbackSome(
+func (ont *TableManager) onFieldDelReqFeedbackSome(
 	field tableFieldsResponse,
 ) fieldsReqFeedback {
 	resp := F.Pipe3(
