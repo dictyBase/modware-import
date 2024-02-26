@@ -18,6 +18,22 @@ type TableManager struct {
 	DatabaseId int32
 }
 
+func (tbm *TableManager) TableFieldsDelURL(field tableFieldsResponse) string {
+	return fmt.Sprintf(
+		"https://%s/api/database/fields/%d/",
+		tbm.Client.GetConfig().Host,
+		field.Id,
+	)
+}
+
+func (tbm *TableManager) TableFieldsURL(tbl *client.Table) string {
+	return fmt.Sprintf(
+		"https://%s/api/database/fields/table/%d/",
+		tbm.Client.GetConfig().Host,
+		tbl.GetId(),
+	)
+}
+
 func (tbm *TableManager) CreateTable(
 	table string,
 ) (*client.Table, error) {
