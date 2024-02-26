@@ -33,6 +33,10 @@ type TableManager struct {
 	DatabaseId int32
 }
 
+var (
+	HasField = F.Curry2(uncurriedHasField)
+)
+
 func (tbm *TableManager) TableFieldsChangeURL(
 	field tableFieldsResponse,
 ) string {
@@ -158,6 +162,10 @@ func (tbm *OntologyTableManager) CheckAllTableFields(
 	}
 
 	return true, nil
+}
+
+func uncurriedHasField(name string, fieldResp tableFieldsResponse) bool {
+	return fieldResp.Name == name
 }
 
 func onFieldsReqFeedbackError(err error) fieldsReqFeedback {
