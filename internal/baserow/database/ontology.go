@@ -2,6 +2,7 @@ package database
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -74,6 +75,60 @@ func (ont *OntologyTableManager) CreateFields(tbl *client.Table) error {
 	}
 
 	return nil
+}
+
+func (ont *OntologyTableManager) onFieldDelReqFeedbackSome(
+	field tableFieldsResponse,
+) fieldsReqFeedback {
+	resp := F.Pipe3(
+		ont.TableFieldsDelURL(field),
+		F.Bind13of3(H.MakeRequest)("DELETE", nil),
+		R.Map(httpapi.SetHeaderWithJWT(ont.Token)),
+		readFieldDelResp,
+	)(context.Background())
+
+	return F.Pipe1(
+		resp(),
+		E.Fold[error, tableFieldDelResponse, fieldsReqFeedback](
+			onFieldsReqFeedbackError,
+			onFieldDelReqFeedbackSuccess,
+		),
+	)
+}
+
+func (ont *OntologyTableManager) RemoveExtraField(
+	tbl *client.Table,
+) (string, error) {
+	var empty string
+	resp := F.Pipe3(
+		ont.TableFieldsURL(tbl),
+		H.MakeGetRequest,
+		R.Map(httpapi.SetHeaderWithJWT(ont.Token)),
+		readFieldsResp,
+	)(context.Background())
+	output := F.Pipe1(
+		resp(),
+		E.Fold[error, []tableFieldsResponse, fieldsReqFeedback](
+			onFieldsReqFeedbackError,
+			onFieldsReqFeedbackSuccess,
+		),
+	)
+	if output.Error != nil {
+		return empty, output.Error
+	}
+	delOutput := F.Pipe2(
+		output.Fields,
+		A.FindFirst(hasExtraField),
+		O.Fold[tableFieldsResponse](
+			onFieldDelReqFeedbackNone,
+			ont.onFieldDelReqFeedbackSome,
+		),
+	)
+	if delOutput.Error != nil {
+		return empty, delOutput.Error
+	}
+
+	return delOutput.Msg, nil
 }
 
 func (ont *OntologyTableManager) CheckAllTableFields(
