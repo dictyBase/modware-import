@@ -35,6 +35,9 @@ var (
 	readUpdateFieldsResp = H.ReadJson[tableFieldUpdateResponse](
 		H.MakeClient(http.DefaultClient),
 	)
+	readTableCreateResp = H.ReadJson[tableFieldRes](
+		H.MakeClient(http.DefaultClient),
+	)
 	HasField                = F.Curry2(uncurriedHasField)
 	ResToReqTableWithParams = F.Curry2(uncurriedResToReqTableWithParams)
 )
@@ -60,6 +63,7 @@ type fieldsReqFeedback struct {
 	Error  error
 	Fields []tableFieldRes
 	Msg    string
+	Table  *client.Table
 }
 
 type tableFieldRes struct {
@@ -104,26 +108,46 @@ func (tbm *TableManager) TableFieldsURL(tbl *client.Table) string {
 	)
 }
 
+func (tbm *TableManager) CreteTableURL() string {
+	return fmt.Sprintf(
+		"https://%s/api/database/tables/database/%d/",
+		tbm.Client.GetConfig().Host,
+		tbm.DatabaseId,
+	)
+}
+
 func (tbm *TableManager) CreateTable(
 	table string, fields []string,
 ) (*client.Table, error) {
-	isTrue := true
 	var row []interface{}
-	row = append(row, fields)
-	tbl, resp, err := tbm.Client.
-		DatabaseTablesApi.
-		CreateDatabaseTable(tbm.Ctx, tbm.DatabaseId).
-		TableCreate(client.TableCreate{Name: table, Data: row, FirstRowHeader: &isTrue}).
-		Execute()
-	if err != nil {
-		return tbl, fmt.Errorf(
-			"error in creating table %s %s",
-			table, err,
-		)
+	params := map[string]interface{}{
+		"name":             table,
+		"data":             append(row, fields),
+		"first_row_header": "true",
 	}
-	defer resp.Body.Close()
+	createPayload := F.Pipe2(
+		params,
+		J.Marshal,
+		E.Fold(onJSONPayloadError, onJSONPayloadSuccess),
+	)
+	if createPayload.Error != nil {
+		return &client.Table{}, createPayload.Error
+	}
+	resp := F.Pipe3(
+		tbm.CreteTableURL(),
+		makeHTTPRequest("POST", bytes.NewBuffer(createPayload.Payload)),
+		R.Map(httpapi.SetHeaderWithJWT(tbm.Token)),
+		readTableCreateResp,
+	)(context.Background())
+	output := F.Pipe1(
+		resp(),
+		E.Fold[error, tableFieldRes, fieldsReqFeedback](
+			onFieldsReqFeedbackError,
+			onTableCreateFeedbackSuccess,
+		),
+	)
 
-	return tbl, nil
+	return output.Table, output.Error
 }
 
 func (tbm *TableManager) TableFieldsResp(
@@ -167,8 +191,8 @@ func (tbm *OntologyTableManager) CreateFields(tbl *client.Table) error {
 		tbm.Client.GetConfig().Host,
 		tbl.GetId(),
 	)
-	for _, payload := range tbm.FieldDefs() {
-		jsonData, err := json.Marshal(payload)
+	for _, params := range tbm.FieldDefs() {
+		jsonData, err := json.Marshal(params)
 		if err != nil {
 			return fmt.Errorf("error in encoding body %s", err)
 		}
@@ -305,6 +329,15 @@ func (ont *TableManager) onFieldDelReqFeedbackSome(
 
 func uncurriedHasField(name string, fieldResp tableFieldRes) bool {
 	return fieldResp.Name == name
+}
+
+func onTableCreateFeedbackSuccess(res tableFieldRes) fieldsReqFeedback {
+	return fieldsReqFeedback{
+		Table: &client.Table{
+			Id:   int32(res.Id),
+			Name: res.Name,
+		},
+	}
 }
 
 func onFieldsReqFeedbackError(err error) fieldsReqFeedback {
