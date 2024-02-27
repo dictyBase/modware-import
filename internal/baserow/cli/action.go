@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"slices"
 
@@ -70,7 +71,7 @@ func CreateDatabaseToken(cltx *cli.Context) error {
 }
 
 func CreateAccessToken(cltx *cli.Context) error {
-	token, err := database.AccessToken(&database.AccessTokenProperties{
+	resp, err := database.AccessToken(&database.AccessTokenProperties{
 		Email:    cltx.String("email"),
 		Password: cltx.String("password"),
 		Server:   cltx.String("server"),
@@ -78,7 +79,22 @@ func CreateAccessToken(cltx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err, 2)
 	}
-	fmt.Println(token)
+	fmt.Println(resp.GetToken())
+	if cltx.Bool("save-refresh-token") {
+		err := os.WriteFile(
+			cltx.String("refresh-token-path"),
+			[]byte(resp.GetRefreshToken()),
+			0600,
+		)
+		if err != nil {
+			return cli.Exit(
+				fmt.Sprintf("error in writing refresh token to file %s", err),
+				2,
+			)
+		}
+		registry.GetLogger().
+			Infof("saved refresh token at %s", cltx.String("refresh-token-path"))
+	}
 	return nil
 }
 
