@@ -72,10 +72,13 @@ func LoadOntologyToTableFlag() []cli.Flag {
 func CreateOntologyTableFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
-			Name:     "token",
-			Aliases:  []string{"t"},
-			Usage:    "database token with write privilege",
-			Required: true,
+			Name:    "token",
+			Aliases: []string{"t"},
+			Usage:   "database token with write privilege",
+		},
+		&cli.StringFlag{
+			Name:  "refresh-token-path",
+			Usage: "location, in absence of token value the refresh token will be read",
 		},
 		&cli.IntFlag{
 			Name:     "database-id",
