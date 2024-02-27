@@ -9,6 +9,7 @@ import (
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
+	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/dictyBase/modware-import/internal/baserow/ontology"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -139,19 +140,33 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 }
 
 func CreateOntologyTableHandler(cltx *cli.Context) error {
-	logger := registry.GetLogger()
-	bclient := database.BaserowClient(cltx.String("server"))
+	token := cltx.String("token")
+	if len(token) == 0 {
+		tkm, err := httpapi.NewTokenManager(
+			cltx.String("server"),
+			cltx.String("refresh-token-path"),
+		)
+		if err != nil {
+			cli.Exit(err.Error(), 2)
+		}
+		rtoken, err := tkm.FreshToken()
+		if err != nil {
+			cli.Exit(fmt.Sprintf("error in refreshing token %s", err), 2)
+		}
+		token = rtoken
+	}
 	authCtx := context.WithValue(
 		context.Background(),
 		client.ContextAccessToken,
-		cltx.String("token"),
+		token,
 	)
+	logger := registry.GetLogger()
 	ontTbl := &database.OntologyTableManager{
 		TableManager: &database.TableManager{
-			Client:     bclient,
+			Client:     database.BaserowClient(cltx.String("server")),
 			Logger:     logger,
 			Ctx:        authCtx,
-			Token:      cltx.String("token"),
+			Token:      token,
 			DatabaseId: int32(cltx.Int("database-id")),
 		},
 	}
@@ -163,7 +178,10 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 	msg, err := ontTbl.UpdateField(
 		tbl,
 		"is_obsolete",
-		map[string]interface{}{"name": "is_obsolete", "type": "boolean"},
+		map[string]interface{}{
+			"name": "is_obsolete",
+			"type": "boolean",
+		},
 	)
 	if err != nil {
 		return cli.Exit(
