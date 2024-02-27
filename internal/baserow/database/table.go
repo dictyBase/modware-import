@@ -56,7 +56,7 @@ func (tbm *TableManager) TableFieldsURL(tbl *client.Table) string {
 	)
 }
 
-func (tbm *TableManager) CreteTableURL() string {
+func (tbm *TableManager) CreateTableURL() string {
 	return fmt.Sprintf(
 		"https://%s/api/database/tables/database/%d/",
 		tbm.Client.GetConfig().Host,
@@ -82,7 +82,7 @@ func (tbm *TableManager) CreateTable(
 		return &client.Table{}, createPayload.Error
 	}
 	resp := F.Pipe3(
-		tbm.CreteTableURL(),
+		tbm.CreateTableURL(),
 		makeHTTPRequest("POST", bytes.NewBuffer(createPayload.Payload)),
 		R.Map(httpapi.SetHeaderWithJWT(tbm.Token)),
 		readTableCreateResp,
