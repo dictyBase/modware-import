@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	A "github.com/IBM/fp-go/array"
+	J "github.com/IBM/fp-go/json"
 	O "github.com/IBM/fp-go/option"
 
 	"github.com/dictyBase/modware-import/internal/collection"
@@ -23,6 +24,31 @@ import (
 	F "github.com/IBM/fp-go/function"
 )
 
+var (
+	makeHTTPRequest  = F.Bind13of3(H.MakeRequest)
+	readFieldDelResp = H.ReadJson[tableFieldDelResponse](
+		H.MakeClient(http.DefaultClient),
+	)
+	readFieldsResp = H.ReadJson[[]tableFieldReq](
+		H.MakeClient(http.DefaultClient),
+	)
+	readUpdateFieldsResp = H.ReadJson[tableFieldUpdateResponse](
+		H.MakeClient(http.DefaultClient),
+	)
+	HasField            = F.Curry2(uncurriedHasField)
+	ResToReqTableFields = F.Curry2(uncurriedResToReqTableFields)
+)
+
+type tableFieldUpdateResponse struct {
+	Id      int `json:"id"`
+	TableId int `json:"table_id"`
+}
+
+type jsonPayload struct {
+	Error   error
+	Payload []byte
+}
+
 type tableFieldDelResponse struct {
 	RelatedFields []struct {
 		ID      int `json:"id"`
@@ -32,22 +58,18 @@ type tableFieldDelResponse struct {
 
 type fieldsReqFeedback struct {
 	Error  error
-	Fields []tableFieldsResponse
+	Fields []tableFieldReq
 	Msg    string
 }
 
-var (
-	readFieldDelResp = H.ReadJson[tableFieldDelResponse](
-		H.MakeClient(http.DefaultClient),
-	)
-	readFieldsResp = H.ReadJson[[]tableFieldsResponse](
-		H.MakeClient(http.DefaultClient),
-	)
-)
-
-type tableFieldsResponse struct {
+type tableFieldReq struct {
 	Name string `json:"name"`
 	Id   int    `json:"id"`
+}
+
+type tableFieldsReq struct {
+	tableFieldReq
+	Params map[string]interface{}
 }
 
 type FieldDefinition interface {
@@ -64,17 +86,13 @@ type TableManager struct {
 	DatabaseId int32
 }
 
-var (
-	HasField = F.Curry2(uncurriedHasField)
-)
-
 func (tbm *TableManager) TableFieldsChangeURL(
-	field tableFieldsResponse,
+	req tableFieldsReq,
 ) string {
 	return fmt.Sprintf(
 		"https://%s/api/database/fields/%d/",
 		tbm.Client.GetConfig().Host,
-		field.Id,
+		req.Id,
 	)
 }
 
@@ -126,7 +144,7 @@ func (tbm *TableManager) TableFieldsResp(
 
 func (tbm *TableManager) ListTableFields(
 	tbl *client.Table,
-) ([]tableFieldsResponse, error) {
+) ([]tableFieldReq, error) {
 	resp := F.Pipe3(
 		tbm.TableFieldsURL(tbl),
 		H.MakeGetRequest,
@@ -135,7 +153,7 @@ func (tbm *TableManager) ListTableFields(
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, []tableFieldsResponse, fieldsReqFeedback](
+		E.Fold[error, []tableFieldReq, fieldsReqFeedback](
 			onFieldsReqFeedbackError,
 			onFieldsReqFeedbackSuccess,
 		),
@@ -178,13 +196,13 @@ func (tbm *OntologyTableManager) CheckAllTableFields(
 		return ok, err
 	}
 	defer res.Body.Close()
-	existing := make([]tableFieldsResponse, 0)
+	existing := make([]tableFieldReq, 0)
 	if err := json.NewDecoder(res.Body).Decode(&existing); err != nil {
 		return ok, fmt.Errorf("error in decoding response %s", err)
 	}
 	exFields := collection.Map(
 		existing,
-		func(input tableFieldsResponse) string { return input.Name },
+		func(input tableFieldReq) string { return input.Name },
 	)
 	for _, fld := range tbm.FieldNames() {
 		if num := slices.Index(exFields, fld); num == -1 {
@@ -195,12 +213,31 @@ func (tbm *OntologyTableManager) CheckAllTableFields(
 	return true, nil
 }
 
-func (tbm *TableManager) method() {
+func (tbm *TableManager) UpdateField(
+	tbl *client.Table,
+	req string,
+	updateSpec map[string]interface{},
+) (string, error) {
+	var empty string
+	fields, err := tbm.ListTableFields(tbl)
+	if err != nil {
+		return empty, err
+	}
+	updateOutput := F.Pipe3(
+		fields,
+		A.FindFirst(HasField(req)),
+		O.Map(ResToReqTableFields(updateSpec)),
+		O.Fold[tableFieldsReq](
+			onFieldDelReqFeedbackNone,
+			tbm.onFieldUpdateReqFeedbackSome,
+		),
+	)
 
+	return updateOutput.Msg, updateOutput.Error
 }
 
 func (tbm *TableManager) RemoveField(
-	tbl *client.Table, field string,
+	tbl *client.Table, req string,
 ) (string, error) {
 	var empty string
 	fields, err := tbm.ListTableFields(tbl)
@@ -209,24 +246,48 @@ func (tbm *TableManager) RemoveField(
 	}
 	delOutput := F.Pipe2(
 		fields,
-		A.FindFirst(HasField(field)),
-		O.Fold[tableFieldsResponse](
+		A.FindFirst(HasField(req)),
+		O.Fold[tableFieldReq](
 			onFieldDelReqFeedbackNone,
 			tbm.onFieldDelReqFeedbackSome,
 		),
 	)
-	if delOutput.Error != nil {
-		return empty, delOutput.Error
-	}
 
-	return delOutput.Msg, nil
+	return delOutput.Msg, delOutput.Error
+}
+
+func (tbm *TableManager) onFieldUpdateReqFeedbackSome(
+	req tableFieldsReq,
+) fieldsReqFeedback {
+	payloadResp := F.Pipe2(
+		req.Params,
+		J.Marshal,
+		E.Fold(onJsonPayloadError, onJsonPayloadSuccess),
+	)
+	if payloadResp.Error != nil {
+		return fieldsReqFeedback{Error: payloadResp.Error}
+	}
+	resp := F.Pipe3(
+		tbm.TableFieldsChangeURL(req),
+		makeHTTPRequest("PATCH", bytes.NewBuffer(payloadResp.Payload)),
+		R.Map(httpapi.SetHeaderWithJWT(tbm.Token)),
+		readUpdateFieldsResp,
+	)(context.Background())
+
+	return F.Pipe1(
+		resp(),
+		E.Fold[error, tableFieldUpdateResponse, fieldsReqFeedback](
+			onFieldsReqFeedbackError,
+			onFieldUpdateReqFeedbackSuccess,
+		),
+	)
 }
 
 func (ont *TableManager) onFieldDelReqFeedbackSome(
-	field tableFieldsResponse,
+	req tableFieldReq,
 ) fieldsReqFeedback {
 	resp := F.Pipe3(
-		ont.TableFieldsChangeURL(field),
+		ont.TableFieldsChangeURL(req),
 		F.Bind13of3(H.MakeRequest)("DELETE", nil),
 		R.Map(httpapi.SetHeaderWithJWT(ont.Token)),
 		readFieldDelResp,
@@ -241,7 +302,7 @@ func (ont *TableManager) onFieldDelReqFeedbackSome(
 	)
 }
 
-func uncurriedHasField(name string, fieldResp tableFieldsResponse) bool {
+func uncurriedHasField(name string, fieldResp tableFieldReq) bool {
 	return fieldResp.Name == name
 }
 
@@ -249,7 +310,7 @@ func onFieldsReqFeedbackError(err error) fieldsReqFeedback {
 	return fieldsReqFeedback{Error: err}
 }
 
-func onFieldsReqFeedbackSuccess(resp []tableFieldsResponse) fieldsReqFeedback {
+func onFieldsReqFeedbackSuccess(resp []tableFieldReq) fieldsReqFeedback {
 	return fieldsReqFeedback{Fields: resp}
 }
 
@@ -259,6 +320,34 @@ func onFieldDelReqFeedbackSuccess(
 	return fieldsReqFeedback{Msg: "deleted field"}
 }
 
+func onFieldUpdateReqFeedbackSuccess(
+	resp tableFieldUpdateResponse,
+) fieldsReqFeedback {
+	return fieldsReqFeedback{Msg: "updated field"}
+}
+
 func onFieldDelReqFeedbackNone() fieldsReqFeedback {
 	return fieldsReqFeedback{Msg: "no field found to delete"}
+}
+
+func onJsonPayloadError(err error) jsonPayload {
+	return jsonPayload{Error: err}
+}
+
+func onJsonPayloadSuccess(resp []byte) jsonPayload {
+	return jsonPayload{Payload: resp}
+}
+
+func uncurriedResToReqTableFields(
+	params map[string]interface{},
+	req tableFieldReq,
+) tableFieldsReq {
+	return tableFieldsReq{
+		tableFieldReq: tableFieldReq{
+			Name: req.Name,
+			Id:   req.Id,
+		},
+		Params: params,
+	}
+
 }
