@@ -29,7 +29,7 @@ var (
 	readFieldDelResp = H.ReadJson[tableFieldDelResponse](
 		H.MakeClient(http.DefaultClient),
 	)
-	readFieldsResp = H.ReadJson[[]tableFieldReq](
+	readFieldsResp = H.ReadJson[[]tableFieldRes](
 		H.MakeClient(http.DefaultClient),
 	)
 	readUpdateFieldsResp = H.ReadJson[tableFieldUpdateResponse](
@@ -331,24 +331,32 @@ func onFieldDelReqFeedbackNone() fieldsReqFeedback {
 	return fieldsReqFeedback{Msg: "no field found to delete"}
 }
 
-func onJsonPayloadError(err error) jsonPayload {
+func onJSONPayloadError(err error) jsonPayload {
 	return jsonPayload{Error: err}
 }
 
-func onJsonPayloadSuccess(resp []byte) jsonPayload {
+func onJSONPayloadSuccess(resp []byte) jsonPayload {
 	return jsonPayload{Payload: resp}
 }
 
-func uncurriedResToReqTableFields(
+func uncurriedResToReqTableWithParams(
 	params map[string]interface{},
-	req tableFieldReq,
-) tableFieldsReq {
-	return tableFieldsReq{
-		tableFieldReq: tableFieldReq{
+	req tableFieldRes,
+) tableFieldReq {
+	return tableFieldReq{
+		tableFieldRes: tableFieldRes{
 			Name: req.Name,
 			Id:   req.Id,
 		},
 		Params: params,
 	}
+}
 
+func ResToReqTable(req tableFieldRes) tableFieldReq {
+	return tableFieldReq{
+		tableFieldRes: tableFieldRes{
+			Name: req.Name,
+			Id:   req.Id,
+		},
+	}
 }
