@@ -187,7 +187,7 @@ func (tbm *OntologyTableManager) CheckAllTableFields(
 
 func (tbm *TableManager) UpdateField(
 	tbl *client.Table,
-	req string,
+	field string,
 	updateSpec map[string]interface{},
 ) (string, error) {
 	var empty string
@@ -197,7 +197,7 @@ func (tbm *TableManager) UpdateField(
 	}
 	updateOutput := F.Pipe3(
 		fields,
-		A.FindFirst(HasField(req)),
+		A.FindFirst(HasField(field)),
 		O.Map(ResToReqTableWithParams(updateSpec)),
 		O.Fold[tableFieldReq](
 			onFieldDelReqFeedbackNone,
