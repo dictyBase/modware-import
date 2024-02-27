@@ -16,6 +16,16 @@ func CreateAccessTokenFlag() []cli.Flag {
 			Usage:    "Database password",
 			Required: true,
 		},
+		&cli.BoolFlag{
+			Name:  "save-refresh-token",
+			Usage: "whether to persist the refresh token",
+			Value: true,
+		},
+		&cli.StringFlag{
+			Name:  "refresh-token-path",
+			Usage: "where the refresh token will be saved",
+			Value: "./refresh-token.txt",
+		},
 	}
 }
 
