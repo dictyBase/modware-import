@@ -36,6 +36,16 @@ func SetHeaderWithToken(token string) func(*http.Request) *http.Request {
 	}
 }
 
+func SetHeaderWith(req *http.Request) *http.Request {
+	req.Header = F.Pipe2(
+		H.Default,
+		H.WithContentType(C.Json),
+		H.WithHeader(HD.Accept)(C.Json),
+	).GetHeaders()
+
+	return req
+}
+
 func SetHeaderWithJWT(jwt string) func(*http.Request) *http.Request {
 	return func(req *http.Request) *http.Request {
 		req.Header = F.Pipe3(
