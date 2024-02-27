@@ -35,8 +35,8 @@ var (
 	readUpdateFieldsResp = H.ReadJson[tableFieldUpdateResponse](
 		H.MakeClient(http.DefaultClient),
 	)
-	HasField            = F.Curry2(uncurriedHasField)
-	ResToReqTableFields = F.Curry2(uncurriedResToReqTableFields)
+	HasField                = F.Curry2(uncurriedHasField)
+	ResToReqTableWithParams = F.Curry2(uncurriedResToReqTableWithParams)
 )
 
 type tableFieldUpdateResponse struct {
@@ -58,17 +58,17 @@ type tableFieldDelResponse struct {
 
 type fieldsReqFeedback struct {
 	Error  error
-	Fields []tableFieldReq
+	Fields []tableFieldRes
 	Msg    string
 }
 
-type tableFieldReq struct {
+type tableFieldRes struct {
 	Name string `json:"name"`
 	Id   int    `json:"id"`
 }
 
-type tableFieldsReq struct {
-	tableFieldReq
+type tableFieldReq struct {
+	tableFieldRes
 	Params map[string]interface{}
 }
 
@@ -87,7 +87,7 @@ type TableManager struct {
 }
 
 func (tbm *TableManager) TableFieldsChangeURL(
-	req tableFieldsReq,
+	req tableFieldReq,
 ) string {
 	return fmt.Sprintf(
 		"https://%s/api/database/fields/%d/",
@@ -144,7 +144,7 @@ func (tbm *TableManager) TableFieldsResp(
 
 func (tbm *TableManager) ListTableFields(
 	tbl *client.Table,
-) ([]tableFieldReq, error) {
+) ([]tableFieldRes, error) {
 	resp := F.Pipe3(
 		tbm.TableFieldsURL(tbl),
 		H.MakeGetRequest,
@@ -153,7 +153,7 @@ func (tbm *TableManager) ListTableFields(
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, []tableFieldReq, fieldsReqFeedback](
+		E.Fold[error, []tableFieldRes, fieldsReqFeedback](
 			onFieldsReqFeedbackError,
 			onFieldsReqFeedbackSuccess,
 		),
@@ -196,13 +196,13 @@ func (tbm *OntologyTableManager) CheckAllTableFields(
 		return ok, err
 	}
 	defer res.Body.Close()
-	existing := make([]tableFieldReq, 0)
+	existing := make([]tableFieldRes, 0)
 	if err := json.NewDecoder(res.Body).Decode(&existing); err != nil {
 		return ok, fmt.Errorf("error in decoding response %s", err)
 	}
 	exFields := collection.Map(
 		existing,
-		func(input tableFieldReq) string { return input.Name },
+		func(input tableFieldRes) string { return input.Name },
 	)
 	for _, fld := range tbm.FieldNames() {
 		if num := slices.Index(exFields, fld); num == -1 {
@@ -226,8 +226,8 @@ func (tbm *TableManager) UpdateField(
 	updateOutput := F.Pipe3(
 		fields,
 		A.FindFirst(HasField(req)),
-		O.Map(ResToReqTableFields(updateSpec)),
-		O.Fold[tableFieldsReq](
+		O.Map(ResToReqTableWithParams(updateSpec)),
+		O.Fold[tableFieldReq](
 			onFieldDelReqFeedbackNone,
 			tbm.onFieldUpdateReqFeedbackSome,
 		),
@@ -244,9 +244,10 @@ func (tbm *TableManager) RemoveField(
 	if err != nil {
 		return empty, err
 	}
-	delOutput := F.Pipe2(
+	delOutput := F.Pipe3(
 		fields,
 		A.FindFirst(HasField(req)),
+		O.Map(ResToReqTable),
 		O.Fold[tableFieldReq](
 			onFieldDelReqFeedbackNone,
 			tbm.onFieldDelReqFeedbackSome,
@@ -257,12 +258,12 @@ func (tbm *TableManager) RemoveField(
 }
 
 func (tbm *TableManager) onFieldUpdateReqFeedbackSome(
-	req tableFieldsReq,
+	req tableFieldReq,
 ) fieldsReqFeedback {
 	payloadResp := F.Pipe2(
 		req.Params,
 		J.Marshal,
-		E.Fold(onJsonPayloadError, onJsonPayloadSuccess),
+		E.Fold(onJSONPayloadError, onJSONPayloadSuccess),
 	)
 	if payloadResp.Error != nil {
 		return fieldsReqFeedback{Error: payloadResp.Error}
@@ -288,7 +289,7 @@ func (ont *TableManager) onFieldDelReqFeedbackSome(
 ) fieldsReqFeedback {
 	resp := F.Pipe3(
 		ont.TableFieldsChangeURL(req),
-		F.Bind13of3(H.MakeRequest)("DELETE", nil),
+		makeHTTPRequest("DELETE", nil),
 		R.Map(httpapi.SetHeaderWithJWT(ont.Token)),
 		readFieldDelResp,
 	)(context.Background())
@@ -302,7 +303,7 @@ func (ont *TableManager) onFieldDelReqFeedbackSome(
 	)
 }
 
-func uncurriedHasField(name string, fieldResp tableFieldReq) bool {
+func uncurriedHasField(name string, fieldResp tableFieldRes) bool {
 	return fieldResp.Name == name
 }
 
@@ -310,7 +311,7 @@ func onFieldsReqFeedbackError(err error) fieldsReqFeedback {
 	return fieldsReqFeedback{Error: err}
 }
 
-func onFieldsReqFeedbackSuccess(resp []tableFieldReq) fieldsReqFeedback {
+func onFieldsReqFeedbackSuccess(resp []tableFieldRes) fieldsReqFeedback {
 	return fieldsReqFeedback{Fields: resp}
 }
 
