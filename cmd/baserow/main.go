@@ -52,10 +52,10 @@ func main() {
 				Action: baserow.CreateAccessToken,
 			},
 			{
-				Name:   "create-table",
-				Usage:  "Create a baserow database table",
-				Flags:  baserow.CreateTableFlag(),
-				Action: baserow.CreateTable,
+				Name:   "create-ontology-table",
+				Usage:  "Create a baserow table with ontology fields preset",
+				Flags:  baserow.CreateOntologyTableFlag(),
+				Action: baserow.CreateOntologyTableHandler,
 			},
 			{
 				Name:   "load-ontology",
