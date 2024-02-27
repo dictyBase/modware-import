@@ -10,16 +10,16 @@ import (
 
 var (
 	makeHTTPRequest  = F.Bind13of3(H.MakeRequest)
-	readFieldDelResp = H.ReadJson[tableFieldDelResponse](
+	readFieldDelResp = H.ReadJSON[tableFieldDelResponse](
 		H.MakeClient(http.DefaultClient),
 	)
-	readFieldsResp = H.ReadJson[[]tableFieldRes](
+	readFieldsResp = H.ReadJSON[[]tableFieldRes](
 		H.MakeClient(http.DefaultClient),
 	)
-	readUpdateFieldsResp = H.ReadJson[tableFieldUpdateResponse](
+	readUpdateFieldsResp = H.ReadJSON[tableFieldUpdateResponse](
 		H.MakeClient(http.DefaultClient),
 	)
-	readTableCreateResp = H.ReadJson[tableFieldRes](
+	readTableCreateResp = H.ReadJSON[tableFieldRes](
 		H.MakeClient(http.DefaultClient),
 	)
 	HasField                = F.Curry2(uncurriedHasField)
