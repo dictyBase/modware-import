@@ -24,4 +24,4 @@ jobs:
     secrets: inherit
     with:
       repository: ${{ github.repository }}
-      ref: ${{ github.ref_name }}
+      ref: ${{ github.event.pull_request.head.sha }}
