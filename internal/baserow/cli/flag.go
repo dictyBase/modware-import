@@ -69,7 +69,27 @@ func LoadOntologyToTableFlag() []cli.Flag {
 	}
 }
 
+func CreatePhenotypeTableFlag() []cli.Flag {
+	return append(tableCreationFlags(),
+		&cli.StringSliceFlag{
+			Name:     "table",
+			Usage:    "tables to create for loading phenotype annotation",
+			Required: true,
+		},
+	)
+}
+
 func CreateOntologyTableFlag() []cli.Flag {
+	return append(tableCreationFlags(),
+		&cli.StringSliceFlag{
+			Name:     "table",
+			Usage:    "tables to create for loading ontology",
+			Required: true,
+		},
+	)
+}
+
+func tableCreationFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:    "token",
@@ -84,11 +104,6 @@ func CreateOntologyTableFlag() []cli.Flag {
 		&cli.IntFlag{
 			Name:     "database-id",
 			Usage:    "Database id",
-			Required: true,
-		},
-		&cli.StringSliceFlag{
-			Name:     "table",
-			Usage:    "tables to create for loading ontology",
 			Required: true,
 		},
 	}
