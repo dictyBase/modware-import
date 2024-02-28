@@ -170,24 +170,26 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 			DatabaseId: int32(cltx.Int("database-id")),
 		},
 	}
-	tblParams := map[string]interface{}{
-		"name": "is_obsolete",
-		"type": "boolean",
-	}
 	for _, name := range cltx.StringSlice("table") {
 		tbl, err := ontTbl.CreateTable(name, ontTbl.FieldNames())
 		if err != nil {
 			return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
 		}
 		logger.Infof("created table with fields %s", tbl.GetName())
-		msg, err := ontTbl.UpdateField(tbl, "is_obsolete", tblParams)
-		if err != nil {
-			return cli.Exit(
-				fmt.Sprintf("error in updating is_obsolete field %s", err),
-				2,
-			)
+		for fieldName, spec := range ontTbl.FieldChangeSpecs() {
+			msg, err := ontTbl.UpdateField(tbl, fieldName, spec)
+			if err != nil {
+				return cli.Exit(
+					fmt.Sprintf(
+						"error in updating %s field %s",
+						fieldName,
+						err,
+					),
+					2,
+				)
+			}
+			logger.Info(msg)
 		}
-		logger.Info(msg)
 	}
 	return nil
 }
