@@ -52,6 +52,12 @@ func main() {
 				Action: baserow.CreateAccessToken,
 			},
 			{
+				Name:   "create-phenotype-table",
+				Usage:  "Create a baserow table with phenotype fields preset",
+				Flags:  baserow.CreatePhenotypeTableFlag(),
+				Action: baserow.CreatePhenoTableHandler,
+			},
+			{
 				Name:   "create-ontology-table",
 				Usage:  "Create a baserow table with ontology fields preset",
 				Flags:  baserow.CreateOntologyTableFlag(),
