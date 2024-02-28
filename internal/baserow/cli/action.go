@@ -170,25 +170,24 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 			DatabaseId: int32(cltx.Int("database-id")),
 		},
 	}
-	tbl, err := ontTbl.CreateTable(cltx.String("table"), ontTbl.FieldNames())
-	if err != nil {
-		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+	tblParams := map[string]interface{}{
+		"name": "is_obsolete",
+		"type": "boolean",
 	}
-	logger.Infof("created table with fields %s", tbl.GetName())
-	msg, err := ontTbl.UpdateField(
-		tbl,
-		"is_obsolete",
-		map[string]interface{}{
-			"name": "is_obsolete",
-			"type": "boolean",
-		},
-	)
-	if err != nil {
-		return cli.Exit(
-			fmt.Sprintf("error in updating is_obsolete field %s", err),
-			2,
-		)
+	for _, name := range cltx.StringSlice("table") {
+		tbl, err := ontTbl.CreateTable(name, ontTbl.FieldNames())
+		if err != nil {
+			return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+		}
+		logger.Infof("created table with fields %s", tbl.GetName())
+		msg, err := ontTbl.UpdateField(tbl, "is_obsolete", tblParams)
+		if err != nil {
+			return cli.Exit(
+				fmt.Sprintf("error in updating is_obsolete field %s", err),
+				2,
+			)
+		}
+		logger.Info(msg)
 	}
-	logger.Info(msg)
 	return nil
 }
