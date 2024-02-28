@@ -9,7 +9,6 @@ import (
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
-	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/dictyBase/modware-import/internal/baserow/ontology"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -139,19 +138,60 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 	return nil
 }
 
+func CreatePhenoTableHandler(cltx *cli.Context) error {
+	token := cltx.String("token")
+	if len(token) == 0 {
+		rtoken, err := refreshToken(cltx)
+		if err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+		token = rtoken
+	}
+	authCtx := context.WithValue(
+		context.Background(),
+		client.ContextAccessToken,
+		token,
+	)
+	logger := registry.GetLogger()
+	phenoTbl := &database.PhenotypeTableManager{
+		TableManager: &database.TableManager{
+			Client:     database.BaserowClient(cltx.String("server")),
+			Logger:     logger,
+			Ctx:        authCtx,
+			Token:      token,
+			DatabaseId: int32(cltx.Int("database-id")),
+		},
+	}
+	for _, name := range cltx.StringSlice("table") {
+		tbl, err := phenoTbl.CreateTable(name, phenoTbl.FieldNames())
+		if err != nil {
+			return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+		}
+		logger.Infof("created table with fields %s", tbl.GetName())
+		for fieldName, spec := range phenoTbl.FieldChangeSpecs() {
+			msg, err := phenoTbl.UpdateField(tbl, fieldName, spec)
+			if err != nil {
+				return cli.Exit(
+					fmt.Sprintf(
+						"error in updating %s field %s",
+						fieldName,
+						err,
+					),
+					2,
+				)
+			}
+			logger.Info(msg)
+		}
+	}
+	return nil
+}
+
 func CreateOntologyTableHandler(cltx *cli.Context) error {
 	token := cltx.String("token")
 	if len(token) == 0 {
-		tkm, err := httpapi.NewTokenManager(
-			cltx.String("server"),
-			cltx.String("refresh-token-path"),
-		)
+		rtoken, err := refreshToken(cltx)
 		if err != nil {
-			cli.Exit(err.Error(), 2)
-		}
-		rtoken, err := tkm.FreshToken()
-		if err != nil {
-			cli.Exit(fmt.Sprintf("error in refreshing token %s", err), 2)
+			return cli.Exit(err.Error(), 2)
 		}
 		token = rtoken
 	}
