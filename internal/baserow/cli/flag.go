@@ -79,6 +79,7 @@ func CreateOntologyTableFlag() []cli.Flag {
 		&cli.StringFlag{
 			Name:  "refresh-token-path",
 			Usage: "location, in absence of token value the refresh token will be read",
+			Value: "./refresh-token.txt",
 		},
 		&cli.IntFlag{
 			Name:     "database-id",
