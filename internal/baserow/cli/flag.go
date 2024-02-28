@@ -71,9 +71,9 @@ func LoadOntologyToTableFlag() []cli.Flag {
 
 func CreatePhenotypeTableFlag() []cli.Flag {
 	return append(tableCreationFlags(),
-		&cli.StringSliceFlag{
+		&cli.StringFlag{
 			Name:     "table",
-			Usage:    "tables to create for loading phenotype annotation",
+			Usage:    "table to create for loading phenotype annotation",
 			Required: true,
 		},
 	)
