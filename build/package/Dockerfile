@@ -28,6 +28,17 @@ RUN go build  \
 RUN upx -q -9 gmake \
 	&& upx -q -9 importer
 
+RUN go build  \
+	-a \
+	-ldflags "-s -w -extldflags '-static'" \
+	-installsuffix cgo \
+	-tags netgo \
+	-o baserow \ 
+	cmd/baserow/main.go
+RUN upx -q -9 gmake \
+	&& upx -q -9 baserow
+
 FROM gcr.io/distroless/static
 COPY --from=builder /go/modware-import/gmake /usr/local/bin/
 COPY --from=builder /go/modware-import/importer /usr/local/bin/
+COPY --from=builder /go/modware-import/baserow /usr/local/bin/
