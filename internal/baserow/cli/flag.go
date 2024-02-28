@@ -86,9 +86,9 @@ func CreateOntologyTableFlag() []cli.Flag {
 			Usage:    "Database id",
 			Required: true,
 		},
-		&cli.StringFlag{
+		&cli.StringSliceFlag{
 			Name:     "table",
-			Usage:    "Ontology table name",
+			Usage:    "tables to create for loading ontology",
 			Required: true,
 		},
 	}
