@@ -162,26 +162,25 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 			DatabaseId: int32(cltx.Int("database-id")),
 		},
 	}
-	for _, name := range cltx.StringSlice("table") {
-		tbl, err := phenoTbl.CreateTable(name, phenoTbl.FieldNames())
+	name := cltx.String("table")
+	tbl, err := phenoTbl.CreateTable(name, phenoTbl.FieldNames())
+	if err != nil {
+		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+	}
+	logger.Infof("created table with fields %s", tbl.GetName())
+	for fieldName, spec := range phenoTbl.FieldChangeSpecs() {
+		msg, err := phenoTbl.UpdateField(tbl, fieldName, spec)
 		if err != nil {
-			return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+			return cli.Exit(
+				fmt.Sprintf(
+					"error in updating %s field %s",
+					fieldName,
+					err,
+				),
+				2,
+			)
 		}
-		logger.Infof("created table with fields %s", tbl.GetName())
-		for fieldName, spec := range phenoTbl.FieldChangeSpecs() {
-			msg, err := phenoTbl.UpdateField(tbl, fieldName, spec)
-			if err != nil {
-				return cli.Exit(
-					fmt.Sprintf(
-						"error in updating %s field %s",
-						fieldName,
-						err,
-					),
-					2,
-				)
-			}
-			logger.Info(msg)
-		}
+		logger.Info(msg)
 	}
 	return nil
 }
