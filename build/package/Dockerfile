@@ -25,8 +25,6 @@ RUN go build  \
 	-tags netgo \
 	-o importer \ 
 	cmd/import/main.go
-RUN upx -q -9 gmake \
-	&& upx -q -9 importer
 
 RUN go build  \
 	-a \
@@ -35,8 +33,6 @@ RUN go build  \
 	-tags netgo \
 	-o baserow \ 
 	cmd/baserow/main.go
-RUN upx -q -9 gmake \
-	&& upx -q -9 baserow
 
 RUN go build  \
 	-a \
@@ -45,8 +41,11 @@ RUN go build  \
 	-tags netgo \
 	-o content \ 
 	cmd/loader/main.go
+
 RUN upx -q -9 gmake \
-	&& upx -q -9 content
+	&& upx -q -9 importer \
+	&& upx -q -9 baserow \
+	&& upx -q -9 content 
 
 FROM gcr.io/distroless/static
 COPY --from=builder /go/modware-import/gmake /usr/local/bin/
