@@ -18,3 +18,10 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with: 
           version: v1.55.2
+  call-pr-docker-build:
+    needs: lint
+    uses: dictyBase/workflows/.github/workflows/docker-build-push.yaml@develop
+    secrets: inherit
+    with:
+      repository: ${{ github.repository }}
+      ref: ${{ github.ref_name }}
