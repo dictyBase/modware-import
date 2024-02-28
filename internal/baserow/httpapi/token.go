@@ -22,7 +22,6 @@ var (
 	readRefreshTokenResp = H.ReadJSON[refreshTokenRes](
 		H.MakeClient(http.DefaultClient),
 	)
-	validate *validator.Validate
 )
 
 type tokenReqFeedback struct {
@@ -58,6 +57,7 @@ func NewTokenManager(
 		host:         host,
 		refreshToken: string(cnt),
 	}
+	validate := validator.New()
 	if err := validate.Struct(tkm); err != nil {
 		return tkm, fmt.Errorf("validation failed %s", err)
 	}
