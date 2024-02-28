@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-playground/validator/v10"
+
 	R "github.com/IBM/fp-go/context/readerioeither"
 
 	E "github.com/IBM/fp-go/either"
@@ -20,6 +22,7 @@ var (
 	readRefreshTokenResp = H.ReadJSON[refreshTokenRes](
 		H.MakeClient(http.DefaultClient),
 	)
+	validate *validator.Validate
 )
 
 type tokenReqFeedback struct {
@@ -33,15 +36,17 @@ type jsonPayload struct {
 }
 
 type TokenManager struct {
-	host         string
-	refreshToken string
+	host         string `validate:"required"`
+	refreshToken string `validate:"required"`
 }
 
 type refreshTokenRes struct {
-	Token string `json:"token"`
+	Token string `json:"access_token"`
 }
 
-func NewTokenManager(host, tokenFile string) (*TokenManager, error) {
+func NewTokenManager(
+	host, tokenFile string,
+) (*TokenManager, error) {
 	cnt, err := os.ReadFile(tokenFile)
 	if err != nil {
 		return &TokenManager{}, fmt.Errorf(
@@ -49,7 +54,15 @@ func NewTokenManager(host, tokenFile string) (*TokenManager, error) {
 			err,
 		)
 	}
-	return &TokenManager{host: host, refreshToken: string(cnt)}, nil
+	tkm := &TokenManager{
+		host:         host,
+		refreshToken: string(cnt),
+	}
+	if err := validate.Struct(tkm); err != nil {
+		return tkm, fmt.Errorf("validation failed %s", err)
+	}
+
+	return tkm, nil
 }
 
 func (tkm *TokenManager) RefreshTokenURL() string {
