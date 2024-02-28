@@ -49,6 +49,7 @@ require (
 
 require (
 	github.com/IBM/fp-go v1.0.139
+	github.com/go-playground/validator/v10 v10.14.1
 	github.com/jedib0t/go-pretty/v6 v6.5.4
 	github.com/jellydator/ttlcache/v3 v3.2.0
 	github.com/pkg/errors v0.9.1
@@ -80,7 +81,6 @@ require (
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.14.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
