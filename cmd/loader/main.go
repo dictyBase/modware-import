@@ -13,7 +13,7 @@ import (
 func main() {
 	app := &cli.App{
 		Name:   "loader",
-		Usage:  "A command line application for loading data",
+		Usage:  "A command line application for loading content data",
 		Before: logger.SetupCliLogger,
 		Flags: []cli.Flag{
 			&cli.StringFlag{

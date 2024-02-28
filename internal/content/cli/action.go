@@ -218,7 +218,10 @@ func nameAndNamespace(input string) (string, string) {
 		A.Last,
 		O.Map(func(val string) []string { return strings.Split(val, ".") }),
 		O.Map(func(val []string) string { return val[0] }),
-		O.Map(func(val string) []string { return strings.Split(val, "-") }),
+		O.Map(func(val string) []string {
+			str := strings.Split(val, "-")
+			return []string{str[0], strings.Join(str[1:], "-")}
+		}),
 	)
 	data, _ := O.Unwrap(output)
 	nsmap := namespaceMap()

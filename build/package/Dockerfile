@@ -1,4 +1,4 @@
-FROM golang:1.21.6-bullseye AS builder
+FROM golang:1.21.7-bullseye AS builder
 LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
 ENV CGO_ENABLED=0 \
 	GOOS=linux \
@@ -25,9 +25,30 @@ RUN go build  \
 	-tags netgo \
 	-o importer \ 
 	cmd/import/main.go
+
+RUN go build  \
+	-a \
+	-ldflags "-s -w -extldflags '-static'" \
+	-installsuffix cgo \
+	-tags netgo \
+	-o baserow \ 
+	cmd/baserow/main.go
+
+RUN go build  \
+	-a \
+	-ldflags "-s -w -extldflags '-static'" \
+	-installsuffix cgo \
+	-tags netgo \
+	-o content \ 
+	cmd/loader/main.go
+
 RUN upx -q -9 gmake \
-	&& upx -q -9 importer
+	&& upx -q -9 importer \
+	&& upx -q -9 baserow \
+	&& upx -q -9 content 
 
 FROM gcr.io/distroless/static
 COPY --from=builder /go/modware-import/gmake /usr/local/bin/
 COPY --from=builder /go/modware-import/importer /usr/local/bin/
+COPY --from=builder /go/modware-import/baserow /usr/local/bin/
+COPY --from=builder /go/modware-import/content /usr/local/bin/
