@@ -5,7 +5,13 @@ type OntologyTableManager struct {
 }
 
 func (ont *OntologyTableManager) FieldNames() []string {
-	return []string{"term_id", "name", "is_obsolete"}
+	return []string{
+		"term_id",
+		"name",
+		"is_obsolete",
+		"created_on",
+		"last_modified",
+	}
 }
 
 func (ont *OntologyTableManager) FieldDefs() []map[string]interface{} {
@@ -16,7 +22,7 @@ func (ont *OntologyTableManager) FieldDefs() []map[string]interface{} {
 	}
 }
 
-func (ont *OntologyTableManager) TabledateParams() map[string]map[string]interface{} {
+func (ont *OntologyTableManager) FieldChangeSpecs() map[string]map[string]interface{} {
 	paramsMap := make(map[string]map[string]interface{})
 	paramsMap["is_obsolete"] = map[string]interface{}{
 		"name": "is_obsolete",
