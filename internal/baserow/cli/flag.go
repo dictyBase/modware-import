@@ -16,6 +16,16 @@ func CreateAccessTokenFlag() []cli.Flag {
 			Usage:    "Database password",
 			Required: true,
 		},
+		&cli.BoolFlag{
+			Name:  "save-refresh-token",
+			Usage: "whether to persist the refresh token",
+			Value: true,
+		},
+		&cli.StringFlag{
+			Name:  "refresh-token-path",
+			Usage: "where the refresh token will be saved",
+			Value: "./refresh-token.txt",
+		},
 	}
 }
 
@@ -62,19 +72,23 @@ func LoadOntologyToTableFlag() []cli.Flag {
 func CreateOntologyTableFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
-			Name:     "token",
-			Aliases:  []string{"t"},
-			Usage:    "database token with write privilege",
-			Required: true,
+			Name:    "token",
+			Aliases: []string{"t"},
+			Usage:   "database token with write privilege",
+		},
+		&cli.StringFlag{
+			Name:  "refresh-token-path",
+			Usage: "location, in absence of token value the refresh token will be read",
+			Value: "./refresh-token.txt",
 		},
 		&cli.IntFlag{
 			Name:     "database-id",
 			Usage:    "Database id",
 			Required: true,
 		},
-		&cli.StringFlag{
+		&cli.StringSliceFlag{
 			Name:     "table",
-			Usage:    "Ontology table name",
+			Usage:    "tables to create for loading ontology",
 			Required: true,
 		},
 	}

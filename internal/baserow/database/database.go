@@ -21,7 +21,9 @@ func BaserowClient(server string) *client.APIClient {
 	return client.NewAPIClient(conf)
 }
 
-func AccessToken(args *AccessTokenProperties) (string, error) {
+func AccessToken(
+	args *AccessTokenProperties,
+) (*client.CreateUser200Response, error) {
 	req := BaserowClient(
 		args.Server,
 	).UserApi.TokenAuth(
@@ -35,10 +37,10 @@ func AccessToken(args *AccessTokenProperties) (string, error) {
 	).Execute()
 	defer r.Body.Close()
 	if err != nil {
-		return "", fmt.Errorf("error in executing API call %s", err)
+		return resp, fmt.Errorf("error in executing API call %s", err)
 	}
 	if r != nil && r.StatusCode == http.StatusUnauthorized {
-		return "", errors.New("unauthrorized access")
+		return resp, errors.New("unauthrorized access")
 	}
-	return resp.GetToken(), nil
+	return resp, nil
 }

@@ -5,8 +5,9 @@ import (
 	"io"
 	"net/http"
 
+	H "github.com/IBM/fp-go/context/readerioeither/http"
 	F "github.com/IBM/fp-go/function"
-	H "github.com/IBM/fp-go/http/builder"
+	B "github.com/IBM/fp-go/http/builder"
 	C "github.com/IBM/fp-go/http/content"
 	HD "github.com/IBM/fp-go/http/headers"
 	S "github.com/IBM/fp-go/string"
@@ -15,20 +16,21 @@ import (
 var (
 	WithJWT = F.Flow2(
 		S.Format[string]("JWT %s"),
-		H.WithAuthorization,
+		B.WithAuthorization,
 	)
 	WithToken = F.Flow2(
 		S.Format[string]("Token %s"),
-		H.WithAuthorization,
+		B.WithAuthorization,
 	)
+	MakeHTTPRequest = F.Bind13of3(H.MakeRequest)
 )
 
 func SetHeaderWithToken(token string) func(*http.Request) *http.Request {
 	return func(req *http.Request) *http.Request {
 		req.Header = F.Pipe3(
-			H.Default,
-			H.WithContentType(C.Json),
-			H.WithHeader(HD.Accept)(C.Json),
+			B.Default,
+			B.WithContentType(C.Json),
+			B.WithHeader(HD.Accept)(C.Json),
 			WithToken(token),
 		).GetHeaders()
 
@@ -36,12 +38,22 @@ func SetHeaderWithToken(token string) func(*http.Request) *http.Request {
 	}
 }
 
+func SetHeaderWith(req *http.Request) *http.Request {
+	req.Header = F.Pipe2(
+		B.Default,
+		B.WithContentType(C.Json),
+		B.WithHeader(HD.Accept)(C.Json),
+	).GetHeaders()
+
+	return req
+}
+
 func SetHeaderWithJWT(jwt string) func(*http.Request) *http.Request {
 	return func(req *http.Request) *http.Request {
 		req.Header = F.Pipe3(
-			H.Default,
-			H.WithContentType(C.Json),
-			H.WithHeader(HD.Accept)(C.Json),
+			B.Default,
+			B.WithContentType(C.Json),
+			B.WithHeader(HD.Accept)(C.Json),
 			WithJWT(jwt),
 		).GetHeaders()
 

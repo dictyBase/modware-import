@@ -3,11 +3,13 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"slices"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
+	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/dictyBase/modware-import/internal/baserow/ontology"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -70,7 +72,7 @@ func CreateDatabaseToken(cltx *cli.Context) error {
 }
 
 func CreateAccessToken(cltx *cli.Context) error {
-	token, err := database.AccessToken(&database.AccessTokenProperties{
+	resp, err := database.AccessToken(&database.AccessTokenProperties{
 		Email:    cltx.String("email"),
 		Password: cltx.String("password"),
 		Server:   cltx.String("server"),
@@ -78,7 +80,22 @@ func CreateAccessToken(cltx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err, 2)
 	}
-	fmt.Println(token)
+	fmt.Println(resp.GetToken())
+	if cltx.Bool("save-refresh-token") {
+		err := os.WriteFile(
+			cltx.String("refresh-token-path"),
+			[]byte(resp.GetRefreshToken()),
+			0600,
+		)
+		if err != nil {
+			return cli.Exit(
+				fmt.Sprintf("error in writing refresh token to file %s", err),
+				2,
+			)
+		}
+		registry.GetLogger().
+			Infof("saved refresh token at %s", cltx.String("refresh-token-path"))
+	}
 	return nil
 }
 
@@ -123,38 +140,54 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 }
 
 func CreateOntologyTableHandler(cltx *cli.Context) error {
-	logger := registry.GetLogger()
-	bclient := database.BaserowClient(cltx.String("server"))
+	token := cltx.String("token")
+	if len(token) == 0 {
+		tkm, err := httpapi.NewTokenManager(
+			cltx.String("server"),
+			cltx.String("refresh-token-path"),
+		)
+		if err != nil {
+			cli.Exit(err.Error(), 2)
+		}
+		rtoken, err := tkm.FreshToken()
+		if err != nil {
+			cli.Exit(fmt.Sprintf("error in refreshing token %s", err), 2)
+		}
+		token = rtoken
+	}
 	authCtx := context.WithValue(
 		context.Background(),
 		client.ContextAccessToken,
-		cltx.String("token"),
+		token,
 	)
+	logger := registry.GetLogger()
 	ontTbl := &database.OntologyTableManager{
 		TableManager: &database.TableManager{
-			Client:     bclient,
+			Client:     database.BaserowClient(cltx.String("server")),
 			Logger:     logger,
 			Ctx:        authCtx,
-			Token:      cltx.String("token"),
+			Token:      token,
 			DatabaseId: int32(cltx.Int("database-id")),
 		},
 	}
-	tbl, err := ontTbl.CreateTable(cltx.String("table"), ontTbl.FieldNames())
-	if err != nil {
-		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+	tblParams := map[string]interface{}{
+		"name": "is_obsolete",
+		"type": "boolean",
 	}
-	logger.Infof("created table with fields %s", tbl.GetName())
-	msg, err := ontTbl.UpdateField(
-		tbl,
-		"is_obsolete",
-		map[string]interface{}{"name": "is_obsolete", "type": "boolean"},
-	)
-	if err != nil {
-		return cli.Exit(
-			fmt.Sprintf("error in updating is_obsolete field %s", err),
-			2,
-		)
+	for _, name := range cltx.StringSlice("table") {
+		tbl, err := ontTbl.CreateTable(name, ontTbl.FieldNames())
+		if err != nil {
+			return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+		}
+		logger.Infof("created table with fields %s", tbl.GetName())
+		msg, err := ontTbl.UpdateField(tbl, "is_obsolete", tblParams)
+		if err != nil {
+			return cli.Exit(
+				fmt.Sprintf("error in updating is_obsolete field %s", err),
+				2,
+			)
+		}
+		logger.Info(msg)
 	}
-	logger.Info(msg)
 	return nil
 }
