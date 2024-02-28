@@ -19,7 +19,6 @@ Cli application for importing dictybase data.
 ![Total PRS](https://badgen.net/github/prs/dictyBase/modware-import)
 ![Open PRS](https://badgen.net/github/open-prs/dictyBase/modware-import)
 ![Closed PRS](https://badgen.net/github/closed-prs/dictyBase/modware-import)
-![Merged PRS](https://badgen.net/github/merged-prs/dictyBase/modware-import)   
 ![Commits](https://badgen.net/github/commits/dictyBase/modware-import/develop)
 ![Branches](https://badgen.net/github/branches/dictyBase/modware-import)
 ![Tags](https://badgen.net/github/tags/dictyBase/modware-import)   
