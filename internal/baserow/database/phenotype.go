@@ -22,10 +22,10 @@ func (pheno *PhenotypeTableManager) FieldNames() []string {
 
 func (pheno *PhenotypeTableManager) FieldChangeSpecs() map[string]map[string]interface{} {
 	paramsMap := make(map[string]map[string]interface{})
-	/* paramsMap["annotation_id"] = map[string]interface{}{
+	paramsMap["annotation_id"] = map[string]interface{}{
 		"name": "annotation_id",
 		"type": "uuid",
-	} */
+	}
 	paramsMap["deleted"] = map[string]interface{}{
 		"name": "deleted",
 		"type": "boolean",
@@ -46,10 +46,10 @@ func (pheno *PhenotypeTableManager) FieldChangeSpecs() map[string]map[string]int
 		"date_time_format":  "12",
 		"date_show_tzinfo":  "true",
 	}
-	/* paramsMap["assigned_by"] = map[string]interface{}{
+	paramsMap["assigned_by"] = map[string]interface{}{
 		"name": "assigned_by",
 		"type": "multiple_collaborators",
-	} */
+	}
 
 	return paramsMap
 }
