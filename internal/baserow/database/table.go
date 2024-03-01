@@ -56,6 +56,32 @@ func (tbm *TableManager) TableFieldsURL(tbl *client.Table) string {
 	)
 }
 
+func (tbm *TableManager) TablesURL() string {
+	return fmt.Sprintf(
+		"https://%s/api/database/tables/database/%d/",
+		tbm.Client.GetConfig().Host,
+		tbm.DatabaseId,
+	)
+}
+
+func (tbm *TableManager) TableNameToId(name string) (int, error) {
+	resp := F.Pipe3(
+		tbm.TablesURL(),
+		H.MakeGetRequest,
+		R.Map(httpapi.SetHeaderWithJWT(tbm.Token)),
+		readTablesResp,
+	)(context.Background())
+	output := F.Pipe1(
+		resp(),
+		E.Fold[error, []tableFieldRes, fieldsReqFeedback](
+			onFieldsReqFeedbackError,
+			onTablesReqFeedbackSuccess(name),
+		),
+	)
+
+	return output.Id, output.Error
+}
+
 func (tbm *TableManager) CreateTableURL() string {
 	return fmt.Sprintf(
 		"https://%s/api/database/tables/database/%d/",
