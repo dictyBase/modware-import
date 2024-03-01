@@ -9,8 +9,11 @@ func (pheno *PhenotypeTableManager) FieldNames() []string {
 		"annotation_id",
 		"strain_id",
 		"strain_descriptor",
+		"phenotype_id",
 		"phenotype_term",
+		"assay_id",
 		"assay_term",
+		"environment_id",
 		"environment_term",
 		"reference",
 		"deleted",
@@ -49,6 +52,21 @@ func (pheno *PhenotypeTableManager) FieldChangeSpecs() map[string]map[string]int
 	paramsMap["assigned_by"] = map[string]interface{}{
 		"name": "assigned_by",
 		"type": "multiple_collaborators",
+	}
+	paramsMap["phenotype_term"] = map[string]interface{}{
+		"name":    "phenotype_term",
+		"type":    "formula",
+		"formula": "lookup('phenotype_id','name')",
+	}
+	paramsMap["environment_term"] = map[string]interface{}{
+		"name":    "environment_term",
+		"type":    "formula",
+		"formula": "lookup('environment_id','name')",
+	}
+	paramsMap["assay_term"] = map[string]interface{}{
+		"name":    "assay_term",
+		"type":    "formula",
+		"formula": "lookup('assay_id','name')",
 	}
 
 	return paramsMap
