@@ -3,8 +3,10 @@ package database
 import (
 	"net/http"
 
+	A "github.com/IBM/fp-go/array"
 	H "github.com/IBM/fp-go/context/readerioeither/http"
 	F "github.com/IBM/fp-go/function"
+	O "github.com/IBM/fp-go/option"
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 )
 
@@ -25,8 +27,10 @@ var (
 	readTablesResp = H.ReadJSON[[]tableFieldRes](
 		H.MakeClient(http.DefaultClient),
 	)
-	HasField                = F.Curry2(uncurriedHasField)
-	ResToReqTableWithParams = F.Curry2(uncurriedResToReqTableWithParams)
+	HasField                   = F.Curry2(uncurriedHasField)
+	ResToReqTableWithParams    = F.Curry2(uncurriedResToReqTableWithParams)
+	matchTableName             = F.Curry2(uncurriedMatchTableName)
+	onTablesReqFeedbackSuccess = F.Curry2(uncurriedOnTablesReqFeedbackSuccess)
 )
 
 type tableFieldUpdateResponse struct {
@@ -51,6 +55,7 @@ type fieldsReqFeedback struct {
 	Fields []tableFieldRes
 	Msg    string
 	Table  *client.Table
+	Id     int
 }
 
 type tableFieldRes struct {
@@ -128,4 +133,22 @@ func ResToReqTable(req tableFieldRes) tableFieldReq {
 			Id:   req.Id,
 		},
 	}
+}
+
+func uncurriedMatchTableName(name string, tres tableFieldRes) bool {
+	return tres.Name == name
+}
+
+func uncurriedOnTablesReqFeedbackSuccess(
+	name string, res []tableFieldRes,
+) fieldsReqFeedback {
+	return F.Pipe2(
+		res,
+		A.FindFirst(matchTableName(name)),
+		O.Fold(func() fieldsReqFeedback { return fieldsReqFeedback{} },
+			func(ores tableFieldRes) fieldsReqFeedback {
+				return fieldsReqFeedback{Id: ores.Id}
+			},
+		),
+	)
 }
