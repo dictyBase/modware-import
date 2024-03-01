@@ -22,6 +22,9 @@ var (
 	readTableCreateResp = H.ReadJSON[tableFieldRes](
 		H.MakeClient(http.DefaultClient),
 	)
+	readTablesResp = H.ReadJSON[[]tableFieldRes](
+		H.MakeClient(http.DefaultClient),
+	)
 	HasField                = F.Curry2(uncurriedHasField)
 	ResToReqTableWithParams = F.Curry2(uncurriedResToReqTableWithParams)
 )
