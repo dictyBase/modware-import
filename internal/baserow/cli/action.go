@@ -232,3 +232,23 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 	}
 	return nil
 }
+func allPhenoTableIds(
+	pheno *database.PhenotypeTableManager,
+	cltx *cli.Context,
+) (map[string]int, error) {
+	idMaps := make(map[string]int)
+	tableNames := []string{
+		cltx.String("assay-ontology-table"),
+		cltx.String("phenotype-ontology-table"),
+		cltx.String("env-ontology-table"),
+	}
+	for _, name := range tableNames {
+		id, err := pheno.TableNameToId(name)
+		if err != nil {
+			return idMaps, err
+		}
+		idMaps[name] = id
+	}
+
+	return idMaps, nil
+}
