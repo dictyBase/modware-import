@@ -76,6 +76,21 @@ func CreatePhenotypeTableFlag() []cli.Flag {
 			Usage:    "table to create for loading phenotype annotation",
 			Required: true,
 		},
+		&cli.StringFlag{
+			Name:  "assay-ontology-table",
+			Usage: "table name containing assay ontology",
+			Value: "assay-ontology",
+		},
+		&cli.StringFlag{
+			Name:  "env-ontology-table",
+			Usage: "table name containing environmental ontology",
+			Value: "environment-ontology",
+		},
+		&cli.StringFlag{
+			Name:  "phenotype-ontology-table",
+			Usage: "table name containing phenotype ontology",
+			Value: "phenotype-ontology",
+		},
 	)
 }
 
