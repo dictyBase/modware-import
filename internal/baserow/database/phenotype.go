@@ -23,6 +23,29 @@ func (pheno *PhenotypeTableManager) FieldNames() []string {
 	}
 }
 
+func (pheno *PhenotypeTableManager) LinkFieldChangeSpecs(
+	idMaps map[string]int,
+) map[string]map[string]interface{} {
+	paramsMap := make(map[string]map[string]interface{})
+	paramsMap["phenotype_id"] = map[string]interface{}{
+		"name":              "phenotype_id",
+		"type":              "link_row",
+		"link_row_table_id": idMaps["phenotype-ontology-table"],
+	}
+	paramsMap["assay_id"] = map[string]interface{}{
+		"name":              "assay_id",
+		"type":              "link_row",
+		"link_row_table_id": idMaps["assay-ontology-table"],
+	}
+	paramsMap["environment_id"] = map[string]interface{}{
+		"name":              "environment_id",
+		"type":              "link_row",
+		"link_row_table_id": idMaps["env-ontology-table"],
+	}
+
+	return paramsMap
+}
+
 func (pheno *PhenotypeTableManager) FieldChangeSpecs() map[string]map[string]interface{} {
 	paramsMap := make(map[string]map[string]interface{})
 	paramsMap["annotation_id"] = map[string]interface{}{
