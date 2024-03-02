@@ -79,17 +79,17 @@ func CreatePhenotypeTableFlag() []cli.Flag {
 		&cli.StringFlag{
 			Name:  "assay-ontology-table",
 			Usage: "table name containing assay ontology",
-			Value: "assay-ontology",
+			Value: "assay_ontology",
 		},
 		&cli.StringFlag{
 			Name:  "env-ontology-table",
 			Usage: "table name containing environmental ontology",
-			Value: "environment-ontology",
+			Value: "environment_ontology",
 		},
 		&cli.StringFlag{
 			Name:  "phenotype-ontology-table",
 			Usage: "table name containing phenotype ontology",
-			Value: "phenotype-ontology",
+			Value: "phenotype_ontology",
 		},
 	)
 }
