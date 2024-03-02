@@ -22,5 +22,4 @@ func refreshToken(cltx *cli.Context) (string, error) {
 	}
 
 	return token, nil
-
 }
