@@ -168,7 +168,14 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
 	}
 	logger.Infof("created table with fields %s", tbl.GetName())
-	for fieldName, spec := range phenoTbl.FieldChangeSpecs() {
+	tableIdMaps, err := allPhenoTableIds(phenoTbl, cltx)
+	if err != nil {
+		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
+	}
+	for fieldName, spec := range mergeFieldDefs(
+		phenoTbl.LinkFieldChangeSpecs(tableIdMaps),
+		phenoTbl.FieldChangeSpecs(),
+	) {
 		msg, err := phenoTbl.UpdateField(tbl, fieldName, spec)
 		if err != nil {
 			return cli.Exit(
@@ -232,18 +239,19 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 	}
 	return nil
 }
+
 func allPhenoTableIds(
 	pheno *database.PhenotypeTableManager,
 	cltx *cli.Context,
 ) (map[string]int, error) {
 	idMaps := make(map[string]int)
-	tableNames := []string{
-		cltx.String("assay-ontology-table"),
-		cltx.String("phenotype-ontology-table"),
-		cltx.String("env-ontology-table"),
+	flagNames := []string{
+		"assay-ontology-table",
+		"phenotype-ontology-table",
+		"env-ontology-table",
 	}
-	for _, name := range tableNames {
-		id, err := pheno.TableNameToId(name)
+	for _, name := range flagNames {
+		id, err := pheno.TableNameToId(cltx.String(name))
 		if err != nil {
 			return idMaps, err
 		}
@@ -251,4 +259,13 @@ func allPhenoTableIds(
 	}
 
 	return idMaps, nil
+}
+
+func mergeFieldDefs(
+	m1, m2 map[string]map[string]interface{},
+) map[string]map[string]interface{} {
+	for k, v := range m2 {
+		m1[k] = v
+	}
+	return m1
 }
