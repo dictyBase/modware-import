@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"net/http"
 
 	A "github.com/IBM/fp-go/array"
@@ -145,7 +146,12 @@ func uncurriedOnTablesReqFeedbackSuccess(
 	return F.Pipe2(
 		res,
 		A.FindFirst(matchTableName(name)),
-		O.Fold(func() fieldsReqFeedback { return fieldsReqFeedback{} },
+		O.Fold(
+			func() fieldsReqFeedback {
+				return fieldsReqFeedback{
+					Error: fmt.Errorf("unable to find table %s", name),
+				}
+			},
 			func(ores tableFieldRes) fieldsReqFeedback {
 				return fieldsReqFeedback{Id: ores.Id}
 			},
