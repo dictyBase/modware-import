@@ -1,3 +1,8 @@
+// Package ontology provides functionality to interact with ontologies
+// stored in a Baserow table. It includes functions to load new terms into the
+// table or update existing entries based on their deprecation status. The package
+// handles the construction and execution of HTTP requests to the Baserow API,
+// and the marshaling and unmarshaling of JSON data as needed for the ontology terms.
 package ontology
 
 import (
