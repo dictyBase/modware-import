@@ -41,6 +41,10 @@ func (pha *PhenotypeAnnotation) EnvironmentId() string {
 	return pha.environmentId
 }
 
+func (pha *PhenotypeAnnotation) HasNotes() bool {
+	return len(pha.notes) == 0
+}
+
 // Notes returns any notes associated with the phenotype annotation.
 func (pha *PhenotypeAnnotation) Notes() string {
 	return pha.notes
