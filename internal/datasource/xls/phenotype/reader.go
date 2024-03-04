@@ -1,3 +1,10 @@
+// Package phenotype provides functionality to read phenotype annotations
+// from an Excel file. It defines the PhenotypeAnnotationReader struct with methods
+// to create a new reader, iterate over rows of data, and retrieve phenotype annotations
+// as structured data with validation. The reader is initialized with a file path,
+// a specific sheet name, and a creation date, and it includes error handling for
+// file and row reading. It uses the third-party libraries excelize for Excel file
+// manipulation and go-playground/validator for data validation.
 package phenotype
 
 import (
@@ -8,12 +15,24 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// PhenotypeAnnotationReader is responsible for reading phenotype annotations
+// from an Excel file
 type PhenotypeAnnotationReader struct {
 	rows          *excelize.Rows
 	createdOn     time.Time
 	dataValidator *validator.Validate
 }
 
+// NewPhenotypeAnnotationReader creates a new reader for phenotype annotations from an Excel file.
+// It initializes the reader for the specified sheet in the file and sets the creation date for the annotations.
+// The function also sets up a data validator for structural validation of the annotations.
+// If the function encounters an error while opening the file or reading the rows, it returns the reader object
+// created up to that point along with the error.
+//
+// Parameters:
+// - file: The path to the Excel file to be read.
+// - sheet: The name of the sheet within the Excel file which contains the phenotype annotations.
+// - date: The creation date to be associated with the annotations being read.
 func NewPhenotypeAnnotationReader(
 	file, sheet string, date time.Time,
 ) (*PhenotypeAnnotationReader, error) {
@@ -35,6 +54,9 @@ func NewPhenotypeAnnotationReader(
 	return phenoReader, nil
 }
 
+// Next advances the reader to the next row of phenotype annotations.
+// If there are no more rows to read or an error occurs, it will close the reader and return false.
+// This method should be called before each call to Value to advance the reader to the next phenotype annotation.
 func (phr *PhenotypeAnnotationReader) Next() bool {
 	if phr.rows.Next() {
 		return true
@@ -44,6 +66,10 @@ func (phr *PhenotypeAnnotationReader) Next() bool {
 	return false
 }
 
+// Value retrieves the current phenotype annotation from the reader.
+// Before calling Value, Next should be used to advance the reader to the desired row.
+// Value decodes the current row into a PhenotypeAnnotation struct and performs data validation.
+// If the validation fails or an error occurs while reading the columns, it returns an error.
 func (phr *PhenotypeAnnotationReader) Value() (*PhenotypeAnnotation, error) {
 	anno := &PhenotypeAnnotation{}
 	row, err := phr.rows.Columns()
