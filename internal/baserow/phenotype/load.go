@@ -1,8 +1,6 @@
 package phenotype
 
 import (
-	"errors"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,12 +32,6 @@ func NewPhenotypeLoader(args LoaderProperties) *PhenotypeLoader {
 
 type ParseNameToDateFeedback struct {
 	Err error
-}
-
-func onParseNameToDateNone() ParseNameToDateFeedback {
-	return ParseNameToDateFeedback{
-		Err: errors.New("The date string is absent from file name"),
-	}
 }
 
 func (loader *PhenotypeLoader) Load(args *LoaderProperties) error {
