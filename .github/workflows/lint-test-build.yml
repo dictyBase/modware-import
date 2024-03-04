@@ -1,0 +1,44 @@
+name: Lint, test coverage and build
+on:
+  pull_request:
+    branches-ignore:
+      - master
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check out code
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          cache: false
+      - run: go version
+      - name: run linter
+        uses: golangci/golangci-lint-action@v3
+        with: 
+          version: v1.55.2
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: set up golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      - run: go version
+      - name: check out code
+        uses: actions/checkout@v4
+      - name: unit test
+        run: go test -shuffle on -covermode=atomic -coverprofile=profile.cov -v ./...
+      - name: upload coverage to codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./profile.cov
+  call-pr-docker-build:
+    needs: test
+    uses: dictyBase/workflows/.github/workflows/docker-build-push-pr.yaml@develop
+    secrets: inherit
+    with:
+      repository: ${{ github.repository }}
+      ref: ${{ github.event.pull_request.head.ref }}
