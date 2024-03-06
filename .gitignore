@@ -3,3 +3,4 @@ import
 k8cmd
 baserowcmd
 refresh-token.txt
+.aider*
