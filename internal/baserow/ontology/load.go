@@ -11,12 +11,28 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/dictyBase/go-obograph/graph"
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/sirupsen/logrus"
 )
+
+type LoadingLooper struct {
+	Handler *FnRunnerProperties
+}
+
+func (ldo *LoadingLooper) Run() error {
+	return ldo.Handler.Fn(ldo.Handler.Props)
+}
+
+type FnRunnerProperties struct {
+	Fn    func(*termRowProperties) error
+	Props *termRowProperties
+}
 
 type LoadProperties struct {
 	File    string
@@ -72,6 +88,12 @@ func LoadNewOrUpdate(args *LoadProperties) error {
 			err,
 		)
 	}
+
+	return handleTermLoading(grph, args)
+}
+
+func handleTermLoading(grph graph.OboGraph, args *LoadProperties) error {
+	loaderSlice := make([]*FnRunnerProperties, 0)
 	for _, term := range grph.Terms() {
 		existResp, err := existTermRow(&termRowProperties{
 			Term:    term,
@@ -102,17 +124,32 @@ func LoadNewOrUpdate(args *LoadProperties) error {
 			args.Logger.Infof("updated row with term %s", string(term.ID()))
 			continue
 		}
-		err = addTermRow(&termRowProperties{
-			Term:    term,
-			Host:    args.Client.GetConfig().Host,
-			Token:   args.Token,
-			TableId: args.TableId,
+		loaderSlice = append(loaderSlice, &FnRunnerProperties{
+			Fn: addTermRow,
+			Props: &termRowProperties{
+				Term:    term,
+				Host:    args.Client.GetConfig().Host,
+				Token:   args.Token,
+				TableId: args.TableId,
+			},
 		})
-		if err != nil {
-			return err
+		if len(loaderSlice) > 5 {
+			grp := &errgroup.Group{}
+			for _, loadFn := range loaderSlice {
+				args.Logger.Infof(
+					"handling load of %s term",
+					loadFn.Props.Term.ID(),
+				)
+				runner := &LoadingLooper{Handler: loadFn}
+				grp.Go(runner.Run)
+			}
+			if err := grp.Wait(); err != nil {
+				return err
+			}
+			loaderSlice = slices.Delete(loaderSlice, 0, len(loaderSlice))
 		}
-		args.Logger.Infof("add row with id %s", term.ID())
 	}
+
 	return nil
 }
 
