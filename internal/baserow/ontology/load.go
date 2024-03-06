@@ -21,6 +21,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const ConcurrentTermLoader = 10
+
 type LoadingLooper struct {
 	Handler *FnRunnerProperties
 }
@@ -133,7 +135,7 @@ func handleTermLoading(grph graph.OboGraph, args *LoadProperties) error {
 				TableId: args.TableId,
 			},
 		})
-		if len(loaderSlice) > 5 {
+		if len(loaderSlice) > ConcurrentTermLoader {
 			grp := &errgroup.Group{}
 			for _, loadFn := range loaderSlice {
 				args.Logger.Infof(
@@ -147,6 +149,20 @@ func handleTermLoading(grph graph.OboGraph, args *LoadProperties) error {
 				return err
 			}
 			loaderSlice = slices.Delete(loaderSlice, 0, len(loaderSlice))
+		}
+	}
+	if len(loaderSlice) > 0 {
+		grp := &errgroup.Group{}
+		for _, loadFn := range loaderSlice {
+			args.Logger.Infof(
+				"handling load of %s term",
+				loadFn.Props.Term.ID(),
+			)
+			runner := &LoadingLooper{Handler: loadFn}
+			grp.Go(runner.Run)
+		}
+		if err := grp.Wait(); err != nil {
+			return err
 		}
 	}
 
