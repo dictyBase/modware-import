@@ -13,8 +13,13 @@ linters-settings:
         lines: 80
     revive:
       rules:
-        - name: var-naming
-          arguments: [["ID"]]
+       - name: var-naming
+         disabled: true
+         # exclude: [""]
+         # arguments:
+         #  - ["ID"] # AllowList
+         #  - ["VM"] # DenyList
+         #  - - upperCaseConst: true
 linters:
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
