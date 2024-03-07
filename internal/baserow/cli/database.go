@@ -11,7 +11,6 @@ import (
 	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/registry"
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -95,33 +94,5 @@ func CreateAccessToken(cltx *cli.Context) error {
 		registry.GetLogger().
 			Infof("saved refresh token at %s", cltx.String("refresh-token-path"))
 	}
-	return nil
-}
-
-
-
-func mergeFieldDefs(
-	m1, m2 map[string]map[string]interface{},
-) map[string]map[string]interface{} {
-	for k, v := range m2 {
-		m1[k] = v
-	}
-	return m1
-}
-
-func updateFieldDefs(
-	tbm *database.TableManager,
-	defs map[string]map[string]interface{},
-	tbl *client.Table,
-	logger *logrus.Entry,
-) error {
-	for fieldName, spec := range defs {
-		msg, err := tbm.UpdateField(tbl, fieldName, spec)
-		if err != nil {
-			return fmt.Errorf("error in updating %s field %s", fieldName, err)
-		}
-		logger.Info(msg)
-	}
-
 	return nil
 }
