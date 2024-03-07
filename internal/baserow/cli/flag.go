@@ -69,6 +69,31 @@ func LoadOntologyToTableFlag() []cli.Flag {
 	}
 }
 
+func CreateStrainTableFlag() []cli.Flag {
+	return append(tableCreationFlags(),
+		&cli.StringFlag{
+			Name:     "table",
+			Usage:    "table to create for loading phenotype annotation",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:  "strainchar-ontology-table",
+			Usage: "table name containing strain characteristics ontology",
+			Value: "strain_characteristics_ontology",
+		},
+		&cli.StringFlag{
+			Name:  "genetic-mod-ontology-table",
+			Usage: "table name containing genetic modification ontology",
+			Value: "genetic_modification_ontology",
+		},
+		&cli.StringFlag{
+			Name:  "mutagenesis-method-ontology-table",
+			Usage: "table name containing mutagenesis method ontology",
+			Value: "mutagenesis_method_ontology",
+		},
+	)
+}
+
 func CreatePhenotypeTableFlag() []cli.Flag {
 	return append(tableCreationFlags(),
 		&cli.StringFlag{
