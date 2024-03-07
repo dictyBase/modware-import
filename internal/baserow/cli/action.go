@@ -138,6 +138,65 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 	return nil
 }
 
+func CreateStrainTableHandler(cltx *cli.Context) error {
+	token := cltx.String("token")
+	if len(token) == 0 {
+		rtoken, err := refreshToken(cltx)
+		if err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+		token = rtoken
+	}
+	authCtx := context.WithValue(
+		context.Background(),
+		client.ContextAccessToken,
+		token,
+	)
+	logger := registry.GetLogger()
+	strainTbl := &database.StrainTableManager{
+		TableManager: &database.TableManager{
+			Client:     database.BaserowClient(cltx.String("server")),
+			DatabaseId: int32(cltx.Int("database-id")),
+			Logger:     logger,
+			Ctx:        authCtx,
+			Token:      token,
+		},
+	}
+	name := cltx.String("table")
+	tbl, err := strainTbl.CreateTable(name, strainTbl.FieldNames())
+	if err != nil {
+		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+	}
+	logger.Infof("created table with fields %s", tbl.GetName())
+	flagNames := []string{
+		"strainchar-ontology-table",
+		"genetic-mod-ontology-table",
+		"mutagenesis-method-ontology-table",
+	}
+	tableIdMaps, err := allTableIds(strainTbl.TableManager, flagNames, cltx)
+	if err != nil {
+		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
+	}
+	for fieldName, spec := range mergeFieldDefs(
+		strainTbl.LinkFieldChangeSpecs(tableIdMaps),
+		strainTbl.FieldChangeSpecs(),
+	) {
+		msg, err := strainTbl.UpdateField(tbl, fieldName, spec)
+		if err != nil {
+			return cli.Exit(
+				fmt.Sprintf(
+					"error in updating %s field %s",
+					fieldName,
+					err,
+				),
+				2,
+			)
+		}
+		logger.Info(msg)
+	}
+	return nil
+}
+
 func CreatePhenoTableHandler(cltx *cli.Context) error {
 	token := cltx.String("token")
 	if len(token) == 0 {
