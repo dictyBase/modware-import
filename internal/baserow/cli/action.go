@@ -168,7 +168,12 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
 	}
 	logger.Infof("created table with fields %s", tbl.GetName())
-	tableIdMaps, err := allPhenoTableIds(phenoTbl, cltx)
+	flagNames := []string{
+		"assay-ontology-table",
+		"phenotype-ontology-table",
+		"env-ontology-table",
+	}
+	tableIdMaps, err := allTableIds(phenoTbl.TableManager, flagNames, cltx)
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
 	}
@@ -240,18 +245,14 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 	return nil
 }
 
-func allPhenoTableIds(
-	pheno *database.PhenotypeTableManager,
+func allTableIds(
+	tbm *database.TableManager,
+	flagNames []string,
 	cltx *cli.Context,
 ) (map[string]int, error) {
 	idMaps := make(map[string]int)
-	flagNames := []string{
-		"assay-ontology-table",
-		"phenotype-ontology-table",
-		"env-ontology-table",
-	}
 	for _, name := range flagNames {
-		id, err := pheno.TableNameToId(cltx.String(name))
+		id, err := tbm.TableNameToId(cltx.String(name))
 		if err != nil {
 			return idMaps, err
 		}
