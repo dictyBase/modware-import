@@ -53,9 +53,15 @@ func main() {
 			},
 			{
 				Name:   "create-phenotype-table",
-				Usage:  "Create a baserow table with phenotype fields preset",
+				Usage:  "Create a baserow table with phenotype annotation fields preset",
 				Flags:  baserow.CreatePhenotypeTableFlag(),
 				Action: baserow.CreatePhenoTableHandler,
+			},
+			{
+				Name:   "create-strain-table",
+				Usage:  "Create a baserow table with strain annotation fields preset",
+				Flags:  baserow.CreateStrainTableFlag(),
+				Action: baserow.CreateStrainTableHandler,
 			},
 			{
 				Name:   "create-ontology-table",
