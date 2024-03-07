@@ -98,22 +98,7 @@ func CreateAccessToken(cltx *cli.Context) error {
 	return nil
 }
 
-func allTableIds(
-	tbm *database.TableManager,
-	flagNames []string,
-	cltx *cli.Context,
-) (map[string]int, error) {
-	idMaps := make(map[string]int)
-	for _, name := range flagNames {
-		id, err := tbm.TableNameToId(cltx.String(name))
-		if err != nil {
-			return idMaps, err
-		}
-		idMaps[name] = id
-	}
 
-	return idMaps, nil
-}
 
 func mergeFieldDefs(
 	m1, m2 map[string]map[string]interface{},
