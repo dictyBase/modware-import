@@ -37,12 +37,12 @@ func (strn *StrainTableManager) LinkFieldChangeSpecs(
 	paramsMap["strain_characteristics_id"] = map[string]interface{}{
 		"name":              "strain_characteristics_id",
 		"type":              "link_row",
-		"link_row_table_id": idMaps["strain-characteristics-ontology-table"],
+		"link_row_table_id": idMaps["strainchar-ontology-table"],
 	}
 	paramsMap["genetic_modification_id"] = map[string]interface{}{
 		"name":              "genetic_modification_id",
 		"type":              "link_row",
-		"link_row_table_id": idMaps["genetic-modification-ontology-table"],
+		"link_row_table_id": idMaps["genetic-mod-ontology-table"],
 	}
 	paramsMap["mutagenesis_method_id"] = map[string]interface{}{
 		"name":              "mutagenesis_method_id",
