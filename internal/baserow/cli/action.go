@@ -12,6 +12,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/baserow/ontology"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/registry"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -177,22 +178,15 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
 	}
-	for fieldName, spec := range mergeFieldDefs(
+	fieldDefs := []map[string]map[string]interface{}{
 		strainTbl.LinkFieldChangeSpecs(tableIdMaps),
 		strainTbl.FieldChangeSpecs(),
-	) {
-		msg, err := strainTbl.UpdateField(tbl, fieldName, spec)
+	}
+	for _, def := range fieldDefs {
+		err := updateFieldDefs(strainTbl.TableManager, def, tbl, logger)
 		if err != nil {
-			return cli.Exit(
-				fmt.Sprintf(
-					"error in updating %s field %s",
-					fieldName,
-					err,
-				),
-				2,
-			)
+			cli.Exit(err.Error(), 2)
 		}
-		logger.Info(msg)
 	}
 	return nil
 }
@@ -328,4 +322,21 @@ func mergeFieldDefs(
 		m1[k] = v
 	}
 	return m1
+}
+
+func updateFieldDefs(
+	tbm *database.TableManager,
+	defs map[string]map[string]interface{},
+	tbl *client.Table,
+	logger *logrus.Entry,
+) error {
+	for fieldName, spec := range defs {
+		msg, err := tbm.UpdateField(tbl, fieldName, spec)
+		if err != nil {
+			return fmt.Errorf("error in updating %s field %s", fieldName, err)
+		}
+		logger.Info(msg)
+	}
+
+	return nil
 }
