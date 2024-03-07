@@ -6,6 +6,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 func updateFieldDefs(
@@ -14,15 +15,34 @@ func updateFieldDefs(
 	tbl *client.Table,
 	logger *logrus.Entry,
 ) error {
+	grp := &errgroup.Group{}
 	for fieldName, spec := range defs {
-		msg, err := tbm.UpdateField(tbl, fieldName, spec)
-		if err != nil {
-			return fmt.Errorf("error in updating %s field %s", fieldName, err)
-		}
-		logger.Info(msg)
+		grp.Go(updateFieldFunc(tbm, tbl, fieldName, spec, logger))
 	}
 
-	return nil
+	return grp.Wait() // Wait for all goroutines to complete before returning
+}
+
+// updateFieldFunc returns a function that conforms to the signature expected by errgroup.Go
+func updateFieldFunc(
+	tbm *database.TableManager,
+	tbl *client.Table,
+	fieldName string,
+	spec map[string]interface{},
+	logger *logrus.Entry,
+) func() error {
+	return func() error {
+		msg, err := tbm.UpdateField(tbl, fieldName, spec)
+		if err != nil {
+			return fmt.Errorf(
+				"error in updating %s field %s",
+				fieldName,
+				err,
+			)
+		}
+		logger.Info(msg)
+		return nil
+	}
 }
 
 func mergeFieldDefs(
