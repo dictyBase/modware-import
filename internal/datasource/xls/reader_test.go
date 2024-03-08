@@ -53,7 +53,7 @@ func createTempExcelFile(
 	}
 	if createRow {
 		xfh.SetCellValue(sheetName, "A1", "Hello")
-		xfh.SetCellValue(sheetName, "B1", 123)
+		xfh.SetCellValue(sheetName, "A2", "No Hello for you")
 	}
 	xfh.SetActiveSheet(index)
 	tmpFileName := filepath.Join(
@@ -75,7 +75,12 @@ func createTempExcelFile(
 func TestNewReader(t *testing.T) {
 	t.Run("should return error if file does not exist", func(t *testing.T) {
 		t.Parallel()
-		_, err := NewReader("non-existent-file.xlsx", "Sheet1", time.Now())
+		_, err := NewReader(
+			"non-existent-file.xlsx",
+			"Sheet1",
+			time.Now(),
+			false,
+		)
 		assert.Error(t, err)
 	})
 
@@ -83,7 +88,7 @@ func TestNewReader(t *testing.T) {
 		t.Parallel()
 		xlsFile, err := createTempExcelFile(t, "Sheet34", false)
 		assert.NoError(t, err)
-		_, err = NewReader(xlsFile, "non-existent-sheet", time.Now())
+		_, err = NewReader(xlsFile, "non-existent-sheet", time.Now(), false)
 		assert.Error(t, err)
 	})
 
@@ -93,7 +98,7 @@ func TestNewReader(t *testing.T) {
 			t.Parallel()
 			xlsFile, err := createTempExcelFile(t, "Sheet74", false)
 			assert.NoError(t, err)
-			reader, err := NewReader(xlsFile, "Sheet74", time.Now())
+			reader, err := NewReader(xlsFile, "Sheet74", time.Now(), false)
 			assert.NoError(t, err)
 			assert.NotNil(t, reader)
 		},
@@ -105,16 +110,35 @@ func TestXlsReader_Next(t *testing.T) {
 		t.Parallel()
 		xlsFile, err := createTempExcelFile(t, "Sheet72", true)
 		assert.NoError(t, err)
-		reader, err := NewReader(xlsFile, "Sheet72", time.Now())
+		reader, err := NewReader(xlsFile, "Sheet72", time.Now(), false)
 		assert.NoError(t, err)
 		assert.True(t, reader.Next())
 	})
-	t.Run("should return false if there are no more rows", func(t *testing.T) {
+	t.Run("should return false if there are no rows", func(t *testing.T) {
 		t.Parallel()
 		xlsFile, err := createTempExcelFile(t, "Sheet79", false)
 		assert.NoError(t, err)
-		reader, err := NewReader(xlsFile, "Sheet79", time.Now())
+		reader, err := NewReader(xlsFile, "Sheet79", time.Now(), false)
 		assert.NoError(t, err)
+		assert.False(t, reader.Next())
+	})
+	t.Run("should return false if there are no more rows", func(t *testing.T) {
+		t.Parallel()
+		xlsFile, err := createTempExcelFile(t, "Sheet89", true)
+		assert.NoError(t, err)
+		reader, err := NewReader(xlsFile, "Sheet89", time.Now(), false)
+		assert.NoError(t, err)
+		assert.True(t, reader.Next())
+		assert.True(t, reader.Next())
+		assert.False(t, reader.Next())
+	})
+	t.Run("should skip headers or first row", func(t *testing.T) {
+		t.Parallel()
+		xlsFile, err := createTempExcelFile(t, "Sheet799", true)
+		assert.NoError(t, err)
+		reader, err := NewReader(xlsFile, "Sheet799", time.Now(), true)
+		assert.NoError(t, err)
+		assert.True(t, reader.Next())
 		assert.False(t, reader.Next())
 	})
 }
