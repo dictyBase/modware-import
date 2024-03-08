@@ -8,6 +8,7 @@ func (strn *StrainTableManager) FieldNames() []string {
 	return []string{
 		"annotation_id",
 		"strain_id",
+		"strain_names",
 		"strain_descriptor",
 		"strain_summary",
 		"systematic_name",
