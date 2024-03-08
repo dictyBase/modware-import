@@ -23,6 +23,11 @@ type StrainAnnotation struct {
 	genes               string
 	genotype            string
 	depositor           string
+	empty               bool
+}
+
+func (strain *StrainAnnotation) IsEmpty() bool {
+	return strain.empty
 }
 
 func (strain *StrainAnnotation) HasId() bool {
