@@ -26,7 +26,7 @@ type StrainAnnotation struct {
 }
 
 func (strain *StrainAnnotation) HasId() bool {
-	return len(strain.id) == 0
+	return len(strain.id) > 0
 }
 
 func (strain *StrainAnnotation) Id() string {
@@ -34,7 +34,7 @@ func (strain *StrainAnnotation) Id() string {
 }
 
 func (strain *StrainAnnotation) HasName() bool {
-	return len(strain.name) == 0
+	return len(strain.name) > 0
 }
 
 func (strain *StrainAnnotation) Name() string {
@@ -42,11 +42,11 @@ func (strain *StrainAnnotation) Name() string {
 }
 
 func (strain *StrainAnnotation) HasSystematicName() bool {
-	return len(strain.systematicName) == 0
+	return len(strain.systematicName) > 0
 }
 
 func (strain *StrainAnnotation) HasPlasmid() bool {
-	return len(strain.plasmid) == 0
+	return len(strain.plasmid) > 0
 }
 
 func (strain *StrainAnnotation) Plasmid() string {
@@ -54,7 +54,7 @@ func (strain *StrainAnnotation) Plasmid() string {
 }
 
 func (strain *StrainAnnotation) HasParentId() bool {
-	return len(strain.parentId) == 0
+	return len(strain.parentId) > 0
 }
 
 func (strain *StrainAnnotation) ParentId() string {
