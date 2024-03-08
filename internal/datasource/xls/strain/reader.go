@@ -15,7 +15,7 @@ func NewStrainAnnotationReader(
 	file, sheet string, date time.Time,
 ) (*StrainAnnotationReader, error) {
 	strainReader := &StrainAnnotationReader{}
-	rdr, err := xls.NewReader(file, sheet, date)
+	rdr, err := xls.NewReader(file, sheet, date, true)
 	if err != nil {
 		return strainReader, err
 	}
