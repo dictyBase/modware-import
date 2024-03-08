@@ -2,6 +2,8 @@ package xls
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -14,19 +16,14 @@ type XlsReader struct {
 	DataValidator *validator.Validate
 }
 
-func NewReader(
-	file, sheet string, date time.Time,
+func NewReaderFromStream(
+	fdr io.Reader, sheet string, date time.Time,
 ) (*XlsReader, error) {
 	xlsr := &XlsReader{CreatedOn: date}
-	reader, err := excelize.OpenFile(file)
+	reader, err := excelize.OpenReader(fdr)
 	if err != nil {
-		return xlsr, fmt.Errorf(
-			"error in reading file %s %s",
-			file,
-			err,
-		)
+		return xlsr, fmt.Errorf("error in reading %s", err)
 	}
-	defer reader.Close()
 	rows, err := reader.Rows(sheet)
 	if err != nil {
 		return xlsr, fmt.Errorf("error in reading rows %s", err)
@@ -37,6 +34,21 @@ func NewReader(
 	)
 
 	return xlsr, nil
+}
+
+func NewReader(
+	file, sheet string, date time.Time,
+) (*XlsReader, error) {
+	xlsr := &XlsReader{CreatedOn: date}
+	reader, err := os.Open(file)
+	if err != nil {
+		return xlsr, fmt.Errorf(
+			"error in reading file %s %s",
+			file,
+			err,
+		)
+	}
+	return NewReaderFromStream(reader, sheet, date)
 }
 
 func (xlsr *XlsReader) Next() bool {
