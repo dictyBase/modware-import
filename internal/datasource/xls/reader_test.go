@@ -74,11 +74,13 @@ func createTempExcelFile(
 
 func TestNewReader(t *testing.T) {
 	t.Run("should return error if file does not exist", func(t *testing.T) {
+		t.Parallel()
 		_, err := NewReader("non-existent-file.xlsx", "Sheet1", time.Now())
 		assert.Error(t, err)
 	})
 
 	t.Run("should return error if sheet does not exist", func(t *testing.T) {
+		t.Parallel()
 		xlsFile, err := createTempExcelFile(t, "Sheet34", false)
 		assert.NoError(t, err)
 		_, err = NewReader(xlsFile, "non-existent-sheet", time.Now())
@@ -88,6 +90,7 @@ func TestNewReader(t *testing.T) {
 	t.Run(
 		"should return XlsReader if file and sheet exist",
 		func(t *testing.T) {
+			t.Parallel()
 			xlsFile, err := createTempExcelFile(t, "Sheet74", false)
 			assert.NoError(t, err)
 			reader, err := NewReader(xlsFile, "Sheet74", time.Now())
@@ -99,6 +102,7 @@ func TestNewReader(t *testing.T) {
 
 func TestXlsReader_Next(t *testing.T) {
 	t.Run("should return true if there are rows", func(t *testing.T) {
+		t.Parallel()
 		xlsFile, err := createTempExcelFile(t, "Sheet72", true)
 		assert.NoError(t, err)
 		reader, err := NewReader(xlsFile, "Sheet72", time.Now())
@@ -106,6 +110,7 @@ func TestXlsReader_Next(t *testing.T) {
 		assert.True(t, reader.Next())
 	})
 	t.Run("should return false if there are no more rows", func(t *testing.T) {
+		t.Parallel()
 		xlsFile, err := createTempExcelFile(t, "Sheet79", false)
 		assert.NoError(t, err)
 		reader, err := NewReader(xlsFile, "Sheet79", time.Now())
