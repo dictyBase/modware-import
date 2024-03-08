@@ -17,7 +17,7 @@ type XlsReader struct {
 }
 
 func NewReaderFromStream(
-	fdr io.Reader, sheet string, date time.Time,
+	fdr io.Reader, sheet string, date time.Time, skipHeader bool,
 ) (*XlsReader, error) {
 	xlsr := &XlsReader{CreatedOn: date}
 	reader, err := excelize.OpenReader(fdr)
@@ -28,6 +28,15 @@ func NewReaderFromStream(
 	if err != nil {
 		return xlsr, fmt.Errorf("error in reading rows %s", err)
 	}
+	if skipHeader {
+		if rows.Next() {
+			_, err := rows.Columns()
+			if err != nil {
+				return xlsr, fmt.Errorf("error in skipping header row %s", err)
+			}
+
+		}
+	}
 	xlsr.Rows = rows
 	xlsr.DataValidator = validator.New(
 		validator.WithPrivateFieldValidation(),
@@ -37,7 +46,7 @@ func NewReaderFromStream(
 }
 
 func NewReader(
-	file, sheet string, date time.Time,
+	file, sheet string, date time.Time, skipHeader bool,
 ) (*XlsReader, error) {
 	xlsr := &XlsReader{CreatedOn: date}
 	reader, err := os.Open(file)
@@ -48,7 +57,7 @@ func NewReader(
 			err,
 		)
 	}
-	return NewReaderFromStream(reader, sheet, date)
+	return NewReaderFromStream(reader, sheet, date, skipHeader)
 }
 
 func (xlsr *XlsReader) Next() bool {
