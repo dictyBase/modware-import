@@ -11,12 +11,30 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/dictyBase/go-obograph/graph"
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/sirupsen/logrus"
 )
+
+const ConcurrentTermLoader = 10
+
+type LoadingLooper struct {
+	Handler *FnRunnerProperties
+}
+
+func (ldo *LoadingLooper) Run() error {
+	return ldo.Handler.Fn(ldo.Handler.Props)
+}
+
+type FnRunnerProperties struct {
+	Fn    func(*termRowProperties) error
+	Props *termRowProperties
+}
 
 type LoadProperties struct {
 	File    string
@@ -72,48 +90,40 @@ func LoadNewOrUpdate(args *LoadProperties) error {
 			err,
 		)
 	}
+
+	return handleTermLoading(grph, args)
+}
+
+func handleTermLoading(grph graph.OboGraph, args *LoadProperties) error {
+	loaderSlice := make([]*FnRunnerProperties, 0)
 	for _, term := range grph.Terms() {
-		existResp, err := existTermRow(&termRowProperties{
-			Term:    term,
-			Host:    args.Client.GetConfig().Host,
-			Token:   args.Token,
-			TableId: args.TableId,
-		})
+		existResp, err := checkTermExistence(term, args)
 		if err != nil {
 			return err
 		}
 		if existResp.Exist {
-			if existResp.IsDeprecated == term.IsDeprecated() {
-				args.Logger.Debugf("term %s has no change", string(term.ID()))
-				continue
+			if err := processExistingTerm(term, existResp, args); err != nil {
+				return err
 			}
-			err = updateTermRow(&updateTermRowProperties{
-				RowId: existResp.RowId,
-				termRowProperties: &termRowProperties{
+		} else {
+			loaderSlice = append(loaderSlice, &FnRunnerProperties{
+				Fn: addTermRow,
+				Props: &termRowProperties{
 					Term:    term,
 					Host:    args.Client.GetConfig().Host,
 					Token:   args.Token,
 					TableId: args.TableId,
 				},
 			})
-			if err != nil {
-				return err
+			if len(loaderSlice) > ConcurrentTermLoader {
+				if err := executeLoaderSlice(loaderSlice, args); err != nil {
+					return err
+				}
+				loaderSlice = slices.Delete(loaderSlice, 0, len(loaderSlice))
 			}
-			args.Logger.Infof("updated row with term %s", string(term.ID()))
-			continue
 		}
-		err = addTermRow(&termRowProperties{
-			Term:    term,
-			Host:    args.Client.GetConfig().Host,
-			Token:   args.Token,
-			TableId: args.TableId,
-		})
-		if err != nil {
-			return err
-		}
-		args.Logger.Infof("add row with id %s", term.ID())
 	}
-	return nil
+	return executeLoaderSlice(loaderSlice, args)
 }
 
 func LoadNew(args *LoadProperties) error {
@@ -247,4 +257,64 @@ func termStatus(term graph.Term) string {
 		return "true"
 	}
 	return "false"
+}
+
+func checkTermExistence(
+	term graph.Term,
+	args *LoadProperties,
+) (*exisTermRowResp, error) {
+	return existTermRow(&termRowProperties{
+		Term:    term,
+		Host:    args.Client.GetConfig().Host,
+		Token:   args.Token,
+		TableId: args.TableId,
+	})
+}
+
+func processExistingTerm(
+	term graph.Term,
+	existResp *exisTermRowResp,
+	args *LoadProperties,
+) error {
+	if existResp.IsDeprecated == term.IsDeprecated() {
+		args.Logger.Debugf("term %s has no change", string(term.ID()))
+		return nil
+	}
+	err := updateTermRow(&updateTermRowProperties{
+		RowId: existResp.RowId,
+		termRowProperties: &termRowProperties{
+			Term:    term,
+			Host:    args.Client.GetConfig().Host,
+			Token:   args.Token,
+			TableId: args.TableId,
+		},
+	})
+	if err != nil {
+		return err
+	}
+	args.Logger.Infof("updated row with term %s", string(term.ID()))
+	return nil
+}
+
+func executeLoaderSlice(
+	loaderSlice []*FnRunnerProperties,
+	args *LoadProperties,
+) error {
+	if len(loaderSlice) == 0 {
+		return nil
+	}
+	grp := &errgroup.Group{}
+	for _, loadFn := range loaderSlice {
+		args.Logger.Infof(
+			"handling load of %s term",
+			loadFn.Props.Term.ID(),
+		)
+		runner := &LoadingLooper{Handler: loadFn}
+		grp.Go(runner.Run)
+	}
+	if err := grp.Wait(); err != nil {
+		return err
+	}
+
+	return nil
 }
