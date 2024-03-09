@@ -62,6 +62,16 @@ func TestHasSystematicName(t *testing.T) {
 	)
 }
 
+func TestSystematicName(t *testing.T) {
+	s := StrainAnnotation{systematicName: "SysName"}
+	assert.Equal(
+		t,
+		"SysName",
+		s.SystematicName(),
+		"Expected SystematicName to return the correct name value",
+	)
+}
+
 func TestHasPlasmid(t *testing.T) {
 	s := StrainAnnotation{plasmid: "Plasmid Info"}
 	assert.True(
