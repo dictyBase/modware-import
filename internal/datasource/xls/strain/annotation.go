@@ -50,6 +50,10 @@ func (strain *StrainAnnotation) HasSystematicName() bool {
 	return len(strain.systematicName) > 0
 }
 
+func (strain *StrainAnnotation) SystematicName() string {
+	return strain.systematicName
+}
+
 func (strain *StrainAnnotation) HasPlasmid() bool {
 	return len(strain.plasmid) > 0
 }
