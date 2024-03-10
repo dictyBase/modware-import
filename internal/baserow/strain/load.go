@@ -6,25 +6,69 @@ import (
 	"fmt"
 	"sync"
 
+	"slices"
+
 	R "github.com/IBM/fp-go/context/readerioeither"
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
 	J "github.com/IBM/fp-go/json"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/dictyBase/modware-import/internal/datasource/xls/strain"
+	"github.com/sirupsen/logrus"
 )
 
-type strainRowProperties struct {
-	Host    string
-	Token   string
-	TableId int
-	Strain  *strain.StrainAnnotation
+const ConcurrentStrainLoader = 10
+
 type fnRunnerProperties struct {
 	fn    func(*strain.StrainAnnotation) (string, error)
 	props *strain.StrainAnnotation
 }
 
-func createStrainRow(strn *strain.StrainAnnotation) map[string]interface{} {
+type StrainLoader struct {
+	Host         string
+	Token        string
+	TableId      int
+	Logger       *logrus.Entry
+	StrainReader *strain.StrainAnnotationReader
+}
+
+func (loader *StrainLoader) Load() error {
+	loaderSlice := make([]*fnRunnerProperties, 0, ConcurrentStrainLoader)
+	strainReader := loader.StrainReader
+
+	for strainReader.Next() {
+		strain, err := strainReader.Value()
+		if err != nil {
+			return err
+		}
+		loaderSlice = append(loaderSlice, &fnRunnerProperties{
+			fn:    loader.addStrainRow,
+			props: strain,
+		})
+
+		if len(loaderSlice) == ConcurrentStrainLoader {
+			if err := processFnRunnerProperties(loaderSlice, loader.Logger); err != nil {
+				return err
+			}
+			loaderSlice = slices.Delete(loaderSlice, 0, len(loaderSlice))
+			// Another way to do this
+			// loaderSlice = loaderSlice[:0] // Reset the slice without allocating new memory
+		}
+	}
+
+	// Process remaining items in loaderSlice
+	if len(loaderSlice) > 0 {
+		if err := processFnRunnerProperties(loaderSlice, loader.Logger); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (loader *StrainLoader) addRowParameters(
+	strn *strain.StrainAnnotation,
+) map[string]interface{} {
 	params := map[string]interface{}{
 		"strain_descriptor":         strn.Descriptor(),
 		"species":                   strn.Species(),
@@ -59,19 +103,21 @@ func createStrainRow(strn *strain.StrainAnnotation) map[string]interface{} {
 	return params
 }
 
-func createStrainURL(host string, tableId int) string {
+func (loader *StrainLoader) createStrainURL() string {
 	return fmt.Sprintf(
 		"https://%s/api/database/rows/table/%d/?user_field_names=true",
-		host,
-		tableId,
+		loader.Host,
+		loader.TableId,
 	)
 }
 
-func addStrainRow(args *strainRowProperties) (string, error) {
+func (loader *StrainLoader) addStrainRow(
+	strn *strain.StrainAnnotation,
+) (string, error) {
 	var empty string
 	createPayload := F.Pipe3(
-		args.Strain,
-		createStrainRow,
+		strn,
+		loader.addRowParameters,
 		J.Marshal,
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
 	)
@@ -79,9 +125,9 @@ func addStrainRow(args *strainRowProperties) (string, error) {
 		return empty, createPayload.Error
 	}
 	resp := F.Pipe3(
-		createStrainURL(args.Host, args.TableId),
+		loader.createStrainURL(),
 		httpapi.MakeHTTPRequest("POST", bytes.NewBuffer(createPayload.Payload)),
-		R.Map(httpapi.SetHeaderWithJWT(args.Token)),
+		R.Map(httpapi.SetHeaderWithJWT(loader.Token)),
 		strainCreateHTTP,
 	)(context.Background())
 	output := F.Pipe1(
