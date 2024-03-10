@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sync"
 
 	R "github.com/IBM/fp-go/context/readerioeither"
 	E "github.com/IBM/fp-go/either"
@@ -18,6 +19,9 @@ type strainRowProperties struct {
 	Token   string
 	TableId int
 	Strain  *strain.StrainAnnotation
+type fnRunnerProperties struct {
+	fn    func(*strain.StrainAnnotation) (string, error)
+	props *strain.StrainAnnotation
 }
 
 func createStrainRow(strn *strain.StrainAnnotation) map[string]interface{} {
@@ -88,4 +92,65 @@ func addStrainRow(args *strainRowProperties) (string, error) {
 		),
 	)
 	return output.Msg, output.Err
+}
+
+func executeLoaderSlice(
+	loaderSlice []*fnRunnerProperties,
+) (chan string, chan error) {
+	// Create a context that can be cancelled
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Make sure all paths cancel the context to avoid context leak
+
+	// channel to communicate error and result
+	resultCh := make(chan string)
+	errCh := make(chan error)
+	var wg sync.WaitGroup
+
+	// Run each function in a goroutine
+	for _, loader := range loaderSlice {
+		wg.Add(1)
+		go func(ldr *fnRunnerProperties) {
+			defer wg.Done()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				result, err := ldr.fn(ldr.props)
+				if err != nil {
+					cancel()
+					errCh <- err
+					return
+				}
+				resultCh <- result
+			}
+		}(loader)
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultCh)
+		close(errCh)
+	}()
+
+	return resultCh, errCh
+}
+
+func processFnRunnerProperties(
+	loaderSlice []*fnRunnerProperties,
+	logger *logrus.Entry,
+) error {
+	resultCh, errCh := executeLoaderSlice(loaderSlice)
+	for {
+		select {
+		case err := <-errCh:
+			if err != nil {
+				return err
+			}
+		case result, ok := <-resultCh:
+			if !ok {
+				return nil
+			}
+			logger.Debugf(result)
+		}
+	}
 }
