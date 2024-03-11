@@ -64,6 +64,12 @@ func main() {
 				Action: baserow.CreateStrainTableHandler,
 			},
 			{
+				Name:   "load-strain-annotation",
+				Usage:  "load strain annotation from excel spreadsheet to baserow table",
+				Flags:  baserow.LoadStrainToTableFlag(),
+				Action: baserow.LoadStrainAnnotationToTable,
+			},
+			{
 				Name:   "create-ontology-table",
 				Usage:  "Create a baserow table with ontology fields preset",
 				Flags:  baserow.CreateOntologyTableFlag(),

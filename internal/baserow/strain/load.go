@@ -55,7 +55,6 @@ func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
 			fn:    loader.addStrainRow,
 			props: strain,
 		})
-
 		if len(loaderSlice) == ConcurrentStrainLoader {
 			if err := processFnRunnerProperties(loaderSlice, loader.Logger); err != nil {
 				return err

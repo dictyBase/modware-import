@@ -47,6 +47,34 @@ func CreateDatabaseTokenFlag() []cli.Flag {
 	}...)
 }
 
+func LoadStrainToTableFlag() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:     "token",
+			Aliases:  []string{"t"},
+			Usage:    "database token with write privilege",
+			Required: true,
+		},
+		&cli.IntFlag{
+			Name:     "table-id",
+			Usage:    "Database table id",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:     "input",
+			Aliases:  []string{"i"},
+			Usage:    "input excel spreadsheet file with strain annotations",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:    "sheet",
+			Aliases: []string{"s"},
+			Usage:   "name of sheet which contains the annotation",
+			Value:   "Strain_annotations",
+		},
+	}
+}
+
 func LoadOntologyToTableFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
