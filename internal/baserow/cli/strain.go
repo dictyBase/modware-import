@@ -3,12 +3,38 @@ package cli
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
+	"github.com/dictyBase/modware-import/internal/baserow/strain"
+	strainReader "github.com/dictyBase/modware-import/internal/datasource/xls/strain"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
 )
+
+func LoadStrainAnnotationToTable(cltx *cli.Context) error {
+	logger := registry.GetLogger()
+	loader := strain.NewStrainLoader(
+		cltx.String("server"),
+		cltx.String("token"),
+		cltx.Int("table-id"),
+		logger,
+	)
+	reader, err := strainReader.NewStrainAnnotationReader(
+		cltx.String("input"),
+		cltx.String("sheet"),
+		time.Now(),
+	)
+	if err != nil {
+		cli.Exit(err.Error(), 2)
+	}
+	if err := loader.Load(reader); err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+
+	return nil
+}
 
 func CreateStrainTableHandler(cltx *cli.Context) error {
 	token := cltx.String("token")
