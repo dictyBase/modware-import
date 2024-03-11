@@ -25,34 +25,29 @@ type fnRunnerProperties struct {
 }
 
 type StrainLoader struct {
-	Host         string
-	Token        string
-	TableId      int
-	Logger       *logrus.Entry
-	StrainReader *strain.StrainAnnotationReader
+	Host    string
+	Token   string
+	TableId int
+	Logger  *logrus.Entry
 }
 
 func NewStrainLoader(
 	host, token string,
 	tableId int,
 	logger *logrus.Entry,
-	reader *strain.StrainAnnotationReader,
 ) *StrainLoader {
 	return &StrainLoader{
-		Host:         host,
-		Token:        token,
-		TableId:      tableId,
-		Logger:       logger,
-		StrainReader: reader,
+		Host:    host,
+		Token:   token,
+		TableId: tableId,
+		Logger:  logger,
 	}
 }
 
-func (loader *StrainLoader) Load() error {
+func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
 	loaderSlice := make([]*fnRunnerProperties, 0, ConcurrentStrainLoader)
-	strainReader := loader.StrainReader
-
-	for strainReader.Next() {
-		strain, err := strainReader.Value()
+	for reader.Next() {
+		strain, err := reader.Value()
 		if err != nil {
 			return err
 		}
