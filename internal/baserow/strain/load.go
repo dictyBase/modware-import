@@ -32,6 +32,21 @@ type StrainLoader struct {
 	StrainReader *strain.StrainAnnotationReader
 }
 
+func NewStrainLoader(
+	host, token string,
+	tableId int,
+	logger *logrus.Entry,
+	reader *strain.StrainAnnotationReader,
+) *StrainLoader {
+	return &StrainLoader{
+		Host:         host,
+		Token:        token,
+		TableId:      tableId,
+		Logger:       logger,
+		StrainReader: reader,
+	}
+}
+
 func (loader *StrainLoader) Load() error {
 	loaderSlice := make([]*fnRunnerProperties, 0, ConcurrentStrainLoader)
 	strainReader := loader.StrainReader
