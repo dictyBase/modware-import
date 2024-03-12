@@ -34,7 +34,6 @@ func NewReaderFromStream(
 			if err != nil {
 				return xlsr, fmt.Errorf("error in skipping header row %s", err)
 			}
-
 		}
 	}
 	xlsr.Rows = rows

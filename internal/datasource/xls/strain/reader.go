@@ -49,7 +49,7 @@ func (stnr *StrainAnnotationReader) Value() (*StrainAnnotation, error) {
 	anno.reference = row[14]
 	anno.assignedBy = row[15]
 	if err := stnr.DataValidator.Struct(anno); err != nil {
-		return nil, fmt.Errorf("error in data validation %s", err)
+		return anno, fmt.Errorf("error in data validation %s", err)
 	}
 
 	return anno, nil
