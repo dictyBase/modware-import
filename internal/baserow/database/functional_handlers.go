@@ -28,11 +28,25 @@ var (
 	readTablesResp = H.ReadJSON[[]tableFieldRes](
 		H.MakeClient(http.DefaultClient),
 	)
+	readListRowsResp = H.ReadJSON[listRowsResp](
+		H.MakeClient(http.DefaultClient),
+	)
 	HasField                   = F.Curry2(uncurriedHasField)
 	ResToReqTableWithParams    = F.Curry2(uncurriedResToReqTableWithParams)
 	matchTableName             = F.Curry2(uncurriedMatchTableName)
 	onTablesReqFeedbackSuccess = F.Curry2(uncurriedOnTablesReqFeedbackSuccess)
 )
+
+type rowResp struct {
+	Id int32 `json:"id"`
+}
+
+type listRowsResp struct {
+	Count    int32      `json:"count"`
+	Next     string     `json:"next"`
+	Previous string     `json:"previous"`
+	Results  []*rowResp `json:"results"`
+}
 
 type tableFieldUpdateResponse struct {
 	Id      int `json:"id"`
@@ -88,6 +102,10 @@ func onFieldsReqFeedbackError(err error) fieldsReqFeedback {
 
 func onFieldsReqFeedbackSuccess(resp []tableFieldRes) fieldsReqFeedback {
 	return fieldsReqFeedback{Fields: resp}
+}
+
+func onListRowsReqFeedbackSuccess(resp listRowsResp) fieldsReqFeedback {
+	return fieldsReqFeedback{Id: int(resp.Results[0].Id)}
 }
 
 func onFieldDelReqFeedbackSuccess(
