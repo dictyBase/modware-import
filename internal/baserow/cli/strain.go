@@ -13,6 +13,14 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func flagNames() []string {
+	return []string{
+		"strainchar-ontology-table",
+		"genetic-mod-ontology-table",
+		"mutagenesis-method-ontology-table",
+	}
+}
+
 func LoadStrainAnnotationToTable(cltx *cli.Context) error {
 	logger := registry.GetLogger()
 	loader := strain.NewStrainLoader(
@@ -66,12 +74,7 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
 	}
 	logger.Infof("created table with fields %s", tbl.GetName())
-	flagNames := []string{
-		"strainchar-ontology-table",
-		"genetic-mod-ontology-table",
-		"mutagenesis-method-ontology-table",
-	}
-	tableIdMaps, err := allTableIds(strainTbl.TableManager, flagNames, cltx)
+	tableIdMaps, err := allTableIds(strainTbl.TableManager, flagNames(), cltx)
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
 	}
