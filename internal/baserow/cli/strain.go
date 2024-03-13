@@ -15,11 +15,11 @@ import (
 )
 
 func flagNames() []string {
-	return []string{
-		"strainchar-ontology-table",
-		"genetic-mod-ontology-table",
-		"mutagenesis-method-ontology-table",
+	allFlags := make([]string, 0)
+	for _, flg := range strainOntologyTableFlags() {
+		allFlags = append(allFlags, flg.Names()[0])
 	}
+	return allFlags
 }
 
 func LoadStrainAnnotationToTable(cltx *cli.Context) error {
@@ -133,7 +133,7 @@ func CreateStrainTableFlag() []cli.Flag {
 			Value: "mutagenesis_method_ontology",
 		},
 	)
-	return append(tblFlags, ontologyTableFlags()...)
+	return append(tblFlags, strainOntologyTableFlags()...)
 }
 
 func LoadStrainToTableFlag() []cli.Flag {
@@ -161,5 +161,25 @@ func LoadStrainToTableFlag() []cli.Flag {
 			Usage:   "name of sheet which contains the annotation",
 			Value:   "Strain_Annotations",
 		},
-	}, ontologyTableFlags()...)
+	}, strainOntologyTableFlags()...)
+}
+
+func strainOntologyTableFlags() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:  "strainchar-ontology-table",
+			Usage: "table name containing strain characteristics ontology",
+			Value: "strain_characteristics_ontology",
+		},
+		&cli.StringFlag{
+			Name:  "genetic-mod-ontology-table",
+			Usage: "table name containing genetic modification ontology",
+			Value: "genetic_modification_ontology",
+		},
+		&cli.StringFlag{
+			Name:  "mutagenesis-method-ontology-table",
+			Usage: "table name containing mutagenesis method ontology",
+			Value: "mutagenesis_method_ontology",
+		},
+	}
 }
