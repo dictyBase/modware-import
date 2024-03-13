@@ -68,3 +68,28 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 	}
 	return nil
 }
+
+func CreatePhenotypeTableFlag() []cli.Flag {
+	return append(tableCreationFlags(),
+		&cli.StringFlag{
+			Name:     "table",
+			Usage:    "table to create for loading phenotype annotation",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:  "assay-ontology-table",
+			Usage: "table name containing assay ontology",
+			Value: "assay_ontology",
+		},
+		&cli.StringFlag{
+			Name:  "env-ontology-table",
+			Usage: "table name containing environmental ontology",
+			Value: "environment_ontology",
+		},
+		&cli.StringFlag{
+			Name:  "phenotype-ontology-table",
+			Usage: "table name containing phenotype ontology",
+			Value: "phenotype_ontology",
+		},
+	)
+}

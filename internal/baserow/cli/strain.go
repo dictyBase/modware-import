@@ -109,3 +109,57 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 	}
 	return nil
 }
+
+func CreateStrainTableFlag() []cli.Flag {
+	tblFlags := append(tableCreationFlags(),
+		&cli.StringFlag{
+			Name:     "table",
+			Usage:    "table to create for loading strain annotation",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:  "strainchar-ontology-table",
+			Usage: "table name containing strain characteristics ontology",
+			Value: "strain_characteristics_ontology",
+		},
+		&cli.StringFlag{
+			Name:  "genetic-mod-ontology-table",
+			Usage: "table name containing genetic modification ontology",
+			Value: "genetic_modification_ontology",
+		},
+		&cli.StringFlag{
+			Name:  "mutagenesis-method-ontology-table",
+			Usage: "table name containing mutagenesis method ontology",
+			Value: "mutagenesis_method_ontology",
+		},
+	)
+	return append(tblFlags, ontologyTableFlags()...)
+}
+
+func LoadStrainToTableFlag() []cli.Flag {
+	return append([]cli.Flag{
+		&cli.StringFlag{
+			Name:     "token",
+			Aliases:  []string{"t"},
+			Usage:    "database token with write privilege",
+			Required: true,
+		},
+		&cli.IntFlag{
+			Name:     "table-id",
+			Usage:    "Database table id",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:     "input",
+			Aliases:  []string{"i"},
+			Usage:    "input excel spreadsheet file with strain annotations",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:    "sheet",
+			Aliases: []string{"s"},
+			Usage:   "name of sheet which contains the annotation",
+			Value:   "Strain_Annotations",
+		},
+	}, ontologyTableFlags()...)
+}
