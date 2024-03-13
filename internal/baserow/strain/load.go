@@ -6,18 +6,35 @@ import (
 	"fmt"
 	"sync"
 
-	"slices"
-
 	R "github.com/IBM/fp-go/context/readerioeither"
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
-	J "github.com/IBM/fp-go/json"
+	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/dictyBase/modware-import/internal/datasource/xls/strain"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 )
 
 const ConcurrentStrainLoader = 10
+
+type StrainPayload struct {
+	Descriptor              string `json:"strain_descriptor"`
+	Species                 string `json:"species"`
+	Reference               string `json:"reference"`
+	Summary                 string `json:"summary"`
+	GeneticModificationId   []int  `json:"genetic_modification_id"`
+	StrainCharacteristicsId []int  `json:"strain_characteristics_id"`
+	MutagenesisMethodId     []int  `json:"mutagenesis_method_id"`
+	AssignedBy              []int  `json:"assigned_by"`
+	Names                   string `json:"strain_names"`
+	SystematicName          string `json:"systematic_name"`
+	Plasmid                 string `json:"plasmid"`
+	ParentId                string `json:"parent_strain_id"`
+	Genes                   string `json:"associated_genes"`
+	Genotype                string `json:"genotype"`
+	Depositor               string `json:"depositor"`
+}
 
 type fnRunnerProperties struct {
 	fn    func(*strain.StrainAnnotation) (string, error)
@@ -25,22 +42,30 @@ type fnRunnerProperties struct {
 }
 
 type StrainLoader struct {
-	Host    string
-	Token   string
-	TableId int
-	Logger  *logrus.Entry
+	Host             string
+	Token            string
+	TableId          int
+	Logger           *logrus.Entry
+	OntologyTableMap map[string]int
+	TableManager     *database.TableManager
+	Payload          *StrainPayload
+	Annotation       *strain.StrainAnnotation
 }
 
 func NewStrainLoader(
 	host, token string,
 	tableId int,
 	logger *logrus.Entry,
+	tblMap map[string]int,
+	manager *database.TableManager,
 ) *StrainLoader {
 	return &StrainLoader{
-		Host:    host,
-		Token:   token,
-		TableId: tableId,
-		Logger:  logger,
+		Host:             host,
+		Token:            token,
+		TableId:          tableId,
+		Logger:           logger,
+		OntologyTableMap: tblMap,
+		TableManager:     manager,
 	}
 }
 
@@ -48,14 +73,19 @@ func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
 	loaderSlice := make([]*fnRunnerProperties, 0, ConcurrentStrainLoader)
 	for reader.Next() {
 		strain, err := reader.Value()
+		if strain.IsEmpty() {
+			continue
+		}
 		if err != nil {
 			return err
 		}
+		loader.Logger.Infof("got strain descriptor %s", strain.Descriptor())
 		loaderSlice = append(loaderSlice, &fnRunnerProperties{
 			fn:    loader.addStrainRow,
 			props: strain,
 		})
 		if len(loaderSlice) == ConcurrentStrainLoader {
+			loader.Logger.Debug("going to load strain")
 			if err := processFnRunnerProperties(loaderSlice, loader.Logger); err != nil {
 				return err
 			}
@@ -64,9 +94,9 @@ func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
 			// loaderSlice = loaderSlice[:0] // Reset the slice without allocating new memory
 		}
 	}
-
 	// Process remaining items in loaderSlice
 	if len(loaderSlice) > 0 {
+		loader.Logger.Debug("going to load remaining strains")
 		if err := processFnRunnerProperties(loaderSlice, loader.Logger); err != nil {
 			return err
 		}
@@ -75,41 +105,11 @@ func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
 	return nil
 }
 
-func (loader *StrainLoader) addRowParameters(
+func (loader *StrainLoader) addStrain(
 	strn *strain.StrainAnnotation,
-) map[string]interface{} {
-	params := map[string]interface{}{
-		"strain_descriptor":         strn.Descriptor(),
-		"species":                   strn.Species(),
-		"assigned_by":               []string{strn.AssignedBy()},
-		"reference":                 strn.Reference(),
-		"strain_summary":            strn.Summary(),
-		"strain_characteristics_id": []string{strn.Characteristic()},
-		"genetic_modification_id":   []string{strn.GeneticModification()},
-		"mutagenesis_method_id":     []string{strn.MutagenesisMethod()},
-	}
-	if strn.HasName() {
-		params["strain_names"] = strn.Name()
-	}
-	if strn.HasSystematicName() {
-		params["systematic_name"] = strn.SystematicName()
-	}
-	if strn.HasPlasmid() {
-		params["plasmid"] = strn.Plasmid()
-	}
-	if strn.HasParentId() {
-		params["parent_strain_id"] = strn.ParentId()
-	}
-	if strn.HasGenes() {
-		params["associated_genes"] = strn.Genes()
-	}
-	if strn.HasGenotype() {
-		params["genotype"] = strn.Genotype()
-	}
-	if strn.HasDepositor() {
-		params["depositor"] = strn.Depositor()
-	}
-	return params
+) E.Either[error, *StrainLoader] {
+	loader.Annotation = strn
+	return E.Right[error](loader)
 }
 
 func (loader *StrainLoader) createStrainURL() string {
@@ -124,27 +124,28 @@ func (loader *StrainLoader) addStrainRow(
 	strn *strain.StrainAnnotation,
 ) (string, error) {
 	var empty string
-	createPayload := F.Pipe3(
-		strn,
-		loader.addRowParameters,
-		J.Marshal,
+	content := F.Pipe7(
+		E.Do[error](strn),
+		E.Bind(initialPayload, loader.addStrain),
+		E.Bind(charIdsHandler, characteristicIds),
+		E.Bind(genModIdHandler, genmodId),
+		E.Bind(mutagenesisIdHandler, mutagenesisId),
+		E.Map[error, *StrainLoader](loaderToPayload),
+		E.Chain[error, *StrainPayload](marshalPayload),
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
 	)
-	if createPayload.Error != nil {
-		return empty, createPayload.Error
+	if content.Error != nil {
+		return empty, content.Error
 	}
 	resp := F.Pipe3(
 		loader.createStrainURL(),
-		httpapi.MakeHTTPRequest("POST", bytes.NewBuffer(createPayload.Payload)),
-		R.Map(httpapi.SetHeaderWithJWT(loader.Token)),
+		httpapi.MakeHTTPRequest("POST", bytes.NewBuffer(content.Payload)),
+		R.Map(httpapi.SetHeaderWithToken(loader.Token)),
 		strainCreateHTTP,
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, strainCreateResp, httpapi.ResponseFeedback](
-			onStrainCreateFeedbackError,
-			onStrainCreateFeedbackSuccess,
-		),
+		E.Fold(onStrainCreateFeedbackError, onStrainCreateFeedbackSuccess),
 	)
 	return output.Msg, output.Err
 }
@@ -152,10 +153,6 @@ func (loader *StrainLoader) addStrainRow(
 func executeLoaderSlice(
 	loaderSlice []*fnRunnerProperties,
 ) (chan string, chan error) {
-	// Create a context that can be cancelled
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Make sure all paths cancel the context to avoid context leak
-
 	// channel to communicate error and result
 	resultCh := make(chan string)
 	errCh := make(chan error)
@@ -166,18 +163,13 @@ func executeLoaderSlice(
 		wg.Add(1)
 		go func(ldr *fnRunnerProperties) {
 			defer wg.Done()
-			select {
-			case <-ctx.Done():
+			fmt.Printf("going to process %s", ldr.props.Descriptor())
+			result, err := ldr.fn(ldr.props)
+			if err != nil {
+				errCh <- err
 				return
-			default:
-				result, err := ldr.fn(ldr.props)
-				if err != nil {
-					cancel()
-					errCh <- err
-					return
-				}
-				resultCh <- result
 			}
+			resultCh <- result
 		}(loader)
 	}
 
@@ -194,6 +186,7 @@ func processFnRunnerProperties(
 	loaderSlice []*fnRunnerProperties,
 	logger *logrus.Entry,
 ) error {
+	logger.Debugf("going process %d records", len(loaderSlice))
 	resultCh, errCh := executeLoaderSlice(loaderSlice)
 	for {
 		select {
@@ -205,7 +198,7 @@ func processFnRunnerProperties(
 			if !ok {
 				return nil
 			}
-			logger.Debugf(result)
+			logger.Infof(result)
 		}
 	}
 }
