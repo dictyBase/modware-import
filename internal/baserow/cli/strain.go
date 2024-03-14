@@ -137,18 +137,7 @@ func CreateStrainTableFlag() []cli.Flag {
 }
 
 func LoadStrainToTableFlag() []cli.Flag {
-	return append([]cli.Flag{
-		&cli.StringFlag{
-			Name:     "token",
-			Aliases:  []string{"t"},
-			Usage:    "database token with write privilege",
-			Required: true,
-		},
-		&cli.IntFlag{
-			Name:     "table-id",
-			Usage:    "Database table id",
-			Required: true,
-		},
+	tblFlags := append(tableCreationFlags(),
 		&cli.StringFlag{
 			Name:     "input",
 			Aliases:  []string{"i"},
@@ -161,7 +150,8 @@ func LoadStrainToTableFlag() []cli.Flag {
 			Usage:   "name of sheet which contains the annotation",
 			Value:   "Strain_Annotations",
 		},
-	}, strainOntologyTableFlags()...)
+	)
+	return append(tblFlags, strainOntologyTableFlags()...)
 }
 
 func strainOntologyTableFlags() []cli.Flag {
