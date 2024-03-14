@@ -108,8 +108,14 @@ func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
 func (loader *StrainLoader) addStrain(
 	strn *strain.StrainAnnotation,
 ) E.Either[error, *StrainLoader] {
-	loader.Annotation = strn
-	return E.Right[error](loader)
+	newLoader := NewStrainLoader(
+		loader.Host, loader.Token,
+		loader.TableId, loader.Logger,
+		loader.OntologyTableMap,
+		loader.TableManager,
+	)
+	newLoader.Annotation = strn
+	return E.Right[error](newLoader)
 }
 
 func (loader *StrainLoader) createStrainURL() string {
