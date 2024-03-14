@@ -19,12 +19,12 @@ import (
 const ConcurrentStrainLoader = 10
 
 type StrainPayload struct {
-	Descriptor              string `json:"strain_descriptor,omitempty"`
-	Species                 string `json:"species,omitempty"`
-	Reference               string `json:"reference,omitempty"`
+	Descriptor              string `json:"strain_descriptor"`
+	Species                 string `json:"species"`
+	Reference               string `json:"reference"`
 	Summary                 string `json:"strain_summary,omitempty"`
 	GeneticModificationId   []int  `json:"genetic_modification_id,omitempty"`
-	StrainCharacteristicsId []int  `json:"strain_characteristics_id,omitempty"`
+	StrainCharacteristicsId []int  `json:"strain_characteristics_id"`
 	MutagenesisMethodId     []int  `json:"mutagenesis_method_id,omitempty"`
 	AssignedBy              []int  `json:"assigned_by,omitempty"`
 	Names                   string `json:"strain_names,omitempty"`
