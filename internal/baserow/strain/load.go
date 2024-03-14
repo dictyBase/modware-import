@@ -19,21 +19,21 @@ import (
 const ConcurrentStrainLoader = 10
 
 type StrainPayload struct {
-	Descriptor              string `json:"strain_descriptor"`
-	Species                 string `json:"species"`
-	Reference               string `json:"reference"`
-	Summary                 string `json:"summary"`
-	GeneticModificationId   []int  `json:"genetic_modification_id"`
-	StrainCharacteristicsId []int  `json:"strain_characteristics_id"`
-	MutagenesisMethodId     []int  `json:"mutagenesis_method_id"`
-	AssignedBy              []int  `json:"assigned_by"`
-	Names                   string `json:"strain_names"`
-	SystematicName          string `json:"systematic_name"`
-	Plasmid                 string `json:"plasmid"`
-	ParentId                string `json:"parent_strain_id"`
-	Genes                   string `json:"associated_genes"`
-	Genotype                string `json:"genotype"`
-	Depositor               string `json:"depositor"`
+	Descriptor              string `json:"strain_descriptor,omitempty"`
+	Species                 string `json:"species,omitempty"`
+	Reference               string `json:"reference,omitempty"`
+	Summary                 string `json:"strain_summary,omitempty"`
+	GeneticModificationId   []int  `json:"genetic_modification_id,omitempty"`
+	StrainCharacteristicsId []int  `json:"strain_characteristics_id,omitempty"`
+	MutagenesisMethodId     []int  `json:"mutagenesis_method_id,omitempty"`
+	AssignedBy              []int  `json:"assigned_by,omitempty"`
+	Names                   string `json:"strain_names,omitempty"`
+	SystematicName          string `json:"systematic_name,omitempty"`
+	Plasmid                 string `json:"plasmid,omitempty"`
+	ParentId                string `json:"parent_strain_id,omitempty"`
+	Genes                   string `json:"associated_genes,omitempty"`
+	Genotype                string `json:"genotype,omitempty"`
+	Depositor               string `json:"depositor,omitempty"`
 }
 
 type fnRunnerProperties struct {
@@ -140,7 +140,7 @@ func (loader *StrainLoader) addStrainRow(
 	resp := F.Pipe3(
 		loader.createStrainURL(),
 		httpapi.MakeHTTPRequest("POST", bytes.NewBuffer(content.Payload)),
-		R.Map(httpapi.SetHeaderWithToken(loader.Token)),
+		R.Map(httpapi.SetHeaderWithJWT(loader.Token)),
 		strainCreateHTTP,
 	)(context.Background())
 	output := F.Pipe1(
@@ -163,7 +163,6 @@ func executeLoaderSlice(
 		wg.Add(1)
 		go func(ldr *fnRunnerProperties) {
 			defer wg.Done()
-			fmt.Printf("going to process %s", ldr.props.Descriptor())
 			result, err := ldr.fn(ldr.props)
 			if err != nil {
 				errCh <- err
