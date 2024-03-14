@@ -43,7 +43,7 @@ func (tbm *TableManager) ListRowsWithSearchURL(
 	tableId int,
 ) string {
 	return fmt.Sprintf(
-		"https://%s/api/database/rows/table/%d/?user_field_names=true&size=1&search=%s",
+		"https://%s/api/database/rows/table/%d/?user_field_names=true&size=1&search=%s&search_mode=compat",
 		tbm.Client.GetConfig().Host,
 		tableId,
 		param,
