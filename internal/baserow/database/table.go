@@ -80,7 +80,7 @@ func (tbm *TableManager) SearchRows(param string, tableId int) (int, error) {
 	resp := F.Pipe3(
 		tbm.ListRowsWithSearchURL(param, tableId),
 		H.MakeGetRequest,
-		R.Map(httpapi.SetHeaderWithToken(tbm.Token)),
+		R.Map(httpapi.SetHeaderWithJWT(tbm.Token)),
 		readListRowsResp,
 	)(context.Background())
 	output := F.Pipe1(
