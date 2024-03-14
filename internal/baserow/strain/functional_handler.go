@@ -24,7 +24,7 @@ var (
 var mutagenesisIdHandler = F.Curry2(
 	func(mutId int, loader *StrainLoader) *StrainLoader {
 		if mutId != 0 {
-			loader.Payload.GeneticModificationId = []int{mutId}
+			loader.Payload.MutagenesisMethodId = []int{mutId}
 		}
 
 		return loader
@@ -33,7 +33,7 @@ var mutagenesisIdHandler = F.Curry2(
 var charIdsHandler = F.Curry2(
 	func(charIds []int, loader *StrainLoader) *StrainLoader {
 		if len(charIds) != 0 {
-			loader.Payload.GeneticModificationId = charIds
+			loader.Payload.StrainCharacteristicsId = charIds
 		}
 
 		return loader
