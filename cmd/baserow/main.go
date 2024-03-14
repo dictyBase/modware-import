@@ -44,55 +44,59 @@ func main() {
 			registry.SetLogger(l)
 			return nil
 		},
-		Commands: []*cli.Command{
-			{
-				Name:   "create-access-token",
-				Usage:  "Create a new baserow access token",
-				Flags:  baserow.CreateAccessTokenFlag(),
-				Action: baserow.CreateAccessToken,
-			},
-			{
-				Name:   "create-phenotype-table",
-				Usage:  "Create a baserow table with phenotype annotation fields preset",
-				Flags:  baserow.CreatePhenotypeTableFlag(),
-				Action: baserow.CreatePhenoTableHandler,
-			},
-			{
-				Name:   "create-strain-table",
-				Usage:  "Create a baserow table with strain annotation fields preset",
-				Flags:  baserow.CreateStrainTableFlag(),
-				Action: baserow.CreateStrainTableHandler,
-			},
-			{
-				Name:   "load-strain-annotation",
-				Usage:  "load strain annotation from excel spreadsheet to baserow table",
-				Flags:  baserow.LoadStrainToTableFlag(),
-				Action: baserow.LoadStrainAnnotationToTable,
-			},
-			{
-				Name:   "create-ontology-table",
-				Usage:  "Create a baserow table with ontology fields preset",
-				Flags:  baserow.CreateOntologyTableFlag(),
-				Action: baserow.CreateOntologyTableHandler,
-			},
-			{
-				Name:   "load-ontology",
-				Usage:  "load ontology in a baserow table",
-				Flags:  baserow.LoadOntologyToTableFlag(),
-				Action: baserow.LoadOntologyToTable,
-			},
-			{
-				Name:   "create-database-token",
-				Usage:  "Create a baserow database token",
-				Flags:  baserow.CreateDatabaseTokenFlag(),
-				Action: baserow.CreateDatabaseToken,
-			},
-		},
+		Commands: allCommands(),
 	}
 
 	err := app.Run(os.Args)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+}
+
+func allCommands() []*cli.Command {
+	return []*cli.Command{
+		{
+			Name:   "create-access-token",
+			Usage:  "Create a new baserow access token",
+			Flags:  baserow.CreateAccessTokenFlag(),
+			Action: baserow.CreateAccessToken,
+		},
+		{
+			Name:   "create-phenotype-table",
+			Usage:  "Create a baserow table with phenotype annotation fields preset",
+			Flags:  baserow.CreatePhenotypeTableFlag(),
+			Action: baserow.CreatePhenoTableHandler,
+		},
+		{
+			Name:   "create-strain-table",
+			Usage:  "Create a baserow table with strain annotation fields preset",
+			Flags:  baserow.CreateStrainTableFlag(),
+			Action: baserow.CreateStrainTableHandler,
+		},
+		{
+			Name:   "load-strain-annotation",
+			Usage:  "load strain annotation from excel spreadsheet to baserow table",
+			Flags:  baserow.LoadStrainToTableFlag(),
+			Action: baserow.LoadStrainAnnotationToTable,
+		},
+		{
+			Name:   "create-ontology-table",
+			Usage:  "Create a baserow table with ontology fields preset",
+			Flags:  baserow.CreateOntologyTableFlag(),
+			Action: baserow.CreateOntologyTableHandler,
+		},
+		{
+			Name:   "load-ontology",
+			Usage:  "load ontology in a baserow table",
+			Flags:  baserow.LoadOntologyToTableFlag(),
+			Action: baserow.LoadOntologyToTable,
+		},
+		{
+			Name:   "create-database-token",
+			Usage:  "Create a baserow database token",
+			Flags:  baserow.CreateDatabaseTokenFlag(),
+			Action: baserow.CreateDatabaseToken,
+		},
 	}
 }
