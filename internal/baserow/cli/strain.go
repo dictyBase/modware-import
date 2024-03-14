@@ -24,17 +24,25 @@ func flagNames() []string {
 
 func LoadStrainAnnotationToTable(cltx *cli.Context) error {
 	logger := registry.GetLogger()
+	token := cltx.String("token")
+	if len(token) == 0 {
+		rtoken, err := refreshToken(cltx)
+		if err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+		token = rtoken
+	}
 	authCtx := context.WithValue(
 		context.Background(),
 		client.ContextAccessToken,
-		cltx.String("token"),
+		token,
 	)
 	tbm := &database.TableManager{
 		Client:     database.BaserowClient(cltx.String("server")),
 		DatabaseId: int32(cltx.Int("database-id")),
 		Logger:     logger,
 		Ctx:        authCtx,
-		Token:      cltx.String("token"),
+		Token:      token,
 	}
 	tableIdMaps, err := allTableIds(tbm, flagNames(), cltx)
 	if err != nil {
@@ -42,7 +50,7 @@ func LoadStrainAnnotationToTable(cltx *cli.Context) error {
 	}
 	loader := strain.NewStrainLoader(
 		cltx.String("server"),
-		cltx.String("token"),
+		token,
 		cltx.Int("table-id"),
 		logger,
 		tableIdMaps,
@@ -149,6 +157,11 @@ func LoadStrainToTableFlag() []cli.Flag {
 			Aliases: []string{"s"},
 			Usage:   "name of sheet which contains the annotation",
 			Value:   "Strain_Annotations",
+		},
+		&cli.IntFlag{
+			Name:     "table-id",
+			Usage:    "Database table id",
+			Required: true,
 		},
 	)
 	return append(tblFlags, strainOntologyTableFlags()...)
