@@ -31,6 +31,9 @@ var (
 	readListRowsResp = H.ReadJSON[listRowsResp](
 		H.MakeClient(http.DefaultClient),
 	)
+	readListResp = H.ReadJSON[listResponse](
+		H.MakeClient(http.DefaultClient),
+	)
 	HasField                   = F.Curry2(uncurriedHasField)
 	ResToReqTableWithParams    = F.Curry2(uncurriedResToReqTableWithParams)
 	matchTableName             = F.Curry2(uncurriedMatchTableName)
@@ -74,6 +77,11 @@ type fieldsReqFeedback struct {
 }
 
 type tableFieldRes struct {
+	Name string `json:"name"`
+	Id   int    `json:"id"`
+}
+
+type listResponse struct {
 	Name string `json:"name"`
 	Id   int    `json:"id"`
 }
