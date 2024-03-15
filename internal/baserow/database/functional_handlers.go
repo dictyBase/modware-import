@@ -31,7 +31,7 @@ var (
 	readListRowsResp = H.ReadJSON[listRowsResp](
 		H.MakeClient(http.DefaultClient),
 	)
-	readListResp = H.ReadJSON[listResponse](
+	readListResp = H.ReadJSON[[]ListResponse](
 		H.MakeClient(http.DefaultClient),
 	)
 	HasField                   = F.Curry2(uncurriedHasField)
@@ -81,9 +81,15 @@ type tableFieldRes struct {
 	Id   int    `json:"id"`
 }
 
-type listResponse struct {
+type ListResponse struct {
 	Name string `json:"name"`
 	Id   int    `json:"id"`
+}
+
+type listReqFeedback struct {
+	Error error
+	Msg   string
+	Resp  []ListResponse
 }
 
 type tableFieldReq struct {
@@ -130,6 +136,14 @@ func onFieldUpdateReqFeedbackSuccess(
 
 func onFieldDelReqFeedbackNone() fieldsReqFeedback {
 	return fieldsReqFeedback{Msg: "no field found to delete"}
+}
+
+func onListReqFeedbackError(err error) listReqFeedback {
+	return listReqFeedback{Error: err}
+}
+
+func onListReqFeedbackSuccess(resp []ListResponse) listReqFeedback {
+	return listReqFeedback{Resp: resp}
 }
 
 func onJSONPayloadError(err error) jsonPayload {
