@@ -133,21 +133,6 @@ func CreateStrainTableFlag() []cli.Flag {
 			Usage:    "table to create for loading strain annotation",
 			Required: true,
 		},
-		&cli.StringFlag{
-			Name:  "strainchar-ontology-table",
-			Usage: "table name containing strain characteristics ontology",
-			Value: "strain_characteristics_ontology",
-		},
-		&cli.StringFlag{
-			Name:  "genetic-mod-ontology-table",
-			Usage: "table name containing genetic modification ontology",
-			Value: "genetic_modification_ontology",
-		},
-		&cli.StringFlag{
-			Name:  "mutagenesis-method-ontology-table",
-			Usage: "table name containing mutagenesis method ontology",
-			Value: "mutagenesis_method_ontology",
-		},
 	)
 	return append(tblFlags, strainOntologyTableFlags()...)
 }
