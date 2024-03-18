@@ -136,12 +136,13 @@ func (loader *StrainLoader) addStrainRow(
 	strn *strain.StrainAnnotation,
 ) (string, error) {
 	var empty string
-	content := F.Pipe7(
+	content := F.Pipe8(
 		E.Do[error](strn),
 		E.Bind(initialPayload, loader.addStrain),
 		E.Bind(charIdsHandler, characteristicIds),
 		E.Bind(mutagenesisIdHandler, mutagenesisId),
 		E.Bind(genModIdHandler, genmodId),
+		E.Bind(assignedByIdHandler, assignedById),
 		E.Map[error, *StrainLoader](loaderToPayload),
 		E.Chain[error, *StrainPayload](marshalPayload),
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
