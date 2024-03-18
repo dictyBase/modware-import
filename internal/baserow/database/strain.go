@@ -70,7 +70,7 @@ func (strn *StrainTableManager) FieldChangeSpecs() map[string]map[string]interfa
 	}
 	paramsMap["created_on"] = map[string]interface{}{
 		"name":              "created_on",
-		"type":              "created_on",
+		"type":              "date",
 		"date_format":       "US",
 		"date_include_time": "true",
 		"date_time_format":  "12",
