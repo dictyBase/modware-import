@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	A "github.com/IBM/fp-go/array"
+	O "github.com/IBM/fp-go/option"
+
 	R "github.com/IBM/fp-go/context/readerioeither"
 	H "github.com/IBM/fp-go/context/readerioeither/http"
 	E "github.com/IBM/fp-go/either"
@@ -31,38 +34,39 @@ func (wkm *WorkspaceManager) ListWorkspaceUserURL(id int, email string) string {
 }
 
 func (wkm *WorkspaceManager) SearchWorkspaceUser(
-	workspaceId int,
-	email string,
-) (int, error) {
-	resp := F.Pipe3(
-		wkm.ListWorkspaceUserURL(workspaceId, email),
-		H.MakeGetRequest,
-		R.Map(httpapi.SetHeaderWithJWT(wkm.Token)),
-		readWorkspaceUserResp,
-	)(context.Background())
-	output := F.Pipe1(
-		resp(),
-		E.Fold[error, []WorkspaceUserResp, workspaceUserFeedback](
-			onWorkspaceUserReqFeedbackError,
-			onWorkspaceUserReqFeedbackSuccess,
-		),
+	workspace, email string,
+) (bool, int, error) {
+	empty := 0
+	ok := false
+	wsp, err := wkm.ListWorkspaces()
+	if err != nil {
+		return ok, empty, err
+	}
+	output := F.Pipe3(
+		wsp,
+		A.FindFirst(HasWorkspace(workspace)),
+		O.Map(SearchUser(email)),
+		O.GetOrElse(F.Constant(0)),
 	)
+	if output != empty {
+		ok = true
+	}
 
-	return output.Resp[0].UserId, output.Error
+	return ok, output, nil
 }
 
-func (wkm *WorkspaceManager) ListWorkspaces() ([]ListResponse, error) {
+func (wkm *WorkspaceManager) ListWorkspaces() ([]WorkspaceResp, error) {
 	resp := F.Pipe3(
 		wkm.ListWorkspaceURL(),
 		H.MakeGetRequest,
 		R.Map(httpapi.SetHeaderWithJWT(wkm.Token)),
-		readListResp,
+		readWorkspaceResp,
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, []ListResponse, listReqFeedback](
-			onListReqFeedbackError,
-			onListReqFeedbackSuccess,
+		E.Fold[error, []WorkspaceResp, listReqFeedback](
+			onWorkspaceReqFeedbackError,
+			onWorkspaceReqFeedbackSuccess,
 		),
 	)
 
