@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	R "github.com/IBM/fp-go/context/readerioeither"
 	E "github.com/IBM/fp-go/either"
@@ -19,26 +20,28 @@ import (
 const ConcurrentStrainLoader = 10
 
 type StrainPayload struct {
-	Descriptor              string `json:"strain_descriptor"`
-	Species                 string `json:"species"`
-	Reference               string `json:"reference"`
-	Summary                 string `json:"strain_summary,omitempty"`
-	GeneticModificationId   []int  `json:"genetic_modification_id,omitempty"`
-	StrainCharacteristicsId []int  `json:"strain_characteristics_id"`
-	MutagenesisMethodId     []int  `json:"mutagenesis_method_id,omitempty"`
-	AssignedBy              []int  `json:"assigned_by,omitempty"`
-	Names                   string `json:"strain_names,omitempty"`
-	SystematicName          string `json:"systematic_name,omitempty"`
-	Plasmid                 string `json:"plasmid,omitempty"`
-	ParentId                string `json:"parent_strain_id,omitempty"`
-	Genes                   string `json:"associated_genes,omitempty"`
-	Genotype                string `json:"genotype,omitempty"`
-	Depositor               string `json:"depositor,omitempty"`
+	Descriptor              string    `json:"strain_descriptor"`
+	Species                 string    `json:"species"`
+	Reference               string    `json:"reference"`
+	Summary                 string    `json:"strain_summary,omitempty"`
+	GeneticModificationId   []int     `json:"genetic_modification_id,omitempty"`
+	StrainCharacteristicsId []int     `json:"strain_characteristics_id"`
+	MutagenesisMethodId     []int     `json:"mutagenesis_method_id,omitempty"`
+	AssignedBy              []int     `json:"assigned_by,omitempty"`
+	Names                   string    `json:"strain_names,omitempty"`
+	SystematicName          string    `json:"systematic_name,omitempty"`
+	Plasmid                 string    `json:"plasmid,omitempty"`
+	ParentId                string    `json:"parent_strain_id,omitempty"`
+	Genes                   string    `json:"associated_genes,omitempty"`
+	Genotype                string    `json:"genotype,omitempty"`
+	Depositor               string    `json:"depositor,omitempty"`
+	CreatedOn               time.Time `json:"created_on"`
 }
 
 type fnRunnerProperties struct {
-	fn    func(*strain.StrainAnnotation) (string, error)
-	props *strain.StrainAnnotation
+	fn        func(*strain.StrainAnnotation, time.Time) (string, error)
+	props     *strain.StrainAnnotation
+	createdOn time.Time
 }
 
 type StrainLoader struct {
@@ -86,8 +89,9 @@ func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
 		}
 		loader.Logger.Infof("got strain descriptor %s", strain.Descriptor())
 		loaderSlice = append(loaderSlice, &fnRunnerProperties{
-			fn:    loader.addStrainRow,
-			props: strain,
+			fn:        loader.addStrainRow,
+			props:     strain,
+			createdOn: reader.CreatedOn,
 		})
 		if len(loaderSlice) == ConcurrentStrainLoader {
 			loader.Logger.Debug("going to load strain")
@@ -134,6 +138,7 @@ func (loader *StrainLoader) createStrainURL() string {
 
 func (loader *StrainLoader) addStrainRow(
 	strn *strain.StrainAnnotation,
+	createdOn time.Time,
 ) (string, error) {
 	var empty string
 	content := F.Pipe8(
@@ -176,7 +181,7 @@ func executeLoaderSlice(
 		wg.Add(1)
 		go func(ldr *fnRunnerProperties) {
 			defer wg.Done()
-			result, err := ldr.fn(ldr.props)
+			result, err := ldr.fn(ldr.props, ldr.createdOn)
 			if err != nil {
 				errCh <- err
 				return
