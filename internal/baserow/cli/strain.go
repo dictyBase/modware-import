@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -22,6 +23,75 @@ func flagNames() []string {
 		allFlags = append(allFlags, flg.Names()[0])
 	}
 	return allFlags
+}
+
+func LoadStrainAnnotationFromFolderToTable(cltx *cli.Context) error {
+	files, err := listStrainFiles(cltx.String("folder"))
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+	for _, rec := range files {
+		createdOn, err := parseStrainFileName(rec)
+		if err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+		reader, err := strainReader.NewStrainAnnotationReader(
+			cltx.String("input"),
+			cltx.String("sheet"),
+			createdOn,
+		)
+		if err != nil {
+			cli.Exit(err.Error(), 2)
+		}
+		logger := registry.GetLogger()
+		token := cltx.String("token")
+		if len(token) == 0 {
+			rtoken, err := refreshToken(cltx)
+			if err != nil {
+				return cli.Exit(err.Error(), 2)
+			}
+			token = rtoken
+		}
+		authCtx := context.WithValue(
+			context.Background(),
+			client.ContextAccessToken,
+			token,
+		)
+		client := database.BaserowClient(cltx.String("server"))
+		tbm := &database.TableManager{
+			Client:     client,
+			DatabaseId: int32(cltx.Int("database-id")),
+			Logger:     logger,
+			Ctx:        authCtx,
+			Token:      token,
+		}
+		tableIdMaps, err := allTableIds(tbm, flagNames(), cltx)
+		if err != nil {
+			return cli.Exit(
+				fmt.Sprintf("error in getting table ids %s", err),
+				2,
+			)
+		}
+		wkm := &database.WorkspaceManager{
+			Logger: logger,
+			Token:  token,
+			Host:   client.GetConfig().Host,
+		}
+		loader := strain.NewStrainLoader(
+			cltx.String("server"),
+			token,
+			cltx.String("workspace"),
+			cltx.Int("table-id"),
+			logger,
+			tableIdMaps,
+			tbm,
+			wkm,
+		)
+		if err := loader.Load(reader); err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+	}
+	return nil
 }
 
 func LoadStrainAnnotationToTable(cltx *cli.Context) error {
@@ -198,4 +268,22 @@ func parseStrainFileName(file string) (time.Time, error) {
 		"-",
 	)
 	return time.Parse("Jan-02-2006", output)
+}
+
+func listStrainFiles(folder string) ([]string, error) {
+	entries, err := os.ReadDir(folder)
+	fullPaths := make([]string, 0)
+	if err != nil {
+		return fullPaths, fmt.Errorf("error in reading dir %s %s", folder, err)
+	}
+	for _, rec := range entries {
+		if rec.IsDir() {
+			continue
+		}
+		if !strings.Contains(rec.Name(), "PMID") {
+			continue
+		}
+		fullPaths = append(fullPaths, filepath.Join(folder, rec.Name()))
+	}
+	return fullPaths, nil
 }
