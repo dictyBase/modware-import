@@ -3,6 +3,8 @@ package cli
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
@@ -23,6 +25,18 @@ func flagNames() []string {
 }
 
 func LoadStrainAnnotationToTable(cltx *cli.Context) error {
+	createdOn, err := parseStrainFileName(cltx.String("input"))
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+	reader, err := strainReader.NewStrainAnnotationReader(
+		cltx.String("input"),
+		cltx.String("sheet"),
+		createdOn,
+	)
+	if err != nil {
+		cli.Exit(err.Error(), 2)
+	}
 	logger := registry.GetLogger()
 	token := cltx.String("token")
 	if len(token) == 0 {
@@ -64,14 +78,6 @@ func LoadStrainAnnotationToTable(cltx *cli.Context) error {
 		tbm,
 		wkm,
 	)
-	reader, err := strainReader.NewStrainAnnotationReader(
-		cltx.String("input"),
-		cltx.String("sheet"),
-		time.Now(),
-	)
-	if err != nil {
-		cli.Exit(err.Error(), 2)
-	}
 	if err := loader.Load(reader); err != nil {
 		return cli.Exit(err.Error(), 2)
 	}
@@ -184,4 +190,12 @@ func strainOntologyTableFlags() []cli.Flag {
 			Value: "mutagenesis_method_ontology",
 		},
 	}
+}
+
+func parseStrainFileName(file string) (time.Time, error) {
+	output := strings.Join(
+		strings.Split(strings.Split(filepath.Base(file), ".")[0], "-")[3:],
+		"-",
+	)
+	return time.Parse("Jan-02-2006", output)
 }
