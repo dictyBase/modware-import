@@ -31,7 +31,7 @@ var (
 	readListRowsResp = H.ReadJSON[listRowsResp](
 		H.MakeClient(http.DefaultClient),
 	)
-	readListResp = H.ReadJSON[[]ListResponse](
+	readWorkspaceResp = H.ReadJSON[[]WorkspaceResp](
 		H.MakeClient(http.DefaultClient),
 	)
 	readWorkspaceUserResp = H.ReadJSON[[]WorkspaceUserResp](
@@ -41,6 +41,9 @@ var (
 	ResToReqTableWithParams    = F.Curry2(uncurriedResToReqTableWithParams)
 	matchTableName             = F.Curry2(uncurriedMatchTableName)
 	onTablesReqFeedbackSuccess = F.Curry2(uncurriedOnTablesReqFeedbackSuccess)
+	HasWorkspace               = F.Curry2(uncurriedHasWorkspace)
+	HasUser                    = F.Curry2(uncurriedHasUser)
+	SearchUser                 = F.Curry2(uncurriedSearchUser)
 )
 
 type rowResp struct {
@@ -84,13 +87,16 @@ type tableFieldRes struct {
 	Id   int    `json:"id"`
 }
 
-type ListResponse struct {
-	Name string `json:"name"`
-	Id   int    `json:"id"`
+type WorkspaceResp struct {
+	Name  string              `json:"name"`
+	Id    int                 `json:"id"`
+	Users []WorkspaceUserResp `json:"users"`
 }
 
 type WorkspaceUserResp struct {
-	UserId int `json:"user_id"`
+	Id    int    `json:"user_id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type workspaceUserFeedback struct {
@@ -101,7 +107,7 @@ type workspaceUserFeedback struct {
 type listReqFeedback struct {
 	Error error
 	Msg   string
-	Resp  []ListResponse
+	Resp  []WorkspaceResp
 }
 
 type tableFieldReq struct {
@@ -109,8 +115,25 @@ type tableFieldReq struct {
 	Params map[string]interface{}
 }
 
+func uncurriedSearchUser(email string, wrsp WorkspaceResp) int {
+	return F.Pipe3(
+		wrsp.Users,
+		A.FindFirst(HasUser(email)),
+		O.Map(func(user WorkspaceUserResp) int { return user.Id }),
+		O.GetOrElse(F.Constant(0)),
+	)
+}
+
 func uncurriedHasField(name string, fieldResp tableFieldRes) bool {
 	return fieldResp.Name == name
+}
+
+func uncurriedHasWorkspace(name string, wrsp WorkspaceResp) bool {
+	return wrsp.Name == name
+}
+
+func uncurriedHasUser(email string, ursp WorkspaceUserResp) bool {
+	return ursp.Email == email
 }
 
 func onTableCreateFeedbackSuccess(res tableFieldRes) fieldsReqFeedback {
@@ -150,11 +173,11 @@ func onFieldDelReqFeedbackNone() fieldsReqFeedback {
 	return fieldsReqFeedback{Msg: "no field found to delete"}
 }
 
-func onListReqFeedbackError(err error) listReqFeedback {
+func onWorkspaceReqFeedbackError(err error) listReqFeedback {
 	return listReqFeedback{Error: err}
 }
 
-func onListReqFeedbackSuccess(resp []ListResponse) listReqFeedback {
+func onWorkspaceReqFeedbackSuccess(resp []WorkspaceResp) listReqFeedback {
 	return listReqFeedback{Resp: resp}
 }
 
