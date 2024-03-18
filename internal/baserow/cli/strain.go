@@ -171,6 +171,12 @@ func LoadStrainToTableFlag() []cli.Flag {
 			Usage:    "Database table id",
 			Required: true,
 		},
+		&cli.StringFlag{
+			Name:     "workspace",
+			Aliases:  []string{"w"},
+			Usage:    "name of the workspace whether the database exists",
+			Required: true,
+		},
 	)
 	return append(tblFlags, strainOntologyTableFlags()...)
 }
