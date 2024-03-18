@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	J "github.com/IBM/fp-go/json"
 
@@ -88,6 +89,16 @@ var initialPayload = F.Curry2(
 		loader.Payload = payload
 
 		return loader
+	})
+
+var creationTimeHandler = F.Curry2(
+	func(createdOn time.Time, loader *StrainLoader) *StrainLoader {
+		loader.Payload.CreatedOn = createdOn
+		return loader
+	})
+var creationTime = F.Curry2(
+	func(createdOn time.Time, loader *StrainLoader) E.Either[error, time.Time] {
+		return E.Right[error](createdOn)
 	})
 
 type strainCreateResp struct {
