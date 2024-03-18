@@ -37,8 +37,9 @@ func LoadStrainAnnotationToTable(cltx *cli.Context) error {
 		client.ContextAccessToken,
 		token,
 	)
+	client := database.BaserowClient(cltx.String("server"))
 	tbm := &database.TableManager{
-		Client:     database.BaserowClient(cltx.String("server")),
+		Client:     client,
 		DatabaseId: int32(cltx.Int("database-id")),
 		Logger:     logger,
 		Ctx:        authCtx,
@@ -48,13 +49,20 @@ func LoadStrainAnnotationToTable(cltx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
 	}
+	wkm := &database.WorkspaceManager{
+		Logger: logger,
+		Token:  token,
+		Host:   client.GetConfig().Host,
+	}
 	loader := strain.NewStrainLoader(
 		cltx.String("server"),
 		token,
+		cltx.String("workspace"),
 		cltx.Int("table-id"),
 		logger,
 		tableIdMaps,
 		tbm,
+		wkm,
 	)
 	reader, err := strainReader.NewStrainAnnotationReader(
 		cltx.String("input"),
