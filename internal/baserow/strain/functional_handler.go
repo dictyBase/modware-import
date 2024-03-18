@@ -21,6 +21,14 @@ var (
 	)
 )
 
+var assignedByIdHandler = F.Curry2(
+	func(aid int, loader *StrainLoader) *StrainLoader {
+		if aid != 0 {
+			loader.Payload.AssignedBy = []int{aid}
+		}
+		return loader
+	})
+
 var mutagenesisIdHandler = F.Curry2(
 	func(mutId int, loader *StrainLoader) *StrainLoader {
 		if mutId != 0 {
@@ -100,6 +108,20 @@ func onStrainCreateFeedbackError(err error) httpapi.ResponseFeedback {
 
 func processOntologyTermId(val string) string {
 	return strings.Replace(val, ":", "_", 1)
+}
+
+func assignedById(loader *StrainLoader) E.Either[error, int] {
+	ok, aid, err := loader.WorkspaceManager.SearchWorkspaceUser(
+		loader.Workspace, loader.Annotation.AssignedBy(),
+	)
+	if err != nil {
+		return E.Left[int](err)
+	}
+	if !ok {
+		return E.Right[error](0)
+	}
+
+	return E.Right[error](aid)
 }
 
 func mutagenesisId(loader *StrainLoader) E.Either[error, int] {
