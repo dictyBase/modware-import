@@ -42,6 +42,7 @@ type fnRunnerProperties struct {
 }
 
 type StrainLoader struct {
+	Workspace        string
 	Host             string
 	Token            string
 	TableId          int
@@ -50,22 +51,26 @@ type StrainLoader struct {
 	TableManager     *database.TableManager
 	Payload          *StrainPayload
 	Annotation       *strain.StrainAnnotation
+	WorkspaceManager *database.WorkspaceManager
 }
 
 func NewStrainLoader(
-	host, token string,
+	host, token, wspace string,
 	tableId int,
 	logger *logrus.Entry,
 	tblMap map[string]int,
 	manager *database.TableManager,
+	wmanager *database.WorkspaceManager,
 ) *StrainLoader {
 	return &StrainLoader{
+		Workspace:        wspace,
 		Host:             host,
 		Token:            token,
 		TableId:          tableId,
 		Logger:           logger,
 		OntologyTableMap: tblMap,
 		TableManager:     manager,
+		WorkspaceManager: wmanager,
 	}
 }
 
@@ -109,10 +114,11 @@ func (loader *StrainLoader) addStrain(
 	strn *strain.StrainAnnotation,
 ) E.Either[error, *StrainLoader] {
 	newLoader := NewStrainLoader(
-		loader.Host, loader.Token,
+		loader.Host, loader.Token, loader.Workspace,
 		loader.TableId, loader.Logger,
 		loader.OntologyTableMap,
 		loader.TableManager,
+		loader.WorkspaceManager,
 	)
 	newLoader.Annotation = strn
 	return E.Right[error](newLoader)
