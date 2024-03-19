@@ -1,6 +1,15 @@
 package cli
 
-import "io/fs"
+import (
+	"io/fs"
+	"strings"
+
+	F "github.com/IBM/fp-go/function"
+)
+
+var (
+	Split = F.Curry2(F.Bind2nd[string, string, []string])(strings.Split)
+)
 
 type SliceWithError[T any] struct {
 	Slice []T
