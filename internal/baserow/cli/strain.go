@@ -13,6 +13,8 @@ import (
 
 	A "github.com/IBM/fp-go/array"
 	F "github.com/IBM/fp-go/function"
+	O "github.com/IBM/fp-go/option"
+	S "github.com/IBM/fp-go/string"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
@@ -269,11 +271,20 @@ func strainOntologyTableFlags() []cli.Flag {
 }
 
 func parseStrainFileName(file string) (time.Time, error) {
-	output := strings.Join(
-		strings.Split(strings.Split(filepath.Base(file), ".")[0], "-")[3:],
-		"-",
+	output := F.Pipe7(
+		file,
+		filepath.Base,
+		Split("."),
+		A.Head,
+		O.GetOrElse(F.Constant("")),
+		Split("-"),
+		A.SliceRight[string](3),
+		S.Join(":"),
 	)
-	return time.Parse("Jan-02-2006", output)
+	if len(output) == 0 {
+		return time.Time{}, fmt.Errorf("error in parsing file name %s", file)
+	}
+	return time.Parse("Jan:02:2006", output)
 }
 
 func listStrainFiles(folder string) ([]string, error) {
