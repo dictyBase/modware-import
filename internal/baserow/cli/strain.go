@@ -170,14 +170,28 @@ func CreateStrainTableFlag() []cli.Flag {
 	return append(tblFlags, strainOntologyTableFlags()...)
 }
 
+func LoadStrainFolderToTableFlag() []cli.Flag {
+	return append(strainToTableFlag(),
+		&cli.StringFlag{
+			Name:     "folder",
+			Aliases:  []string{"f"},
+			Usage:    "folder with excel spreadsheet files with strain annotations",
+			Required: true,
+		})
+}
+
 func LoadStrainToTableFlag() []cli.Flag {
-	tblFlags := append(tableCreationFlags(),
+	return append(strainToTableFlag(),
 		&cli.StringFlag{
 			Name:     "input",
 			Aliases:  []string{"i"},
 			Usage:    "input excel spreadsheet file with strain annotations",
 			Required: true,
-		},
+		})
+}
+
+func strainToTableFlag() []cli.Flag {
+	tblFlags := append(tableCreationFlags(),
 		&cli.StringFlag{
 			Name:    "sheet",
 			Aliases: []string{"s"},
