@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	E "github.com/IBM/fp-go/either"
@@ -39,63 +38,7 @@ func LoadStrainAnnotationFromFolderToTable(cltx *cli.Context) error {
 		return cli.Exit(err.Error(), 2)
 	}
 	for _, rec := range files {
-		createdOn, err := parseStrainFileName(rec)
-		if err != nil {
-			return cli.Exit(err.Error(), 2)
-		}
-		reader, err := strainReader.NewStrainAnnotationReader(
-			cltx.String("input"),
-			cltx.String("sheet"),
-			createdOn,
-		)
-		if err != nil {
-			cli.Exit(err.Error(), 2)
-		}
-		logger := registry.GetLogger()
-		token := cltx.String("token")
-		if len(token) == 0 {
-			rtoken, err := refreshToken(cltx)
-			if err != nil {
-				return cli.Exit(err.Error(), 2)
-			}
-			token = rtoken
-		}
-		authCtx := context.WithValue(
-			context.Background(),
-			client.ContextAccessToken,
-			token,
-		)
-		client := database.BaserowClient(cltx.String("server"))
-		tbm := &database.TableManager{
-			Client:     client,
-			DatabaseId: int32(cltx.Int("database-id")),
-			Logger:     logger,
-			Ctx:        authCtx,
-			Token:      token,
-		}
-		tableIdMaps, err := allTableIds(tbm, flagNames(), cltx)
-		if err != nil {
-			return cli.Exit(
-				fmt.Sprintf("error in getting table ids %s", err),
-				2,
-			)
-		}
-		wkm := &database.WorkspaceManager{
-			Logger: logger,
-			Token:  token,
-			Host:   client.GetConfig().Host,
-		}
-		loader := strain.NewStrainLoader(
-			cltx.String("server"),
-			token,
-			cltx.String("workspace"),
-			cltx.Int("table-id"),
-			logger,
-			tableIdMaps,
-			tbm,
-			wkm,
-		)
-		if err := loader.Load(reader); err != nil {
+		if err := processFile(rec, cltx); err != nil {
 			return cli.Exit(err.Error(), 2)
 		}
 	}
@@ -103,26 +46,33 @@ func LoadStrainAnnotationFromFolderToTable(cltx *cli.Context) error {
 }
 
 func LoadStrainAnnotationToTable(cltx *cli.Context) error {
-	createdOn, err := parseStrainFileName(cltx.String("input"))
+	err := processFile(cltx.String("input"), cltx)
 	if err != nil {
 		return cli.Exit(err.Error(), 2)
 	}
+	return nil
+}
+
+func processFile(filePath string, cltx *cli.Context) error {
+	createdOn, err := parseStrainFileName(filePath)
+	if err != nil {
+		return err
+	}
 	reader, err := strainReader.NewStrainAnnotationReader(
-		cltx.String("input"),
+		filePath,
 		cltx.String("sheet"),
 		createdOn,
 	)
 	if err != nil {
-		cli.Exit(err.Error(), 2)
+		return err
 	}
 	logger := registry.GetLogger()
 	token := cltx.String("token")
 	if len(token) == 0 {
-		rtoken, err := refreshToken(cltx)
+		token, err = refreshToken(cltx)
 		if err != nil {
-			return cli.Exit(err.Error(), 2)
+			return err
 		}
-		token = rtoken
 	}
 	authCtx := context.WithValue(
 		context.Background(),
@@ -139,7 +89,7 @@ func LoadStrainAnnotationToTable(cltx *cli.Context) error {
 	}
 	tableIdMaps, err := allTableIds(tbm, flagNames(), cltx)
 	if err != nil {
-		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
+		return fmt.Errorf("error in getting table ids %s", err)
 	}
 	wkm := &database.WorkspaceManager{
 		Logger: logger,
@@ -157,9 +107,8 @@ func LoadStrainAnnotationToTable(cltx *cli.Context) error {
 		wkm,
 	)
 	if err := loader.Load(reader); err != nil {
-		return cli.Exit(err.Error(), 2)
+		return err
 	}
-
 	return nil
 }
 
@@ -310,5 +259,5 @@ func listStrainFiles(folder string) ([]string, error) {
 func isStrainAnnoFile(
 	rec fs.DirEntry,
 ) bool {
-	return strings.Contains(rec.Name(), "PMID")
+	return F.Pipe1(rec.Name(), S.Includes("PMID"))
 }
