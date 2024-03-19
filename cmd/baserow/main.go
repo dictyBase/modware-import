@@ -75,6 +75,12 @@ func allCommands() []*cli.Command {
 			Action: baserow.CreateStrainTableHandler,
 		},
 		{
+			Name:   "load-strain-folder",
+			Usage:  "load strain annotations from folder to baserow table",
+			Flags:  baserow.LoadStrainFolderToTableFlag(),
+			Action: baserow.LoadStrainAnnotationFromFolderToTable,
+		},
+		{
 			Name:   "load-strain-annotation",
 			Usage:  "load strain annotation from excel spreadsheet to baserow table",
 			Flags:  baserow.LoadStrainToTableFlag(),
