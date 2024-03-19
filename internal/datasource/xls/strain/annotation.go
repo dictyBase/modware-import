@@ -14,7 +14,7 @@ type StrainAnnotation struct {
 	summary             string `validate:"required_with=descriptor"`
 	characteristic      string `validate:"required_with=descriptor"`
 	geneticModification string `validate:"required_with=characteristic"`
-	mutagenesisMethod   string `validate:"required_with=geneticModification"`
+	mutagenesisMethod   string
 	id                  string
 	name                string
 	systematicName      string
