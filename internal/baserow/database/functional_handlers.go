@@ -34,9 +34,6 @@ var (
 	readWorkspaceResp = H.ReadJSON[[]WorkspaceResp](
 		H.MakeClient(http.DefaultClient),
 	)
-	readWorkspaceUserResp = H.ReadJSON[[]WorkspaceUserResp](
-		H.MakeClient(http.DefaultClient),
-	)
 	HasField                   = F.Curry2(uncurriedHasField)
 	ResToReqTableWithParams    = F.Curry2(uncurriedResToReqTableWithParams)
 	matchTableName             = F.Curry2(uncurriedMatchTableName)
@@ -97,11 +94,6 @@ type WorkspaceUserResp struct {
 	Id    int    `json:"user_id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
-}
-
-type workspaceUserFeedback struct {
-	Error error
-	Resp  []WorkspaceUserResp
 }
 
 type listReqFeedback struct {
@@ -179,16 +171,6 @@ func onWorkspaceReqFeedbackError(err error) listReqFeedback {
 
 func onWorkspaceReqFeedbackSuccess(resp []WorkspaceResp) listReqFeedback {
 	return listReqFeedback{Resp: resp}
-}
-
-func onWorkspaceUserReqFeedbackError(err error) workspaceUserFeedback {
-	return workspaceUserFeedback{Error: err}
-}
-
-func onWorkspaceUserReqFeedbackSuccess(
-	resp []WorkspaceUserResp,
-) workspaceUserFeedback {
-	return workspaceUserFeedback{Resp: resp}
 }
 
 func onJSONPayloadError(err error) jsonPayload {
