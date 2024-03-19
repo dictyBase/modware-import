@@ -3,10 +3,16 @@ package cli
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	E "github.com/IBM/fp-go/either"
+
+	A "github.com/IBM/fp-go/array"
+	F "github.com/IBM/fp-go/function"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
@@ -271,19 +277,27 @@ func parseStrainFileName(file string) (time.Time, error) {
 }
 
 func listStrainFiles(folder string) ([]string, error) {
-	entries, err := os.ReadDir(folder)
-	fullPaths := make([]string, 0)
-	if err != nil {
-		return fullPaths, fmt.Errorf("error in reading dir %s %s", folder, err)
-	}
-	for _, rec := range entries {
-		if rec.IsDir() {
-			continue
-		}
-		if !strings.Contains(rec.Name(), "PMID") {
-			continue
-		}
-		fullPaths = append(fullPaths, filepath.Join(folder, rec.Name()))
-	}
-	return fullPaths, nil
+	output := F.Pipe2(
+		E.TryCatchError(os.ReadDir(folder)),
+		E.Map[error](func(files []fs.DirEntry) []string {
+			return F.Pipe3(
+				files,
+				A.Filter(noDir),
+				A.Filter(isStrainAnnoFile),
+				A.Map(
+					func(rec fs.DirEntry) string {
+						return filepath.Join(folder, rec.Name())
+					},
+				),
+			)
+		}),
+		E.Fold[error, []string](onErrorWithSlice, onSuccessWithSlice),
+	)
+	return output.Slice, output.Error
+}
+
+func isStrainAnnoFile(
+	rec fs.DirEntry,
+) bool {
+	return strings.Contains(rec.Name(), "PMID")
 }
