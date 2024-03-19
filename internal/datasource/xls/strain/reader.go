@@ -2,6 +2,7 @@ package strain
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dictyBase/modware-import/internal/datasource/xls"
@@ -33,21 +34,21 @@ func (stnr *StrainAnnotationReader) Value() (*StrainAnnotation, error) {
 		anno.empty = true
 		return anno, nil
 	}
-	anno.descriptor = row[0]
-	anno.name = row[1]
-	anno.summary = row[2]
-	anno.systematicName = row[3]
-	anno.characteristic = row[4]
-	anno.geneticModification = row[5]
-	anno.mutagenesisMethod = row[6]
-	anno.plasmid = row[7]
-	anno.parentId = row[8]
-	anno.genes = row[10]
-	anno.genotype = row[11]
-	anno.depositor = row[12]
-	anno.species = row[13]
-	anno.reference = row[14]
-	anno.assignedBy = row[15]
+	anno.descriptor = strings.TrimSpace(row[0])
+	anno.name = strings.TrimSpace(row[1])
+	anno.summary = strings.TrimSpace(row[2])
+	anno.systematicName = strings.TrimSpace(row[3])
+	anno.characteristic = strings.TrimSpace(row[4])
+	anno.geneticModification = strings.TrimSpace(row[5])
+	anno.mutagenesisMethod = strings.TrimSpace(row[6])
+	anno.plasmid = strings.TrimSpace(row[7])
+	anno.parentId = strings.TrimSpace(row[8])
+	anno.genes = strings.TrimSpace(row[10])
+	anno.genotype = strings.TrimSpace(row[11])
+	anno.depositor = strings.TrimSpace(row[12])
+	anno.species = strings.TrimSpace(row[13])
+	anno.reference = strings.TrimSpace(row[14])
+	anno.assignedBy = strings.TrimSpace(row[15])
 	if err := stnr.DataValidator.Struct(anno); err != nil {
 		return anno, fmt.Errorf("error in data validation %s", err)
 	}
