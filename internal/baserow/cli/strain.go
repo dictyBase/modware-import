@@ -54,6 +54,7 @@ func LoadStrainAnnotationToTable(cltx *cli.Context) error {
 }
 
 func processFile(filePath string, cltx *cli.Context) error {
+	logger := registry.GetLogger()
 	createdOn, err := parseStrainFileName(filePath)
 	if err != nil {
 		return err
@@ -66,7 +67,6 @@ func processFile(filePath string, cltx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	logger := registry.GetLogger()
 	token := cltx.String("token")
 	if len(token) == 0 {
 		token, err = refreshToken(cltx)
@@ -106,6 +106,7 @@ func processFile(filePath string, cltx *cli.Context) error {
 		tbm,
 		wkm,
 	)
+	logger.Infof("going to load file %s", filePath)
 	if err := loader.Load(reader); err != nil {
 		return err
 	}
