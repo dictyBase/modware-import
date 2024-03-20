@@ -8,6 +8,7 @@ func (strn *StrainTableManager) FieldNames() []string {
 	return []string{
 		"annotation_id",
 		"strain_id",
+		"strain_names",
 		"strain_descriptor",
 		"strain_summary",
 		"systematic_name",
@@ -69,15 +70,16 @@ func (strn *StrainTableManager) FieldChangeSpecs() map[string]map[string]interfa
 	}
 	paramsMap["created_on"] = map[string]interface{}{
 		"name":              "created_on",
-		"type":              "created_on",
+		"type":              "date",
 		"date_format":       "US",
 		"date_include_time": "true",
 		"date_time_format":  "12",
 		"date_show_tzinfo":  "true",
 	}
 	paramsMap["assigned_by"] = map[string]interface{}{
-		"name": "assigned_by",
-		"type": "multiple_collaborators",
+		"name":                   "assigned_by",
+		"type":                   "multiple_collaborators",
+		"notify_user_when_added": "false",
 	}
 	paramsMap["strain_characteristics"] = map[string]interface{}{
 		"name":    "strain_characteristics",

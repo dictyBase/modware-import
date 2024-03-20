@@ -28,11 +28,31 @@ var (
 	readTablesResp = H.ReadJSON[[]tableFieldRes](
 		H.MakeClient(http.DefaultClient),
 	)
+	readListRowsResp = H.ReadJSON[listRowsResp](
+		H.MakeClient(http.DefaultClient),
+	)
+	readWorkspaceResp = H.ReadJSON[[]WorkspaceResp](
+		H.MakeClient(http.DefaultClient),
+	)
 	HasField                   = F.Curry2(uncurriedHasField)
 	ResToReqTableWithParams    = F.Curry2(uncurriedResToReqTableWithParams)
 	matchTableName             = F.Curry2(uncurriedMatchTableName)
 	onTablesReqFeedbackSuccess = F.Curry2(uncurriedOnTablesReqFeedbackSuccess)
+	HasWorkspace               = F.Curry2(uncurriedHasWorkspace)
+	HasUser                    = F.Curry2(uncurriedHasUser)
+	SearchUser                 = F.Curry2(uncurriedSearchUser)
 )
+
+type rowResp struct {
+	Id int32 `json:"id"`
+}
+
+type listRowsResp struct {
+	Count    int32      `json:"count"`
+	Next     string     `json:"next"`
+	Previous string     `json:"previous"`
+	Results  []*rowResp `json:"results"`
+}
 
 type tableFieldUpdateResponse struct {
 	Id      int `json:"id"`
@@ -64,13 +84,48 @@ type tableFieldRes struct {
 	Id   int    `json:"id"`
 }
 
+type WorkspaceResp struct {
+	Name  string              `json:"name"`
+	Id    int                 `json:"id"`
+	Users []WorkspaceUserResp `json:"users"`
+}
+
+type WorkspaceUserResp struct {
+	Id    int    `json:"user_id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type listReqFeedback struct {
+	Error error
+	Msg   string
+	Resp  []WorkspaceResp
+}
+
 type tableFieldReq struct {
 	tableFieldRes
 	Params map[string]interface{}
 }
 
+func uncurriedSearchUser(email string, wrsp WorkspaceResp) int {
+	return F.Pipe3(
+		wrsp.Users,
+		A.FindFirst(HasUser(email)),
+		O.Map(func(user WorkspaceUserResp) int { return user.Id }),
+		O.GetOrElse(F.Constant(0)),
+	)
+}
+
 func uncurriedHasField(name string, fieldResp tableFieldRes) bool {
 	return fieldResp.Name == name
+}
+
+func uncurriedHasWorkspace(name string, wrsp WorkspaceResp) bool {
+	return wrsp.Name == name
+}
+
+func uncurriedHasUser(email string, ursp WorkspaceUserResp) bool {
+	return ursp.Email == email
 }
 
 func onTableCreateFeedbackSuccess(res tableFieldRes) fieldsReqFeedback {
@@ -90,6 +145,10 @@ func onFieldsReqFeedbackSuccess(resp []tableFieldRes) fieldsReqFeedback {
 	return fieldsReqFeedback{Fields: resp}
 }
 
+func onListRowsReqFeedbackSuccess(resp listRowsResp) fieldsReqFeedback {
+	return fieldsReqFeedback{Id: int(resp.Results[0].Id)}
+}
+
 func onFieldDelReqFeedbackSuccess(
 	resp tableFieldDelResponse,
 ) fieldsReqFeedback {
@@ -104,6 +163,14 @@ func onFieldUpdateReqFeedbackSuccess(
 
 func onFieldDelReqFeedbackNone() fieldsReqFeedback {
 	return fieldsReqFeedback{Msg: "no field found to delete"}
+}
+
+func onWorkspaceReqFeedbackError(err error) listReqFeedback {
+	return listReqFeedback{Error: err}
+}
+
+func onWorkspaceReqFeedbackSuccess(resp []WorkspaceResp) listReqFeedback {
+	return listReqFeedback{Resp: resp}
 }
 
 func onJSONPayloadError(err error) jsonPayload {

@@ -38,6 +38,18 @@ type TableManager struct {
 	DatabaseId int32
 }
 
+func (tbm *TableManager) ListRowsWithSearchURL(
+	param string,
+	tableId int,
+) string {
+	return fmt.Sprintf(
+		"https://%s/api/database/rows/table/%d/?user_field_names=true&size=1&search=%s&search_mode=compat",
+		tbm.Client.GetConfig().Host,
+		tableId,
+		param,
+	)
+}
+
 func (tbm *TableManager) TableFieldsChangeURL(
 	req tableFieldReq,
 ) string {
@@ -62,6 +74,24 @@ func (tbm *TableManager) TablesURL() string {
 		tbm.Client.GetConfig().Host,
 		tbm.DatabaseId,
 	)
+}
+
+func (tbm *TableManager) SearchRows(param string, tableId int) (int, error) {
+	resp := F.Pipe3(
+		tbm.ListRowsWithSearchURL(param, tableId),
+		H.MakeGetRequest,
+		R.Map(httpapi.SetHeaderWithJWT(tbm.Token)),
+		readListRowsResp,
+	)(context.Background())
+	output := F.Pipe1(
+		resp(),
+		E.Fold[error, listRowsResp, fieldsReqFeedback](
+			onFieldsReqFeedbackError,
+			onListRowsReqFeedbackSuccess,
+		),
+	)
+
+	return output.Id, output.Error
 }
 
 func (tbm *TableManager) TableNameToId(name string) (int, error) {

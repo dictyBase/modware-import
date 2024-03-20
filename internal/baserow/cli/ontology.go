@@ -98,3 +98,35 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 	}
 	return nil
 }
+
+func LoadOntologyToTableFlag() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:     "token",
+			Aliases:  []string{"t"},
+			Usage:    "database token with write privilege",
+			Required: true,
+		},
+		&cli.IntFlag{
+			Name:     "table-id",
+			Usage:    "Database table id",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:     "input",
+			Aliases:  []string{"i"},
+			Usage:    "input json formatted ontology file",
+			Required: true,
+		},
+	}
+}
+
+func CreateOntologyTableFlag() []cli.Flag {
+	return append(tableCreationFlags(),
+		&cli.StringSliceFlag{
+			Name:     "table",
+			Usage:    "tables to create for loading ontology",
+			Required: true,
+		},
+	)
+}
