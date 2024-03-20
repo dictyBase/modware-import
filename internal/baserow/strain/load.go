@@ -20,22 +20,26 @@ import (
 const ConcurrentStrainLoader = 10
 
 type StrainPayload struct {
-	Descriptor              string    `json:"strain_descriptor"`
-	Species                 string    `json:"species"`
-	Reference               string    `json:"reference"`
-	Summary                 string    `json:"strain_summary,omitempty"`
-	GeneticModificationId   []int     `json:"genetic_modification_id,omitempty"`
-	StrainCharacteristicsId []int     `json:"strain_characteristics_id"`
-	MutagenesisMethodId     []int     `json:"mutagenesis_method_id,omitempty"`
-	AssignedBy              []int     `json:"assigned_by,omitempty"`
-	Names                   string    `json:"strain_names,omitempty"`
-	SystematicName          string    `json:"systematic_name,omitempty"`
-	Plasmid                 string    `json:"plasmid,omitempty"`
-	ParentId                string    `json:"parent_strain_id,omitempty"`
-	Genes                   string    `json:"associated_genes,omitempty"`
-	Genotype                string    `json:"genotype,omitempty"`
-	Depositor               string    `json:"depositor,omitempty"`
-	CreatedOn               time.Time `json:"created_on"`
+	Descriptor              string       `json:"strain_descriptor"`
+	Species                 string       `json:"species"`
+	Reference               string       `json:"reference"`
+	Summary                 string       `json:"strain_summary,omitempty"`
+	GeneticModificationId   []int        `json:"genetic_modification_id,omitempty"`
+	StrainCharacteristicsId []int        `json:"strain_characteristics_id"`
+	MutagenesisMethodId     []int        `json:"mutagenesis_method_id,omitempty"`
+	AssignedBy              []AssignedBy `json:"assigned_by,omitempty"`
+	Names                   string       `json:"strain_names,omitempty"`
+	SystematicName          string       `json:"systematic_name,omitempty"`
+	Plasmid                 string       `json:"plasmid,omitempty"`
+	ParentId                string       `json:"parent_strain_id,omitempty"`
+	Genes                   string       `json:"associated_genes,omitempty"`
+	Genotype                string       `json:"genotype,omitempty"`
+	Depositor               string       `json:"depositor,omitempty"`
+	CreatedOn               time.Time    `json:"created_on"`
+}
+
+type AssignedBy struct {
+	Id int `json:"id"`
 }
 
 type fnRunnerProperties struct {
