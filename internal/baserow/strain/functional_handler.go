@@ -25,7 +25,7 @@ var (
 var assignedByIdHandler = F.Curry2(
 	func(aid int, loader *StrainLoader) *StrainLoader {
 		if aid != 0 {
-			loader.Payload.AssignedBy = []int{aid}
+			loader.Payload.AssignedBy = []AssignedBy{{Id: aid}}
 		}
 		return loader
 	})
