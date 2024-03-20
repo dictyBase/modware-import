@@ -77,8 +77,9 @@ func (strn *StrainTableManager) FieldChangeSpecs() map[string]map[string]interfa
 		"date_show_tzinfo":  "true",
 	}
 	paramsMap["assigned_by"] = map[string]interface{}{
-		"name": "assigned_by",
-		"type": "multiple_collaborators",
+		"name":                   "assigned_by",
+		"type":                   "multiple_collaborators",
+		"notify_user_when_added": "false",
 	}
 	paramsMap["strain_characteristics"] = map[string]interface{}{
 		"name":    "strain_characteristics",
