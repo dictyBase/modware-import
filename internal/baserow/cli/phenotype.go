@@ -49,22 +49,15 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
 	}
-	for fieldName, spec := range mergeFieldDefs(
+	fieldDefs := []map[string]map[string]interface{}{
 		phenoTbl.LinkFieldChangeSpecs(tableIdMaps),
 		phenoTbl.FieldChangeSpecs(),
-	) {
-		msg, err := phenoTbl.UpdateField(tbl, fieldName, spec)
+	}
+	for _, def := range fieldDefs {
+		err := updateFieldDefs(phenoTbl.TableManager, def, tbl, logger)
 		if err != nil {
-			return cli.Exit(
-				fmt.Sprintf(
-					"error in updating %s field %s",
-					fieldName,
-					err,
-				),
-				2,
-			)
+			cli.Exit(err.Error(), 2)
 		}
-		logger.Info(msg)
 	}
 	return nil
 }
