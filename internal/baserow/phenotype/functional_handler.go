@@ -1,26 +1,15 @@
 package phenotype
 
 import (
-	"github.com/dictyBase/modware-import/internal/baserow/common"
 	"fmt"
-	"net/http"
-	"strings"
 
+	"github.com/dictyBase/modware-import/internal/baserow/common"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
-
-	H "github.com/IBM/fp-go/context/readerioeither/http"
 
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
-	J "github.com/IBM/fp-go/json"
 
 	"github.com/dictyBase/modware-import/internal/datasource/xls/phenotype"
-)
-
-var (
-	phenoCreateHTTP = H.ReadJSON[phenoCreateResp](
-		H.MakeClient(http.DefaultClient),
-	)
 )
 
 var initialPayload = F.Curry2(
@@ -67,7 +56,7 @@ func environmentId(loader *PhenotypeLoader) E.Either[error, []int] {
 		return E.Right[error]([]int{0})
 	}
 	envid, err := loader.TableManager.SearchRows(
-		processOntologyTermId(loader.Annotation.EnvironmentId()),
+		common.ProcessOntologyTermId(loader.Annotation.EnvironmentId()),
 		loader.OntologyTableMap["env-ontology-table"],
 	)
 	if err != nil {
@@ -81,7 +70,7 @@ func assayId(loader *PhenotypeLoader) E.Either[error, []int] {
 		return E.Right[error]([]int{0})
 	}
 	asid, err := loader.TableManager.SearchRows(
-		processOntologyTermId(loader.Annotation.AssayId()),
+		common.ProcessOntologyTermId(loader.Annotation.AssayId()),
 		loader.OntologyTableMap["assay-ontology-table"],
 	)
 	if err != nil {
@@ -92,7 +81,7 @@ func assayId(loader *PhenotypeLoader) E.Either[error, []int] {
 
 func phenotypeId(loader *PhenotypeLoader) E.Either[error, []int] {
 	phid, err := loader.TableManager.SearchRows(
-		processOntologyTermId(loader.Annotation.PhenotypeId()),
+		common.ProcessOntologyTermId(loader.Annotation.PhenotypeId()),
 		loader.OntologyTableMap["phenotype-ontology-table"],
 	)
 	if err != nil {
@@ -101,17 +90,10 @@ func phenotypeId(loader *PhenotypeLoader) E.Either[error, []int] {
 	return E.Right[error]([]int{phid})
 }
 
-
-// Use common.MarshalPayload instead
-
 func onPhenoCreateFeedbackSuccess(
-	res phenoCreateResp,
+	res common.CreateResp,
 ) httpapi.ResponseFeedback {
 	return httpapi.ResponseFeedback{
 		Msg: fmt.Sprintf("created phenotype with annotation id %s", res.AnnoId),
 	}
-}
-
-func onPhenoCreateFeedbackError(err error) httpapi.ResponseFeedback {
-	return httpapi.ResponseFeedback{Err: err}
 }
