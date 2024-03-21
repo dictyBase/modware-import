@@ -28,22 +28,24 @@ var initialPayload = F.Curry2(
 )
 
 var assayIdHandler = F.Curry2(
-	func(assayId []int, loader *PhenotypeLoader) *PhenotypeLoader {
-		if len(assayId) != 0 {
-			loader.Payload.AssayId = assayId
+	func(assayId int, loader *PhenotypeLoader) *PhenotypeLoader {
+		if assayId != 0 {
+			loader.Payload.AssayId = []int{assayId}
 		}
 		return loader
 	})
 
 var envIdHandler = F.Curry2(
-	func(envId []int, loader *PhenotypeLoader) *PhenotypeLoader {
-		loader.Payload.EnvironmentId = envId
+	func(envId int, loader *PhenotypeLoader) *PhenotypeLoader {
+		if envId != 0 {
+			loader.Payload.EnvironmentId = []int{envId}
+		}
 		return loader
 	})
 
 var phenoIdHandler = F.Curry2(
-	func(phenoId []int, loader *PhenotypeLoader) *PhenotypeLoader {
-		loader.Payload.Id = phenoId
+	func(phenoId int, loader *PhenotypeLoader) *PhenotypeLoader {
+		loader.Payload.Id = []int{phenoId}
 		return loader
 	})
 
@@ -51,43 +53,44 @@ type phenoCreateResp struct {
 	AnnoId string `json:"annotation_id"`
 }
 
-func environmentId(loader *PhenotypeLoader) E.Either[error, []int] {
+func environmentId(loader *PhenotypeLoader) E.Either[error, int] {
 	if !loader.Annotation.HasEnvironmentId() {
-		return E.Right[error]([]int{0})
+		return E.Right[error](0)
 	}
 	envid, err := loader.TableManager.SearchRows(
 		common.ProcessOntologyTermId(loader.Annotation.EnvironmentId()),
 		loader.OntologyTableMap["env-ontology-table"],
 	)
 	if err != nil {
-		return E.Left[[]int](err)
+		return E.Left[int](err)
 	}
-	return E.Right[error]([]int{envid})
+	return E.Right[error](envid)
 }
 
-func assayId(loader *PhenotypeLoader) E.Either[error, []int] {
+func assayId(loader *PhenotypeLoader) E.Either[error, int] {
 	if !loader.Annotation.HasAssayId() {
-		return E.Right[error]([]int{0})
+		return E.Right[error](0)
 	}
 	asid, err := loader.TableManager.SearchRows(
 		common.ProcessOntologyTermId(loader.Annotation.AssayId()),
 		loader.OntologyTableMap["assay-ontology-table"],
 	)
 	if err != nil {
-		return E.Left[[]int](err)
+		return E.Left[int](err)
 	}
-	return E.Right[error]([]int{asid})
+	return E.Right[error](asid)
 }
 
-func phenotypeId(loader *PhenotypeLoader) E.Either[error, []int] {
+func assignedById(loader *PhenotypeLoader) E.Either[error, int] {
+func phenotypeId(loader *PhenotypeLoader) E.Either[error, int] {
 	phid, err := loader.TableManager.SearchRows(
 		common.ProcessOntologyTermId(loader.Annotation.PhenotypeId()),
 		loader.OntologyTableMap["phenotype-ontology-table"],
 	)
 	if err != nil {
-		return E.Left[[]int](err)
+		return E.Left[int](err)
 	}
-	return E.Right[error]([]int{phid})
+	return E.Right[error](phid)
 }
 
 func onPhenoCreateFeedbackSuccess(
