@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/dictyBase/modware-import/internal/baserow/phenotype"
+	phenoReader "github.com/dictyBase/modware-import/internal/datasource/xls/phenotype"
+
 	E "github.com/IBM/fp-go/either"
 
 	A "github.com/IBM/fp-go/array"
@@ -73,6 +76,66 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 	return nil
 }
 
+func processPhenoFile(filePath string, cltx *cli.Context) error {
+	logger := registry.GetLogger()
+	createdOn, err := parsePhenoFileName(filePath)
+	if err != nil {
+		return err
+	}
+	reader, err := phenoReader.NewPhenotypeAnnotationReader(
+		filePath,
+		cltx.String("sheet"),
+		createdOn,
+	)
+	if err != nil {
+		return err
+	}
+	token := cltx.String("token")
+	if len(token) == 0 {
+		token, err = refreshToken(cltx)
+		if err != nil {
+			return err
+		}
+	}
+	authCtx := context.WithValue(
+		context.Background(),
+		client.ContextAccessToken,
+		token,
+	)
+	client := database.BaserowClient(cltx.String("server"))
+	tbm := &database.TableManager{
+		Client:     client,
+		DatabaseId: int32(cltx.Int("database-id")),
+		Logger:     logger,
+		Ctx:        authCtx,
+		Token:      token,
+	}
+	tableIdMaps, err := allTableIds(tbm, phenoFlagNames(), cltx)
+	if err != nil {
+		return fmt.Errorf("error in getting table ids %s", err)
+	}
+	wkm := &database.WorkspaceManager{
+		Logger: logger,
+		Token:  token,
+		Host:   cltx.String("server"),
+	}
+	loader := phenotype.NewPhenotypeLoader(&phenotype.PhenotypeLoaderProperties{
+		Host:             cltx.String("server"),
+		Workspace:        cltx.String("workspace"),
+		TableId:          cltx.Int("table-id"),
+		Token:            token,
+		Logger:           logger,
+		OntologyTableMap: tableIdMaps,
+		TableManager:     tbm,
+		WorkspaceManager: wkm,
+	})
+	logger.Infof("going to load file %s", filePath)
+	if err := loader.Load(reader); err != nil {
+		return err
+	}
+	return nil
+}
+
 func parsePhenoFileName(file string) (time.Time, error) {
 	output := F.Pipe7(
 		file,
@@ -114,4 +177,12 @@ func isPhenoAnnoFile(
 	rec fs.DirEntry,
 ) bool {
 	return F.Pipe1(rec.Name(), S.Includes("PMID"))
+}
+
+func phenoFlagNames() []string {
+	allFlags := make([]string, 0)
+	for _, flg := range phenoOntologyTableFlags() {
+		allFlags = append(allFlags, flg.Names()[0])
+	}
+	return allFlags
 }
