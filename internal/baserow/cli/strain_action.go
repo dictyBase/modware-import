@@ -38,7 +38,7 @@ func LoadStrainAnnotationFromFolderToTable(cltx *cli.Context) error {
 		return cli.Exit(err.Error(), 2)
 	}
 	for _, rec := range files {
-		if err := processFile(rec, cltx); err != nil {
+		if err := processStrainFile(rec, cltx); err != nil {
 			return cli.Exit(err.Error(), 2)
 		}
 	}
@@ -46,14 +46,14 @@ func LoadStrainAnnotationFromFolderToTable(cltx *cli.Context) error {
 }
 
 func LoadStrainAnnotationToTable(cltx *cli.Context) error {
-	err := processFile(cltx.String("input"), cltx)
+	err := processStrainFile(cltx.String("input"), cltx)
 	if err != nil {
 		return cli.Exit(err.Error(), 2)
 	}
 	return nil
 }
 
-func processFile(filePath string, cltx *cli.Context) error {
+func processStrainFile(filePath string, cltx *cli.Context) error {
 	logger := registry.GetLogger()
 	createdOn, err := parseStrainFileName(filePath)
 	if err != nil {
