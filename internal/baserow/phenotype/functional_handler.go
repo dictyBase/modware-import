@@ -49,9 +49,6 @@ var phenoIdHandler = F.Curry2(
 		return loader
 	})
 
-type phenoCreateResp struct {
-	AnnoId string `json:"annotation_id"`
-}
 var assignedByIdHandler = F.Curry2(
 	func(aid int, loader *PhenotypeLoader) *PhenotypeLoader {
 		if aid != 0 {
