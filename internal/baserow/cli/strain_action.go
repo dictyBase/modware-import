@@ -24,7 +24,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func flagNames() []string {
+func strainFlagNames() []string {
 	allFlags := make([]string, 0)
 	for _, flg := range strainOntologyTableFlags() {
 		allFlags = append(allFlags, flg.Names()[0])
@@ -87,7 +87,7 @@ func processStrainFile(filePath string, cltx *cli.Context) error {
 		Ctx:        authCtx,
 		Token:      token,
 	}
-	tableIdMaps, err := allTableIds(tbm, flagNames(), cltx)
+	tableIdMaps, err := allTableIds(tbm, strainFlagNames(), cltx)
 	if err != nil {
 		return fmt.Errorf("error in getting table ids %s", err)
 	}
@@ -143,7 +143,11 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
 	}
 	logger.Infof("created table with fields %s", tbl.GetName())
-	tableIdMaps, err := allTableIds(strainTbl.TableManager, flagNames(), cltx)
+	tableIdMaps, err := allTableIds(
+		strainTbl.TableManager,
+		strainFlagNames(),
+		cltx,
+	)
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
 	}
