@@ -143,8 +143,8 @@ func parsePhenoFileName(file string) (time.Time, error) {
 		Split("."),
 		A.Head,
 		O.GetOrElse(F.Constant("")),
-		Split("-"),
-		A.SliceRight[string](3),
+		Split("_"),
+		A.SliceRight[string](2),
 		S.Join(":"),
 	)
 	if len(output) == 0 {
