@@ -9,9 +9,11 @@ import (
 	R "github.com/IBM/fp-go/context/readerioeither"
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
+	"golang.org/x/exp/slices"
 
 	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
+	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/dictyBase/modware-import/internal/datasource/xls/phenotype"
 	"github.com/sirupsen/logrus"
 )
@@ -73,6 +75,60 @@ func NewPhenotypeLoader(props *PhenotypeLoaderProperties) *PhenotypeLoader {
 	}
 }
 
+func (loader *PhenotypeLoader) Load(
+	reader *phenotype.PhenotypeAnnotationReader,
+) error {
+	tasks := make(
+		[]concurrent.TaskWrapper[*phenotype.PhenotypeAnnotation, string],
+		0,
+		ConcurrentPhenoLoader,
+	)
+	for reader.Next() {
+		pheno, err := reader.Value()
+		if pheno.IsEmpty() {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		loader.Logger.Infof(
+			"got strain descriptor to load %s",
+			pheno.StrainDescriptor(),
+		)
+		tasks = append(
+			tasks,
+			concurrent.TaskWrapper[*phenotype.PhenotypeAnnotation, string]{
+				TaskFunc: loader.addPhenotypeRow,
+				Input:    pheno,
+			},
+		)
+		if len(tasks) == ConcurrentPhenoLoader {
+			loader.Logger.Debug("going to load phenotypes")
+			results, err := concurrent.ProcessWork(tasks)
+			if err != nil {
+				return err
+			}
+			for _, rec := range results {
+				loader.Logger.Debug(rec)
+			}
+			tasks = slices.Delete(tasks, 0, len(tasks))
+		}
+	}
+	// Process remaining items in tasks
+	if len(tasks) > 0 {
+		loader.Logger.Debug("going to load remaining phenotype")
+		results, err := concurrent.ProcessWork(tasks)
+		if err != nil {
+			return err
+		}
+		for _, rec := range results {
+			loader.Logger.Debug(rec)
+		}
+	}
+
+	return nil
+}
+
 func (loader *PhenotypeLoader) addPheno(
 	pheno *phenotype.PhenotypeAnnotation,
 ) E.Either[error, *PhenotypeLoader] {
@@ -85,8 +141,8 @@ func (loader *PhenotypeLoader) addPheno(
 		OntologyTableMap: loader.OntologyTableMap,
 		TableManager:     loader.TableManager,
 		WorkspaceManager: loader.WorkspaceManager,
+		Annotation:       pheno,
 	})
-	newLoader.Annotation = pheno
 	return E.Right[error](newLoader)
 }
 
