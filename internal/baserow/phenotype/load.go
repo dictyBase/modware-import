@@ -11,6 +11,7 @@ import (
 	F "github.com/IBM/fp-go/function"
 	"golang.org/x/exp/slices"
 
+	"github.com/dictyBase/modware-import/internal/baserow/common"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/dictyBase/modware-import/internal/concurrent"
@@ -157,7 +158,7 @@ func (loader *PhenotypeLoader) addPhenotypeRow(
 		E.Bind(assayIdHandler, assayId),
 		E.Bind(envIdHandler, environmentId),
 		E.Map[error, *PhenotypeLoader](loaderToPayload),
-		E.Chain[error, *PhenotypePayload](marshalPayload),
+		E.Chain[error, *PhenotypePayload](common.MarshalPayload),
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
 	)
 	if content.Error != nil {
@@ -167,18 +168,16 @@ func (loader *PhenotypeLoader) addPhenotypeRow(
 		loader.createPhenotypeURL(),
 		httpapi.MakeHTTPRequest("POST", bytes.NewBuffer(content.Payload)),
 		R.Map(httpapi.SetHeaderWithJWT(loader.Token)),
-		phenoCreateHTTP,
+		common.CreateHTTP,
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold(onPhenoCreateFeedbackError, onPhenoCreateFeedbackSuccess),
+		E.Fold(common.OnCreateFeedbackError, onPhenoCreateFeedbackSuccess),
 	)
 	return output.Msg, output.Err
 }
 
-func loaderToPayload(
-	loader *PhenotypeLoader,
-) *PhenotypePayload {
+func loaderToPayload(loader *PhenotypeLoader) *PhenotypePayload {
 	return loader.Payload
 }
 
