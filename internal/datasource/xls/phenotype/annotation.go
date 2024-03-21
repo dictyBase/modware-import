@@ -5,6 +5,8 @@
 // The struct's methods provide accessors and checkers for the various fields.
 package phenotype
 
+import "time"
+
 // PhenotypeAnnotation represents annotations related to a phenotype.
 type PhenotypeAnnotation struct {
 	strainId         string
@@ -17,6 +19,11 @@ type PhenotypeAnnotation struct {
 	assignedBy       string `validate:"required_with=phenotypeId"`
 	deleted          bool
 	empty            bool
+	createdOn        time.Time `validate:"required"`
+}
+
+func (pha *PhenotypeAnnotation) CreatedOn() time.Time {
+	return pha.createdOn
 }
 
 // AssayId returns the assay ID associated with the phenotype annotation.

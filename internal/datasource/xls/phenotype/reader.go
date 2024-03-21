@@ -66,6 +66,7 @@ func (phr *PhenotypeAnnotationReader) Value() (*PhenotypeAnnotation, error) {
 	anno.reference = strings.TrimSpace(row[8])
 	anno.assignedBy = strings.TrimSpace(row[10])
 	anno.deleted = false
+	anno.createdOn = phr.CreatedOn
 	if err := phr.DataValidator.Struct(anno); err != nil {
 		return nil, fmt.Errorf("error in data validation %s", err)
 	}
