@@ -52,6 +52,13 @@ var phenoIdHandler = F.Curry2(
 type phenoCreateResp struct {
 	AnnoId string `json:"annotation_id"`
 }
+var assignedByIdHandler = F.Curry2(
+	func(aid int, loader *PhenotypeLoader) *PhenotypeLoader {
+		if aid != 0 {
+			loader.Payload.AssignedBy = []common.AssignedBy{{Id: aid}}
+		}
+		return loader
+	})
 
 func environmentId(loader *PhenotypeLoader) E.Either[error, int] {
 	if !loader.Annotation.HasEnvironmentId() {
@@ -82,6 +89,19 @@ func assayId(loader *PhenotypeLoader) E.Either[error, int] {
 }
 
 func assignedById(loader *PhenotypeLoader) E.Either[error, int] {
+	ok, aid, err := loader.WorkspaceManager.SearchWorkspaceUser(
+		loader.Workspace, loader.Annotation.AssignedBy(),
+	)
+	if err != nil {
+		return E.Left[int](err)
+	}
+	if !ok {
+		return E.Right[error](0)
+	}
+
+	return E.Right[error](aid)
+}
+
 func phenotypeId(loader *PhenotypeLoader) E.Either[error, int] {
 	phid, err := loader.TableManager.SearchRows(
 		common.ProcessOntologyTermId(loader.Annotation.PhenotypeId()),
