@@ -136,9 +136,10 @@ func (loader *PhenotypeLoader) addPhenotypeRow(
 	pheno *phenotype.PhenotypeAnnotation,
 ) (string, error) {
 	var empty string
-	content := F.Pipe7(
+	content := F.Pipe8(
 		E.Do[error](pheno),
 		E.Bind(initialPayload, loader.addPheno),
+		E.Bind(assignedByIdHandler, assignedById),
 		E.Bind(phenoIdHandler, phenotypeId),
 		E.Bind(assayIdHandler, assayId),
 		E.Bind(envIdHandler, environmentId),
