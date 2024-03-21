@@ -3,6 +3,8 @@ package concurrent
 import (
 	"errors"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Task represents a generic function that takes an input of type I and returns an output of type O and an error.
@@ -13,7 +15,24 @@ type TaskWrapper[I any, O any] struct {
 	Input    I          // The input for the task function
 }
 
-func ProcessWork[I any, O any](taskSlice []TaskWrapper[I, O]) ([]O, error) {
+func RunTasks[I any, O any](
+	taskSlice []TaskWrapper[I, O],
+	logger *logrus.Entry,
+) error {
+	if len(taskSlice) == 0 {
+		return nil
+	}
+	results, err := concurrentRun(taskSlice)
+	if err != nil {
+		return err
+	}
+	for _, rec := range results {
+		logger.Debug(rec)
+	}
+	return nil
+}
+
+func concurrentRun[I any, O any](taskSlice []TaskWrapper[I, O]) ([]O, error) {
 	resultCh, errCh := work(taskSlice)
 	results := make([]O, 0) // Add slice to collect results
 	errSlice := make([]error, 0)
