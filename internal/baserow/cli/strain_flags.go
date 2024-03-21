@@ -35,28 +35,6 @@ func LoadStrainToTableFlag() []cli.Flag {
 		})
 }
 
-func spreadsheetFlag() []cli.Flag {
-	return []cli.Flag{
-		&cli.StringFlag{
-			Name:    "sheet",
-			Aliases: []string{"s"},
-			Usage:   "name of sheet which contains the annotation",
-			Value:   "Strain_Annotations",
-		},
-		&cli.IntFlag{
-			Name:     "table-id",
-			Usage:    "Database table id",
-			Required: true,
-		},
-		&cli.StringFlag{
-			Name:     "workspace",
-			Aliases:  []string{"w"},
-			Usage:    "name of the workspace whether the database exists",
-			Required: true,
-		},
-	}
-}
-
 func strainToTableFlag() []cli.Flag {
 	tblFlags := append(tableCreationFlags(), spreadsheetFlag()...)
 	return append(tblFlags, strainOntologyTableFlags()...)
