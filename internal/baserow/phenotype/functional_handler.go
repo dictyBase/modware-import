@@ -104,7 +104,7 @@ func processOntologyTermId(val string) string {
 	return strings.Replace(val, ":", "_", 1)
 }
 
-func marshalPayload(payload *PhenotypePayload) E.Either[error, []byte] {
+func marshalPayload[T any](payload *T) E.Either[error, []byte] {
 	return F.Pipe1(payload, J.Marshal)
 }
 
