@@ -101,26 +101,15 @@ func (loader *PhenotypeLoader) Load(
 		)
 		if len(tasks) == ConcurrentPhenoLoader {
 			loader.Logger.Debug("going to load phenotypes")
-			results, err := concurrent.ProcessWork(tasks)
-			if err != nil {
+			if err := concurrent.RunTasks(tasks, loader.Logger); err != nil {
 				return err
-			}
-			for _, rec := range results {
-				loader.Logger.Debug(rec)
 			}
 			tasks = slices.Delete(tasks, 0, len(tasks))
 		}
 	}
-	// Process remaining items in tasks
-	if len(tasks) > 0 {
-		loader.Logger.Debug("going to load remaining phenotype")
-		results, err := concurrent.ProcessWork(tasks)
-		if err != nil {
-			return err
-		}
-		for _, rec := range results {
-			loader.Logger.Debug(rec)
-		}
+	loader.Logger.Debug("going to load remaining phenotypes")
+	if err := concurrent.RunTasks(tasks, loader.Logger); err != nil {
+		return err
 	}
 
 	return nil
