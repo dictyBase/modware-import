@@ -21,20 +21,16 @@ import (
 
 const ConcurrentPhenoLoader = 10
 
-type AssignedBy struct {
-	Id int `json:"id"`
-}
-
 type PhenotypePayload struct {
-	StrainDescriptor string       `json:"strain_descriptor"`
-	Id               []int        `json:"phenotype_id"`
-	Reference        string       `json:"reference"`
-	CreatedOn        time.Time    `json:"created_on"`
-	AssignedBy       []AssignedBy `json:"assigned_by"`
-	StrainId         string       `json:"strain_id,omitempty"`
-	AssayId          []int        `json:"assay_id,omitempty"`
-	EnvironmentId    []int        `json:"environment_id,omitempty"`
-	Deleted          bool         `json:"deleted,omitempty"`
+	StrainDescriptor string              `json:"strain_descriptor"`
+	Id               []int               `json:"phenotype_id"`
+	Reference        string              `json:"reference"`
+	CreatedOn        time.Time           `json:"created_on"`
+	AssignedBy       []common.AssignedBy `json:"assigned_by"`
+	StrainId         string              `json:"strain_id,omitempty"`
+	AssayId          []int               `json:"assay_id,omitempty"`
+	EnvironmentId    []int               `json:"environment_id,omitempty"`
+	Deleted          bool                `json:"deleted,omitempty"`
 }
 
 type PhenotypeLoader struct {

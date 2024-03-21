@@ -20,6 +20,10 @@ type CreateResp struct {
 	AnnoId string `json:"annotation_id"`
 }
 
+type AssignedBy struct {
+	Id int `json:"id"`
+}
+
 func ProcessOntologyTermId(val string) string {
 	return strings.Replace(val, ":", "_", 1)
 }
