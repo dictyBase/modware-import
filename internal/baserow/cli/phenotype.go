@@ -3,6 +3,17 @@ package cli
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"time"
+
+	E "github.com/IBM/fp-go/either"
+
+	A "github.com/IBM/fp-go/array"
+	F "github.com/IBM/fp-go/function"
+	O "github.com/IBM/fp-go/option"
+	S "github.com/IBM/fp-go/string"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
@@ -62,27 +73,45 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 	return nil
 }
 
-func CreatePhenotypeTableFlag() []cli.Flag {
-	return append(tableCreationFlags(),
-		&cli.StringFlag{
-			Name:     "table",
-			Usage:    "table to create for loading phenotype annotation",
-			Required: true,
-		},
-		&cli.StringFlag{
-			Name:  "assay-ontology-table",
-			Usage: "table name containing assay ontology",
-			Value: "assay_ontology",
-		},
-		&cli.StringFlag{
-			Name:  "env-ontology-table",
-			Usage: "table name containing environmental ontology",
-			Value: "environment_ontology",
-		},
-		&cli.StringFlag{
-			Name:  "phenotype-ontology-table",
-			Usage: "table name containing phenotype ontology",
-			Value: "phenotype_ontology",
-		},
+func parsePhenoFileName(file string) (time.Time, error) {
+	output := F.Pipe7(
+		file,
+		filepath.Base,
+		Split("."),
+		A.Head,
+		O.GetOrElse(F.Constant("")),
+		Split("-"),
+		A.SliceRight[string](3),
+		S.Join(":"),
 	)
+	if len(output) == 0 {
+		return time.Time{}, fmt.Errorf("error in parsing file name %s", file)
+	}
+	return time.Parse("Jan:02:2006", output)
+}
+
+func listPhenoFiles(folder string) ([]string, error) {
+	output := F.Pipe2(
+		E.TryCatchError(os.ReadDir(folder)),
+		E.Map[error](func(files []fs.DirEntry) []string {
+			return F.Pipe3(
+				files,
+				A.Filter(noDir),
+				A.Filter(isStrainAnnoFile),
+				A.Map(
+					func(rec fs.DirEntry) string {
+						return filepath.Join(folder, rec.Name())
+					},
+				),
+			)
+		}),
+		E.Fold[error, []string](onErrorWithSlice, onSuccessWithSlice),
+	)
+	return output.Slice, output.Error
+}
+
+func isPhenoAnnoFile(
+	rec fs.DirEntry,
+) bool {
+	return F.Pipe1(rec.Name(), S.Includes("PMID"))
 }
