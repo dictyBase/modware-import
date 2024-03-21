@@ -1,6 +1,7 @@
 package phenotype
 
 import (
+	"github.com/dictyBase/modware-import/internal/baserow/common"
 	"fmt"
 	"net/http"
 	"strings"
@@ -100,13 +101,8 @@ func phenotypeId(loader *PhenotypeLoader) E.Either[error, []int] {
 	return E.Right[error]([]int{phid})
 }
 
-func processOntologyTermId(val string) string {
-	return strings.Replace(val, ":", "_", 1)
-}
 
-func marshalPayload[T any](payload *T) E.Either[error, []byte] {
-	return F.Pipe1(payload, J.Marshal)
-}
+// Use common.MarshalPayload instead
 
 func onPhenoCreateFeedbackSuccess(
 	res phenoCreateResp,

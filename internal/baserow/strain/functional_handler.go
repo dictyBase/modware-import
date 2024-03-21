@@ -1,6 +1,7 @@
 package strain
 
 import (
+	"github.com/dictyBase/modware-import/internal/baserow/common"
 	"fmt"
 	"net/http"
 	"strings"
@@ -117,9 +118,6 @@ func onStrainCreateFeedbackError(err error) httpapi.ResponseFeedback {
 	return httpapi.ResponseFeedback{Err: err}
 }
 
-func processOntologyTermId(val string) string {
-	return strings.Replace(val, ":", "_", 1)
-}
 
 func assignedById(loader *StrainLoader) E.Either[error, int] {
 	ok, aid, err := loader.WorkspaceManager.SearchWorkspaceUser(
@@ -177,6 +175,4 @@ func characteristicIds(loader *StrainLoader) E.Either[error, []int] {
 
 func loaderToPayload(ldr *StrainLoader) *StrainPayload { return ldr.Payload }
 
-func marshalPayload(payload *StrainPayload) E.Either[error, []byte] {
-	return F.Pipe1(payload, J.Marshal)
-}
+// Use common.MarshalPayload instead
