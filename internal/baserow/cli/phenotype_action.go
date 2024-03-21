@@ -3,20 +3,9 @@ package cli
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/dictyBase/modware-import/internal/baserow/phenotype"
 	phenoReader "github.com/dictyBase/modware-import/internal/datasource/xls/phenotype"
-
-	E "github.com/IBM/fp-go/either"
-
-	A "github.com/IBM/fp-go/array"
-	F "github.com/IBM/fp-go/function"
-	O "github.com/IBM/fp-go/option"
-	S "github.com/IBM/fp-go/string"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
@@ -110,7 +99,11 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 		Ctx:        authCtx,
 		Token:      token,
 	}
-	tableIdMaps, err := allTableIds(tbm, phenoFlagNames(), cltx)
+	tableIdMaps, err := allTableIds(
+		tbm,
+		flagNamesHandler(phenoOntologyTableFlags()),
+		cltx,
+	)
 	if err != nil {
 		return fmt.Errorf("error in getting table ids %s", err)
 	}
@@ -134,55 +127,4 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 		return err
 	}
 	return nil
-}
-
-func parsePhenoFileName(file string) (time.Time, error) {
-	output := F.Pipe7(
-		file,
-		filepath.Base,
-		Split("."),
-		A.Head,
-		O.GetOrElse(F.Constant("")),
-		Split("_"),
-		A.SliceRight[string](2),
-		S.Join(":"),
-	)
-	if len(output) == 0 {
-		return time.Time{}, fmt.Errorf("error in parsing file name %s", file)
-	}
-	return time.Parse("Jan:02:2006", output)
-}
-
-func listPhenoFiles(folder string) ([]string, error) {
-	output := F.Pipe2(
-		E.TryCatchError(os.ReadDir(folder)),
-		E.Map[error](func(files []fs.DirEntry) []string {
-			return F.Pipe3(
-				files,
-				A.Filter(noDir),
-				A.Filter(isStrainAnnoFile),
-				A.Map(
-					func(rec fs.DirEntry) string {
-						return filepath.Join(folder, rec.Name())
-					},
-				),
-			)
-		}),
-		E.Fold[error, []string](onErrorWithSlice, onSuccessWithSlice),
-	)
-	return output.Slice, output.Error
-}
-
-func isPhenoAnnoFile(
-	rec fs.DirEntry,
-) bool {
-	return F.Pipe1(rec.Name(), S.Includes("annotation"))
-}
-
-func phenoFlagNames() []string {
-	allFlags := make([]string, 0)
-	for _, flg := range phenoOntologyTableFlags() {
-		allFlags = append(allFlags, flg.Names()[0])
-	}
-	return allFlags
 }
