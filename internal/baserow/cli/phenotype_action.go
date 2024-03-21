@@ -176,7 +176,7 @@ func listPhenoFiles(folder string) ([]string, error) {
 func isPhenoAnnoFile(
 	rec fs.DirEntry,
 ) bool {
-	return F.Pipe1(rec.Name(), S.Includes("PMID"))
+	return F.Pipe1(rec.Name(), S.Includes("annotation"))
 }
 
 func phenoFlagNames() []string {
