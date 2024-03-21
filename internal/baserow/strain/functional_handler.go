@@ -101,10 +101,6 @@ func onStrainCreateFeedbackSuccess(
 	}
 }
 
-func onStrainCreateFeedbackError(err error) httpapi.ResponseFeedback {
-	return httpapi.ResponseFeedback{Err: err}
-}
-
 func assignedById(loader *StrainLoader) E.Either[error, int] {
 	ok, aid, err := loader.WorkspaceManager.SearchWorkspaceUser(
 		loader.Workspace, loader.Annotation.AssignedBy(),
