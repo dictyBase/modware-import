@@ -15,9 +15,8 @@ import (
 var initialPayload = F.Curry2(
 	func(loader *PhenotypeLoader, pheno *phenotype.PhenotypeAnnotation) *PhenotypeLoader {
 		payload := &PhenotypePayload{
-			StrainDescriptor: pheno.StrainDescriptor(),
-			Reference:        pheno.Reference(),
-			CreatedOn:        pheno.CreatedOn(),
+			Reference: pheno.Reference(),
+			CreatedOn: pheno.CreatedOn(),
 		}
 		if pheno.HasStrainId() {
 			payload.StrainId = pheno.StrainId()
