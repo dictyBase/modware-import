@@ -71,11 +71,6 @@ func TestPhenotypeId(t *testing.T) {
 	assert.Equal(t, "P123", annotation.PhenotypeId())
 }
 
-func TestStrainDescriptor(t *testing.T) {
-	annotation := PhenotypeAnnotation{strainDescriptor: "Desc123"}
-	assert.Equal(t, "Desc123", annotation.StrainDescriptor())
-}
-
 func TestStrainId(t *testing.T) {
 	annotation := PhenotypeAnnotation{strainId: "S123"}
 	assert.Equal(t, "S123", annotation.StrainId())
