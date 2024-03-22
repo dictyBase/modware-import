@@ -22,7 +22,6 @@ import (
 const ConcurrentPhenoLoader = 10
 
 type PhenotypePayload struct {
-	StrainDescriptor string              `json:"strain_descriptor"`
 	Id               []int               `json:"phenotype_id"`
 	Reference        string              `json:"reference"`
 	CreatedOn        time.Time           `json:"created_on"`
@@ -89,8 +88,8 @@ func (loader *PhenotypeLoader) Load(
 			return err
 		}
 		loader.Logger.Infof(
-			"got strain descriptor to load %s",
-			pheno.StrainDescriptor(),
+			"got strain id to load %s",
+			pheno.StrainId(),
 		)
 		tasks = append(
 			tasks,
