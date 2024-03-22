@@ -58,13 +58,12 @@ func (phr *PhenotypeAnnotationReader) Value() (*PhenotypeAnnotation, error) {
 		return anno, nil
 	}
 	anno.strainId = strings.TrimSpace(row[0])
-	anno.strainDescriptor = strings.TrimSpace(row[1])
-	anno.phenotypeId = strings.TrimSpace(row[2])
-	anno.notes = strings.TrimSpace(row[4])
+	anno.phenotypeId = strings.TrimSpace(row[1])
+	anno.notes = strings.TrimSpace(row[3])
 	anno.assayId = strings.TrimSpace(row[5])
 	anno.environmentId = strings.TrimSpace(row[7])
 	anno.reference = strings.TrimSpace(row[8])
-	anno.assignedBy = strings.TrimSpace(row[10])
+	anno.assignedBy = strings.TrimSpace(row[9])
 	anno.deleted = false
 	anno.createdOn = phr.CreatedOn
 	if err := phr.DataValidator.Struct(anno); err != nil {
