@@ -31,15 +31,15 @@ func (pha *PhenotypeAnnotation) AssayId() string {
 }
 
 // HasAssayId checks whether an assay ID is associated with the phenotype annotation.
-// It returns true if the assay ID is not set.
+// It returns true if the assay ID is set.
 func (pha *PhenotypeAnnotation) HasAssayId() bool {
-	return len(pha.assayId) == 0
+	return len(pha.assayId) > 0
 }
 
 // HasEnvironmentId checks whether an environment ID is associated with the phenotype annotation.
-// It returns true if the environment ID is not set.
+// It returns true if the environment ID is set.
 func (pha *PhenotypeAnnotation) HasEnvironmentId() bool {
-	return len(pha.environmentId) == 0
+	return len(pha.environmentId) > 0
 }
 
 // EnvironmentId returns the environment ID associated with the phenotype annotation.
@@ -48,7 +48,7 @@ func (pha *PhenotypeAnnotation) EnvironmentId() string {
 }
 
 func (pha *PhenotypeAnnotation) HasNotes() bool {
-	return len(pha.notes) == 0
+	return len(pha.notes) > 0
 }
 
 // Notes returns any notes associated with the phenotype annotation.
@@ -73,9 +73,9 @@ func (pha *PhenotypeAnnotation) IsEmpty() bool {
 }
 
 // HasStrainId checks whether a strain ID is associated with the phenotype annotation.
-// It returns true if the strain ID is not set.
+// It returns true if the strain ID is set.
 func (pha *PhenotypeAnnotation) HasStrainId() bool {
-	return len(pha.strainId) == 0
+	return len(pha.strainId) > 0
 }
 
 // PhenotypeId returns the phenotype ID associated with the phenotype annotation.
