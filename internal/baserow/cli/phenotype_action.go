@@ -65,6 +65,27 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 	return nil
 }
 
+func LoadPhenoAnnotationToTable(cltx *cli.Context) error {
+	err := processPhenoFile(cltx.String("input"), cltx)
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+	return nil
+}
+
+func LoadPhenoAnnotationFromFolderToTable(cltx *cli.Context) error {
+	files, err := listPhenoFiles(cltx.String("folder"))
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+	for _, rec := range files {
+		if err := processPhenoFile(rec, cltx); err != nil {
+			return cli.Exit(err.Error(), 2)
+		}
+	}
+	return nil
+}
+
 func processPhenoFile(filePath string, cltx *cli.Context) error {
 	logger := registry.GetLogger()
 	createdOn, err := parsePhenoFileName(filePath)
