@@ -60,8 +60,8 @@ func (phr *PhenotypeAnnotationReader) Value() (*PhenotypeAnnotation, error) {
 	anno.strainId = strings.TrimSpace(row[0])
 	anno.phenotypeId = strings.TrimSpace(row[1])
 	anno.notes = strings.TrimSpace(row[3])
-	anno.assayId = strings.TrimSpace(row[5])
-	anno.environmentId = strings.TrimSpace(row[7])
+	anno.assayId = strings.TrimSpace(row[4])
+	anno.environmentId = strings.TrimSpace(row[6])
 	anno.reference = strings.TrimSpace(row[8])
 	anno.assignedBy = strings.TrimSpace(row[9])
 	anno.deleted = false
