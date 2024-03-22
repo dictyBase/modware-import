@@ -22,14 +22,14 @@ import (
 const ConcurrentPhenoLoader = 10
 
 type PhenotypePayload struct {
-	Id               []int               `json:"phenotype_id"`
-	Reference        string              `json:"reference"`
-	CreatedOn        time.Time           `json:"created_on"`
-	AssignedBy       []common.AssignedBy `json:"assigned_by"`
-	StrainId         string              `json:"strain_id,omitempty"`
-	AssayId          []int               `json:"assay_id,omitempty"`
-	EnvironmentId    []int               `json:"environment_id,omitempty"`
-	Deleted          bool                `json:"deleted,omitempty"`
+	Id            []int               `json:"phenotype_id"`
+	Reference     string              `json:"reference"`
+	CreatedOn     time.Time           `json:"created_on"`
+	AssignedBy    []common.AssignedBy `json:"assigned_by"`
+	StrainId      string              `json:"strain_id,omitempty"`
+	AssayId       []int               `json:"assay_id,omitempty"`
+	EnvironmentId []int               `json:"environment_id,omitempty"`
+	Deleted       bool                `json:"deleted,omitempty"`
 }
 
 type PhenotypeLoader struct {
@@ -87,7 +87,7 @@ func (loader *PhenotypeLoader) Load(
 		if err != nil {
 			return err
 		}
-		loader.Logger.Infof(
+		loader.Logger.Debugf(
 			"got strain id to load %s",
 			pheno.StrainId(),
 		)
@@ -126,8 +126,8 @@ func (loader *PhenotypeLoader) addPheno(
 		OntologyTableMap: loader.OntologyTableMap,
 		TableManager:     loader.TableManager,
 		WorkspaceManager: loader.WorkspaceManager,
-		Annotation:       pheno,
 	})
+	newLoader.Annotation = pheno
 	return E.Right[error](newLoader)
 }
 
@@ -138,10 +138,10 @@ func (loader *PhenotypeLoader) addPhenotypeRow(
 	content := F.Pipe8(
 		E.Do[error](pheno),
 		E.Bind(initialPayload, loader.addPheno),
-		E.Bind(assignedByIdHandler, assignedById),
 		E.Bind(phenoIdHandler, phenotypeId),
 		E.Bind(assayIdHandler, assayId),
 		E.Bind(envIdHandler, environmentId),
+		E.Bind(assignedByIdHandler, assignedById),
 		E.Map[error, *PhenotypeLoader](loaderToPayload),
 		E.Chain[error, *PhenotypePayload](common.MarshalPayload),
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
