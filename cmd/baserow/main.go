@@ -69,6 +69,18 @@ func allCommands() []*cli.Command {
 			Action: baserow.CreatePhenoTableHandler,
 		},
 		{
+			Name:   "load-phenotype-folder",
+			Usage:  "load phenotype annotations from folder to baserow table",
+			Flags:  baserow.LoadPhenoFolderToTableFlag(),
+			Action: baserow.LoadPhenoAnnotationFromFolderToTable,
+		},
+		{
+			Name:   "load-phenotype-annotation",
+			Usage:  "load phenotype annotation from excel spreadsheet to baserow table",
+			Flags:  baserow.LoadPhenoToTableFlag(),
+			Action: baserow.LoadPhenoAnnotationToTable,
+		},
+		{
 			Name:   "create-strain-table",
 			Usage:  "Create a baserow table with strain annotation fields preset",
 			Flags:  baserow.CreateStrainTableFlag(),
