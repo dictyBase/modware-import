@@ -15,6 +15,8 @@ type TaskWrapper[I any, O any] struct {
 	Input    I          // The input for the task function
 }
 
+// RunTasks takes a slice of TaskWrappers, executes them concurrently, logs their output using the provided logger,
+// and returns any errors encountered during execution.
 func RunTasks[I any, O any](
 	taskSlice []TaskWrapper[I, O],
 	logger *logrus.Entry,
@@ -32,6 +34,8 @@ func RunTasks[I any, O any](
 	return nil
 }
 
+// concurrentRun executes a slice of TaskWrappers concurrently and collects their results and errors.
+// It returns a slice of results of type O and a combined error if any errors were encountered.
 func concurrentRun[I any, O any](taskSlice []TaskWrapper[I, O]) ([]O, error) {
 	resultCh, errCh := work(taskSlice)
 	results := make([]O, 0) // Add slice to collect results
@@ -57,6 +61,9 @@ FINISH:
 	return results, errors.Join(errSlice...)
 }
 
+// work takes a slice of TaskWrappers and executes them concurrently.
+// It returns two channels: one for the results of type O and another for errors.
+// Each task is run in its own goroutine. After all tasks have finished, both channels are closed.
 func work[I any, O any](taskSlice []TaskWrapper[I, O]) (chan O, chan error) {
 	resultCh := make(chan O)
 	errCh := make(chan error)
