@@ -14,8 +14,8 @@ func TestAssayId(t *testing.T) {
 func TestHasAssayId(t *testing.T) {
 	annotationWithId := PhenotypeAnnotation{assayId: "A123"}
 	annotationWithoutId := PhenotypeAnnotation{}
-	assert.False(t, annotationWithId.HasAssayId())
-	assert.True(t, annotationWithoutId.HasAssayId())
+	assert.True(t, annotationWithId.HasAssayId())
+	assert.False(t, annotationWithoutId.HasAssayId())
 }
 
 func TestEnvironmentId(t *testing.T) {
@@ -26,8 +26,8 @@ func TestEnvironmentId(t *testing.T) {
 func TestHasEnvironmentId(t *testing.T) {
 	annotationWithId := PhenotypeAnnotation{environmentId: "E123"}
 	annotationWithoutId := PhenotypeAnnotation{}
-	assert.False(t, annotationWithId.HasEnvironmentId())
-	assert.True(t, annotationWithoutId.HasEnvironmentId())
+	assert.True(t, annotationWithId.HasEnvironmentId())
+	assert.False(t, annotationWithoutId.HasEnvironmentId())
 }
 
 func TestNotes(t *testing.T) {
@@ -38,8 +38,8 @@ func TestNotes(t *testing.T) {
 func TestHasNotes(t *testing.T) {
 	annotationWithNotes := PhenotypeAnnotation{notes: "This is a note."}
 	annotationWithoutNotes := PhenotypeAnnotation{}
-	assert.False(t, annotationWithNotes.HasNotes())
-	assert.True(t, annotationWithoutNotes.HasNotes())
+	assert.True(t, annotationWithNotes.HasNotes())
+	assert.False(t, annotationWithoutNotes.HasNotes())
 }
 
 func TestReference(t *testing.T) {
@@ -62,8 +62,8 @@ func TestIsEmpty(t *testing.T) {
 func TestHasStrainId(t *testing.T) {
 	annotationWithId := PhenotypeAnnotation{strainId: "S123"}
 	annotationWithoutId := PhenotypeAnnotation{}
-	assert.False(t, annotationWithId.HasStrainId())
-	assert.True(t, annotationWithoutId.HasStrainId())
+	assert.True(t, annotationWithId.HasStrainId())
+	assert.False(t, annotationWithoutId.HasStrainId())
 }
 
 func TestPhenotypeId(t *testing.T) {
