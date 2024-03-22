@@ -58,6 +58,7 @@ type PhenotypeLoaderProperties struct {
 	WorkspaceManager *database.WorkspaceManager
 }
 
+// NewPhenotypeLoader creates a new instance of PhenotypeLoader with the provided properties.
 func NewPhenotypeLoader(props *PhenotypeLoaderProperties) *PhenotypeLoader {
 	return &PhenotypeLoader{
 		Workspace:        props.Workspace,
@@ -71,6 +72,8 @@ func NewPhenotypeLoader(props *PhenotypeLoaderProperties) *PhenotypeLoader {
 	}
 }
 
+// Load processes the phenotype data from the given reader and loads them into the database.
+// It concurrently processes and loads data up to a set limit before waiting and continuing with the next batch.
 func (loader *PhenotypeLoader) Load(
 	reader *phenotype.PhenotypeAnnotationReader,
 ) error {
