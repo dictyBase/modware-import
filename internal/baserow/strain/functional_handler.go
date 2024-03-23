@@ -2,30 +2,22 @@ package strain
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
-	J "github.com/IBM/fp-go/json"
+	"github.com/dictyBase/modware-import/internal/baserow/common"
 
 	F "github.com/IBM/fp-go/function"
 
-	H "github.com/IBM/fp-go/context/readerioeither/http"
 	E "github.com/IBM/fp-go/either"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/dictyBase/modware-import/internal/datasource/xls/strain"
 )
 
-var (
-	strainCreateHTTP = H.ReadJSON[strainCreateResp](
-		H.MakeClient(http.DefaultClient),
-	)
-)
-
 var assignedByIdHandler = F.Curry2(
 	func(aid int, loader *StrainLoader) *StrainLoader {
 		if aid != 0 {
-			loader.Payload.AssignedBy = []AssignedBy{{Id: aid}}
+			loader.Payload.AssignedBy = []common.AssignedBy{{Id: aid}}
 		}
 		return loader
 	})
@@ -101,24 +93,12 @@ var creationTime = F.Curry2(
 		return E.Right[error](createdOn)
 	})
 
-type strainCreateResp struct {
-	AnnoId string `json:"annotation_id"`
-}
-
 func onStrainCreateFeedbackSuccess(
-	res strainCreateResp,
+	res common.CreateResp,
 ) httpapi.ResponseFeedback {
 	return httpapi.ResponseFeedback{
 		Msg: fmt.Sprintf("created strain with annotation id %s", res.AnnoId),
 	}
-}
-
-func onStrainCreateFeedbackError(err error) httpapi.ResponseFeedback {
-	return httpapi.ResponseFeedback{Err: err}
-}
-
-func processOntologyTermId(val string) string {
-	return strings.Replace(val, ":", "_", 1)
 }
 
 func assignedById(loader *StrainLoader) E.Either[error, int] {
@@ -137,7 +117,7 @@ func assignedById(loader *StrainLoader) E.Either[error, int] {
 
 func mutagenesisId(loader *StrainLoader) E.Either[error, int] {
 	mutId, err := loader.TableManager.SearchRows(
-		processOntologyTermId(loader.Annotation.MutagenesisMethod()),
+		common.ProcessOntologyTermId(loader.Annotation.MutagenesisMethod()),
 		loader.OntologyTableMap["mutagenesis-method-ontology-table"],
 	)
 	if err != nil {
@@ -149,7 +129,7 @@ func mutagenesisId(loader *StrainLoader) E.Either[error, int] {
 
 func genmodId(loader *StrainLoader) E.Either[error, int] {
 	mutId, err := loader.TableManager.SearchRows(
-		processOntologyTermId(loader.Annotation.GeneticModification()),
+		common.ProcessOntologyTermId(loader.Annotation.GeneticModification()),
 		loader.OntologyTableMap["genetic-mod-ontology-table"],
 	)
 	if err != nil {
@@ -163,7 +143,7 @@ func characteristicIds(loader *StrainLoader) E.Either[error, []int] {
 	charIds := make([]int, 0)
 	for _, charac := range strings.Split(loader.Annotation.Characteristic(), ",") {
 		cid, err := loader.TableManager.SearchRows(
-			processOntologyTermId(charac),
+			common.ProcessOntologyTermId(charac),
 			loader.OntologyTableMap["strainchar-ontology-table"],
 		)
 		if err != nil {
@@ -176,7 +156,3 @@ func characteristicIds(loader *StrainLoader) E.Either[error, []int] {
 }
 
 func loaderToPayload(ldr *StrainLoader) *StrainPayload { return ldr.Payload }
-
-func marshalPayload(payload *StrainPayload) E.Either[error, []byte] {
-	return F.Pipe1(payload, J.Marshal)
-}

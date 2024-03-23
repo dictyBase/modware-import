@@ -10,6 +10,7 @@ import (
 	R "github.com/IBM/fp-go/context/readerioeither"
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
+	"github.com/dictyBase/modware-import/internal/baserow/common"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/dictyBase/modware-import/internal/datasource/xls/strain"
@@ -20,26 +21,22 @@ import (
 const ConcurrentStrainLoader = 10
 
 type StrainPayload struct {
-	Descriptor              string       `json:"strain_descriptor"`
-	Species                 string       `json:"species"`
-	Reference               string       `json:"reference"`
-	Summary                 string       `json:"strain_summary,omitempty"`
-	GeneticModificationId   []int        `json:"genetic_modification_id,omitempty"`
-	StrainCharacteristicsId []int        `json:"strain_characteristics_id"`
-	MutagenesisMethodId     []int        `json:"mutagenesis_method_id,omitempty"`
-	AssignedBy              []AssignedBy `json:"assigned_by,omitempty"`
-	Names                   string       `json:"strain_names,omitempty"`
-	SystematicName          string       `json:"systematic_name,omitempty"`
-	Plasmid                 string       `json:"plasmid,omitempty"`
-	ParentId                string       `json:"parent_strain_id,omitempty"`
-	Genes                   string       `json:"associated_genes,omitempty"`
-	Genotype                string       `json:"genotype,omitempty"`
-	Depositor               string       `json:"depositor,omitempty"`
-	CreatedOn               time.Time    `json:"created_on"`
-}
-
-type AssignedBy struct {
-	Id int `json:"id"`
+	Descriptor              string              `json:"strain_descriptor"`
+	Species                 string              `json:"species"`
+	Reference               string              `json:"reference"`
+	Summary                 string              `json:"strain_summary,omitempty"`
+	GeneticModificationId   []int               `json:"genetic_modification_id,omitempty"`
+	StrainCharacteristicsId []int               `json:"strain_characteristics_id"`
+	MutagenesisMethodId     []int               `json:"mutagenesis_method_id,omitempty"`
+	AssignedBy              []common.AssignedBy `json:"assigned_by,omitempty"`
+	Names                   string              `json:"strain_names,omitempty"`
+	SystematicName          string              `json:"systematic_name,omitempty"`
+	Plasmid                 string              `json:"plasmid,omitempty"`
+	ParentId                string              `json:"parent_strain_id,omitempty"`
+	Genes                   string              `json:"associated_genes,omitempty"`
+	Genotype                string              `json:"genotype,omitempty"`
+	Depositor               string              `json:"depositor,omitempty"`
+	CreatedOn               time.Time           `json:"created_on"`
 }
 
 type fnRunnerProperties struct {
@@ -154,7 +151,7 @@ func (loader *StrainLoader) addStrainRow(
 		E.Bind(assignedByIdHandler, assignedById),
 		E.Bind(creationTimeHandler, creationTime(createdOn)),
 		E.Map[error, *StrainLoader](loaderToPayload),
-		E.Chain[error, *StrainPayload](marshalPayload),
+		E.Chain[error, *StrainPayload](common.MarshalPayload),
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
 	)
 	if content.Error != nil {
@@ -164,11 +161,11 @@ func (loader *StrainLoader) addStrainRow(
 		loader.createStrainURL(),
 		httpapi.MakeHTTPRequest("POST", bytes.NewBuffer(content.Payload)),
 		R.Map(httpapi.SetHeaderWithJWT(loader.Token)),
-		strainCreateHTTP,
+		common.CreateHTTP,
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold(onStrainCreateFeedbackError, onStrainCreateFeedbackSuccess),
+		E.Fold(common.OnCreateFeedbackError, onStrainCreateFeedbackSuccess),
 	)
 	return output.Msg, output.Err
 }
