@@ -75,3 +75,30 @@ func TestStrainId(t *testing.T) {
 	annotation := PhenotypeAnnotation{strainId: "S123"}
 	assert.Equal(t, "S123", annotation.StrainId())
 }
+
+func TestStrainDescriptor(t *testing.T) {
+	tests := []struct {
+		name             string
+		strainDescriptor string
+		want             string
+	}{
+		{"Valid strain descriptor", "ABCD-1234", "ABCD-1234"},
+		{"Empty strain descriptor", "", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pha := PhenotypeAnnotation{
+				strainDescriptor: tt.strainDescriptor,
+			}
+			assert.Equal(t, tt.want, pha.StrainDescriptor())
+		})
+	}
+}
+
+func TestHasStrainDescriptor(t *testing.T) {
+	annotationWithDescriptor := PhenotypeAnnotation{strainDescriptor: "ABC123"}
+	annotationWithoutDescriptor := PhenotypeAnnotation{}
+	assert.True(t, annotationWithDescriptor.HasStrainDescriptor())
+	assert.False(t, annotationWithoutDescriptor.HasStrainDescriptor())
+}
