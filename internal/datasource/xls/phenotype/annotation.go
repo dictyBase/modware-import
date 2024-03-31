@@ -9,16 +9,17 @@ import "time"
 
 // PhenotypeAnnotation represents annotations related to a phenotype.
 type PhenotypeAnnotation struct {
-	strainId      string
-	phenotypeId   string `validate:"required_with=strainDescriptor"`
-	assayId       string
-	environmentId string
-	notes         string
-	reference     string `validate:"required_with=phenotypeId"`
-	assignedBy    string `validate:"required_with=phenotypeId"`
-	deleted       bool
-	empty         bool
-	createdOn     time.Time `validate:"required"`
+	strainId         string
+	strainDescriptor string
+	phenotypeId      string `validate:"required"`
+	assayId          string
+	environmentId    string
+	notes            string
+	reference        string `validate:"required_with=phenotypeId"`
+	assignedBy       string `validate:"required_with=phenotypeId"`
+	deleted          bool
+	empty            bool
+	createdOn        time.Time `validate:"required"`
 }
 
 func (pha *PhenotypeAnnotation) CreatedOn() time.Time {
@@ -76,6 +77,17 @@ func (pha *PhenotypeAnnotation) IsEmpty() bool {
 // It returns true if the strain ID is set.
 func (pha *PhenotypeAnnotation) HasStrainId() bool {
 	return len(pha.strainId) > 0
+}
+
+// HasStrainDescriptor checks if the PhenotypeAnnotation instance has a strainDescriptor defined.
+// It returns true if the strainDescriptor is not empty, otherwise false.
+func (pha *PhenotypeAnnotation) HasStrainDescriptor() bool {
+	return len(pha.strainDescriptor) > 0
+}
+
+// StrainDescriptor returns the strain descriptor associated with the PhenotypeAnnotation.
+func (pha *PhenotypeAnnotation) StrainDescriptor() string {
+	return pha.strainDescriptor
 }
 
 // PhenotypeId returns the phenotype ID associated with the phenotype annotation.
