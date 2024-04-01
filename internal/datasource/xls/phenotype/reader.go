@@ -53,10 +53,49 @@ func (phr *PhenotypeAnnotationReader) Value() (*PhenotypeAnnotation, error) {
 	if err != nil {
 		return anno, fmt.Errorf("error in reading column %s", err)
 	}
-	if len(row) == 0 {
+	rowLen := len(row)
+	switch rowLen {
+	case 0:
 		anno.empty = true
 		return anno, nil
+	case 10:
+		anno = phr.hanldeTenRows(row)
+	case 12:
+		anno = phr.hanldeTwelveRows(row)
+	default:
+		return nil, fmt.Errorf(
+			"expected no of rows %d, cannot process file",
+			rowLen,
+		)
 	}
+	if err := phr.DataValidator.Struct(anno); err != nil {
+		return nil, fmt.Errorf("error in data validation %s", err)
+	}
+
+	return anno, nil
+}
+
+func (phr *PhenotypeAnnotationReader) hanldeTwelveRows(
+	row []string,
+) *PhenotypeAnnotation {
+	anno := &PhenotypeAnnotation{}
+	anno.strainId = strings.TrimSpace(row[0])
+	anno.strainDescriptor = strings.TrimSpace(row[1])
+	anno.phenotypeId = strings.TrimSpace(row[2])
+	anno.notes = strings.TrimSpace(row[4])
+	anno.assayId = strings.TrimSpace(row[5])
+	anno.environmentId = strings.TrimSpace(row[7])
+	anno.reference = strings.TrimSpace(row[9])
+	anno.assignedBy = strings.TrimSpace(row[10])
+	anno.deleted = false
+	anno.createdOn = phr.CreatedOn
+	return anno
+}
+
+func (phr *PhenotypeAnnotationReader) hanldeTenRows(
+	row []string,
+) *PhenotypeAnnotation {
+	anno := &PhenotypeAnnotation{}
 	anno.strainId = strings.TrimSpace(row[0])
 	anno.phenotypeId = strings.TrimSpace(row[1])
 	anno.notes = strings.TrimSpace(row[3])
@@ -66,9 +105,5 @@ func (phr *PhenotypeAnnotationReader) Value() (*PhenotypeAnnotation, error) {
 	anno.assignedBy = strings.TrimSpace(row[9])
 	anno.deleted = false
 	anno.createdOn = phr.CreatedOn
-	if err := phr.DataValidator.Struct(anno); err != nil {
-		return nil, fmt.Errorf("error in data validation %s", err)
-	}
-
-	return anno, nil
+	return anno
 }
