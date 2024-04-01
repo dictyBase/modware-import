@@ -5,3 +5,6 @@ baserowcmd
 refresh-token.txt
 .aider*
 strain-annotations
+Phenotype_Annotations
+kosher-files
+files_needs_edit.txt
