@@ -21,6 +21,9 @@ var initialPayload = F.Curry2(
 		if pheno.HasStrainId() {
 			payload.StrainId = pheno.StrainId()
 		}
+		if pheno.HasStrainDescriptor() {
+			payload.StrainDescriptor = pheno.StrainDescriptor()
+		}
 		loader.Payload = payload
 		return loader
 	},
