@@ -85,16 +85,12 @@ func (loader *PhenotypeLoader) Load(
 	)
 	for reader.Next() {
 		pheno, err := reader.Value()
-		if pheno.IsEmpty() {
-			continue
-		}
 		if err != nil {
 			return err
 		}
-		loader.Logger.Debugf(
-			"got strain id to load %s",
-			pheno.StrainId(),
-		)
+		if pheno.IsEmpty() {
+			continue
+		}
 		tasks = append(
 			tasks,
 			concurrent.TaskWrapper[*phenotype.PhenotypeAnnotation, string]{
@@ -110,7 +106,7 @@ func (loader *PhenotypeLoader) Load(
 			tasks = slices.Delete(tasks, 0, len(tasks))
 		}
 	}
-	loader.Logger.Debug("going to load remaining phenotypes")
+	loader.Logger.Infof("going to load remaining %d phenotypes", len(tasks))
 	if err := concurrent.RunTasks(tasks, loader.Logger); err != nil {
 		return err
 	}
