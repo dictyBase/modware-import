@@ -86,7 +86,7 @@ func (phr *PhenotypeAnnotationReader) hanldeTwelveRows(
 	anno.assayId = strings.TrimSpace(row[5])
 	anno.environmentId = strings.TrimSpace(row[7])
 	anno.reference = strings.TrimSpace(row[9])
-	anno.assignedBy = strings.TrimSpace(row[10])
+	anno.assignedBy = strings.TrimSpace(row[11])
 	anno.deleted = false
 	anno.createdOn = phr.CreatedOn
 	return anno
