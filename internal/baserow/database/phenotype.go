@@ -8,6 +8,7 @@ func (pheno *PhenotypeTableManager) FieldNames() []string {
 	return []string{
 		"annotation_id",
 		"strain_id",
+		"strain_descriptor",
 		"phenotype_id",
 		"phenotype_term",
 		"assay_id",
