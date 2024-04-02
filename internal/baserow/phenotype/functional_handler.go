@@ -64,8 +64,10 @@ func environmentId(loader *PhenotypeLoader) E.Either[error, int] {
 		return E.Right[error](0)
 	}
 	envid, err := loader.TableManager.SearchRows(
-		common.ProcessEnvOntologyTerm(
-			common.ProcessOntologyTermId(loader.Annotation.EnvironmentId()),
+		F.Pipe2(
+			loader.Annotation.EnvironmentId(),
+			common.ProcessOntologyTermId,
+			common.ProcessEnvOntologyTerm,
 		),
 		loader.OntologyTableMap["env-ontology-table"],
 	)
