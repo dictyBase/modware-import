@@ -28,6 +28,13 @@ func ProcessOntologyTermId(val string) string {
 	return strings.Replace(val, ":", "_", 1)
 }
 
+func ProcessEnvOntologyTerm(input string) string {
+	if strings.Count(input, "D") >= 3 {
+		return strings.Replace(input, "D", "", 1)
+	}
+	return input
+}
+
 func MarshalPayload[T any](payload *T) E.Either[error, []byte] {
 	return F.Pipe1(payload, J.Marshal)
 }
