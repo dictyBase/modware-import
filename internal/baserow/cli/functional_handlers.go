@@ -75,11 +75,7 @@ func listPhenoFiles(folder string) ([]string, error) {
 				files,
 				A.Filter(noDir),
 				A.Filter(isPhenoAnnoFile),
-				A.Map(
-					func(rec fs.DirEntry) string {
-						return filepath.Join(folder, rec.Name())
-					},
-				),
+				A.Map(F.Curry2(fullPath)(folder)),
 			)
 		}),
 		E.Fold[error, []string](onErrorWithSlice, onSuccessWithSlice),
@@ -112,11 +108,7 @@ func listStrainFiles(folder string) ([]string, error) {
 				files,
 				A.Filter(noDir),
 				A.Filter(isStrainAnnoFile),
-				A.Map(
-					func(rec fs.DirEntry) string {
-						return filepath.Join(folder, rec.Name())
-					},
-				),
+				A.Map(F.Curry2(fullPath)(folder)),
 			)
 		}),
 		E.Fold[error, []string](onErrorWithSlice, onSuccessWithSlice),
@@ -141,4 +133,8 @@ func flgName(flg ucli.Flag) []string {
 
 func firstName(names []string) string {
 	return names[0]
+}
+
+func fullPath(folder string, rec fs.DirEntry) string {
+	return filepath.Join(folder, rec.Name())
 }
