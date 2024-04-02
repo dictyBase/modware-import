@@ -12,7 +12,7 @@ func TestAssayId(t *testing.T) {
 }
 
 func TestHasAssayId(t *testing.T) {
-	annotationWithId := PhenotypeAnnotation{assayId: "A123"}
+	annotationWithId := PhenotypeAnnotation{assayId: "DDASSAY_4893439"}
 	annotationWithoutId := PhenotypeAnnotation{}
 	assert.True(t, annotationWithId.HasAssayId())
 	assert.False(t, annotationWithoutId.HasAssayId())
