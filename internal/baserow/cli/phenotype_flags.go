@@ -1,6 +1,7 @@
 package cli
 
 import (
+	A "github.com/IBM/fp-go/array"
 	"github.com/urfave/cli/v2"
 )
 
@@ -22,7 +23,8 @@ func LoadPhenoFolderToTableFlag() []cli.Flag {
 			Aliases:  []string{"f"},
 			Usage:    "folder with excel spreadsheet files with phenotype annotations",
 			Required: true,
-		})
+		},
+	)
 }
 
 func LoadPhenoToTableFlag() []cli.Flag {
@@ -36,8 +38,11 @@ func LoadPhenoToTableFlag() []cli.Flag {
 }
 
 func phenoToTableFlag() []cli.Flag {
-	tblFlags := append(tableCreationFlags(), spreadsheetFlag()...)
-	return append(tblFlags, phenoOntologyTableFlags()...)
+	return A.ArrayConcatAll[cli.Flag](
+		tableCreationFlags(),
+		spreadsheetFlag(),
+		phenoOntologyTableFlags(),
+	)
 }
 
 func phenoOntologyTableFlags() []cli.Flag {
