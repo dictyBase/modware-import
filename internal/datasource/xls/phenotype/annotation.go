@@ -5,7 +5,14 @@
 // The struct's methods provide accessors and checkers for the various fields.
 package phenotype
 
-import "time"
+import (
+	"regexp"
+	"time"
+)
+
+var (
+	assayRgxp = regexp.MustCompile(`^DDASSAY_\d{6,}$`)
+)
 
 // PhenotypeAnnotation represents annotations related to a phenotype.
 type PhenotypeAnnotation struct {
@@ -34,7 +41,10 @@ func (pha *PhenotypeAnnotation) AssayId() string {
 // HasAssayId checks whether an assay ID is associated with the phenotype annotation.
 // It returns true if the assay ID is set.
 func (pha *PhenotypeAnnotation) HasAssayId() bool {
-	return len(pha.assayId) > 0
+	if len(pha.assayId) == 0 {
+		return false
+	}
+	return assayRgxp.MatchString(pha.assayId)
 }
 
 // HasEnvironmentId checks whether an environment ID is associated with the phenotype annotation.
