@@ -176,8 +176,8 @@ func (jobk *Job) containerEnvSpec() []apiv1.EnvVar {
 	level, _ := jobk.args.Cli.Flags().GetString("log-level")
 	return collection.Extend(
 		manifest.MinioEnv(namespace),
-		manifest.ArangoConfigManifest(),
-		manifest.ArangoSecManifest(),
+		manifest.ArangoConfigManifest(namespace),
+		manifest.ArangoSecManifest(namespace),
 		manifest.LogEnv(level),
 	)
 }
