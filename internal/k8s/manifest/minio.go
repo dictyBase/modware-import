@@ -1,17 +1,19 @@
 package manifest
 
 import (
+	"fmt"
+
 	apiv1 "k8s.io/api/core/v1"
 )
 
-func MinioEnv() []apiv1.EnvVar {
+func MinioEnv(namespace string) []apiv1.EnvVar {
 	return []apiv1.EnvVar{
 		{
 			Name: "ACCESS_KEY",
 			ValueFrom: &apiv1.EnvVarSource{
 				SecretKeyRef: &apiv1.SecretKeySelector{
 					LocalObjectReference: apiv1.LocalObjectReference{
-						Name: "dictycr-secret-dev",
+						Name: fmt.Sprintf("dictycr-secret-%s", namespace),
 					},
 					Key: "minio.accesskey",
 				},
@@ -22,7 +24,7 @@ func MinioEnv() []apiv1.EnvVar {
 			ValueFrom: &apiv1.EnvVarSource{
 				SecretKeyRef: &apiv1.SecretKeySelector{
 					LocalObjectReference: apiv1.LocalObjectReference{
-						Name: "dictycr-secret-dev",
+						Name: fmt.Sprintf("dictycr-secret-%s", namespace),
 					},
 					Key: "minio.secretkey",
 				},
