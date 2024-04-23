@@ -27,7 +27,7 @@ const (
 	DictyAnnoOntology        = "dicty_annotation"
 	DictyMutagenesisOntology = "Dd Mutagenesis Method"
 	DictyGeneticmodOntology  = "genetic modification"
-	DictyStraincharOntology  = "strain_characteristics"
+	DictyStraincharOntology  = "dicty_strain_characteristics"
 	ReadfileReader           = "readfile-input"
 	StockDateLayout          = "02-Jan-06"
 	GwdiReader               = "gwdi-input"
