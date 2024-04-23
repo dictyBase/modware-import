@@ -84,7 +84,7 @@ func removeExistingSynonyms(
 	if err != nil && status.Code(err) != codes.NotFound {
 		return fmt.Errorf("error in listing synonyms for %s %s", entryId, err)
 	}
-	if len(tac.Data) == 0 {
+	if tac.Data == nil {
 		logger.Debugf("synonym %s is absent, no need to remove it", entryId)
 		return nil
 	}
