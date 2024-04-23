@@ -17,17 +17,27 @@ var LoadOntoCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		labels := cliJob.MetaLabel()
 		labels["subcommand"] = "load-ontology"
+		bucketPath, _ := cmd.Flags().GetString("s3-bucket-path-prefix")
+		group, _ := cmd.Flags().GetString("group")
 		for _, dbname := range viper.GetStringSlice("databases") {
-			bucketPath, _ := cmd.Flags().GetString("s3-bucket-path-prefix")
 			job, err := cliJob.Run(
 				cmd,
 				labels,
-				LoadCommand(dbname, fmt.Sprintf("%s/%s", bucketPath, dbname)),
+				LoadCommand(
+					dbname,
+					fmt.Sprintf("%s/%s", bucketPath, dbname),
+					group,
+				),
 			)
 			if err != nil {
-				return errors.Errorf("error in running job %s in database %s", err, dbname)
+				return errors.Errorf(
+					"error in running job %s in database %s",
+					err,
+					dbname,
+				)
 			}
-			registry.GetLogger().Infof("deployed job %s in database %s", job.Name, dbname)
+			registry.GetLogger().
+				Infof("deployed job %s in database %s", job.Name, dbname)
 		}
 
 		return nil
@@ -44,7 +54,7 @@ func init() {
 	viper.BindPFlags(LoadOntoCmd.Flags())
 }
 
-func LoadCommand(dbname, path string) []string {
+func LoadCommand(dbname, path, group string) []string {
 	return []string{
 		"/usr/local/bin/importer",
 		"ontology",
@@ -52,7 +62,7 @@ func LoadCommand(dbname, path string) []string {
 		"--log-level",
 		viper.GetString("log-level"),
 		"--group",
-		viper.GetString("group"),
+		group,
 		"--s3-bucket-path",
 		path,
 		"--arangodb-database",
