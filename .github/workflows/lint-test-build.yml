@@ -1,4 +1,4 @@
-name: Lint, test coverage and build
+name: Lint and test coverage
 on:
   pull_request:
     branches-ignore:
