@@ -34,7 +34,7 @@ func SetS3Client(cltx *cli.Context) error {
 }
 
 func SetContentAPIClient(cltx *cli.Context) error {
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		fmt.Sprintf(
 			"%s:%s",
 			cltx.String("content-grpc-host"),
@@ -42,7 +42,6 @@ func SetContentAPIClient(cltx *cli.Context) error {
 		),
 		[]grpc.DialOption{
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithBlock(),
 		}...,
 	)
 	if err != nil {
