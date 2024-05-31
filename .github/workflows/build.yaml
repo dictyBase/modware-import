@@ -5,8 +5,10 @@ on:
      - develop
 jobs:
   call-docker-build:
-    uses: dictyBase/workflows/.github/workflows/docker-build-push.yaml@develop
+    uses: dictyBase/workflows/.github/workflows/docker-publish.yaml@main
     secrets: inherit
     with:
       repository: ${{ github.repository }}
       ref: ${{ github.ref_name }}
+      image: modware-import
+      dockerfile: build/package/Dockerfile 
