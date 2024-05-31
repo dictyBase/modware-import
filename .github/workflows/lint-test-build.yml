@@ -32,13 +32,7 @@ jobs:
       - name: unit test
         run: go test -shuffle on -covermode=atomic -coverprofile=profile.cov -v ./...
       - name: upload coverage to codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./profile.cov
-  call-pr-docker-build:
-    needs: test
-    uses: dictyBase/workflows/.github/workflows/docker-build-push-pr.yaml@develop
-    secrets: inherit
-    with:
-      repository: ${{ github.repository }}
-      ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.CODECOV }}
