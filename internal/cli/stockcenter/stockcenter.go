@@ -78,7 +78,7 @@ func annoAPIFlags() {
 }
 
 func SetAnnoAPIClient() error {
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		fmt.Sprintf(
 			"%s:%s",
 			viper.GetString("annotation-grpc-host"),
@@ -86,7 +86,6 @@ func SetAnnoAPIClient() error {
 		),
 		[]grpc.DialOption{
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithBlock(),
 		}...,
 	)
 	if err != nil {
@@ -102,7 +101,7 @@ func SetAnnoAPIClient() error {
 }
 
 func SetStrainAPIClient() error {
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		fmt.Sprintf(
 			"%s:%s",
 			viper.GetString("stock-grpc-host"),
@@ -110,7 +109,6 @@ func SetStrainAPIClient() error {
 		),
 		[]grpc.DialOption{
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithBlock(),
 		}...,
 	)
 	if err != nil {

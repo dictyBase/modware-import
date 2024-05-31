@@ -36,7 +36,7 @@ func setOrderPreRun(cmd *cobra.Command, args []string) error {
 }
 
 func setOrderAPIClient() error {
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		fmt.Sprintf(
 			"%s:%s",
 			viper.GetString("order-grpc-host"),
