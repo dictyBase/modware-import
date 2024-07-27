@@ -54,7 +54,7 @@ require (
 	github.com/jellydator/ttlcache/v3 v3.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
-	github.com/urfave/cli/v2 v2.27.2
+	github.com/urfave/cli/v2 v2.27.3
 	github.com/xuri/excelize/v2 v2.8.1
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	golang.org/x/sync v0.7.0
@@ -126,7 +126,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/urfave/cli v1.22.14 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
-	github.com/xrash/smetrics v0.0.0-20240312152122-5f08fbb34913 // indirect
+	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/xuri/efp v0.0.0-20231025114914-d1ff6096ae53 // indirect
 	github.com/xuri/nfp v0.0.0-20230919160717-d98342af3f05 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
