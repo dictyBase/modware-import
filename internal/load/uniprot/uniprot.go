@@ -1,14 +1,15 @@
 package uniprot
 
 import (
-	"bufio"
+	"compress/gzip"
+	"context"
+	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/dictyBase/modware-import/internal/registry"
-	r "github.com/go-redis/redis/v7"
 	rds "github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,15 +23,6 @@ const (
 	// for Gene Name/ID -> Uniprot ID
 	GeneCacheKey = "GENE2UNIPROT/gene"
 )
-
-// Count represents the number of each item in the dataset
-type Count struct {
-	noMap      int
-	geneName   int
-	geneID     int
-	unresolved int
-	isoform    int
-}
 
 type UniProtResponse struct {
 	Results []UniProtEntry `json:"results"`
@@ -52,43 +44,72 @@ type UniProtCrossRefProperty struct {
 	Value string `json:"value"`
 }
 
+type UniprotMap struct {
+	UniprotID string
+	GeneID    string
+	GeneSym   []string
+}
+
 // LoadUniprotMappings stores uniprot and gene name or identifier mapping in redis
 func LoadUniprotMappings(cmd *cobra.Command, args []string) error {
 	client := registry.GetRedisClient()
 	defer client.Close()
-	resp, err := http.Get(viper.GetString("uniprot-url"))
+	url := viper.GetString("uniprot-url")
+	for len(url) > 0 {
+		idMaps, nextURL, err := processUniprotPage(url)
+		if err != nil {
+			return err
+		}
+		if err := loadUniprotMapsToRedis(idMaps, client); err != nil {
+			return err
+		}
+		url = nextURL
+	}
+	return nil
+}
+
+func processUniprotPage(url string) ([]UniprotMap, string, error) {
+	resp, err := fetchUniprotData(url)
 	if err != nil {
-		return fmt.Errorf("error in retrieving from uniprot %s", err)
+		return nil, "", err
 	}
 	defer resp.Body.Close()
-	scanner := bufio.NewScanner(resp.Body)
-	c := &Count{
-		noMap:      0,
-		geneName:   0,
-		geneID:     0,
-		unresolved: 0,
-		isoform:    0,
+
+	uniProtResp, err := decodeUniprotResponse(resp)
+	if err != nil {
+		return nil, "", err
 	}
-	for scanner.Scan() {
-		// ignore header
-		if strings.HasPrefix(scanner.Text(), "Entry") {
-			continue
-		}
-		s := strings.Split(strings.TrimSpace(scanner.Text()), "\t")
-		if err := readLine(s, c, client); err != nil {
-			return fmt.Errorf("error in scanning line %s", err)
-		}
+
+	idMaps := extractUniprotMaps(uniProtResp)
+	nextURL := extractNextPageURL(resp.Header.Get("Link"))
+
+	return idMaps, nextURL, nil
+}
+
+func fetchUniprotData(urlStr string) (*http.Response, error) {
+	// Validate the URL
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URL: %v", err)
 	}
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("error in scanning output %s", err)
+
+	// Ensure the URL uses HTTPS and is from the expected domain
+	if parsedURL.Scheme != "https" ||
+		!strings.HasSuffix(parsedURL.Host, "uniprot.org") {
+		return nil, fmt.Errorf("invalid URL scheme or host: %s", urlStr)
 	}
-	stat := fmt.Sprintf(
-		"name:%d\tid:%d\tisoform:%d\tunresolved:%d\tnomap:%d\n",
-		c.geneName, c.geneID, c.isoform,
-		c.unresolved, c.noMap,
-	)
-	log.Print(stat)
-	return nil
+
+	// Make the HTTP request
+	resp, err := http.Get(parsedURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("error fetching data: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(
+			"HTTP request failed with status code: %d",
+			resp.StatusCode,
+		)
+	}
 	return resp, nil
 }
 
