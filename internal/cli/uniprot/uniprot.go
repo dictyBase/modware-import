@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dictyBase/modware-import/internal/registry"
-	r "github.com/go-redis/redis/v7"
+	rds "github.com/go-redis/redis/v7"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -28,17 +28,17 @@ func redisFlags() {
 		"",
 		"grpc host address for redis service",
 	)
-	viper.BindEnv("redis-master-service-host", "REDIS_MASTER_SERVICE_HOST")
+	viper.BindEnv("redis-master-service-host", "REDIS_SERVICE_HOST")
 	UniprotCmd.PersistentFlags().String(
 		"redis-master-service-port",
 		"",
 		"grpc port for redis service",
 	)
-	viper.BindEnv("redis-master-service-port", "REDIS_MASTER_SERVICE_PORT")
+	viper.BindEnv("redis-master-service-port", "REDIS_SERVICE_PORT")
 }
 
 func setRedisClient() error {
-	client := r.NewClient(&r.Options{
+	client := rds.NewClient(&rds.Options{
 		Addr: fmt.Sprintf(
 			"%s:%s",
 			viper.GetString("redis-master-service-host"),
