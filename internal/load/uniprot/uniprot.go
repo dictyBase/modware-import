@@ -9,6 +9,7 @@ import (
 
 	"github.com/dictyBase/modware-import/internal/registry"
 	r "github.com/go-redis/redis/v7"
+	rds "github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

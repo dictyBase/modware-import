@@ -5,9 +5,9 @@ import (
 
 	"github.com/dictyBase/arangomanager"
 	"github.com/dictyBase/go-obograph/storage"
-	r "github.com/go-redis/redis/v7"
 	"github.com/jellydator/ttlcache/v3"
 	"github.com/minio/minio-go/v6"
+	rds "github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/kubernetes"
@@ -68,7 +68,7 @@ func SetWriter(key string, w io.Writer) {
 	v.Set(key, w)
 }
 
-func SetRedisClient(redis *r.Client) {
+func SetRedisClient(redis *rds.Client) {
 	v.Set(RedisKey, redis)
 }
 
@@ -121,8 +121,8 @@ func GetValue(key string) string {
 	return val
 }
 
-func GetRedisClient() *r.Client {
-	redis, _ := v.Get(RedisKey).(*r.Client)
+func GetRedisClient() *rds.Client {
+	redis, _ := v.Get(RedisKey).(*rds.Client)
 	return redis
 }
 
