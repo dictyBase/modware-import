@@ -21,11 +21,9 @@ var UniprotMappingCmd = &cobra.Command{
 }
 
 var uniprotURL = fmt.Sprintf(
-	"%s/?%s&%s&%s",
-	"https://www.uniprot.org/uniprot",
-	"query=taxonomy:44689",
-	"columns=id,database(dictyBase),genes(PREFERRED)",
-	"format=tab",
+	"%sorganism_id:%d&fields=%s&format=%s&size=%d,`",
+	"https://rest.uniprot.org/uniprotkb/search?query=",
+	44689, "id,xref_dictybase", "json", 500,
 )
 
 func init() {
