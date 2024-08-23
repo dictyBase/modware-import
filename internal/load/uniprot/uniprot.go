@@ -174,3 +174,17 @@ func handleIsoforms(s []string, c *Count, client *r.Client) error {
 	}
 	return nil
 }
+func extractNextPageURL(linkHeader string) string {
+	if len(linkHeader) == 0 {
+		return ""
+	}
+	parts := strings.Split(linkHeader, ";")
+	if len(parts) != 2 {
+		return ""
+	}
+	if strings.Contains(parts[1], `rel="next"`) {
+		nextURL := strings.Trim(parts[0], " <>")
+		return nextURL
+	}
+	return ""
+}
