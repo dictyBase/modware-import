@@ -1,6 +1,7 @@
 package uniprot
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -45,9 +46,10 @@ func setRedisClient() error {
 			viper.GetString("redis-master-service-port"),
 		),
 	})
-	err := client.Ping().Err()
+	ctx := context.Background()
+	_, err := client.Ping(ctx).Result()
 	if err != nil {
-		return fmt.Errorf("error pinging redis %s", err)
+		return fmt.Errorf("error pinging redis: %w", err)
 	}
 	registry.SetRedisClient(client)
 	return nil
