@@ -115,23 +115,20 @@ func readLine(s []string, c *Count, client *r.Client) error {
 	return nil
 }
 
-func handleGeneIDs(s []string, c *Count, client *r.Client) error {
-	c.geneID++
-	gs := strings.Split(s[1], ";")
-	if len(gs) > 3 {
-		log.Printf("unresolved line %s\t%s\n", s[0], s[1])
-		c.unresolved++
-	} else {
-		err := client.HSet(UniprotCacheKey, s[0], gs[0]).Err()
-		if err != nil {
-			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+func extractUniprotMaps(uniProtResp UniProtResponse) []UniprotMap {
+	idMaps := make([]UniprotMap, 0)
+	for _, entry := range uniProtResp.Results {
+		dictyID, geneNames := extractCrossReferenceInfo(entry)
+		if len(dictyID) == 0 {
+			continue
 		}
-		err = client.HSet(GeneCacheKey, gs[0], s[0]).Err()
-		if err != nil {
-			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-		}
+		idMaps = append(idMaps, UniprotMap{
+			UniprotID: entry.PrimaryAccession,
+			GeneID:    dictyID,
+			GeneSym:   geneNames,
+		})
 	}
-	return nil
+	return idMaps
 }
 
 func extractCrossReferenceInfo(entry UniProtEntry) (string, []string) {
