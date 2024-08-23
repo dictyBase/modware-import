@@ -134,31 +134,20 @@ func handleGeneIDs(s []string, c *Count, client *r.Client) error {
 	return nil
 }
 
-func handleGeneNames(s []string, c *Count, client *r.Client) error {
-	c.geneName++
-	if strings.Contains(s[2], ";") {
-		err := handleIsoforms(s, c, client)
-		if err != nil {
-			return fmt.Errorf("error in handling isoform %s %s", s, err)
+func extractCrossReferenceInfo(entry UniProtEntry) (string, []string) {
+	var dictyID string
+	geneNames := make([]string, 0)
+	for _, ref := range entry.CrossReferences {
+		if ref.Database == "dictyBase" {
+			dictyID = ref.ID
 		}
-	} else {
-		err := client.HSet(UniprotCacheKey, s[0], s[2]).Err()
-		if err != nil {
-			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-		}
-		// store gene ID
-		id := strings.TrimSuffix(s[1], ";")
-		err = client.HSet(GeneCacheKey, id, s[0]).Err()
-		if err != nil {
-			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
-		}
-		// store gene name
-		err = client.HSet(GeneCacheKey, s[2], s[0]).Err()
-		if err != nil {
-			return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+		for _, prop := range ref.Properties {
+			if prop.Key == "GeneName" {
+				geneNames = append(geneNames, prop.Value)
+			}
 		}
 	}
-	return nil
+	return dictyID, geneNames
 }
 
 func handleIsoforms(s []string, c *Count, client *r.Client) error {
