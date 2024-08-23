@@ -31,6 +31,26 @@ type Count struct {
 	isoform    int
 }
 
+type UniProtResponse struct {
+	Results []UniProtEntry `json:"results"`
+}
+
+type UniProtEntry struct {
+	PrimaryAccession string                  `json:"primaryAccession"`
+	CrossReferences  []UniProtCrossReference `json:"uniProtKBCrossReferences"`
+}
+
+type UniProtCrossReference struct {
+	Database   string                    `json:"database"`
+	ID         string                    `json:"id"`
+	Properties []UniProtCrossRefProperty `json:"properties"`
+}
+
+type UniProtCrossRefProperty struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 // LoadUniprotMappings stores uniprot and gene name or identifier mapping in redis
 func LoadUniprotMappings(cmd *cobra.Command, args []string) error {
 	client := registry.GetRedisClient()
