@@ -89,6 +89,7 @@ func LoadUniprotMappings(cmd *cobra.Command, args []string) error {
 	)
 	log.Print(stat)
 	return nil
+	return resp, nil
 }
 
 func decodeUniprotResponse(resp *http.Response) (UniProtResponse, error) {
@@ -140,19 +141,26 @@ func extractCrossReferenceInfo(entry UniProtEntry) (string, []string) {
 	return dictyID, geneNames
 }
 
-func handleIsoforms(s []string, c *Count, client *r.Client) error {
-	c.isoform++
-	ns := strings.Split(s[2], ";")
-	err := client.HSet(UniprotCacheKey, s[0], ns[0]).Err()
-	if err != nil {
-		return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+func loadUniprotMapsToRedis(maps []UniprotMap, client *rds.Client) error {
+	ctx := context.Background()
+	pipe := client.Pipeline()
+	for _, umap := range maps {
+		// Store UniprotID -> GeneID
+		pipe.HSet(ctx, UniprotCacheKey, umap.UniprotID, umap.GeneID)
+		// Store GeneID -> UniprotID
+		pipe.HSet(ctx, GeneCacheKey, umap.GeneID, umap.UniprotID)
+		// Store GeneSym -> UniprotID for each gene symbol
+		for _, symbol := range umap.GeneSym {
+			pipe.HSet(ctx, GeneCacheKey, symbol, umap.UniprotID)
+		}
 	}
-	err = client.HSet(GeneCacheKey, ns[0], s[0]).Err()
+	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("error in setting the value in redis %s %s", s, err)
+		return fmt.Errorf("error loading UniprotMaps to Redis: %v", err)
 	}
 	return nil
 }
+
 func extractNextPageURL(linkHeader string) string {
 	if len(linkHeader) == 0 {
 		return ""
