@@ -91,28 +91,21 @@ func LoadUniprotMappings(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func readLine(s []string, c *Count, client *r.Client) error {
-	sl := len(s)
-	switch {
-	// if there is no mapping
-	case sl == 1:
-		c.noMap++
-	// only gene ids
-	case sl == 2:
-		err := handleGeneIDs(s, c, client)
-		if err != nil {
-			return fmt.Errorf("error in handling gene IDs %s %s", s, err)
-		}
-	// gene name
-	case sl == 3:
-		err := handleGeneNames(s, c, client)
-		if err != nil {
-			return fmt.Errorf("error in handling gene names %s %s", s, err)
-		}
-	default:
-		log.Printf("something seriously wrong with this line %s\n", s)
+func decodeUniprotResponse(resp *http.Response) (UniProtResponse, error) {
+	gzReader, err := gzip.NewReader(resp.Body)
+	if err != nil {
+		return UniProtResponse{}, fmt.Errorf(
+			"Error creating gzip reader: %v",
+			err,
+		)
 	}
-	return nil
+	defer gzReader.Close()
+
+	var uniProtResp UniProtResponse
+	if err := json.NewDecoder(gzReader).Decode(&uniProtResp); err != nil {
+		return UniProtResponse{}, fmt.Errorf("Error decoding JSON: %v", err)
+	}
+	return uniProtResp, nil
 }
 
 func extractUniprotMaps(uniProtResp UniProtResponse) []UniprotMap {
