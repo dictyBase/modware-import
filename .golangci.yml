@@ -2,6 +2,8 @@ run:
   allow-parallel-runners: true
   timeout: 5m
 linters-settings: 
+    errcheck:
+       ignore: ''
     unused:
       local-variables-are-used: true
     gosec: 
