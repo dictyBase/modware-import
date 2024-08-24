@@ -68,7 +68,7 @@ func processStrainFile(filePath string, cltx *cli.Context) error {
 		Ctx:        authCtx,
 		Token:      token,
 	}
-	tableIdMaps, err := allTableIds(
+	tableIdMaps, err := allTableIDs(
 		tbm,
 		flagNamesHandler(strainOntologyTableFlags()),
 		cltx,
@@ -128,7 +128,7 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
 	}
 	logger.Infof("created table with fields %s", tbl.GetName())
-	tableIdMaps, err := allTableIds(
+	tableIdMaps, err := allTableIDs(
 		strainTbl.TableManager,
 		flagNamesHandler(strainOntologyTableFlags()),
 		cltx,

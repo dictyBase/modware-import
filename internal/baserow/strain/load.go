@@ -145,7 +145,7 @@ func (loader *StrainLoader) addStrainRow(
 	content := F.Pipe9(
 		E.Do[error](strn),
 		E.Bind(initialPayload, loader.addStrain),
-		E.Bind(charIdsHandler, characteristicIds),
+		E.Bind(charIDsHandler, characteristicIDs),
 		E.Bind(mutagenesisIdHandler, mutagenesisId),
 		E.Bind(genModIdHandler, genmodId),
 		E.Bind(assignedByIdHandler, assignedById),
