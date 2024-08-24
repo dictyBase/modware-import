@@ -1,6 +1,6 @@
 run:
   allow-parallel-runners: true
-  timeout: 5m
+  timeout: 15m
 linters-settings: 
     errcheck:
        ignore: ''
