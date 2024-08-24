@@ -67,7 +67,10 @@ func mutantGroups(r io.Reader) ([]stockcenter.GWDIMutantReader, error) {
 	return mr, nil
 }
 
-func runConcurrentCreate(logger *logrus.Entry, gr stockcenter.GWDIMutantReader) error {
+func runConcurrentCreate(
+	logger *logrus.Entry,
+	gr stockcenter.GWDIMutantReader,
+) error {
 	stclient := regs.GetStockAPIClient()
 	annclient := regs.GetAnnotationAPIClient()
 	ps := &parentStrain{
@@ -160,7 +163,9 @@ func syncLoader(wg *sync.WaitGroup, counter chan int, errc chan error) {
 	close(errc)
 }
 
-func createProducer(args *gwdiCreateProdArgs) (chan *stockcenter.GWDIStrain, chan error) {
+func createProducer(
+	args *gwdiCreateProdArgs,
+) (chan *stockcenter.GWDIStrain, chan error) {
 	tasks := make(chan *stockcenter.GWDIStrain)
 	errc := make(chan error, 1)
 	go func(args *gwdiCreateProdArgs) {
@@ -222,16 +227,16 @@ func (gd *gwdiDel) strainsForDeletion() ([]string, error) {
 			return ids, errors.Errorf("error getting list of strains %s", err)
 		}
 		if sc.Meta.NextCursor == 0 {
-			ids = append(ids, gd.queueIds(sc)...)
+			ids = append(ids, gd.queueIDs(sc)...)
 			break
 		}
 		cursor = sc.Meta.NextCursor
-		ids = append(ids, gd.queueIds(sc)...)
+		ids = append(ids, gd.queueIDs(sc)...)
 	}
 	return ids, nil
 }
 
-func (gd *gwdiDel) queueIds(sc *pb.StrainCollection) []string {
+func (gd *gwdiDel) queueIDs(sc *pb.StrainCollection) []string {
 	var ids []string
 	for _, scData := range sc.Data {
 		ids = append(ids, scData.Id)
@@ -254,7 +259,11 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 		if status.Code(err) == codes.NotFound {
 			return nil
 		}
-		return errors.Errorf("error in finding any gwdi annotation for %s %s", id, err)
+		return errors.Errorf(
+			"error in finding any gwdi annotation for %s %s",
+			id,
+			err,
+		)
 	}
 	for _, ta := range tac.Data {
 		_, err := gd.aclient.DeleteAnnotation(
@@ -267,7 +276,11 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 			if status.Code(err) == codes.NotFound {
 				continue
 			}
-			return errors.Errorf("unable to remove annotation for %s %s", id, err)
+			return errors.Errorf(
+				"unable to remove annotation for %s %s",
+				id,
+				err,
+			)
 		}
 	}
 	gd.logger.WithFields(logrus.Fields{
@@ -287,7 +300,11 @@ func (gd *gwdiDel) execute(id string) error {
 		if strings.Contains(err.Error(), "document not found") {
 			return nil
 		}
-		return errors.Errorf("error in removing gwdi strain with id %s %s", id, err)
+		return errors.Errorf(
+			"error in removing gwdi strain with id %s %s",
+			id,
+			err,
+		)
 	}
 	gd.logger.WithFields(logrus.Fields{
 		"event": "delete",
@@ -311,7 +328,10 @@ type gwdiCreate struct {
 func (gc *gwdiCreate) execute(gwdi *stockcenter.GWDIStrain) error {
 	strain, err := gc.createGwdi(gwdi)
 	if err != nil {
-		return errors.Errorf("error in creating new gwdi strain record  %s", err)
+		return errors.Errorf(
+			"error in creating new gwdi strain record  %s",
+			err,
+		)
 	}
 	err = createAnno(&createAnnoArgs{
 		user:     gc.user,
@@ -322,18 +342,26 @@ func (gc *gwdiCreate) execute(gwdi *stockcenter.GWDIStrain) error {
 		value:    gwdi.Genotype,
 	})
 	if err != nil {
-		return errors.Errorf("cannot create genotype of gwdi strain %s %s", strain.Data.Id, err)
+		return errors.Errorf(
+			"cannot create genotype of gwdi strain %s %s",
+			strain.Data.Id,
+			err,
+		)
 	}
 	if err := gc.createPropAndChar(strain.Data.Id, gwdi); err != nil {
 		return err
 	}
 	gc.logger.WithFields(logrus.Fields{
 		"event": "create",
-		"id":    strain.Data.Id}).Debug("new gwdi strain record")
+		"id":    strain.Data.Id,
+	}).Debug("new gwdi strain record")
 	return nil
 }
 
-func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain) error {
+func (gc *gwdiCreate) createPropAndChar(
+	id string,
+	gwdi *stockcenter.GWDIStrain,
+) error {
 	for _, char := range gwdi.Characters {
 		err := createAnno(&createAnnoArgs{
 			user:     gc.user,
@@ -344,8 +372,11 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 			value:    gc.value,
 		})
 		if err != nil {
-			return errors.Errorf("cannot create characteristic %s of gwdi strain %s %s",
-				char, id, err,
+			return errors.Errorf(
+				"cannot create characteristic %s of gwdi strain %s %s",
+				char,
+				id,
+				err,
 			)
 		}
 	}
@@ -359,8 +390,11 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 			value:    prop.Value,
 		})
 		if err != nil {
-			return errors.Errorf("cannot create property %s of gwdi strain %s %s",
-				prop.Property, id, err,
+			return errors.Errorf(
+				"cannot create property %s of gwdi strain %s %s",
+				prop.Property,
+				id,
+				err,
 			)
 		}
 	}
@@ -387,7 +421,9 @@ func (gc *gwdiCreate) createPropAndChar(id string, gwdi *stockcenter.GWDIStrain)
 	})
 }
 
-func (gc *gwdiCreate) createGwdi(gwdi *stockcenter.GWDIStrain) (*pb.Strain, error) {
+func (gc *gwdiCreate) createGwdi(
+	gwdi *stockcenter.GWDIStrain,
+) (*pb.Strain, error) {
 	attr := &pb.NewStrainAttributes{
 		CreatedBy:           regs.DefaultUser,
 		UpdatedBy:           regs.DefaultUser,

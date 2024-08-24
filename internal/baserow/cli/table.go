@@ -5,7 +5,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func allTableIds(
+func allTableIDs(
 	tbm *database.TableManager,
 	flagNames []string,
 	cltx *cli.Context,

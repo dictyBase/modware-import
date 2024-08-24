@@ -48,7 +48,7 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 		"phenotype-ontology-table",
 		"env-ontology-table",
 	}
-	tableIdMaps, err := allTableIds(phenoTbl.TableManager, flagNames, cltx)
+	tableIdMaps, err := allTableIDs(phenoTbl.TableManager, flagNames, cltx)
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
 	}
@@ -120,7 +120,7 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 		Ctx:        authCtx,
 		Token:      token,
 	}
-	tableIdMaps, err := allTableIds(
+	tableIdMaps, err := allTableIDs(
 		tbm,
 		flagNamesHandler(phenoOntologyTableFlags()),
 		cltx,

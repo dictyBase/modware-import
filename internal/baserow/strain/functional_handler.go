@@ -31,10 +31,10 @@ var mutagenesisIdHandler = F.Curry2(
 		return loader
 	})
 
-var charIdsHandler = F.Curry2(
-	func(charIds []int, loader *StrainLoader) *StrainLoader {
-		if len(charIds) != 0 {
-			loader.Payload.StrainCharacteristicsId = charIds
+var charIDsHandler = F.Curry2(
+	func(charIDs []int, loader *StrainLoader) *StrainLoader {
+		if len(charIDs) != 0 {
+			loader.Payload.StrainCharacteristicsId = charIDs
 		}
 
 		return loader
@@ -88,6 +88,7 @@ var creationTimeHandler = F.Curry2(
 		loader.Payload.CreatedOn = createdOn
 		return loader
 	})
+
 var creationTime = F.Curry2(
 	func(createdOn time.Time, loader *StrainLoader) E.Either[error, time.Time] {
 		return E.Right[error](createdOn)
@@ -139,8 +140,8 @@ func genmodId(loader *StrainLoader) E.Either[error, int] {
 	return E.Right[error](mutId)
 }
 
-func characteristicIds(loader *StrainLoader) E.Either[error, []int] {
-	charIds := make([]int, 0)
+func characteristicIDs(loader *StrainLoader) E.Either[error, []int] {
+	charIDs := make([]int, 0)
 	for _, charac := range strings.Split(loader.Annotation.Characteristic(), ",") {
 		cid, err := loader.TableManager.SearchRows(
 			common.ProcessOntologyTermId(charac),
@@ -149,10 +150,10 @@ func characteristicIds(loader *StrainLoader) E.Either[error, []int] {
 		if err != nil {
 			return E.Left[[]int](err)
 		}
-		charIds = append(charIds, cid)
+		charIDs = append(charIDs, cid)
 	}
 
-	return E.Right[error](charIds)
+	return E.Right[error](charIDs)
 }
 
 func loaderToPayload(ldr *StrainLoader) *StrainPayload { return ldr.Payload }
