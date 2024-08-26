@@ -1,4 +1,4 @@
-package uniprot
+package cli
 
 import (
 	"compress/gzip"
@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/dictyBase/modware-import/internal/registry"
+	"github.com/dictyBase/modware-import/internal/uniprot/client"
 	rds "github.com/redis/go-redis/v9"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/urfave/cli/v2"
 )
 
 const (
@@ -51,16 +51,20 @@ type UniprotMap struct {
 }
 
 // LoadUniprotMappings stores uniprot and gene name or identifier mapping in redis
-func LoadUniprotMappings(cmd *cobra.Command, args []string) error {
-	client := registry.GetRedisClient()
-	defer client.Close()
-	url := viper.GetString("uniprot-url")
+func LoadUniprotMappings(cltx *cli.Context) error {
+	if err := client.SetRedisClient(cltx); err != nil {
+		return fmt.Errorf("error setting up Redis client: %w", err)
+	}
+	redisClient := registry.GetRedisClient()
+	defer redisClient.Close()
+
+	url := cltx.String("uniprot-url")
 	for len(url) > 0 {
 		idMaps, nextURL, err := processUniprotPage(url)
 		if err != nil {
 			return err
 		}
-		if err := loadUniprotMapsToRedis(idMaps, client); err != nil {
+		if err := loadUniprotMapsToRedis(idMaps, redisClient); err != nil {
 			return err
 		}
 		url = nextURL
