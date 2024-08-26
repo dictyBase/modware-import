@@ -62,6 +62,8 @@ func LoadUniprotMappings(cltx *cli.Context) error {
 	url := cltx.String("uniprot-url")
 	totalEntries := 0
 
+	loader := NewRedisUniprotLoader(redisClient)
+
 	for len(url) > 0 {
 		logger.Debugf("Processing Uniprot page: %s", url)
 		idMaps, nextURL, err := processUniprotPage(url)
@@ -69,7 +71,7 @@ func LoadUniprotMappings(cltx *cli.Context) error {
 			return cli.Exit(err.Error(), 1)
 		}
 
-		if err := loadUniprotMapsToRedis(idMaps, redisClient); err != nil {
+		if err := loader.Load(idMaps); err != nil {
 			return cli.Exit(err.Error(), 1)
 		}
 
@@ -191,9 +193,23 @@ func extractCrossReferenceInfo(entry UniProtEntry) (string, []string) {
 	return dictyID, geneNames
 }
 
-func loadUniprotMapsToRedis(maps []UniprotMap, client *rds.Client) error {
+// UniprotLoader defines the interface for loading Uniprot mappings
+type UniprotLoader interface {
+	Load(maps []UniprotMap) error
+}
+
+// RedisUniprotLoader implements UniprotLoader for Redis
+type RedisUniprotLoader struct {
+	client *rds.Client
+}
+
+func NewRedisUniprotLoader(client *rds.Client) UniprotLoader {
+	return &RedisUniprotLoader{client: client}
+}
+
+func (r *RedisUniprotLoader) Load(maps []UniprotMap) error {
 	ctx := context.Background()
-	pipe := client.Pipeline()
+	pipe := r.client.Pipeline()
 	for _, umap := range maps {
 		// Store UniprotID -> GeneID
 		pipe.HSet(ctx, UniprotCacheKey, umap.UniprotID, umap.GeneID)
