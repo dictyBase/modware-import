@@ -11,6 +11,7 @@ import (
 
 	"github.com/dictyBase/modware-import/internal/registry"
 	rds "github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -57,17 +58,42 @@ func LoadUniprotMappings(cltx *cli.Context) error {
 	}
 	defer redisClient.Close()
 
+	logger := registry.GetLogger()
 	url := cltx.String("uniprot-url")
+	totalEntries := 0
+
 	for len(url) > 0 {
+		logger.Debugf("Processing Uniprot page: %s", url)
 		idMaps, nextURL, err := processUniprotPage(url)
 		if err != nil {
 			return cli.Exit(err.Error(), 1)
 		}
+
 		if err := loadUniprotMapsToRedis(idMaps, redisClient); err != nil {
 			return cli.Exit(err.Error(), 1)
 		}
+
+		totalEntries += len(idMaps)
+		logger.Infof(
+			"Loaded %d Uniprot entries (Total: %d)",
+			len(idMaps),
+			totalEntries,
+		)
+		for _, entry := range idMaps {
+			logger.WithFields(logrus.Fields{
+				"UniprotID": entry.UniprotID,
+				"GeneID":    entry.GeneID,
+				"GeneSyms":  strings.Join(entry.GeneSym, ", "),
+			}).Debug("Loaded Uniprot entry")
+		}
+
 		url = nextURL
 	}
+
+	logger.Infof(
+		"Completed loading Uniprot mappings. Total entries: %d",
+		totalEntries,
+	)
 	return nil
 }
 
