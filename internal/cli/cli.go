@@ -9,7 +9,6 @@ import (
 	"github.com/dictyBase/modware-import/internal/cli/data"
 	"github.com/dictyBase/modware-import/internal/cli/ontology"
 	"github.com/dictyBase/modware-import/internal/cli/stockcenter"
-	"github.com/dictyBase/modware-import/internal/cli/uniprot"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -56,7 +55,6 @@ func Execute() {
 func init() {
 	RootCmd.AddCommand(
 		stockcenter.StockCenterCmd,
-		uniprot.UniprotCmd,
 		arangodb.ArangodbCmd,
 		ontology.OntologyCmd,
 		data.DataCmd,
