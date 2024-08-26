@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/dictyBase/modware-import/internal/registry"
-	"github.com/dictyBase/modware-import/internal/uniprot/client"
 	rds "github.com/redis/go-redis/v9"
 	"github.com/urfave/cli/v2"
 )
@@ -52,20 +51,20 @@ type UniprotMap struct {
 
 // LoadUniprotMappings stores uniprot and gene name or identifier mapping in redis
 func LoadUniprotMappings(cltx *cli.Context) error {
-	if err := client.SetRedisClient(cltx); err != nil {
-		return fmt.Errorf("error setting up Redis client: %w", err)
-	}
 	redisClient := registry.GetRedisClient()
+	if redisClient == nil {
+		return cli.Exit("Redis client is not set", 1)
+	}
 	defer redisClient.Close()
 
 	url := cltx.String("uniprot-url")
 	for len(url) > 0 {
 		idMaps, nextURL, err := processUniprotPage(url)
 		if err != nil {
-			return err
+			return cli.Exit(err.Error(), 1)
 		}
 		if err := loadUniprotMapsToRedis(idMaps, redisClient); err != nil {
-			return err
+			return cli.Exit(err.Error(), 1)
 		}
 		url = nextURL
 	}
