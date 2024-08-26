@@ -7,13 +7,15 @@ import (
 	contentcli "github.com/dictyBase/modware-import/internal/content/cli"
 	"github.com/dictyBase/modware-import/internal/content/client"
 	"github.com/dictyBase/modware-import/internal/logger"
+	uniprotcli "github.com/dictyBase/modware-import/internal/uniprot/cli"
+	uniprotclient "github.com/dictyBase/modware-import/internal/uniprot/client"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
 	app := &cli.App{
 		Name:   "loader",
-		Usage:  "A command line application for loading content data",
+		Usage:  "A command line application for loading content data and Uniprot mappings",
 		Before: logger.SetupCliLogger,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -38,6 +40,13 @@ func main() {
 				Action: contentcli.LoadContent,
 				Flags:  contentcli.ContentLoaderFlags(),
 				Before: client.CliSetup,
+			},
+			{
+				Name:   "uniprot-mappings",
+				Usage:  "load Uniprot mappings",
+				Action: uniprotcli.LoadUniprotMappings,
+				Flags:  uniprotcli.UniprotFlags(),
+				Before: uniprotclient.SetRedisClient,
 			},
 		},
 	}
