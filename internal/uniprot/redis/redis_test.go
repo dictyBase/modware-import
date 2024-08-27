@@ -135,12 +135,20 @@ func TestRedisUniprotLoader_Load_DuplicateEntries(t *testing.T) {
 		{
 			UniprotID: "P12345",
 			GeneID:    "DDB_G0123456",
-			GeneSym:   []string{"geneA", "geneB"},
 		},
 		{
 			UniprotID: "P12345",
-			GeneID:    "DDB_G0123456",
-			GeneSym:   []string{"geneA", "geneC"},
+			GeneID:    "DDB_G0123457",
+		},
+		{
+			UniprotID: "P12346",
+			GeneID:    "DDB_G0123497",
+			GeneSym:   []string{"geneA", "geneD"},
+		},
+		{
+			UniprotID: "P12347",
+			GeneID:    "DDB_G0123497",
+			GeneSym:   []string{"geneA", "geneD"},
 		},
 	}
 
@@ -149,26 +157,19 @@ func TestRedisUniprotLoader_Load_DuplicateEntries(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Check that the last entry overwrites the previous one
+	// Check that the last entry overwrites the previous one for UniprotID -> GeneID
 	geneID, err := client.HGet(ctx, UniprotCacheKey, "P12345").Result()
 	assert.NoError(t, err)
-	assert.Equal(t, "DDB_G0123456", geneID)
+	assert.Equal(t, "DDB_G0123457", geneID)
 
-	uniprotID, err := client.HGet(ctx, GeneCacheKey, "geneA").Result()
+	// Check that the last entry overwrites the previous one for GeneID -> UniprotID
+	uniprotID, err := client.HGet(ctx, GeneCacheKey, "DDB_G0123497").Result()
 	assert.NoError(t, err)
-	assert.Equal(t, "P12345", uniprotID)
-
-	uniprotID, err = client.HGet(ctx, GeneCacheKey, "geneC").Result()
-	assert.NoError(t, err)
-	assert.Equal(t, "P12345", uniprotID)
-
-	// geneB should exist in the GeneCacheKey
-	ok, err := client.HExists(ctx, GeneCacheKey, "geneB").Result()
-	assert.NoError(t, err)
-	assert.True(t, ok)
-
-	// should not exist in the GeneCacheKey
-	ok, err = client.HExists(ctx, GeneCacheKey, "geneNo").Result()
-	assert.NoError(t, err)
-	assert.False(t, ok)
+	assert.Equal(t, "P12347", uniprotID)
+	// Check that the last entry overwrites the previous one for GeneSym -> UniprotID
+	for _, sym := range []string{"geneA", "geneD"} {
+		uniprotID, err := client.HGet(ctx, GeneCacheKey, sym).Result()
+		assert.NoError(t, err)
+		assert.Equal(t, uniprotID, "P12347")
+	}
 }
