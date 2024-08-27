@@ -39,7 +39,7 @@ RUN go build  \
 	-ldflags "-s -w -extldflags '-static'" \
 	-installsuffix cgo \
 	-tags netgo \
-	-o content \ 
+	-o dataloader \ 
 	cmd/loader/main.go
 
 RUN upx -q -9 gmake \
@@ -51,4 +51,4 @@ FROM gcr.io/distroless/static
 COPY --from=builder /go/modware-import/gmake /usr/local/bin/
 COPY --from=builder /go/modware-import/importer /usr/local/bin/
 COPY --from=builder /go/modware-import/baserow /usr/local/bin/
-COPY --from=builder /go/modware-import/content /usr/local/bin/
+COPY --from=builder /go/modware-import/dataloader /usr/local/bin/
