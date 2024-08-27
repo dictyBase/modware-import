@@ -1,14 +1,15 @@
-name: build
+name: build and publish
 on: 
  push:
    branches:
      - develop
 jobs:
   call-docker-build:
-    uses: dictyBase/workflows/.github/workflows/docker-publish.yaml@main
+    uses: dictyBase/workflows/.github/workflows/build-publish-image.yaml@develop
     secrets: inherit
     with:
       repository: ${{ github.repository }}
       ref: ${{ github.ref_name }}
       image: modware-import
       dockerfile: build/package/Dockerfile 
+      namespace: dictybase
