@@ -12,7 +12,10 @@ import (
 func setupMiniredis(t *testing.T) (*miniredis.Miniredis, *redis.Client) {
 	mr, err := miniredis.Run()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf(
+			"an error '%s' was not expected when opening a stub database connection",
+			err,
+		)
 	}
 
 	client := redis.NewClient(&redis.Options{
@@ -68,18 +71,21 @@ func TestRedisUniprotLoader_Load(t *testing.T) {
 
 			// Check UniprotID -> GeneID mapping
 			for _, umap := range tc.maps {
-				geneID, err := client.HGet(ctx, UniprotCacheKey, umap.UniprotID).Result()
+				geneID, err := client.HGet(ctx, UniprotCacheKey, umap.UniprotID).
+					Result()
 				assert.NoError(t, err)
 				assert.Equal(t, umap.GeneID, geneID)
 
 				// Check GeneID -> UniprotID mapping
-				uniprotID, err := client.HGet(ctx, GeneCacheKey, umap.GeneID).Result()
+				uniprotID, err := client.HGet(ctx, GeneCacheKey, umap.GeneID).
+					Result()
 				assert.NoError(t, err)
 				assert.Equal(t, umap.UniprotID, uniprotID)
 
 				// Check GeneSym -> UniprotID mappings
 				for _, sym := range umap.GeneSym {
-					uniprotID, err := client.HGet(ctx, GeneCacheKey, sym).Result()
+					uniprotID, err := client.HGet(ctx, GeneCacheKey, sym).
+						Result()
 					assert.NoError(t, err)
 					assert.Equal(t, umap.UniprotID, uniprotID)
 				}
@@ -156,8 +162,13 @@ func TestRedisUniprotLoader_Load_DuplicateEntries(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "P12345", uniprotID)
 
-	// geneB should not exist in the GeneCacheKey
-	_, err = client.HGet(ctx, GeneCacheKey, "geneB").Result()
-	assert.Error(t, err)
-	assert.Equal(t, redis.Nil, err)
+	// geneB should exist in the GeneCacheKey
+	ok, err := client.HExists(ctx, GeneCacheKey, "geneB").Result()
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	// should not exist in the GeneCacheKey
+	ok, err = client.HExists(ctx, GeneCacheKey, "geneNo").Result()
+	assert.NoError(t, err)
+	assert.False(t, ok)
 }
