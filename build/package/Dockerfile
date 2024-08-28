@@ -45,7 +45,7 @@ RUN go build  \
 RUN upx -q -9 gmake \
 	&& upx -q -9 importer \
 	&& upx -q -9 baserow \
-	&& upx -q -9 content 
+	&& upx -q -9 dataloader 
 
 FROM gcr.io/distroless/static
 COPY --from=builder /go/modware-import/gmake /usr/local/bin/
