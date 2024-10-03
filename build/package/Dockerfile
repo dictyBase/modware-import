@@ -1,4 +1,4 @@
-FROM golang:1.22.3-bullseye AS builder
+FROM golang:1.22.6-bullseye AS builder
 LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
 ENV CGO_ENABLED=0 \
 	GOOS=linux \
