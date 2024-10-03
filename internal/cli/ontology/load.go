@@ -37,19 +37,34 @@ var LoadCmd = &cobra.Command{
 			logger.Debugf("going to load %s,", name)
 			grph, err := graph.BuildGraph(rdr)
 			if err != nil {
-				return errors.Errorf("error in building graph from %s %s", name, err)
+				return errors.Errorf(
+					"error in building graph from %s %s",
+					name,
+					err,
+				)
 			}
 			if !dsa.ExistsOboGraph(grph) {
-				logger.Debugf("obograph %s does not exist, have to be loaded", name)
+				logger.Debugf(
+					"obograph %s does not exist, have to be loaded",
+					name,
+				)
 				if err := saveNewGraph(dsa, grph, logger); err != nil {
-					return errors.Errorf("error in saving new obograph %s %s", name, err)
+					return errors.Errorf(
+						"error in saving new obograph %s %s",
+						name,
+						err,
+					)
 				}
 
 				continue
 			}
 			logger.Debugf("obograph %s exist, have to be updated", name)
 			if err := saveExistentGraph(dsa, grph, logger); err != nil {
-				return errors.Errorf("error in saving existing obograph %s %s", name, err)
+				return errors.Errorf(
+					"error in saving existing obograph %s %s",
+					name,
+					err,
+				)
 			}
 		}
 		logger.Infof(
@@ -82,7 +97,11 @@ func CollectParams() *araobo.CollectionParams {
 	}
 }
 
-func saveNewGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logrus.Entry) error {
+func saveNewGraph(
+	dsa storage.DataSource,
+	grph graph.OboGraph,
+	logger *logrus.Entry,
+) error {
 	err := dsa.SaveOboGraphInfo(grph)
 	if err != nil {
 		return errors.Errorf("error in saving graph %s", err)
@@ -101,7 +120,11 @@ func saveNewGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logrus.En
 	return nil
 }
 
-func saveExistentGraph(dsa storage.DataSource, grph graph.OboGraph, logger *logrus.Entry) error {
+func saveExistentGraph(
+	dsa storage.DataSource,
+	grph graph.OboGraph,
+	logger *logrus.Entry,
+) error {
 	if err := dsa.UpdateOboGraphInfo(grph); err != nil {
 		return errors.Errorf("error in updating graph information %s", err)
 	}
@@ -161,7 +184,7 @@ func setFileReaders() (map[string]io.Reader, error) {
 	return rds, nil
 }
 
-func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
+func setBucketReaders(_ *cobra.Command) (map[string]io.Reader, error) {
 	rds := make(map[string]io.Reader)
 	doneCh := make(chan struct{})
 	defer close(doneCh)
@@ -178,12 +201,12 @@ func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
 			)
 		}
 		tagOk := false
-		var val string
+		// var val string
 	INNER:
 		for t := range sinfo.UserMetadata {
 			if strings.ToLower(t) == GroupTag {
 				tagOk = true
-				val = sinfo.UserMetadata[t]
+				// val = sinfo.UserMetadata[t]
 				break INNER
 			}
 		}
@@ -193,14 +216,14 @@ func setBucketReaders(cmd *cobra.Command) (map[string]io.Reader, error) {
 			)
 			continue
 		}
-		group, _ := cmd.Flags().GetString("group")
-		if val != group {
+		// group, _ := cmd.Flags().GetString("group")
+		/* if val != group {
 			registry.GetLogger().Warnf(
 				"ontology group metadata value %s did not match %s for %s",
 				val, group, sinfo.Key,
 			)
 			continue
-		}
+		} */
 		obj, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket"), sinfo.Key, minio.GetObjectOptions{},
 		)
