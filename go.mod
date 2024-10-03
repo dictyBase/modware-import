@@ -8,7 +8,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/dictyBase/aphgrpc v1.4.2
 	github.com/dictyBase/arangomanager v0.4.0
-	github.com/dictyBase/go-genproto v0.0.0-20231030202356-522cb6f9976a
+	github.com/dictyBase/go-genproto v0.0.0-20240820162539-df6434865685
 	github.com/dictyBase/go-obograph v1.6.0
 	github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f
 	github.com/emirpasic/gods v1.18.1
@@ -154,6 +154,6 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-go 1.22.0
+go 1.22.5
 
-toolchain go1.22.2
+toolchain go1.22.6
