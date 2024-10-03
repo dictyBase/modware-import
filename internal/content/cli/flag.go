@@ -38,7 +38,6 @@ func ContentLoaderFlags() []cli.Flag {
 		&cli.StringFlag{
 			Name:    "content-grpc-host",
 			Usage:   "grpc host address for content service",
-			Value:   "stock-api",
 			EnvVars: []string{"CONTENT_API_SERVICE_HOST"},
 		},
 		&cli.StringFlag{
