@@ -214,7 +214,6 @@ func setBucketReaders(_ *cobra.Command) (map[string]io.Reader, error) {
 			registry.GetLogger().Warnf(
 				"ontology-group metadata is not present for %s", sinfo.Key,
 			)
-			continue
 		}
 		// group, _ := cmd.Flags().GetString("group")
 		/* if val != group {
