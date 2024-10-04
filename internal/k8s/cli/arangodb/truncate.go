@@ -23,9 +23,14 @@ var TruncateCmd = &cobra.Command{
 			LoadCommand(database),
 		)
 		if err != nil {
-			return errors.Errorf("error in running job %s for database %s", err, database)
+			return errors.Errorf(
+				"error in running job %s for database %s",
+				err,
+				database,
+			)
 		}
-		registry.GetLogger().Infof("deployed job %s for database %s", job.Name, database)
+		registry.GetLogger().
+			Infof("deployed job %s for database %s", job.Name, database)
 
 		return nil
 	},
@@ -48,6 +53,5 @@ func LoadCommand(database string) []string {
 		"info",
 		"--database",
 		database,
-		"--is-secure",
 	}
 }
