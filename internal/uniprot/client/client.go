@@ -13,8 +13,8 @@ func SetRedisClient(cltx *cli.Context) error {
 	client := rds.NewClient(&rds.Options{
 		Addr: fmt.Sprintf(
 			"%s:%s",
-			cltx.String("redis-master-service-host"),
-			cltx.String("redis-master-service-port"),
+			cltx.String("redis-service-host"),
+			cltx.String("redis-service-port"),
 		),
 	})
 	ctx := context.Background()

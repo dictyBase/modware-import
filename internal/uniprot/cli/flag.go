@@ -21,17 +21,17 @@ func UniprotFlags() []cli.Flag {
 			Value:   uniprotURL,
 		},
 		&cli.StringFlag{
-			Name:    "redis-master-service-host",
+			Name:    "redis-service-host",
 			Aliases: []string{"s"},
 			Usage:   "Redis service host address",
-			EnvVars: []string{"REDIS_MASTER_SERVICE_HOST"},
+			EnvVars: []string{"REDIS_SERVICE_HOST"},
 		},
 		&cli.StringFlag{
-			Name:    "redis-master-service-port",
+			Name:    "redis-service-port",
 			Aliases: []string{"p"},
 			Usage:   "Redis service port",
 			Value:   "6379",
-			EnvVars: []string{"REDIS_MASTER_SERVICE_PORT"},
+			EnvVars: []string{"REDIS_SERVICE_PORT"},
 		},
 	}
 }
