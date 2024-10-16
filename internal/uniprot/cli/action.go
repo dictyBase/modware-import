@@ -122,7 +122,8 @@ func fetchUniprotData(urlStr string) (*http.Response, error) {
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
-			"HTTP request failed with status code: %d",
+			"HTTP request to %s failed with status code: %d",
+			parsedURL.String(),
 			resp.StatusCode,
 		)
 	}
