@@ -7,7 +7,7 @@ import (
 )
 
 var uniprotURL = fmt.Sprintf(
-	"%sorganism_id:%d&fields=%s&format=%s&size=%d,`",
+	"%sorganism_id:%d&fields=%s&format=%s&size=%d",
 	"https://rest.uniprot.org/uniprotkb/search?query=",
 	44689, "id,xref_dictybase", "json", 500,
 )
