@@ -5,8 +5,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/toml v1.3.2/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4 h1:vdT7QwBhJJEVNFMBNhRSFDRCB6O16T28VhvqRgqFyn8=
 github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4/go.mod h1:SvXOG8ElV28oAiG9zv91SDe5+9PfIr7PPccpr8YyXNs=
-github.com/IBM/fp-go v1.0.149 h1:GlpdFz2BQ1vyY5fOkneFP40q3xvjIJ6GFRziNtFQFbA=
-github.com/IBM/fp-go v1.0.149/go.mod h1:SGPp61/MoivfuBEr86PVNgr+OYbbguCx3vQxfOKF6dQ=
+github.com/IBM/fp-go v1.0.150 h1:pKTvZ/W9HOsUDVLbQr4bLlIG4fnf1G9V9h+Yc8N/K04=
+github.com/IBM/fp-go v1.0.150/go.mod h1:spbj1nFoMpAGC/UnJM4XUYHNSQ+3JbD2u4LzwFBiwkw=
 github.com/Microsoft/go-winio v0.5.2/go.mod h1:WpS1mjBmmwHBEWmogvA2mj8546UReBk4v8QkMxJ6pZY=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=

@@ -47,7 +47,7 @@ require (
 )
 
 require (
-	github.com/IBM/fp-go v1.0.149
+	github.com/IBM/fp-go v1.0.150
 	github.com/alicebob/miniredis/v2 v2.33.0
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/jedib0t/go-pretty/v6 v6.6.0
