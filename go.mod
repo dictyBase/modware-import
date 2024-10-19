@@ -53,7 +53,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.6.0
 	github.com/jellydator/ttlcache/v3 v3.3.0
 	github.com/pkg/errors v0.9.1
-	github.com/redis/go-redis/v9 v9.6.1
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.5
 	github.com/xuri/excelize/v2 v2.9.0
