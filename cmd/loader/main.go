@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	arangodbcli "github.com/dictyBase/modware-import/internal/arangodb/cli"
 	contentcli "github.com/dictyBase/modware-import/internal/content/cli"
 	"github.com/dictyBase/modware-import/internal/content/client"
 	"github.com/dictyBase/modware-import/internal/logger"
@@ -47,6 +48,13 @@ func main() {
 				Action: uniprotcli.LoadUniprotMappings,
 				Flags:  uniprotcli.UniprotFlags(),
 				Before: uniprotclient.SetRedisClient,
+			},
+			{
+				Name:   "load-arangodb",
+				Usage:  "filter and load JSON dumps into ArangoDB collections",
+				Action: arangodbcli.LoadArangodb,
+				Flags:  arangodbcli.ArangodbLoaderFlags(),
+				Before: client.SetS3Client,
 			},
 		},
 	}
