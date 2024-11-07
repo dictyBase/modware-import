@@ -5,7 +5,7 @@ require (
 	github.com/briandowns/spinner v1.23.1
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cockroachdb/errors v1.11.3
-	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/dictyBase/aphgrpc v1.4.2
 	github.com/dictyBase/arangomanager v0.4.0
 	github.com/dictyBase/go-genproto v0.0.0-20240820162539-df6434865685
@@ -39,25 +39,25 @@ require (
 	golang.org/x/text v0.19.0 // indirect
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.1
-	k8s.io/api v0.31.1
-	k8s.io/apimachinery v0.31.1
-	k8s.io/client-go v0.31.1
+	k8s.io/api v0.31.2
+	k8s.io/apimachinery v0.31.2
+	k8s.io/client-go v0.31.2
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 )
 
 require (
-	github.com/IBM/fp-go v1.0.149
+	github.com/IBM/fp-go v1.0.150
 	github.com/alicebob/miniredis/v2 v2.33.0
 	github.com/go-playground/validator/v10 v10.22.1
-	github.com/jedib0t/go-pretty/v6 v6.6.0
+	github.com/jedib0t/go-pretty/v6 v6.6.1
 	github.com/jellydator/ttlcache/v3 v3.3.0
 	github.com/minio/minio-go/v7 v7.0.80
 	github.com/pkg/errors v0.9.1
-	github.com/redis/go-redis/v9 v9.6.1
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/stretchr/testify v1.9.0
-	github.com/urfave/cli/v2 v2.27.4
-	github.com/xuri/excelize/v2 v2.8.1
+	github.com/urfave/cli/v2 v2.27.5
+	github.com/xuri/excelize/v2 v2.9.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	golang.org/x/sync v0.8.0
 )
@@ -122,7 +122,7 @@ require (
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
-	github.com/richardlehane/msoleps v1.0.3 // indirect
+	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
@@ -140,8 +140,8 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
-	github.com/xuri/efp v0.0.0-20231025114914-d1ff6096ae53 // indirect
-	github.com/xuri/nfp v0.0.0-20230919160717-d98342af3f05 // indirect
+	github.com/xuri/efp v0.0.0-20240408161823-9ad904a10d6d // indirect
+	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
