@@ -13,3 +13,12 @@ jobs:
       image: modware-import
       dockerfile: build/package/Dockerfile 
       namespace: dictybase
+  call-docker-build-dataloader:
+    uses: dictyBase/workflows/.github/workflows/build-publish-image.yaml@develop
+    secrets: inherit
+    with:
+      repository: ${{ github.repository }}
+      ref: ${{ github.ref_name }}
+      image: modware-dataloader
+      dockerfile: build/package/Dockerfile.dataloader
+      namespace: dictybase
