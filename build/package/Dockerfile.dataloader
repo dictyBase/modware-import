@@ -1,0 +1,24 @@
+FROM golang:1.22.6-bullseye AS builder
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+RUN apt-get -qq update \
+    && apt-get -yqq install upx git
+WORKDIR /go/modware-import
+COPY go.mod ./
+COPY go.sum ./
+COPY magefile.go ./
+RUN go mod download
+ADD cmd cmd
+ADD internal internal
+RUN go build  \
+    -a \
+    -ldflags "-s -w -extldflags '-static'" \
+    -installsuffix cgo \
+    -tags netgo \
+    -o dataloader \
+    cmd/loader/main.go
+RUN upx -q -9 dataloader
+
+FROM arangodb:3.11.6
+COPY --from=builder /go/modware-import/dataloader /usr/local/bin/
