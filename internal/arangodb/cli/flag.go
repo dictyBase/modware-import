@@ -5,9 +5,9 @@ import "github.com/urfave/cli/v2"
 func ArangodbLoaderFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
-			Name:     "arangodb-host",
-			Usage:    "ArangoDB server host",
-			Required: true,
+			Name:    "arangodb-host",
+			Usage:   "ArangoDB server host",
+			EnvVars: []string{"ARANGODB_SERVICE_HOST"},
 		},
 		&cli.StringFlag{
 			Name:  "arangodb-port",
