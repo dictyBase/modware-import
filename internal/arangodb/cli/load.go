@@ -126,25 +126,21 @@ func processS3Object(params ProcessS3ObjectParams) ([]interface{}, error) {
 	return items, nil
 }
 
-func handleS3Object(params HandleS3ObjectParams) error {
-	if filepath.Ext(params.Object.Key) != ".json" {
-		return nil
-	}
-
+func getCollectionAndOutputFile(objectKey, outputDir string) (string, string) {
 	collection := strings.ToLower(
-		filepath.Base(params.Object.Key[:len(params.Object.Key)-5]),
+		filepath.Base(objectKey[:len(objectKey)-5]),
 	)
 	outputFile := filepath.Join(
-		params.OutputDir,
+		outputDir,
 		fmt.Sprintf("%s.json", collection),
 	)
+	return collection, outputFile
+}
 
-	params.Log.WithFields(logrus.Fields{
-		"file":        params.Object.Key,
-		"collection":  collection,
-		"output_file": outputFile,
-	}).Info("processing file for import")
-
+func processAndWriteData(
+	params HandleS3ObjectParams,
+	outputFile string,
+) error {
 	items, err := processS3Object(ProcessS3ObjectParams{
 		S3Client:  params.S3Client,
 		Bucket:    params.Context.String("s3-bucket"),
@@ -164,7 +160,13 @@ func handleS3Object(params HandleS3ObjectParams) error {
 	params.Log.WithFields(logrus.Fields{
 		"output_file": outputFile,
 	}).Info("wrote JSON to file")
+	return nil
+}
 
+func importToArangoDB(
+	params HandleS3ObjectParams,
+	collection, outputFile string,
+) error {
 	cmd := buildArangoImportCmd(BuildArangoImportParams{
 		Context:    params.Context,
 		Collection: collection,
@@ -180,8 +182,37 @@ func handleS3Object(params HandleS3ObjectParams) error {
 	params.Log.WithFields(logrus.Fields{
 		"collection": collection,
 	}).Info("successfully imported data to ArangoDB")
-
 	return nil
+}
+
+func handleS3Object(params HandleS3ObjectParams) error {
+	if filepath.Ext(params.Object.Key) != ".json" {
+		return nil
+	}
+
+	collection, outputFile := getCollectionAndOutputFile(
+		params.Object.Key,
+		params.OutputDir,
+	)
+
+	params.Log.WithFields(logrus.Fields{
+		"file":        params.Object.Key,
+		"collection":  collection,
+		"output_file": outputFile,
+	}).Info("processing file for import")
+
+	if err := processAndWriteData(params, outputFile); err != nil {
+		return err
+	}
+
+	if params.Context.Bool("skip-import") {
+		params.Log.WithFields(logrus.Fields{
+			"collection": collection,
+		}).Info("skipping ArangoDB import due to skip-import flag")
+		return nil
+	}
+
+	return importToArangoDB(params, collection, outputFile)
 }
 
 func LoadArangodb(cltx *cli.Context) error {
