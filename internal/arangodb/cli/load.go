@@ -152,6 +152,14 @@ func processAndWriteData(
 	if err != nil {
 		return err
 	}
+
+	if len(items) == 0 {
+		params.Log.WithFields(logrus.Fields{
+			"file": params.Object.Key,
+		}).Info("skipping writing file due to zero items")
+		return nil
+	}
+
 	params.Log.WithFields(logrus.Fields{
 		"file":        params.Object.Key,
 		"items_count": len(items),
