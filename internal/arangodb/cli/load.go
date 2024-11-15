@@ -48,7 +48,7 @@ type GenericResponse struct {
 func buildArangoImportCmd(params BuildArangoImportParams) *exec.Cmd {
 	// #nosec G204 -- Using CLI context values that are validated by the CLI framework
 	return exec.Command("arangoimport",
-		"--server.endpoint", fmt.Sprintf("tcp://%s:%s",
+		"--server.endpoint", fmt.Sprintf("http+tcp://%s:%s",
 			params.Context.String("arangodb-host"),
 			params.Context.String("arangodb-port")),
 		"--server.database", params.Context.String("arangodb-database"),
@@ -57,8 +57,7 @@ func buildArangoImportCmd(params BuildArangoImportParams) *exec.Cmd {
 		"--collection", params.Collection,
 		"--create-collection", "true",
 		"--overwrite", "true",
-		"--threads", "3",
-		"--type", "json",
+		"--type", "jsonl",
 		"--file", params.FilePath,
 	)
 }
