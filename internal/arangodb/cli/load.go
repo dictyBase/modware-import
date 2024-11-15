@@ -95,12 +95,15 @@ func writeJSONToFile(items []interface{}, outputFile string) error {
 	}
 	defer f.Close()
 
-	if err := json.NewEncoder(f).Encode(items); err != nil {
-		return fmt.Errorf(
-			"error writing to output file %s: %w",
-			outputFile,
-			err,
-		)
+	encoder := json.NewEncoder(f)
+	for _, item := range items {
+		if err := encoder.Encode(item); err != nil {
+			return fmt.Errorf(
+				"error writing to output file %s: %w",
+				outputFile,
+				err,
+			)
+		}
 	}
 	return nil
 }
