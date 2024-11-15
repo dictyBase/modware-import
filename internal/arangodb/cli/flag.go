@@ -66,5 +66,10 @@ func ArangodbLoaderFlags() []cli.Flag {
 			Usage:    "Directory where JSON files will be written before import",
 			Required: true,
 		},
+		&cli.BoolFlag{
+			Name:  "skip-import",
+			Usage: "Skip the ArangoDB import process",
+			Value: false,
+		},
 	}
 }
