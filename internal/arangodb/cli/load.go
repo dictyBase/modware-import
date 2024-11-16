@@ -62,17 +62,6 @@ func buildArangoImportCmd(params BuildArangoImportParams) *exec.Cmd {
 	)
 }
 
-func processJSONFile(reader io.Reader) ([]interface{}, error) {
-	response := &GenericResponse{}
-	if err := json.NewDecoder(reader).Decode(response); err != nil {
-		return nil, fmt.Errorf("error decoding JSON: %w", err)
-	}
-	if len(response.Results) == 0 {
-		return nil, fmt.Errorf("no results found in JSON")
-	}
-	return response.Results[0].Items, nil
-}
-
 func runArangoImport(cmd *exec.Cmd) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("error running arangoimport: %w", err)
@@ -85,47 +74,6 @@ func createOutputDirectory(outputDir string) error {
 		return fmt.Errorf("error creating output directory: %w", err)
 	}
 	return nil
-}
-
-func writeJSONToFile(items []interface{}, outputFile string) error {
-	f, err := os.Create(outputFile)
-	if err != nil {
-		return fmt.Errorf("error creating output file %s: %w", outputFile, err)
-	}
-	defer f.Close()
-
-	encoder := json.NewEncoder(f)
-	for _, item := range items {
-		if err := encoder.Encode(item); err != nil {
-			return fmt.Errorf(
-				"error writing to output file %s: %w",
-				outputFile,
-				err,
-			)
-		}
-	}
-	return nil
-}
-
-func processS3Object(params ProcessS3ObjectParams) ([]interface{}, error) {
-	reader, err := params.S3Client.GetObject(
-		params.Bucket,
-		params.ObjectKey,
-		minio.GetObjectOptions{},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error getting object %s: %w",
-			params.ObjectKey,
-			err,
-		)
-	}
-
-	items, err := processJSONFile(reader)
-	if err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 func getCollectionAndOutputFile(objectKey, outputDir string) (string, string) {
@@ -143,30 +91,31 @@ func processAndWriteData(
 	params HandleS3ObjectParams,
 	outputFile string,
 ) error {
-	items, err := processS3Object(ProcessS3ObjectParams{
-		S3Client:  params.S3Client,
-		Bucket:    params.Context.String("s3-bucket"),
-		ObjectKey: params.Object.Key,
-	})
+	// Get the object from S3
+	reader, err := params.S3Client.GetObject(
+		params.Context.String("s3-bucket"),
+		params.Object.Key,
+		minio.GetObjectOptions{},
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf(
+			"error getting object %s: %w",
+			params.Object.Key,
+			err,
+		)
+	}
+	defer reader.Close()
+	outFile, err := os.Create(outputFile)
+	if err != nil {
+		return fmt.Errorf("error creating output file: %w", err)
+	}
+	defer outFile.Close()
+
+	// Process the JSON
+	if err := processJSON(reader, outFile); err != nil {
+		return fmt.Errorf("error processing JSON: %w", err)
 	}
 
-	if len(items) == 0 {
-		params.Log.WithFields(logrus.Fields{
-			"file": params.Object.Key,
-		}).Info("skipping writing file due to zero items")
-		return nil
-	}
-
-	params.Log.WithFields(logrus.Fields{
-		"file":        params.Object.Key,
-		"items_count": len(items),
-	}).Info("successfully parsed JSON file")
-
-	if err := writeJSONToFile(items, outputFile); err != nil {
-		return err
-	}
 	params.Log.WithFields(logrus.Fields{
 		"output_file": outputFile,
 	}).Info("wrote JSON to file")
@@ -267,6 +216,7 @@ func LoadArangodb(cltx *cli.Context) error {
 	log.Info("completed ArangoDB import process")
 	return nil
 }
+
 // processJSONToken handles a single JSON token and returns whether to continue processing
 func processJSONToken(
 	decoder *json.Decoder,
