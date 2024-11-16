@@ -267,3 +267,97 @@ func LoadArangodb(cltx *cli.Context) error {
 	log.Info("completed ArangoDB import process")
 	return nil
 }
+// processJSONToken handles a single JSON token and returns whether to continue processing
+func processJSONToken(
+	decoder *json.Decoder,
+	encoder *json.Encoder,
+	token json.Token,
+	depth *int,
+) (bool, error) {
+	switch t := token.(type) {
+	case json.Delim:
+		return handleDelimiter(t, depth)
+	case string:
+		if t == "items" && *depth == 3 {
+			return true, processItems(decoder, encoder)
+		}
+	}
+	return true, nil
+}
+
+// handleDelimiter processes JSON delimiters and tracks depth
+func handleDelimiter(delim json.Delim, depth *int) (bool, error) {
+	switch delim {
+	case '{', '[':
+		*depth++
+	case '}', ']':
+		*depth--
+		if *depth == 0 {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+// processItems handles the contents of an "items" array
+func processItems(decoder *json.Decoder, encoder *json.Encoder) error {
+	// Skip the opening bracket of items array
+	if _, err := decoder.Token(); err != nil {
+		return fmt.Errorf("error in start decoding items: %w", err)
+	}
+
+	// Process each item in the array
+	for decoder.More() {
+		var item interface{}
+		if err := decoder.Decode(&item); err != nil {
+			return fmt.Errorf("error decoding item: %w", err)
+		}
+		if err := encoder.Encode(item); err != nil {
+			return fmt.Errorf("error encoding item: %w", err)
+		}
+	}
+	return nil
+}
+
+// processJSON reads a JSON input file and writes specific items to an output file.
+// It expects a JSON structure with a specific nesting pattern:
+// {                  // depth 1
+//
+//	  "results": [     // depth 2
+//	    {              // depth 3
+//	      "items": [   // depth 4
+//	        {...},     // individual items
+//	        {...}
+//	      ]
+//	    }
+//	  ]
+//	}
+func processJSON(inputFile io.Reader, outputFile io.Writer) error {
+	decoder := json.NewDecoder(inputFile)
+	encoder := json.NewEncoder(outputFile)
+	depth := 0
+
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("error decoding token: %w", err)
+		}
+
+		continueProcessing, err := processJSONToken(
+			decoder,
+			encoder,
+			token,
+			&depth,
+		)
+		if err != nil {
+			return err
+		}
+		if !continueProcessing {
+			return nil
+		}
+	}
+	return nil
+}
