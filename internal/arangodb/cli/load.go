@@ -62,17 +62,6 @@ func buildArangoImportCmd(params BuildArangoImportParams) *exec.Cmd {
 	)
 }
 
-func processJSONFile(reader io.Reader) ([]interface{}, error) {
-	response := &GenericResponse{}
-	if err := json.NewDecoder(reader).Decode(response); err != nil {
-		return nil, fmt.Errorf("error decoding JSON: %w", err)
-	}
-	if len(response.Results) == 0 {
-		return nil, fmt.Errorf("no results found in JSON")
-	}
-	return response.Results[0].Items, nil
-}
-
 func runArangoImport(cmd *exec.Cmd) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("error running arangoimport: %w", err)
@@ -85,47 +74,6 @@ func createOutputDirectory(outputDir string) error {
 		return fmt.Errorf("error creating output directory: %w", err)
 	}
 	return nil
-}
-
-func writeJSONToFile(items []interface{}, outputFile string) error {
-	f, err := os.Create(outputFile)
-	if err != nil {
-		return fmt.Errorf("error creating output file %s: %w", outputFile, err)
-	}
-	defer f.Close()
-
-	encoder := json.NewEncoder(f)
-	for _, item := range items {
-		if err := encoder.Encode(item); err != nil {
-			return fmt.Errorf(
-				"error writing to output file %s: %w",
-				outputFile,
-				err,
-			)
-		}
-	}
-	return nil
-}
-
-func processS3Object(params ProcessS3ObjectParams) ([]interface{}, error) {
-	reader, err := params.S3Client.GetObject(
-		params.Bucket,
-		params.ObjectKey,
-		minio.GetObjectOptions{},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error getting object %s: %w",
-			params.ObjectKey,
-			err,
-		)
-	}
-
-	items, err := processJSONFile(reader)
-	if err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 func getCollectionAndOutputFile(objectKey, outputDir string) (string, string) {
@@ -143,30 +91,31 @@ func processAndWriteData(
 	params HandleS3ObjectParams,
 	outputFile string,
 ) error {
-	items, err := processS3Object(ProcessS3ObjectParams{
-		S3Client:  params.S3Client,
-		Bucket:    params.Context.String("s3-bucket"),
-		ObjectKey: params.Object.Key,
-	})
+	// Get the object from S3
+	reader, err := params.S3Client.GetObject(
+		params.Context.String("s3-bucket"),
+		params.Object.Key,
+		minio.GetObjectOptions{},
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf(
+			"error getting object %s: %w",
+			params.Object.Key,
+			err,
+		)
+	}
+	defer reader.Close()
+	outFile, err := os.Create(outputFile)
+	if err != nil {
+		return fmt.Errorf("error creating output file: %w", err)
+	}
+	defer outFile.Close()
+
+	// Process the JSON
+	if err := processJSON(reader, outFile); err != nil {
+		return fmt.Errorf("error processing JSON: %w", err)
 	}
 
-	if len(items) == 0 {
-		params.Log.WithFields(logrus.Fields{
-			"file": params.Object.Key,
-		}).Info("skipping writing file due to zero items")
-		return nil
-	}
-
-	params.Log.WithFields(logrus.Fields{
-		"file":        params.Object.Key,
-		"items_count": len(items),
-	}).Info("successfully parsed JSON file")
-
-	if err := writeJSONToFile(items, outputFile); err != nil {
-		return err
-	}
 	params.Log.WithFields(logrus.Fields{
 		"output_file": outputFile,
 	}).Info("wrote JSON to file")
@@ -265,5 +214,100 @@ func LoadArangodb(cltx *cli.Context) error {
 	}
 
 	log.Info("completed ArangoDB import process")
+	return nil
+}
+
+// processJSONToken handles a single JSON token and returns whether to continue processing
+func processJSONToken(
+	decoder *json.Decoder,
+	encoder *json.Encoder,
+	token json.Token,
+	depth *int,
+) (bool, error) {
+	switch t := token.(type) {
+	case json.Delim:
+		return handleDelimiter(t, depth)
+	case string:
+		if t == "items" && *depth == 3 {
+			return true, processItems(decoder, encoder)
+		}
+	}
+	return true, nil
+}
+
+// handleDelimiter processes JSON delimiters and tracks depth
+func handleDelimiter(delim json.Delim, depth *int) (bool, error) {
+	switch delim {
+	case '{', '[':
+		*depth++
+	case '}', ']':
+		*depth--
+		if *depth == 0 {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+// processItems handles the contents of an "items" array
+func processItems(decoder *json.Decoder, encoder *json.Encoder) error {
+	// Skip the opening bracket of items array
+	if _, err := decoder.Token(); err != nil {
+		return fmt.Errorf("error in start decoding items: %w", err)
+	}
+
+	// Process each item in the array
+	for decoder.More() {
+		var item interface{}
+		if err := decoder.Decode(&item); err != nil {
+			return fmt.Errorf("error decoding item: %w", err)
+		}
+		if err := encoder.Encode(item); err != nil {
+			return fmt.Errorf("error encoding item: %w", err)
+		}
+	}
+	return nil
+}
+
+// processJSON reads a JSON input file and writes specific items to an output file.
+// It expects a JSON structure with a specific nesting pattern:
+// {                  // depth 1
+//
+//	  "results": [     // depth 2
+//	    {              // depth 3
+//	      "items": [   // depth 4
+//	        {...},     // individual items
+//	        {...}
+//	      ]
+//	    }
+//	  ]
+//	}
+func processJSON(inputFile io.Reader, outputFile io.Writer) error {
+	decoder := json.NewDecoder(inputFile)
+	encoder := json.NewEncoder(outputFile)
+	depth := 0
+
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("error decoding token: %w", err)
+		}
+
+		continueProcessing, err := processJSONToken(
+			decoder,
+			encoder,
+			token,
+			&depth,
+		)
+		if err != nil {
+			return err
+		}
+		if !continueProcessing {
+			return nil
+		}
+	}
 	return nil
 }
