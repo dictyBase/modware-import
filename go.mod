@@ -36,7 +36,7 @@ require (
 	golang.org/x/oauth2 v0.22.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.25.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.2
 	k8s.io/api v0.31.3
@@ -50,7 +50,7 @@ require (
 	github.com/IBM/fp-go v1.0.151
 	github.com/alicebob/miniredis/v2 v2.33.0
 	github.com/go-playground/validator/v10 v10.23.0
-	github.com/jedib0t/go-pretty/v6 v6.6.3
+	github.com/jedib0t/go-pretty/v6 v6.6.5
 	github.com/jellydator/ttlcache/v3 v3.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.7.0
