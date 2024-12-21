@@ -48,7 +48,7 @@ require (
 
 require (
 	github.com/IBM/fp-go v1.0.151
-	github.com/alicebob/miniredis/v2 v2.33.0
+	github.com/alicebob/miniredis/v2 v2.34.0
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/jedib0t/go-pretty/v6 v6.6.5
 	github.com/jellydator/ttlcache/v3 v3.3.0
@@ -65,7 +65,7 @@ require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
-	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
+	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
 	github.com/arangodb/go-driver v1.6.0 // indirect
 	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
