@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/dictyBase/arangomanager"
+	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/go-obograph/storage"
 	"github.com/jellydator/ttlcache/v3"
 	"github.com/minio/minio-go/v6"
@@ -14,19 +15,24 @@ import (
 )
 
 const (
-	LogrusKey          = "logrus"
-	MinioKey           = "minio"
-	LogFileKey         = "log_file"
-	RedisKey           = "redis"
-	ArangodbSessionKey = "arangodb_session"
-	Arangodb           = "arangodb"
-	OboStorageKey      = "obostorage"
-	OboReadersKey      = "oboreaders"
-	TTLCacheKey        = "ttlcache"
-	KubeClientKey      = "kubeconfig"
+	LogrusKey                  = "logrus"
+	MinioKey                   = "minio"
+	LogFileKey                 = "log_file"
+	RedisKey                   = "redis"
+	ArangodbSessionKey         = "arangodb_session"
+	Arangodb                   = "arangodb"
+	OboStorageKey              = "obostorage"
+	OboReadersKey              = "oboreaders"
+	TTLCacheKey                = "ttlcache"
+	KubeClientKey              = "kubeconfig"
+	FeatureAnnotationClientKey = "feature_annotation"
 )
 
 var v = viper.New()
+
+func FeatureAnnotationAPIClient(cnt feature.FeatureAnnotationServiceClient) {
+	v.Set(FeatureAnnotationClientKey, cnt)
+}
 
 func SetValue(key, value string) {
 	v.Set(key, value)
@@ -134,4 +140,9 @@ func GetKubeClient(key string) *kubernetes.Clientset {
 func GetTTLCache() *ttlcache.Cache[string, string] {
 	ttlCache, _ := v.Get(TTLCacheKey).(*ttlcache.Cache[string, string])
 	return ttlCache
+}
+
+func GetFeatureAnnotationAPIClient() feature.FeatureAnnotationServiceClient {
+	cnt, _ := v.Get(FeatureAnnotationClientKey).(feature.FeatureAnnotationServiceClient)
+	return cnt
 }
