@@ -30,7 +30,7 @@ const (
 
 var v = viper.New()
 
-func FeatureAnnotationAPIClient(cnt feature.FeatureAnnotationServiceClient) {
+func SetFeatureAnnotationAPIClient(cnt feature.FeatureAnnotationServiceClient) {
 	v.Set(FeatureAnnotationClientKey, cnt)
 }
 
