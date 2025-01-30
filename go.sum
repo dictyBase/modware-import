@@ -1,3 +1,5 @@
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.4-20241127180247-a33202765966.1 h1:yeaeyw0RQUe009ebxBQ3TsqBPptiNEGsiS10t+8Htuo=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.4-20241127180247-a33202765966.1/go.mod h1:novQBstnxcGpfKf8qGRATqn1anQKwMJIbH5Q581jibU=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 dario.cat/mergo v1.0.0 h1:AGCNq9Evsj31mOgNPcLyXc+4PNABt905YmuqPYYpBWk=
 dario.cat/mergo v1.0.0/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
@@ -66,8 +68,8 @@ github.com/dictyBase/aphgrpc v1.4.2 h1:jkNyIpUBATNVNTM99TfAHln8UEpzyvNNNuM2+UY6t
 github.com/dictyBase/aphgrpc v1.4.2/go.mod h1:rzi2U95QntAuS6XpqespgZmQ8Ujo2Sq2R5FyhW5adA8=
 github.com/dictyBase/arangomanager v0.4.0 h1:+HgmadUY0qXFMLfZocktynbERkX/FgWzC3vd/MMebnU=
 github.com/dictyBase/arangomanager v0.4.0/go.mod h1:SmElsQJN3EbTjfYCkjS7/uyUkNVwaO2qJB9Mqrs0ND8=
-github.com/dictyBase/go-genproto v0.0.0-20240820162539-df6434865685 h1:PONLj9mPSg5xA5/3v1J3DTEZFd6CZfg1QTCgBjgfLu8=
-github.com/dictyBase/go-genproto v0.0.0-20240820162539-df6434865685/go.mod h1:Kz1i0ZDYaMFdDOK9F7URWA8CV5tU/DIUeR2BQma6SXY=
+github.com/dictyBase/go-genproto v0.0.0-20250129215847-caa84b8a65f7 h1:1i2c6lEbPVIHaQPBAM1Zul8dnzNbJrVFEYrAsuFufI4=
+github.com/dictyBase/go-genproto v0.0.0-20250129215847-caa84b8a65f7/go.mod h1:rlUPhBs4duDUE73MswuLGW9UzbkcTWqQsbpsp/pGqTg=
 github.com/dictyBase/go-obograph v1.6.0 h1:otuiEadRCJ25o6X/5tWhDjiiAbK0R8LBLQpBxVREotc=
 github.com/dictyBase/go-obograph v1.6.0/go.mod h1:osNZ7PRqai1OTnrLy8SoDavKIMaDp7Sw8CFh52ddBkY=
 github.com/dictybase-playground/gobio v0.0.0-20190320200520-c29a8b327c1f h1:4iSwwwVRNLZDA1mc+RuuIU1lFHoUp/7MVDbsLC8tNiY=
