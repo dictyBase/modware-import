@@ -49,7 +49,7 @@ require (
 require (
 	github.com/IBM/fp-go v1.0.151
 	github.com/alicebob/miniredis/v2 v2.34.0
-	github.com/go-playground/validator/v10 v10.24.0
+	github.com/go-playground/validator/v10 v10.25.0
 	github.com/jedib0t/go-pretty/v6 v6.6.5
 	github.com/jellydator/ttlcache/v3 v3.3.0
 	github.com/pkg/errors v0.9.1
