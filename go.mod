@@ -50,7 +50,7 @@ require (
 	github.com/IBM/fp-go v1.0.151
 	github.com/alicebob/miniredis/v2 v2.34.0
 	github.com/go-playground/validator/v10 v10.25.0
-	github.com/jedib0t/go-pretty/v6 v6.6.6
+	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/jellydator/ttlcache/v3 v3.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.7.1
