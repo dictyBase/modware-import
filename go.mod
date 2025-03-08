@@ -47,7 +47,7 @@ require (
 )
 
 require (
-	github.com/IBM/fp-go v1.0.151
+	github.com/IBM/fp-go v1.0.152
 	github.com/alicebob/miniredis/v2 v2.34.0
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/jedib0t/go-pretty/v6 v6.6.7
@@ -55,7 +55,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.7.1
 	github.com/stretchr/testify v1.10.0
-	github.com/urfave/cli/v2 v2.27.5
+	github.com/urfave/cli/v2 v2.27.6
 	github.com/xuri/excelize/v2 v2.9.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/sync v0.11.0
