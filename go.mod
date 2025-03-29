@@ -31,7 +31,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.0
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
-	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/oauth2 v0.25.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
@@ -49,7 +49,7 @@ require (
 require (
 	github.com/IBM/fp-go v1.0.152
 	github.com/alicebob/miniredis/v2 v2.34.0
-	github.com/go-playground/validator/v10 v10.25.0
+	github.com/go-playground/validator/v10 v10.26.0
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/jellydator/ttlcache/v3 v3.3.0
 	github.com/pkg/errors v0.9.1
@@ -153,3 +153,4 @@ require (
 )
 
 go 1.22.6
+toolchain go1.24.1
