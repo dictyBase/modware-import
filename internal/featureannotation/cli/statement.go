@@ -12,7 +12,8 @@ const (
 				RETURN {
 					name: feat.uniquename,
 					gene_id: dbx.accession,
-					feature_id: feat.feature_id
+					feature_id: feat.feature_id,
+					created_by: feat.created_by
 				}
 `
 	ListPubmedsByFeature = `
