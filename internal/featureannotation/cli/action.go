@@ -23,6 +23,14 @@ var annMap = map[string]string{
 	"CGM_DDB":      "dictybase@northwestern.edu",
 }
 
+// processGeneEntryParams holds the parameters for the processGeneEntry function.
+type processGeneEntryParams struct {
+	entry  *Gene
+	dbh    *arangomanager.Database
+	client feature.FeatureAnnotationServiceClient
+	logger *logrus.Entry
+}
+
 type Gene struct {
 	FeatureID string `json:"feature_id"`
 	GeneID    string `json:"gene_id"`
@@ -79,12 +87,12 @@ func fetchPubmedIDs(
 }
 
 // processGeneEntry handles fetching PubMed IDs and creating the annotation for a single gene entry.
-func processGeneEntry(
-	entry *Gene,
-	dbh *arangomanager.Database,
-	client feature.FeatureAnnotationServiceClient,
-	logger *logrus.Entry,
-) error {
+func processGeneEntry(params *processGeneEntryParams) error {
+	logger := params.logger
+	entry := params.entry
+	dbh := params.dbh
+	client := params.client
+
 	logger.Debugf("Feature has geneid %s and name %s",
 		entry.GeneID,
 		entry.Name,
@@ -106,25 +114,21 @@ func processGeneEntry(
 		createdBy = val
 	}
 
-	// Create new feature annotation record
-	annotation := &feature.NewFeatureAnnotation{
-		Type:       "gene",
-		Id:         entry.GeneID,
-		IsObsolete: false,
-		CreatedBy:  createdBy,
-		CreatedAt:  timestamppb.Now(),
-		UpdatedAt:  timestamppb.Now(),
-		Attributes: &feature.FeatureAnnotationAttributes{
-			Name:   entry.Name,
-			Pubmed: pubmedIDs,
-		},
-	}
-
 	// Set up gRPC call
 	res, err := client.CreateFeatureAnnotation(
 		context.Background(),
-		annotation,
-	)
+		&feature.NewFeatureAnnotation{
+			Type:       "gene",
+			Id:         entry.GeneID,
+			IsObsolete: false,
+			CreatedBy:  createdBy,
+			CreatedAt:  timestamppb.Now(),
+			UpdatedAt:  timestamppb.Now(),
+			Attributes: &feature.FeatureAnnotationAttributes{
+				Name:   entry.Name,
+				Pubmed: pubmedIDs,
+			},
+		})
 	if err != nil {
 		return fmt.Errorf(
 			"failed to create feature annotation for gene %s: %w",
@@ -166,7 +170,13 @@ func LoadFeatureAnnotation(cltx *cli.Context) error {
 			)
 		}
 		// Call helper function to process the entry
-		if err := processGeneEntry(entry, dbh, client, logger); err != nil {
+		params := &processGeneEntryParams{
+			entry:  entry,
+			dbh:    dbh,
+			client: client,
+			logger: logger,
+		}
+		if err := processGeneEntry(params); err != nil {
 			// Exit if the helper function encounters an error
 			return cli.Exit(err.Error(), 2)
 		}
