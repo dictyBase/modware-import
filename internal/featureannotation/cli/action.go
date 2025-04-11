@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dictyBase/arangomanager"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/registry"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -26,6 +28,117 @@ type Gene struct {
 	GeneID    string `json:"gene_id"`
 	Name      string `json:"name"`
 	CreatedBy string `json:"created_by"`
+}
+
+// fetchPubmedIDs queries and retrieves PubMed IDs associated with a given gene feature.
+func fetchPubmedIDs(
+	entry *Gene,
+	dbh *arangomanager.Database,
+	logger *logrus.Entry,
+) ([]string, error) {
+	pubmedResult, err := dbh.SearchRows(
+		ListPubmedsByFeature,
+		map[string]interface{}{
+			"feature_id": entry.FeatureID,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error querying PubMed IDs for feature %s: %w",
+			entry.FeatureID,
+			err,
+		)
+	}
+	defer pubmedResult.Close()
+
+	if pubmedResult.IsEmpty() {
+		logger.Infof(
+			"No PubMed references found for feature %s",
+			entry.FeatureID,
+		)
+		return nil, nil // No IDs found, not an error
+	}
+
+	pubmedIDs := make([]string, 0)
+	for pubmedResult.Scan() {
+		var pubmed string
+		if err := pubmedResult.Read(&pubmed); err != nil {
+			return nil, fmt.Errorf(
+				"error reading PubMed ID for feature %s: %w",
+				entry.FeatureID,
+				err,
+			)
+		}
+		pubmedIDs = append(pubmedIDs, pubmed)
+	}
+	logger.Infof("Feature %s has PubMed reference: %s",
+		entry.FeatureID,
+		pubmedIDs,
+	)
+	return pubmedIDs, nil
+}
+
+// processGeneEntry handles fetching PubMed IDs and creating the annotation for a single gene entry.
+func processGeneEntry(
+	entry *Gene,
+	dbh *arangomanager.Database,
+	client feature.FeatureAnnotationServiceClient,
+	logger *logrus.Entry,
+) error {
+	logger.Debugf("Feature has geneid %s and name %s",
+		entry.GeneID,
+		entry.Name,
+	)
+
+	// Fetch PubMed IDs
+	pubmedIDs, err := fetchPubmedIDs(entry, dbh, logger)
+	if err != nil {
+		return err // Propagate error from fetching IDs
+	}
+
+	// If no PubMed IDs were found, skip creating the annotation for this entry
+	if len(pubmedIDs) == 0 {
+		return nil
+	}
+
+	createdBy := DefaultUserName
+	if val, ok := annMap[entry.CreatedBy]; ok {
+		createdBy = val
+	}
+
+	// Create new feature annotation record
+	annotation := &feature.NewFeatureAnnotation{
+		Type:       "gene",
+		Id:         entry.GeneID,
+		IsObsolete: false,
+		CreatedBy:  createdBy,
+		CreatedAt:  timestamppb.Now(),
+		UpdatedAt:  timestamppb.Now(),
+		Attributes: &feature.FeatureAnnotationAttributes{
+			Name:   entry.Name,
+			Pubmed: pubmedIDs,
+		},
+	}
+
+	// Set up gRPC call
+	res, err := client.CreateFeatureAnnotation(
+		context.Background(),
+		annotation,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to create feature annotation for gene %s: %w",
+			entry.GeneID,
+			err,
+		)
+	}
+
+	logger.Infof(
+		"Created new feature annotation record %s for feature name %s",
+		res.Attributes.Name,
+		res.Id,
+	)
+	return nil
 }
 
 func LoadFeatureAnnotation(cltx *cli.Context) error {
@@ -52,83 +165,11 @@ func LoadFeatureAnnotation(cltx *cli.Context) error {
 				2,
 			)
 		}
-
-		logger.Debugf("Feature has geneid %s and name %s",
-			entry.GeneID,
-			entry.Name,
-		)
-
-		// Query for PubMed IDs per feature
-		pubmedResult, err := dbh.SearchRows(
-			ListPubmedsByFeature,
-			map[string]interface{}{
-				"feature_id": entry.FeatureID,
-			},
-		)
-		if err != nil {
-			return cli.Exit(
-				fmt.Sprintf("error querying PubMed IDs: %s", err),
-				2,
-			)
+		// Call helper function to process the entry
+		if err := processGeneEntry(entry, dbh, client, logger); err != nil {
+			// Exit if the helper function encounters an error
+			return cli.Exit(err.Error(), 2)
 		}
-		defer pubmedResult.Close()
-		if pubmedResult.IsEmpty() {
-			logger.Infof(
-				"No PubMed references found for feature %s",
-				entry.FeatureID,
-			)
-			continue
-		}
-
-		pubmedIDs := make([]string, 0)
-		for pubmedResult.Scan() {
-			var pubmed string
-			if err := pubmedResult.Read(&pubmed); err != nil {
-				return cli.Exit(
-					fmt.Sprintf("error reading PubMed ID: %s", err),
-					2,
-				)
-			}
-			pubmedIDs = append(pubmedIDs, pubmed)
-		}
-		logger.Infof("Feature %s has PubMed reference: %s",
-			entry.FeatureID,
-			pubmedIDs,
-		)
-
-		createdBy := DefaultUserName
-		if val, ok := annMap[entry.CreatedBy]; ok {
-			createdBy = val
-		}
-
-		// Create new feature annotation record
-		annotation := &feature.NewFeatureAnnotation{
-			Type:       "gene",
-			Id:         entry.GeneID,
-			IsObsolete: false,
-			CreatedBy:  createdBy,
-			CreatedAt:  timestamppb.Now(),
-			UpdatedAt:  timestamppb.Now(),
-			Attributes: &feature.FeatureAnnotationAttributes{
-				Name:   entry.Name,
-				Pubmed: pubmedIDs,
-			},
-		}
-
-		// Set up gRPC call with timeout
-		res, err := client.CreateFeatureAnnotation(
-			context.Background(),
-			annotation,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to create feature annotation: %v", err)
-		}
-
-		logger.Infof(
-			"Created new feature annotation record %s for feature name %s",
-			res.Attributes.Name,
-			res.Id,
-		)
 	}
 
 	return nil
