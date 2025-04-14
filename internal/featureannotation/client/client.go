@@ -6,7 +6,7 @@ import (
 	"github.com/dictyBase/arangomanager"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/registry"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -37,9 +37,7 @@ func CliSetup(cltx *cli.Context) error {
 			cltx.String("feature-annotation-grpc-host"),
 			cltx.String("feature-annotation-grpc-port"),
 		),
-		[]grpc.DialOption{
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-		}...,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		return fmt.Errorf(
