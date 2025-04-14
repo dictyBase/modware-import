@@ -32,7 +32,7 @@ type processGeneEntryParams struct {
 }
 
 type Gene struct {
-	FeatureID string `json:"feature_id"`
+	FeatureID int    `json:"feature_id"`
 	GeneID    string `json:"gene_id"`
 	Name      string `json:"name"`
 	CreatedBy string `json:"created_by"`
@@ -92,7 +92,7 @@ func fetchPubmedIDs(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error querying PubMed IDs for feature %s: %w",
+			"error querying PubMed IDs for feature %d: %w",
 			entry.FeatureID,
 			err,
 		)
@@ -101,7 +101,7 @@ func fetchPubmedIDs(
 
 	if pubmedResult.IsEmpty() {
 		logger.Infof(
-			"No PubMed references found for feature %s",
+			"No PubMed references found for feature %d",
 			entry.FeatureID,
 		)
 		return nil, nil // No IDs found, not an error
@@ -112,14 +112,14 @@ func fetchPubmedIDs(
 		var pubmed string
 		if err := pubmedResult.Read(&pubmed); err != nil {
 			return nil, fmt.Errorf(
-				"error reading PubMed ID for feature %s: %w",
+				"error reading PubMed ID for feature %d: %w",
 				entry.FeatureID,
 				err,
 			)
 		}
 		pubmedIDs = append(pubmedIDs, pubmed)
 	}
-	logger.Infof("Feature %s has PubMed reference: %s",
+	logger.Infof("Feature %d has PubMed reference: %s",
 		entry.FeatureID,
 		pubmedIDs,
 	)
