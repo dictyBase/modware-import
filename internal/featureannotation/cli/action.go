@@ -38,6 +38,46 @@ type Gene struct {
 	CreatedBy string `json:"created_by"`
 }
 
+func LoadFeatureAnnotation(cltx *cli.Context) error {
+	logger := registry.GetLogger()
+	dbh := registry.GetArangodbConnection()
+	client := registry.GetFeatureAnnotationAPIClient()
+
+	result, err := dbh.Search(ListActiveGenesQ)
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+	defer result.Close()
+
+	if result.IsEmpty() {
+		logger.Error("No PubMed references found in feature annotations")
+		return nil
+	}
+
+	for result.Scan() {
+		entry := &Gene{}
+		if err := result.Read(&entry); err != nil {
+			return cli.Exit(
+				fmt.Sprintf("error reading query result: %s", err),
+				2,
+			)
+		}
+		// Call helper function to process the entry
+		params := &processGeneEntryParams{
+			entry:  entry,
+			dbh:    dbh,
+			client: client,
+			logger: logger,
+		}
+		if err := processGeneEntry(params); err != nil {
+			// Exit if the helper function encounters an error
+			return cli.Exit(err.Error(), 2)
+		}
+	}
+
+	return nil
+}
+
 // fetchPubmedIDs queries and retrieves PubMed IDs associated with a given gene feature.
 func fetchPubmedIDs(
 	entry *Gene,
@@ -142,45 +182,5 @@ func processGeneEntry(params *processGeneEntryParams) error {
 		res.Attributes.Name,
 		res.Id,
 	)
-	return nil
-}
-
-func LoadFeatureAnnotation(cltx *cli.Context) error {
-	logger := registry.GetLogger()
-	dbh := registry.GetArangodbConnection()
-	client := registry.GetFeatureAnnotationAPIClient()
-
-	result, err := dbh.Search(ListActiveGenesQ)
-	if err != nil {
-		return cli.Exit(err.Error(), 2)
-	}
-	defer result.Close()
-
-	if result.IsEmpty() {
-		logger.Error("No PubMed references found in feature annotations")
-		return nil
-	}
-
-	entry := &Gene{}
-	for result.Scan() {
-		if err := result.Read(&entry); err != nil {
-			return cli.Exit(
-				fmt.Sprintf("error reading query result: %s", err),
-				2,
-			)
-		}
-		// Call helper function to process the entry
-		params := &processGeneEntryParams{
-			entry:  entry,
-			dbh:    dbh,
-			client: client,
-			logger: logger,
-		}
-		if err := processGeneEntry(params); err != nil {
-			// Exit if the helper function encounters an error
-			return cli.Exit(err.Error(), 2)
-		}
-	}
-
 	return nil
 }
