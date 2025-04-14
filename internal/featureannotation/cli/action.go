@@ -133,10 +133,7 @@ func processGeneEntry(params *processGeneEntryParams) error {
 	dbh := params.dbh
 	client := params.client
 
-	logger.Debugf("Feature has geneid %s and name %s",
-		entry.GeneID,
-		entry.Name,
-	)
+	logger.Debugf("Feature has geneid %s", entry.GeneID)
 
 	// Fetch PubMed IDs
 	pubmedIDs, err := fetchPubmedIDs(entry, dbh, logger)
