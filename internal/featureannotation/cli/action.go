@@ -104,7 +104,7 @@ func fetchPubmedIDs(
 			"No PubMed references found for feature %d",
 			entry.FeatureID,
 		)
-		return nil, nil // No IDs found, not an error
+		return []string{}, nil // Return empty slice instead of nil
 	}
 
 	pubmedIDs := make([]string, 0)
@@ -119,7 +119,7 @@ func fetchPubmedIDs(
 		}
 		pubmedIDs = append(pubmedIDs, pubmed)
 	}
-	logger.Infof("Feature %d has PubMed reference: %s",
+	logger.Infof("Feature %d has PubMed reference: %v",
 		entry.FeatureID,
 		pubmedIDs,
 	)
@@ -144,8 +144,9 @@ func processGeneEntry(params *processGeneEntryParams) error {
 		return err // Propagate error from fetching IDs
 	}
 
-	// If no PubMed IDs were found, skip creating the annotation for this entry
+	// If no PubMed IDs were found or pubmedIDs is nil, skip creating the annotation for this entry
 	if len(pubmedIDs) == 0 {
+		logger.Infof("Skipping feature %s with no PubMed IDs", entry.GeneID)
 		return nil
 	}
 
