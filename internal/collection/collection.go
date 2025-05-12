@@ -33,3 +33,18 @@ func Extend[T any](elems ...[]T) []T {
 	}
 	return aslice
 }
+
+// Pipe5 creates a functional pipeline by taking an initial value and applying
+// five functions in succession. The output of each function becomes the input
+// to the next function. The final return value is the result of the last
+// function application.
+func Pipe5[T1, T2, T3, T4, T5, T6 any](
+	initial T1,
+	fn1 func(T1) T2,
+	fn2 func(T2) T3,
+	fn3 func(T3) T4,
+	fn4 func(T4) T5,
+	fn5 func(T5) T6,
+) T6 {
+	return fn5(fn4(fn3(fn2(fn1(initial)))))
+}
