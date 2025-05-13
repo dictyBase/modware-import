@@ -65,8 +65,6 @@ github.com/dictyBase/aphgrpc v1.4.2 h1:jkNyIpUBATNVNTM99TfAHln8UEpzyvNNNuM2+UY6t
 github.com/dictyBase/aphgrpc v1.4.2/go.mod h1:rzi2U95QntAuS6XpqespgZmQ8Ujo2Sq2R5FyhW5adA8=
 github.com/dictyBase/arangomanager v0.7.0 h1:OiFZgL9N6uUJrm0wwQ8Y6Oe0DsiPggPGOmc4wH7CKjI=
 github.com/dictyBase/arangomanager v0.7.0/go.mod h1:CkrV5QpjFlkk8h+NHzfDP+kfzq+49zaCcDlUtKrayK4=
-github.com/dictyBase/go-genproto v0.0.0-20250129215847-caa84b8a65f7 h1:1i2c6lEbPVIHaQPBAM1Zul8dnzNbJrVFEYrAsuFufI4=
-github.com/dictyBase/go-genproto v0.0.0-20250129215847-caa84b8a65f7/go.mod h1:rlUPhBs4duDUE73MswuLGW9UzbkcTWqQsbpsp/pGqTg=
 github.com/dictyBase/go-genproto v0.0.0-20250416011002-08ac47e2a066 h1:fhBHDjP5EPBfxnToKpULjv72XcrJ2Xu5dTUiM6QP32s=
 github.com/dictyBase/go-genproto v0.0.0-20250416011002-08ac47e2a066/go.mod h1:rlUPhBs4duDUE73MswuLGW9UzbkcTWqQsbpsp/pGqTg=
 github.com/dictyBase/go-obograph v1.6.0 h1:otuiEadRCJ25o6X/5tWhDjiiAbK0R8LBLQpBxVREotc=
