@@ -2,15 +2,29 @@ package cli
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
+	"io"
+	"os"
+	"slices"
 
 	"github.com/dictyBase/arangomanager"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// AQL query to update documents based on featureprop_id
+const updateAQLQuery = `
+	FOR row IN @data
+		FOR prop IN @@collection
+			FILTER prop.featureprop_id == row.featureprop_id
+			UPDATE prop WITH { value: row.value } IN @@collection
+			RETURN NEW
+`
 
 // DefaultUserName is the default creator/updater for annotations
 const DefaultUserName = "dcr@dictycr.org"
@@ -31,6 +45,13 @@ type processGeneEntryParams struct {
 	logger *logrus.Entry
 }
 
+// submitBatchParams holds the parameters for the submitBatch function.
+type submitBatchParams struct {
+	dbh            *arangomanager.Database
+	collectionName string
+	docs           []map[string]interface{}
+	logger         *logrus.Entry
+}
 type Gene struct {
 	FeatureID int    `json:"feature_id"`
 	GeneID    string `json:"gene_id"`
@@ -181,4 +202,22 @@ func processGeneEntry(params *processGeneEntryParams) error {
 		res.Id,
 	)
 	return nil
+}
+// submitBatch updates a batch of documents in ArangoDB using the updateAQLQuery.
+// Returns the number of documents successfully updated, or an error.
+func submitBatch(
+	params *submitBatchParams,
+) (int, error) {
+	if len(params.docs) == 0 {
+		return 0, nil
+	}
+	count, err := params.dbh.CountWithParams(updateAQLQuery,
+		map[string]interface{}{
+			"data":        params.docs,
+			"@collection": params.collectionName,
+		})
+	if err != nil {
+		return 0, fmt.Errorf("AQL query execution failed: %w", err)
+	}
+	return int(count), nil
 }
