@@ -58,5 +58,13 @@ func allCommands() []*cli.Command {
 			Before: faclient.CliSetup,
 			Action: facli.LoadFeatureAnnotation,
 		},
+		// Add the new command definition here
+		{
+			Name:   "load-csv-to-arangodb",
+			Usage:  "Update ArangoDB collection data from CSV file",
+			Flags:  facli.LoadCSVToArangodbFlag(),
+			Before: faclient.CSVArangodbCliSetup,
+			Action: facli.LoadCSVToArangodb,
+		},
 	}
 }
