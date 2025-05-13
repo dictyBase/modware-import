@@ -29,6 +29,7 @@ const (
 )
 
 var v = viper.New()
+var csvFilePath string // Add this global variable
 
 func SetFeatureAnnotationAPIClient(cnt feature.FeatureAnnotationServiceClient) {
 	v.Set(FeatureAnnotationClientKey, cnt)
@@ -145,4 +146,14 @@ func GetTTLCache() *ttlcache.Cache[string, string] {
 func GetFeatureAnnotationAPIClient() feature.FeatureAnnotationServiceClient {
 	cnt, _ := v.Get(FeatureAnnotationClientKey).(feature.FeatureAnnotationServiceClient)
 	return cnt
+}
+
+// SetCSVFilePath sets the path to the CSV file
+func SetCSVFilePath(path string) {
+	csvFilePath = path
+}
+
+// GetCSVFilePath gets the path to the CSV file
+func GetCSVFilePath() string {
+	return csvFilePath
 }
