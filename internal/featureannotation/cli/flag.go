@@ -55,3 +55,37 @@ func LoadFeatureAnnotationFlag() []cli.Flag {
 		},
 	}
 }
+
+// LoadCSVToArangodbFlag returns all flags required for loading CSV data to ArangoDB
+func LoadCSVToArangodbFlag() []cli.Flag {
+	// Reuse existing ArangoDB connection flags
+	// Assuming the first 6 flags are ArangoDB related based on the
+	// LoadFeatureAnnotationFlag definition
+	flags := LoadFeatureAnnotationFlag()[:6]
+
+	csvFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:     "csv-file",
+			Usage:    "Path to CSV file to load",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:  "collection",
+			Usage: "ArangoDB collection name to update",
+			Value: "featureprop",
+		},
+		&cli.StringFlag{
+			Name:  "delimiter",
+			Usage: "CSV delimiter character",
+			Value: ",",
+		},
+		&cli.IntFlag{
+			Name:  "batch-size",
+			Usage: "Number of documents to update in a single batch",
+			Value: 500,
+		},
+	}
+
+	// Combine the flags
+	return append(flags, csvFlags...)
+}
