@@ -49,7 +49,7 @@ require (
 require (
 	github.com/IBM/fp-go v1.0.152
 	github.com/alicebob/miniredis/v2 v2.34.0
-	github.com/go-playground/validator/v10 v10.24.0
+	github.com/go-playground/validator/v10 v10.26.0
 	github.com/jedib0t/go-pretty/v6 v6.6.5
 	github.com/jellydator/ttlcache/v3 v3.3.0
 	github.com/pkg/errors v0.9.1
@@ -67,7 +67,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v1.1.5 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
-	github.com/arangodb/go-driver v1.6.6 // indirect
 	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
