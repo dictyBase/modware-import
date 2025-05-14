@@ -1,6 +1,6 @@
 # Go Coding Conventions
 
--- **Build, Test, and Lint Commands**
+- **Build, Test, and Lint Commands**
     - Run all tests: `gotestsum --format-hide-empty-pkg --format testdox --format-icons hivis`
     - Run specific test: `gotestsum --format-hide-empty-pkg --format testdox --format-icons hivis -- -run TestFindSimilar ./...`
     - Run tests with verbose output: `gotestum --format-hide-empty-pkg --format standard-verbose --format-icons hivis`
@@ -45,4 +45,7 @@
 
 - **Receivers:**
     - Use short, one or two-letter receiver names that reflect the type (e.g., `r` for `io.Reader`, `f` for `*File`).
+
+- **Function:**
+    - Use a type struct for more than three input and output parameters
 
