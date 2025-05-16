@@ -7,10 +7,11 @@ import (
 
 // BatchProcessor runs a worker pool for batch processing
 type BatchProcessor[I, O any] struct {
-	Pool         *Pool[I, O]
+	pool         *Pool[I, O]
 	BatchSize    int
 	batchCount   int
 	currentBatch []I
+	currentMeta  []map[string]interface{}
 	batchMutex   sync.Mutex // For thread-safe batch operations
 }
 
@@ -21,9 +22,10 @@ func NewBatchProcessor[I, O any](
 	options ...PoolOption[I, O],
 ) *BatchProcessor[I, O] {
 	return &BatchProcessor[I, O]{
-		Pool:         NewPool(workerFunc, options...),
+		pool:         NewPool(workerFunc, options...),
 		BatchSize:    batchSize,
 		currentBatch: make([]I, 0, batchSize),
+		currentMeta:  make([]map[string]interface{}, 0, batchSize),
 	}
 }
 
@@ -34,7 +36,26 @@ func (bp *BatchProcessor[I, O]) Add(item I) bool {
 	defer bp.batchMutex.Unlock()
 
 	bp.currentBatch = append(bp.currentBatch, item)
+	// Add nil metadata for this item
+	bp.currentMeta = append(bp.currentMeta, nil)
 
+	if len(bp.currentBatch) >= bp.BatchSize {
+		bp.submitCurrentBatchLocked()
+		return true
+	}
+	return false
+}
+
+// AddWithMeta adds an item to the current batch with metadata,
+// automatically submitting the batch when it reaches the configured size
+func (bp *BatchProcessor[I, O]) AddWithMeta(item I, meta map[string]interface{}) bool {
+	bp.batchMutex.Lock()
+	defer bp.batchMutex.Unlock()
+	
+	// Store the item and metadata for later submission
+	bp.currentBatch = append(bp.currentBatch, item)
+	bp.currentMeta = append(bp.currentMeta, meta)
+	
 	if len(bp.currentBatch) >= bp.BatchSize {
 		bp.submitCurrentBatchLocked()
 		return true
@@ -55,6 +76,31 @@ func (bp *BatchProcessor[I, O]) AddBatch(items []I) int {
 	batchesSubmitted := 0
 	for _, item := range items {
 		bp.currentBatch = append(bp.currentBatch, item)
+		// Add nil metadata for this item
+		bp.currentMeta = append(bp.currentMeta, nil)
+
+		if len(bp.currentBatch) >= bp.BatchSize {
+			bp.submitCurrentBatchLocked()
+			batchesSubmitted++
+		}
+	}
+
+	return batchesSubmitted
+}
+
+// AddBatchWithMeta adds multiple items to the processor with the same metadata
+func (bp *BatchProcessor[I, O]) AddBatchWithMeta(items []I, meta map[string]interface{}) int {
+	if len(items) == 0 {
+		return 0
+	}
+
+	bp.batchMutex.Lock()
+	defer bp.batchMutex.Unlock()
+
+	batchesSubmitted := 0
+	for _, item := range items {
+		bp.currentBatch = append(bp.currentBatch, item)
+		bp.currentMeta = append(bp.currentMeta, meta)
 
 		if len(bp.currentBatch) >= bp.BatchSize {
 			bp.submitCurrentBatchLocked()
@@ -76,16 +122,29 @@ func (bp *BatchProcessor[I, O]) submitCurrentBatchLocked() {
 	batch := make([]I, len(bp.currentBatch))
 	copy(batch, bp.currentBatch)
 
-	// Submit each item in the batch individually
-	for _, item := range batch {
-		bp.Pool.Submit(item, map[string]interface{}{
-			"batch_number": bp.batchCount,
-			"batch_size":   len(batch),
-		})
+	// Copy the metadata as well
+	meta := make([]map[string]interface{}, len(bp.currentMeta))
+	copy(meta, bp.currentMeta)
+
+	// Submit each item in the batch with its associated metadata
+	for i, item := range batch {
+		itemMeta := meta[i]
+		if itemMeta == nil {
+			itemMeta = map[string]interface{}{
+				"batch_number": bp.batchCount,
+				"batch_size":   len(batch),
+			}
+		} else {
+			// Add batch info to existing metadata
+			itemMeta["batch_number"] = bp.batchCount
+			itemMeta["batch_size"] = len(batch)
+		}
+		bp.pool.Submit(item, itemMeta)
 	}
 
-	// Reset the current batch
+	// Reset the current batch and metadata
 	bp.currentBatch = make([]I, 0, bp.BatchSize)
+	bp.currentMeta = make([]map[string]interface{}, 0, bp.BatchSize)
 	bp.batchCount++
 }
 
@@ -103,28 +162,33 @@ func (bp *BatchProcessor[I, O]) Flush() {
 
 // Start starts the worker pool
 func (bp *BatchProcessor[I, O]) Start() {
-	bp.Pool.Start()
+	bp.pool.Start()
 }
 
 // Results returns the results channel from the pool
 func (bp *BatchProcessor[I, O]) Results() <-chan Result[O] {
-	return bp.Pool.Results()
+	return bp.pool.Results()
 }
 
 // Errors returns the error channel from the pool
 func (bp *BatchProcessor[I, O]) Errors() <-chan error {
-	return bp.Pool.Errors()
+	return bp.pool.Errors()
 }
 
 // Close flushes the current batch and closes the pool
 func (bp *BatchProcessor[I, O]) Close() {
 	bp.Flush()
-	bp.Pool.Close()
+	bp.pool.Close()
 }
 
 // Cancel immediately stops all processing
 func (bp *BatchProcessor[I, O]) Cancel() {
-	bp.Pool.Cancel()
+	bp.pool.Cancel()
+}
+
+// Pool returns the underlying Pool for backward compatibility
+func (bp *BatchProcessor[I, O]) Pool() *Pool[I, O] {
+	return bp.pool
 }
 
 // GetBatchCount returns the current batch count
