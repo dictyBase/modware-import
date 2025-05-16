@@ -12,3 +12,5 @@ importer
 loader
 .env
 fannloader
+
+**/.claude/settings.local.json
