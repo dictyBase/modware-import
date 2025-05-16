@@ -11,23 +11,29 @@ import (
 	"github.com/dictyBase/arangomanager"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/collection"
+	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// AQL query to update documents based on featureprop_id
-const updateAQLQuery = `
+const (
+	dbhKey            contextKey = "dbh"
+	collectionNameKey contextKey = "collectionName"
+	loggerKey         contextKey = "logger"
+	batchSizeKey      contextKey = "batchSize"
+	// DefaultUserName is the default creator/updater for annotations
+	DefaultUserName = "dcr@dictycr.org"
+	// AQL query to update documents based on featureprop_id
+	updateAQLQuery = `
 	FOR row IN @data
 		FOR prop IN @@collection
 			FILTER prop.featureprop_id == row.featureprop_id
 			UPDATE prop WITH { value: row.value } IN @@collection
 			RETURN NEW
 `
-
-// DefaultUserName is the default creator/updater for annotations
-const DefaultUserName = "dcr@dictycr.org"
+)
 
 var annMap = map[string]string{
 	"CGM_DDB_PASC": "pgaudet@northwestern.edu",
@@ -77,6 +83,7 @@ type SetupConfig struct {
 	CollectionName string
 	BatchSize      int
 	Delimiter      string
+	Workers        int
 }
 
 // Stage 2: File Processing
@@ -100,6 +107,7 @@ type DataProcessingResult struct {
 	ProcessingContext
 	Documents   []map[string]interface{}
 	UpdateCount int
+	Error       error
 }
 
 // Stage 5: Final Result
@@ -107,6 +115,56 @@ type FinalResult struct {
 	TotalUpdated int
 	Success      bool
 	Error        error
+}
+
+// Define custom types for context keys to avoid SA1029
+type contextKey string
+
+// newPipelineContext creates a new context with pipeline-specific values.
+func newPipelineContext(procCtx ProcessingContext) context.Context {
+	ctx := context.WithValue(
+		context.Background(),
+		dbhKey,
+		procCtx.Setup.DBH,
+	)
+	ctx = context.WithValue(
+		ctx,
+		collectionNameKey,
+		procCtx.Setup.CollectionName,
+	)
+	ctx = context.WithValue(ctx, loggerKey, procCtx.Setup.Logger)
+
+	return context.WithValue(ctx, batchSizeKey, procCtx.Setup.BatchSize)
+}
+
+func LoadCSVToArangodb(cltx *cli.Context) error {
+	logger := registry.GetLogger()
+	result := collection.Pipe5(
+		cltx,
+		setupPipeline,
+		setupFileProcessing,
+		validateHeaders,
+		processCSVRecords,
+		finalizeBatchProcessing,
+	)
+
+	// Check the final result for errors
+	if result.Error != nil {
+		logger.Errorf("Pipeline failed: %s", result.Error)
+		return cli.Exit(
+			fmt.Sprintf("Pipeline execution failed: %s", result.Error.Error()),
+			2,
+		)
+	}
+
+	// If successful, log the final count (already logged in
+	// finalizeBatchProcessing, but good for confirmation)
+	logger.Infof(
+		"Pipeline completed successfully. Total documents updated: %d",
+		result.TotalUpdated,
+	)
+
+	return nil
 }
 
 // Stage 1: Initialize setup
@@ -118,6 +176,7 @@ func setupPipeline(cltx *cli.Context) SetupConfig {
 		CollectionName: cltx.String("collection"),
 		BatchSize:      cltx.Int("batch-size"),
 		Delimiter:      cltx.String("delimiter"),
+		Workers:        cltx.Int("workers"),
 	}
 }
 
@@ -198,24 +257,43 @@ func validateHeaders(fileCtx FileContext) ProcessingContext {
 	}
 }
 
-// Stage 4: Process CSV records into batches
+// Stage 4: Process CSV records using a concurrent pipeline with chunking
 func processCSVRecords(procCtx ProcessingContext) DataProcessingResult {
-	// Check for errors from previous stage
 	if procCtx.Error != nil {
 		return DataProcessingResult{ProcessingContext: procCtx}
 	}
 
-	result := DataProcessingResult{
-		ProcessingContext: procCtx,
-		Documents: make(
-			[]map[string]interface{},
-			0,
-			procCtx.Setup.BatchSize,
+	// Create a batch processor for CSV records
+	batchSize := procCtx.Setup.BatchSize
+	workerCount := procCtx.Setup.Workers
+	chunkSize := 5000 // Number of records to process in each chunk
+
+	processor := concurrent.NewBatchProcessor(
+		recordProcessorFunc,
+		batchSize,
+		concurrent.WithWorkers[[]string, map[string]interface{}](workerCount),
+		concurrent.WithBufferSize[[]string, map[string]interface{}](
+			batchSize*2,
 		),
-		UpdateCount: 0,
+	)
+
+	pipeline := concurrent.NewPipeline(
+		processor,
+		batchSubmitterFunc,
+	).WithContext(newPipelineContext(procCtx))
+	pipeline.Start()
+
+	// Set up metadata for record processing
+	meta := map[string]interface{}{
+		"featurePropIDIndex": procCtx.FeaturePropIDIndex,
+		"valueIndex":         procCtx.ValueIndex,
+		"logger":             procCtx.Setup.Logger,
 	}
 
+	// Process records in chunks to avoid loading entire file into memory
 	rowNum := 1 // Start with first data row (header already read)
+	totalProcessed := 0
+	currentChunk := make([][]string, 0, chunkSize)
 
 	for {
 		record, err := procCtx.Reader.Read()
@@ -224,71 +302,49 @@ func processCSVRecords(procCtx ProcessingContext) DataProcessingResult {
 				break // End of file, normal termination
 			}
 			// Critical read error
-			result.Error = fmt.Errorf(
-				"error reading CSV data row %d: %w",
-				rowNum,
-				err,
-			)
-			return result // Return immediately with the error
-		}
-
-		// Process the record using the existing helper
-		doc := processRecord(&processRecordParams{
-			record:             record,
-			featurePropIDIndex: procCtx.FeaturePropIDIndex,
-			valueIndex:         procCtx.ValueIndex,
-			logger:             procCtx.Setup.Logger,
-		})
-
-		if doc == nil {
-			rowNum++ // Skip this row but continue
-			continue
-		}
-
-		result.Documents = append(result.Documents, doc)
-
-		// If batch is full, process it
-		if len(result.Documents) >= procCtx.Setup.BatchSize {
-			batchResult, batchErr := submitBatch(&submitBatchParams{
-				dbh:            procCtx.Setup.DBH,
-				collectionName: procCtx.Setup.CollectionName,
-				docs:           result.Documents,
-				logger:         procCtx.Setup.Logger,
-			})
-
-			result.UpdateCount += batchResult // Accumulate count
-
-			if batchErr != nil {
-				result.Error = fmt.Errorf(
-					"error submitting batch after row %d: %w",
+			return DataProcessingResult{
+				ProcessingContext: procCtx,
+				Error: fmt.Errorf(
+					"error reading CSV data row %d: %w",
 					rowNum,
-					batchErr,
-				)
-				// Clear documents as the batch failed, but keep the count processed so far
-				result.Documents = nil
-				return result // Return immediately with the error
+					err,
+				),
 			}
-
-			procCtx.Setup.Logger.Infof(
-				"Processed batch ending at row %d. Documents updated in this batch: %d. Total updated so far: %d",
-				rowNum,
-				batchResult,
-				result.UpdateCount,
-			)
-
-			// Reset batch documents
-			result.Documents = make(
-				[]map[string]interface{},
-				0,
-				procCtx.Setup.BatchSize,
-			)
 		}
 
+		// Add record to current chunk
+		currentChunk = append(currentChunk, record)
 		rowNum++
+
+		// When chunk is full, process it
+		if len(currentChunk) >= chunkSize {
+			processor.AddBatchWithMeta(currentChunk, meta)
+			totalProcessed += len(currentChunk)
+			currentChunk = slices.Delete(
+				currentChunk,
+				0,
+				len(currentChunk),
+			)
+		}
 	}
 
-	// Return the result containing any remaining documents for the final batch
-	return result
+	if len(currentChunk) > 0 {
+		processor.AddBatchWithMeta(currentChunk, meta)
+		totalProcessed += len(currentChunk)
+		procCtx.Setup.Logger.Infof("Processed all %d records", totalProcessed)
+	}
+
+	// Flush the processor to ensure all records are processed
+	processor.Flush()
+
+	// Process all records and close the pipeline
+	totalUpdated := pipeline.Process([][]string{})
+	procCtx.Setup.Logger.Infof("Total records updated: %d", totalUpdated)
+
+	return DataProcessingResult{
+		ProcessingContext: procCtx,
+		UpdateCount:       totalUpdated,
+	}
 }
 
 // Stage 5: Submit batches and finalize
@@ -298,44 +354,14 @@ func finalizeBatchProcessing(result DataProcessingResult) FinalResult {
 		defer result.File.Close()
 	}
 
+	finalCount := result.UpdateCount
 	// Check for errors propagated from previous stages
 	if result.Error != nil {
 		return FinalResult{
-			TotalUpdated: result.UpdateCount, // Report count processed before error
+			TotalUpdated: finalCount,
 			Success:      false,
 			Error:        result.Error,
 		}
-	}
-
-	// Process final batch if any documents remain
-	finalCount := result.UpdateCount
-	if len(result.Documents) > 0 {
-		batchResult, err := submitBatch(&submitBatchParams{
-			dbh:            result.Setup.DBH,
-			collectionName: result.Setup.CollectionName,
-			docs:           result.Documents,
-			logger:         result.Setup.Logger,
-		})
-
-		finalCount += batchResult // Add final batch count
-
-		if err != nil {
-			// Error occurred during the final batch submission
-			return FinalResult{
-				TotalUpdated: finalCount, // Report total including this partial/failed batch
-				Success:      false,
-				Error: fmt.Errorf(
-					"error submitting final batch: %w",
-					err,
-				),
-			}
-		}
-
-		result.Setup.Logger.Infof(
-			"Processed final batch. Documents updated in this batch: %d. Total updated: %d",
-			batchResult,
-			finalCount,
-		)
 	}
 
 	// Log success only if no errors occurred throughout the pipeline
@@ -350,35 +376,6 @@ func finalizeBatchProcessing(result DataProcessingResult) FinalResult {
 		Success:      true,
 		Error:        nil,
 	}
-}
-
-func LoadCSVToArangodb(cltx *cli.Context) error {
-	result := collection.Pipe5(
-		cltx,
-		setupPipeline,
-		setupFileProcessing,
-		validateHeaders,
-		processCSVRecords,
-		finalizeBatchProcessing,
-	)
-
-	// Check the final result for errors
-	if result.Error != nil {
-		registry.GetLogger().
-			Errorf("Pipeline failed: %s", result.Error)
-		return cli.Exit(
-			fmt.Sprintf("Pipeline execution failed: %s", result.Error.Error()),
-			2,
-		)
-	}
-	// If successful, log the final count (already logged in
-	// finalizeBatchProcessing, but good for confirmation)
-	registry.GetLogger().
-		Infof(
-			"Pipeline completed successfully. Total documents updated: %d",
-			result.TotalUpdated,
-		)
-	return nil
 }
 
 func LoadFeatureAnnotation(cltx *cli.Context) error {
@@ -550,6 +547,33 @@ func processRecord(
 	}
 }
 
+// recordProcessorFunc creates a worker function that processes CSV records
+func recordProcessorFunc(
+	ctx context.Context,
+	job concurrent.Job[[]string],
+) (map[string]interface{}, error) {
+	record := job.Payload
+	meta := job.Meta
+
+	featurePropIDIndex := meta["featurePropIDIndex"].(int)
+	valueIndex := meta["valueIndex"].(int)
+	logger := meta["logger"].(*logrus.Entry)
+
+	// Use existing processRecord logic
+	doc := processRecord(&processRecordParams{
+		record:             record,
+		featurePropIDIndex: featurePropIDIndex,
+		valueIndex:         valueIndex,
+		logger:             logger,
+	})
+
+	if doc == nil {
+		return nil, fmt.Errorf("invalid record: %v", record)
+	}
+
+	return doc, nil
+}
+
 // submitBatch updates a batch of documents in ArangoDB using the updateAQLQuery.
 // Returns the number of documents successfully updated, or an error.
 func submitBatch(
@@ -567,4 +591,75 @@ func submitBatch(
 		return 0, fmt.Errorf("AQL query execution failed: %w", err)
 	}
 	return int(count), nil
+}
+
+// batchSubmitterFunc creates a result handler for processing document batches
+func batchSubmitterFunc(
+	ctx context.Context,
+	results <-chan concurrent.Result[map[string]interface{}],
+) int {
+	// Extract parameters from context
+	dbh := ctx.Value(dbhKey).(*arangomanager.Database)
+	collectionName := ctx.Value(collectionNameKey).(string)
+	logger := ctx.Value(loggerKey).(*logrus.Entry)
+	batchSize := ctx.Value(batchSizeKey).(int)
+
+	// Collect documents from results
+	documents := make([]map[string]interface{}, 0, batchSize)
+	totalUpdated := 0
+
+	for result := range results {
+		if result.Error != nil {
+			logger.Warnf("Error processing record: %v", result.Error)
+			continue
+		}
+
+		documents = append(documents, result.Output)
+
+		// If we've collected a batch, submit it
+		if len(documents) >= batchSize {
+			count, err := submitBatch(&submitBatchParams{
+				dbh:            dbh,
+				collectionName: collectionName,
+				docs:           documents,
+				logger:         logger,
+			})
+			if err != nil {
+				logger.Errorf("Error submitting batch: %v", err)
+				// Continue processing despite errors
+			}
+
+			totalUpdated += count
+			logger.Infof(
+				"Processed batch. Documents updated: %d. Total updated so far: %d",
+				count,
+				totalUpdated,
+			)
+
+			// Reset documents slice
+			documents = make([]map[string]interface{}, 0, batchSize)
+		}
+	}
+
+	// Submit any remaining documents
+	if len(documents) > 0 {
+		count, err := submitBatch(&submitBatchParams{
+			dbh:            dbh,
+			collectionName: collectionName,
+			docs:           documents,
+			logger:         logger,
+		})
+		if err != nil {
+			logger.Errorf("Error submitting final batch: %v", err)
+		}
+
+		totalUpdated += count
+		logger.Infof(
+			"Processed final batch. Documents updated: %d. Total updated: %d",
+			count,
+			totalUpdated,
+		)
+	}
+
+	return totalUpdated
 }
