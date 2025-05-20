@@ -30,14 +30,6 @@ type submitBatchParams struct {
 	logger         *logrus.Entry
 }
 
-// processRecordParams holds the parameters for the processRecord function.
-type processRecordParams struct {
-	record             []string
-	featurePropIDIndex int
-	valueIndex         int
-	logger             *logrus.Entry
-}
-
 // Stage 1: Setup
 type SetupConfig struct {
 	Logger         *logrus.Entry
@@ -311,30 +303,6 @@ func finalizeBatchProcessing(result DataProcessingResult) FinalResult {
 	}
 }
 
-// processRecord validates a CSV record and converts it to a document map.
-// Returns the document map, or nil if the record should be skipped.
-func processRecord(
-	params *processRecordParams,
-) map[string]interface{} {
-	maxIndex := params.featurePropIDIndex
-	if params.valueIndex > maxIndex {
-		maxIndex = params.valueIndex
-	}
-	// Check if record has enough columns up to the highest required index
-	if len(params.record) <= maxIndex {
-		params.logger.Warnf(
-			"skipping row with insufficient fields (expected at least %d): %v",
-			maxIndex+1,
-			params.record,
-		)
-		return nil // Indicate skip
-	}
-	return map[string]interface{}{
-		"featureprop_id": params.record[params.featurePropIDIndex],
-		"value":          params.record[params.valueIndex],
-	}
-}
-
 // recordProcessorFunc creates a worker function that processes CSV records
 func recordProcessorFunc(
 	ctx context.Context,
@@ -347,19 +315,23 @@ func recordProcessorFunc(
 	valueIndex := meta["valueIndex"].(int)
 	logger := meta["logger"].(*logrus.Entry)
 
-	// Use existing processRecord logic
-	doc := processRecord(&processRecordParams{
-		record:             record,
-		featurePropIDIndex: featurePropIDIndex,
-		valueIndex:         valueIndex,
-		logger:             logger,
-	})
-
-	if doc == nil {
+	maxIndex := featurePropIDIndex
+	if valueIndex > maxIndex {
+		maxIndex = valueIndex
+	}
+	// Check if record has enough columns up to the highest required index
+	if len(record) <= maxIndex {
+		logger.Warnf(
+			"skipping row with insufficient fields (expected at least %d): %v",
+			maxIndex+1,
+			record,
+		)
 		return nil, fmt.Errorf("invalid record: %v", record)
 	}
-
-	return doc, nil
+	return map[string]interface{}{
+		"featureprop_id": record[featurePropIDIndex],
+		"value":          record[valueIndex],
+	}, nil
 }
 
 // submitBatch updates a batch of documents in ArangoDB using the updateAQLQuery.
