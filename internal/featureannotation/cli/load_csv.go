@@ -57,19 +57,12 @@ type ProcessingContext struct {
 	// Error field is inherited from FileContext
 }
 
-// Stage 4: Data Processing
-type DataProcessingResult struct {
-	ProcessingContext
-	Documents   []map[string]interface{}
+// Stage 4: Data Processing / Final Pipeline Result
+type PipelineResult struct {
+	File        *os.File
+	Setup       SetupConfig
 	UpdateCount int
 	Error       error
-}
-
-// Stage 5: Final Result
-type FinalResult struct {
-	TotalUpdated int
-	Success      bool
-	Error        error
 }
 
 // Define custom types for context keys to avoid SA1029
@@ -183,11 +176,16 @@ func validateHeaders(fileCtx FileContext) ProcessingContext {
 }
 
 // Stage 4: Process CSV records using a concurrent pipeline with chunking
-func processCSVRecords(procCtx ProcessingContext) DataProcessingResult {
-	if procCtx.Error != nil {
-		return DataProcessingResult{ProcessingContext: procCtx}
+func processCSVRecords(procCtx ProcessingContext) PipelineResult {
+	currentFile := procCtx.FileContext.File
+	currentSetup := procCtx.FileContext.Setup
+	if procCtx.Error != nil { // Error from a previous stage
+		return PipelineResult{
+			File:  currentFile,
+			Setup: currentSetup,
+			Error: procCtx.Error,
+		}
 	}
-
 	// Create a batch processor for CSV records
 	batchSize := procCtx.Setup.BatchSize
 	workerCount := procCtx.Setup.Workers
@@ -201,7 +199,6 @@ func processCSVRecords(procCtx ProcessingContext) DataProcessingResult {
 			batchSize*2,
 		),
 	)
-
 	pipeline := concurrent.NewPipeline(
 		processor,
 		batchSubmitterFunc,
@@ -214,12 +211,10 @@ func processCSVRecords(procCtx ProcessingContext) DataProcessingResult {
 		"valueIndex":         procCtx.ValueIndex,
 		"logger":             procCtx.Setup.Logger,
 	}
-
 	// Process records in chunks to avoid loading entire file into memory
 	rowNum := 1 // Start with first data row (header already read)
 	totalProcessed := 0
 	currentChunk := make([][]string, 0, chunkSize)
-
 	for {
 		record, err := procCtx.Reader.Read()
 		if err != nil {
@@ -227,8 +222,9 @@ func processCSVRecords(procCtx ProcessingContext) DataProcessingResult {
 				break // End of file, normal termination
 			}
 			// Critical read error
-			return DataProcessingResult{
-				ProcessingContext: procCtx,
+			return PipelineResult{
+				File:  currentFile,
+				Setup: currentSetup,
 				Error: fmt.Errorf(
 					"error reading CSV data row %d: %w",
 					rowNum,
@@ -236,7 +232,6 @@ func processCSVRecords(procCtx ProcessingContext) DataProcessingResult {
 				),
 			}
 		}
-
 		// Add record to current chunk
 		currentChunk = append(currentChunk, record)
 		rowNum++
@@ -266,40 +261,11 @@ func processCSVRecords(procCtx ProcessingContext) DataProcessingResult {
 	totalUpdated := pipeline.Process([][]string{})
 	procCtx.Setup.Logger.Infof("Total records updated: %d", totalUpdated)
 
-	return DataProcessingResult{
-		ProcessingContext: procCtx,
-		UpdateCount:       totalUpdated,
-	}
-}
-
-// Stage 5: Submit batches and finalize
-func finalizeBatchProcessing(result DataProcessingResult) FinalResult {
-	// Always ensure the file is closed if it was opened
-	if result.File != nil {
-		defer result.File.Close()
-	}
-
-	finalCount := result.UpdateCount
-	// Check for errors propagated from previous stages
-	if result.Error != nil {
-		return FinalResult{
-			TotalUpdated: finalCount,
-			Success:      false,
-			Error:        result.Error,
-		}
-	}
-
-	// Log success only if no errors occurred throughout the pipeline
-	result.Setup.Logger.Infof(
-		"successfully finished processing CSV for collection %s. Total documents updated: %d",
-		result.Setup.CollectionName,
-		finalCount,
-	)
-
-	return FinalResult{
-		TotalUpdated: finalCount,
-		Success:      true,
-		Error:        nil,
+	return PipelineResult{
+		File:        currentFile,
+		Setup:       currentSetup,
+		UpdateCount: totalUpdated,
+		Error:       nil, // Explicitly nil on success of this stage
 	}
 }
 

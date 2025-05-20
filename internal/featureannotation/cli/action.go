@@ -10,16 +10,19 @@ import (
 
 func LoadCSVToArangodb(cltx *cli.Context) error {
 	logger := registry.GetLogger()
-	result := collection.Pipe5(
+	result := collection.Pipe4(
 		cltx,
 		setupPipeline,
 		setupFileProcessing,
 		validateHeaders,
 		processCSVRecords,
-		finalizeBatchProcessing,
 	)
 
-	// Check the final result for errors
+	if result.File != nil {
+		defer result.File.Close()
+	}
+
+	// Check for errors
 	if result.Error != nil {
 		logger.Errorf("Pipeline failed: %s", result.Error)
 		return cli.Exit(
@@ -28,11 +31,11 @@ func LoadCSVToArangodb(cltx *cli.Context) error {
 		)
 	}
 
-	// If successful, log the final count (already logged in
-	// finalizeBatchProcessing, but good for confirmation)
+	// Log success
 	logger.Infof(
-		"Pipeline completed successfully. Total documents updated: %d",
-		result.TotalUpdated,
+		"Successfully finished processing CSV for collection %s. Total documents updated: %d",
+		result.Setup.CollectionName,
+		result.UpdateCount,
 	)
 
 	return nil
