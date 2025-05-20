@@ -82,17 +82,12 @@ func LoadCSVToArangodbFlag() []cli.Flag {
 		&cli.IntFlag{
 			Name:  "batch-size",
 			Usage: "Number of documents to update in a single batch",
-			Value: 500,
+			Value: 40,
 		},
 		&cli.IntFlag{
 			Name:  "workers",
 			Usage: "Number of concurrent workers for batch processing",
 			Value: 4,
-		},
-		&cli.BoolFlag{
-			Name:  "concurrent",
-			Usage: "Whether to use the concurrent worker pool implementation",
-			Value: false,
 		},
 	}
 
