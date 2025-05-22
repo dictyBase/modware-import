@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
@@ -10,6 +11,13 @@ import (
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
 )
+
+func safeInt32(val int, flagName string) (int32, error) {
+	if val > math.MaxInt32 || val < math.MinInt32 {
+		return 0, fmt.Errorf("value %d for flag %s is out of int32 range", val, flagName)
+	}
+	return int32(val), nil
+}
 
 func LoadOntologyToTable(cltx *cli.Context) error {
 	logger := registry.GetLogger()
@@ -19,23 +27,35 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		client.ContextDatabaseToken,
 		cltx.String("token"),
 	)
+	dbID, err := safeInt32(cltx.Int("database-id"), "database-id")
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+	tblID, err := safeInt32(cltx.Int("table-id"), "table-id")
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
+
 	ontTbl := &database.OntologyTableManager{
 		TableManager: &database.TableManager{
 			Client:     bclient,
 			Logger:     logger,
 			Ctx:        authCtx,
 			Token:      cltx.String("token"),
-			DatabaseId: int32(cltx.Int("database-id")),
+			DatabaseId: dbID,
 		},
 	}
 	ok, err := ontTbl.CheckAllTableFields(
-		&client.Table{Id: int32(cltx.Int("table-id"))},
+		&client.Table{Id: tblID},
 	)
 	if err != nil {
 		return cli.Exit(err.Error(), 2)
 	}
 	if !ok {
-		return cli.Exit("table does not have the required fields", 2)
+		return cli.Exit(
+			fmt.Sprintf("table with id %d does not have the required fields", tblID),
+			2,
+		)
 	}
 	props := &ontology.LoadProperties{
 		File:    cltx.String("input"),
@@ -65,6 +85,10 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 		client.ContextAccessToken,
 		token,
 	)
+	dbID, err := safeInt32(cltx.Int("database-id"), "database-id")
+	if err != nil {
+		return cli.Exit(err.Error(), 2)
+	}
 	logger := registry.GetLogger()
 	ontTbl := &database.OntologyTableManager{
 		TableManager: &database.TableManager{
@@ -72,7 +96,7 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 			Logger:     logger,
 			Ctx:        authCtx,
 			Token:      token,
-			DatabaseId: int32(cltx.Int("database-id")),
+			DatabaseId: dbID,
 		},
 	}
 	for _, name := range cltx.StringSlice("table") {

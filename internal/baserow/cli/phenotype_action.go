@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/dictyBase/modware-import/internal/baserow/phenotype"
 	phenoReader "github.com/dictyBase/modware-import/internal/datasource/xls/phenotype"
@@ -28,13 +29,17 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 		token,
 	)
 	logger := registry.GetLogger()
+	databaseIDVal := cltx.Int("database-id")
+	if databaseIDVal > math.MaxInt32 || databaseIDVal < math.MinInt32 {
+		return cli.Exit(fmt.Sprintf("value %d for --database-id is out of int32 range", databaseIDVal), 2)
+	}
 	phenoTbl := &database.PhenotypeTableManager{
 		TableManager: &database.TableManager{
 			Client:     database.BaserowClient(cltx.String("server")),
 			Logger:     logger,
 			Ctx:        authCtx,
 			Token:      token,
-			DatabaseId: int32(cltx.Int("database-id")),
+			DatabaseId: int32(databaseIDVal),
 		},
 	}
 	name := cltx.String("table")
@@ -113,9 +118,13 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 		token,
 	)
 	client := database.BaserowClient(cltx.String("server"))
+	databaseIDVal := cltx.Int("database-id")
+	if databaseIDVal > math.MaxInt32 || databaseIDVal < math.MinInt32 {
+		return fmt.Errorf("value %d for --database-id is out of int32 range: %d", databaseIDVal, databaseIDVal)
+	}
 	tbm := &database.TableManager{
 		Client:     client,
-		DatabaseId: int32(cltx.Int("database-id")),
+		DatabaseId: int32(databaseIDVal),
 		Logger:     logger,
 		Ctx:        authCtx,
 		Token:      token,

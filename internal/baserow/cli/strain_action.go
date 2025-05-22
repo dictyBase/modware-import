@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
@@ -61,9 +62,16 @@ func processStrainFile(filePath string, cltx *cli.Context) error {
 		token,
 	)
 	client := database.BaserowClient(cltx.String("server"))
+	databaseIDVal := cltx.Int("database-id")
+	if databaseIDVal > math.MaxInt32 || databaseIDVal < math.MinInt32 {
+		return fmt.Errorf(
+			"value %d for --database-id is out of int32 range",
+			databaseIDVal,
+		)
+	}
 	tbm := &database.TableManager{
 		Client:     client,
-		DatabaseId: int32(cltx.Int("database-id")),
+		DatabaseId: int32(databaseIDVal),
 		Logger:     logger,
 		Ctx:        authCtx,
 		Token:      token,
@@ -115,13 +123,23 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 	)
 	strainTbl := &database.StrainTableManager{
 		TableManager: &database.TableManager{
-			Client:     database.BaserowClient(cltx.String("server")),
-			DatabaseId: int32(cltx.Int("database-id")),
-			Logger:     logger,
-			Ctx:        authCtx,
-			Token:      token,
+			Client: database.BaserowClient(cltx.String("server")),
+			Logger: logger,
+			Ctx:    authCtx,
+			Token:  token,
 		},
 	}
+	databaseIDVal := cltx.Int("database-id")
+	if databaseIDVal > math.MaxInt32 || databaseIDVal < math.MinInt32 {
+		return cli.Exit(
+			fmt.Sprintf(
+				"value %d for --database-id is out of int32 range",
+				databaseIDVal,
+			),
+			2,
+		)
+	}
+	strainTbl.TableManager.DatabaseId = int32(databaseIDVal)
 	name := cltx.String("table")
 	tbl, err := strainTbl.CreateTable(name, strainTbl.FieldNames())
 	if err != nil {
