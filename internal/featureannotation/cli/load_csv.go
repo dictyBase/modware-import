@@ -6,8 +6,10 @@ import (
 	"io"
 	"os"
 	"slices"
+	"strconv"
 
 	"github.com/dictyBase/arangomanager"
+	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -60,7 +62,7 @@ type ProcessSingleRecordParams struct {
 // SubmitBatchAndLogParams holds the parameters for the submitBatchAndLog function.
 type SubmitBatchAndLogParams struct {
 	Setup            *SetupConfig
-	Docs             []map[string]interface{}
+	Docs             []map[string]string
 	Logger           *logrus.Entry
 	BatchDescription string
 }
@@ -155,48 +157,69 @@ func validateHeaders(fileCtx FileContext) ProcessingContext {
 	}
 }
 
-// Helper function to submit a batch and log results
+func extractFeaturePropID(doc map[string]string) int {
+	fid, err := strconv.Atoi(doc["featureprop_id"])
+	if err != nil {
+		// Mimic previous behavior: if Atoi fails (e.g., empty string or non-numeric),
+		// fid becomes 0. No explicit logging here as it's per item in a batch.
+		return 0
+	}
+	return fid
+}
+
+func extractValue(doc map[string]string) string {
+	return doc["value"]
+}
+
 func submitBatchAndLog(
 	params *SubmitBatchAndLogParams,
 ) (int, error) {
-	if len(params.Docs) == 0 {
-		return 0, nil
+	featurePropIDs := collection.Map(params.Docs, extractFeaturePropID)
+	values := collection.Map(params.Docs, extractValue)
+	// This check is mostly a safeguard; with the logic above, they should
+	// always be equal.
+	if len(featurePropIDs) != len(values) {
+		err := fmt.Errorf(
+			"internal error: featurePropIDs and values slices have different lengths (%d vs %d) after processing batch",
+			len(featurePropIDs),
+			len(values),
+		)
+		params.Logger.Error(err)
+		return 0, err
 	}
-	// Core logic from the former submitBatch function
-	dbCount, dbErr := params.Setup.DBH.CountWithParams(updateAQLQuery,
+	params.Logger.Debugf(
+		"Processing %d featureprop_ids for batch",
+		len(featurePropIDs),
+	)
+	dbErr := params.Setup.DBH.Do(updateAQLQuery,
 		map[string]interface{}{
-			"data":        params.Docs,
-			"@collection": params.Setup.CollectionName,
+			"featureprop_ids": featurePropIDs,
+			"values":          values,
+			"@collection":     params.Setup.CollectionName,
 		})
-
-	// Error handling and logging (adapted from original submitBatchAndLog)
 	if dbErr != nil {
-		// Construct the error message that submitBatch would have returned
 		returnedErr := fmt.Errorf("AQL query execution failed: %w", dbErr)
-		// Log this error
 		params.Logger.Errorf(
 			"Error submitting %s batch: %v",
 			params.BatchDescription,
 			returnedErr,
 		)
-		return 0, returnedErr // Return the constructed error
+		return 0, returnedErr
 	}
-
-	// Success logging
 	params.Logger.Infof(
 		"Processed %s batch. Documents updated: %d.",
 		params.BatchDescription,
-		dbCount,
+		len(featurePropIDs),
 	)
-	return int(dbCount), nil
+	return len(featurePropIDs), nil
 }
 
 // processSingleRecordAndValidate processes a single CSV record, validates it,
-// and transforms it into a map.
-// It returns the processed document and a boolean indicating if processing was successful.
+// and transforms it into a map. It returns the processed document and a boolean
+// indicating if processing was successful.
 func processSingleRecordAndValidate(
 	params *ProcessSingleRecordParams,
-) (map[string]interface{}, bool) {
+) (map[string]string, bool) {
 	maxIndex := params.FeaturePropIDIndex
 	if params.ValueIndex > maxIndex {
 		maxIndex = params.ValueIndex
@@ -210,11 +233,10 @@ func processSingleRecordAndValidate(
 		)
 		return nil, false
 	}
-	processedDoc := map[string]interface{}{
+	return map[string]string{
 		"featureprop_id": params.Record[params.FeaturePropIDIndex],
 		"value":          params.Record[params.ValueIndex],
-	}
-	return processedDoc, true
+	}, true
 }
 
 // Stage 4: Process CSV records sequentially in batches.
@@ -231,7 +253,7 @@ func processCSVRecords(procCtx ProcessingContext) PipelineResult {
 	}
 	batchSize := currentSetup.BatchSize
 	totalUpdatedCount := 0
-	documentsForBatch := make([]map[string]interface{}, 0, batchSize)
+	documentsForBatch := make([]map[string]string, 0, batchSize)
 	rowNum := 1 // Start with first data row (header already read)
 	for {
 		record, err := procCtx.Reader.Read()
@@ -296,10 +318,6 @@ func processCSVRecords(procCtx ProcessingContext) PipelineResult {
 			)
 		}
 	}
-	logger.Infof(
-		"Successfully processed all records. Total documents updated: %d",
-		totalUpdatedCount,
-	)
 	return PipelineResult{
 		File:        currentFile,
 		Setup:       currentSetup,
