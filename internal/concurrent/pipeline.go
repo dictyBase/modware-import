@@ -48,14 +48,16 @@ func (bp *BatchProcessor[I, O]) Add(item I) bool {
 
 // AddWithMeta adds an item to the current batch with metadata,
 // automatically submitting the batch when it reaches the configured size
-func (bp *BatchProcessor[I, O]) AddWithMeta(item I, meta map[string]interface{}) bool {
+func (bp *BatchProcessor[I, O]) AddWithMeta(
+	item I,
+	meta map[string]interface{},
+) bool {
 	bp.batchMutex.Lock()
 	defer bp.batchMutex.Unlock()
-	
 	// Store the item and metadata for later submission
 	bp.currentBatch = append(bp.currentBatch, item)
 	bp.currentMeta = append(bp.currentMeta, meta)
-	
+
 	if len(bp.currentBatch) >= bp.BatchSize {
 		bp.submitCurrentBatchLocked()
 		return true
@@ -89,7 +91,10 @@ func (bp *BatchProcessor[I, O]) AddBatch(items []I) int {
 }
 
 // AddBatchWithMeta adds multiple items to the processor with the same metadata
-func (bp *BatchProcessor[I, O]) AddBatchWithMeta(items []I, meta map[string]interface{}) int {
+func (bp *BatchProcessor[I, O]) AddBatchWithMeta(
+	items []I,
+	meta map[string]interface{},
+) int {
 	if len(items) == 0 {
 		return 0
 	}

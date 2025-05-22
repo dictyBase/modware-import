@@ -229,21 +229,12 @@ func (p *Pool[I, O]) Cancel() {
 func (p *Pool[I, O]) GetStats() PoolStats {
 	p.stats.mu.Lock()
 	defer p.stats.mu.Unlock()
-	return *p.stats
-}
-
-// updateStats atomically updates pool statistics
-func (p *Pool[I, O]) updateStats(success bool, duration time.Duration) {
-	atomic.AddInt64(&p.stats.JobsProcessed, 1)
-	if success {
-		atomic.AddInt64(&p.stats.JobsSucceeded, 1)
-	} else {
-		atomic.AddInt64(&p.stats.JobsFailed, 1)
+	return PoolStats{
+		JobsProcessed:       atomic.LoadInt64(&p.stats.JobsProcessed),
+		JobsSucceeded:       atomic.LoadInt64(&p.stats.JobsSucceeded),
+		JobsFailed:          atomic.LoadInt64(&p.stats.JobsFailed),
+		TotalProcessingTime: p.stats.TotalProcessingTime,
 	}
-
-	p.stats.mu.Lock()
-	p.stats.TotalProcessingTime += duration
-	p.stats.mu.Unlock()
 }
 
 // ProcessBatch submits a batch of jobs and waits for completion
@@ -279,34 +270,46 @@ func (w *worker[I, O]) start() {
 			if !ok {
 				return // Channel closed
 			}
-			startTime := time.Now()
-			output, err := w.workerFunc(w.ctx, job)
-			duration := time.Since(startTime)
+			w.processJobAndSendResult(job)
+		}
+	}
+}
 
-			result := Result[O]{
-				JobID:    job.ID,
-				Output:   output,
-				Error:    err,
-				Duration: duration,
-			}
+// processJobAndSendResult encapsulates the logic for processing a single job
+// and sending its result/error. This helps reduce cyclomatic complexity of start().
+func (w *worker[I, O]) processJobAndSendResult(job Job[I]) {
+	startTime := time.Now()
+	output, jobErr := w.workerFunc(w.ctx, job) // Execute the actual work
+	duration := time.Since(startTime)
 
-			select {
-			case <-w.ctx.Done():
-				return
-			case w.resultChan <- result:
-				// Result delivered
-			}
+	// Note: The original `updateStats` was unused. If stats updates are desired here,
+	// they would need to be integrated, likely by sending data back to the pool
+	// or if the worker has a reference to the pool's stats object and can update it atomically/safely.
+	// For now, focusing on complexity reduction and other lint errors.
 
-			if err != nil {
-				select {
-				case <-w.ctx.Done():
-					return
-				case w.errorChan <- err:
-					// Error reported
-				default:
-					// Non-blocking error reporting
-				}
-			}
+	result := Result[O]{
+		JobID:    job.ID,
+		Output:   output,
+		Error:    jobErr,
+		Duration: duration,
+	}
+
+	// Attempt to send the result
+	select {
+	case <-w.ctx.Done(): // Check if context was cancelled during processing or before sending
+		return
+	case w.resultChan <- result:
+		// Result sent successfully
+	}
+
+	// If an error occurred during job processing, attempt to send it to the error channel
+	if jobErr != nil {
+		select {
+		case <-w.ctx.Done(): // Check again if context was cancelled
+		case w.errorChan <- jobErr:
+			// Error sent successfully
+		default:
+			// Error channel is full or context done, error not sent (non-blocking)
 		}
 	}
 }
