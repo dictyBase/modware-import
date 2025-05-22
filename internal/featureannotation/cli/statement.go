@@ -3,11 +3,10 @@ package cli
 const (
 	// AQL query to update documents based on featureprop_id
 	updateAQLQuery = `
-	FOR row IN @data
+	FOR idx IN RANGE(0,COUNT(@featureprop_ids) - 1)
 		FOR prop IN @@collection
-			FILTER prop.featureprop_id == row.featureprop_id
-			UPDATE prop WITH { value: row.value } IN @@collection
-			RETURN NEW
+			FILTER prop.featureprop_id == @featureprop_ids[idx]
+			UPDATE prop WITH { value: @values[idx] } IN @@collection
 	`
 
 	ListActiveGenesQ = `
