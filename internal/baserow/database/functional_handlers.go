@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 
 	A "github.com/IBM/fp-go/array"
@@ -129,6 +130,11 @@ func uncurriedHasUser(email string, ursp WorkspaceUserResp) bool {
 }
 
 func onTableCreateFeedbackSuccess(res tableFieldRes) fieldsReqFeedback {
+	if res.Id < math.MinInt32 || res.Id > math.MaxInt32 {
+		return fieldsReqFeedback{
+			Error: fmt.Errorf("table ID %d from response is out of int32 range", res.Id),
+		}
+	}
 	return fieldsReqFeedback{
 		Table: &client.Table{
 			Id:   int32(res.Id),
