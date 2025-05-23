@@ -33,11 +33,11 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/oauth2 v0.22.0 // indirect
+	golang.org/x/oauth2 v0.25.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
-	google.golang.org/grpc v1.67.1
+	google.golang.org/grpc v1.67.3
 	google.golang.org/protobuf v1.36.4
 	k8s.io/api v0.31.3
 	k8s.io/apimachinery v0.31.3
@@ -49,6 +49,7 @@ require (
 require (
 	github.com/IBM/fp-go v1.0.152
 	github.com/alicebob/miniredis/v2 v2.34.0
+	github.com/arangodb/go-driver v1.6.6
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/google/uuid v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.6.5
@@ -59,7 +60,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.6
 	github.com/xuri/excelize/v2 v2.9.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
-	golang.org/x/sync v0.13.0
+	golang.org/x/sync v0.14.0
 )
 
 require (
@@ -95,8 +96,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
-	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
@@ -106,7 +105,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
