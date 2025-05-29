@@ -1,12 +1,15 @@
 package cli
 
-import "github.com/urfave/cli/v2"
+import (
 	"slices"
+	"time"
 
-// LoadFeatureAnnotationFlag returns all flags required for loading feature annotations
-func LoadFeatureAnnotationFlag() []cli.Flag {
+	"github.com/urfave/cli/v2"
+)
+
+// arangoDBConnectionFlags returns a common set of ArangoDB connection flags.
+func arangoDBConnectionFlags() []cli.Flag {
 	return []cli.Flag{
-		// ArangoDB connection flags
 		&cli.StringFlag{
 			Name:     "arangodb-user",
 			Usage:    "ArangoDB user name",
@@ -28,20 +31,27 @@ func LoadFeatureAnnotationFlag() []cli.Flag {
 		&cli.StringFlag{
 			Name:    "arangodb-host",
 			Usage:   "ArangoDB host",
-			EnvVars: []string{"ARANGODB_SERVICE_HOST"},
+			EnvVars: []string{"ARANGODB_HOST", "ARANGODB_SERVICE_HOST"},
+			Value:   "arangodb",
 		},
 		&cli.IntFlag{
 			Name:    "arangodb-port",
 			Usage:   "ArangoDB port",
-			EnvVars: []string{"ARANGODB_SERVICE_PORT"},
+			EnvVars: []string{"ARANGODB_PORT", "ARANGODB_SERVICE_PORT"},
+			Value:   8529,
 		},
 		&cli.BoolFlag{
 			Name:    "is-secure",
 			Usage:   "Whether to use TLS for ArangoDB connection",
 			EnvVars: []string{"ARANGODB_IS_SECURE"},
+			Value:   false,
 		},
+	}
+}
 
-		// Feature annotation gRPC service flags
+// featureAnnotationGrpcFlags returns gRPC flags for the feature annotation service.
+func featureAnnotationGrpcFlags() []cli.Flag {
+	return []cli.Flag{
 		&cli.StringFlag{
 			Name:    "feature-annotation-grpc-host",
 			Usage:   "Feature annotation gRPC host",
@@ -57,13 +67,17 @@ func LoadFeatureAnnotationFlag() []cli.Flag {
 	}
 }
 
+// LoadFeatureAnnotationFlag returns all flags required for loading feature
+// annotations
+func LoadFeatureAnnotationFlag() []cli.Flag {
+	return slices.Concat(
+		arangoDBConnectionFlags(),
+		featureAnnotationGrpcFlags(),
+	)
+}
+
 // LoadCSVToArangodbFlag returns all flags required for loading CSV data to ArangoDB
 func LoadCSVToArangodbFlag() []cli.Flag {
-	// Reuse existing ArangoDB connection flags
-	// Assuming the first 6 flags are ArangoDB related based on the
-	// LoadFeatureAnnotationFlag definition
-	flags := LoadFeatureAnnotationFlag()[:6]
-
 	csvFlags := []cli.Flag{
 		&cli.StringFlag{
 			Name:     "csv-file",
@@ -91,9 +105,9 @@ func LoadCSVToArangodbFlag() []cli.Flag {
 			Value: 4,
 		},
 	}
+	return slices.Concat(arangoDBConnectionFlags(), csvFlags)
+}
 
-	// Combine the flags
-	return append(flags, csvFlags...)
 // GeneUpdaterFlags returns all flags required for the gene updater command.
 func GeneUpdaterFlags() []cli.Flag {
 	geneUpdaterSpecificFlags := []cli.Flag{
