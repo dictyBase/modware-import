@@ -2,6 +2,13 @@
 func queryArango(params *queryArangoParams) error {
 	params.logger.Debugf("Executing ArangoDB query: %s", params.aqlQuery)
 	cursor, err := params.dbh.Search(params.aqlQuery)
+// queryArangoParams holds the parameters for the queryArango function.
+type queryArangoParams struct {
+	ctx            context.Context
+	config         AppConfig // Contains AQLQuery and Logger
+	arangoDocsChan chan<- ArangoResultDoc
+	mainCancel     context.CancelFunc
+}
 	if err != nil {
 		return fmt.Errorf("failed to execute ArangoDB query: %w", err)
 	}
@@ -12,41 +19,49 @@ func queryArango(params *queryArangoParams) error {
 		return nil
 	}
 
+// queryArango is responsible for querying ArangoDB and sending documents to a channel.
+// It calls params.mainCancel if critical errors occur or the context is done.
+func queryArango(params *queryArangoParams) {
+	dbh := registry.GetArangodbConnection()
+	cursor, err := dbh.Search(params.config.AQLQuery)
+	if err != nil {
+		params.config.Logger.Errorf("error in arangodb query %v", err)
+		params.mainCancel() // Signal other goroutines to stop
+		return
+	}
+	defer cursor.Close()
+	if cursor.IsEmpty() {
+		params.config.Logger.Warn("ArangoDB querier finished (no data).")
+		params.mainCancel() // Signal other goroutines to stop
+		return
+	}
 	docCount := 0
 	for cursor.Scan() {
 		select {
 		case <-params.ctx.Done():
-			params.logger.Warn("Main context cancelled during ArangoDB query.")
-			return params.ctx.Err()
+			return
 		default:
 			var doc ArangoResultDoc
-			if err := cursor.Read(&doc); err != nil {
-				params.logger.Errorf(
+			if errRead := cursor.Read(&doc); errRead != nil {
+				params.config.Logger.Errorf(
 					"Failed to read document from ArangoDB cursor: %v",
-					err,
+					errRead,
 				)
-				continue
+				params.mainCancel() // Signal other goroutines to stop
 			}
+			// Send the document to the channel, handling context
+			// cancellation
 			select {
 			case params.arangoDocsChan <- doc:
 				docCount++
-				if docCount%100 == 0 {
-					params.logger.Infof(
-						"Fetched %d documents from ArangoDB...",
-						docCount,
-					)
-				}
 			case <-params.ctx.Done():
-				params.logger.Warn(
-					"Main context cancelled while sending Arango doc to channel.",
-				)
-				return params.ctx.Err()
+				return
 			}
 		}
 	}
-	params.logger.Infof(
+	params.config.Logger.Infof(
 		"Successfully fetched %d documents from ArangoDB.",
 		docCount,
 	)
-	return nil
 }
+
