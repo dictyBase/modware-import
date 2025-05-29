@@ -2,7 +2,6 @@ package cli
 
 import (
 	"slices"
-	"time"
 
 	"github.com/urfave/cli/v2"
 )
@@ -31,13 +30,13 @@ func arangoDBConnectionFlags() []cli.Flag {
 		&cli.StringFlag{
 			Name:    "arangodb-host",
 			Usage:   "ArangoDB host",
-			EnvVars: []string{"ARANGODB_HOST", "ARANGODB_SERVICE_HOST"},
+			EnvVars: []string{"ARANGODB_SERVICE_HOST"},
 			Value:   "arangodb",
 		},
 		&cli.IntFlag{
 			Name:    "arangodb-port",
 			Usage:   "ArangoDB port",
-			EnvVars: []string{"ARANGODB_PORT", "ARANGODB_SERVICE_PORT"},
+			EnvVars: []string{"ARANGODB_SERVICE_PORT"},
 			Value:   8529,
 		},
 		&cli.BoolFlag{
@@ -129,18 +128,6 @@ func GeneUpdaterFlags() []cli.Flag {
 			Value:   8,
 			Usage:   "Number of gRPC update workers",
 			EnvVars: []string{"GRPC_WORKERS"},
-		},
-		&cli.DurationFlag{
-			Name:    "grpc-timeout",
-			Usage:   "Timeout for gRPC calls",
-			EnvVars: []string{"GRPC_TIMEOUT"},
-			Value:   30 * time.Second,
-		},
-		&cli.DurationFlag{
-			Name:    "arango-timeout",
-			Usage:   "Timeout for ArangoDB query execution",
-			EnvVars: []string{"ARANGO_TIMEOUT"},
-			Value:   5 * time.Minute,
 		},
 	}
 	return slices.Concat(
