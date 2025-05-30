@@ -132,6 +132,16 @@ func extractTextFromNode(node *html.Node, b *strings.Builder) {
 	}
 }
 
+// setupSignalHandling configures handling for SIGINT and SIGTERM signals.
+func setupSignalHandling(mainCancel context.CancelFunc, logger *logrus.Entry) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigChan
+		logger.Infof("Received signal %s, initiating shutdown...", sig)
+		mainCancel()
+	}()
+}
 // queryArango is responsible for querying ArangoDB and sending documents to a channel.
 // It calls params.mainCancel if critical errors occur or the context is done.
 func queryArango(params *queryArangoParams) {
