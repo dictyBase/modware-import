@@ -142,6 +142,27 @@ func setupSignalHandling(mainCancel context.CancelFunc, logger *logrus.Entry) {
 		mainCancel()
 	}()
 }
+
+// bridgeArangoToHTMLPool transfers documents from the ArangoDB channel to the HTML processing pool.
+func bridgeArangoToHTMLPool(
+	mainCtx context.Context,
+	arangoDocsFromQueryChan <-chan ArangoResultDoc,
+	htmlProcessingPool *concurrent.Pool[ArangoResultDoc, ProcessedGeneData],
+	logger *logrus.Entry,
+) {
+	logger.Info("Starting Arango-to-HTML-Pool bridge...")
+	for {
+		select {
+		case <-mainCtx.Done():
+			return
+		case arangoDoc, ok := <-arangoDocsFromQueryChan:
+			if !ok {
+				return
+			}
+			htmlProcessingPool.Submit(arangoDoc)
+		}
+	}
+}
 // queryArango is responsible for querying ArangoDB and sending documents to a channel.
 // It calls params.mainCancel if critical errors occur or the context is done.
 func queryArango(params *queryArangoParams) {
