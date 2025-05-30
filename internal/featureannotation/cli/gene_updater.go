@@ -33,6 +33,52 @@ type queryArangoParams struct {
 	arangoDocsChan chan<- ArangoResultDoc
 	mainCancel     context.CancelFunc
 }
+
+// AppConfig holds all configuration for the application.
+type AppConfig struct {
+	AQLQuery             string
+	ArangoUser           string // For authorship in gRPC updates
+	NumProcessingWorkers int
+	NumGrpcWorkers       int
+	Logger               *logrus.Entry
+}
+
+// ArangoResultDoc represents the structure of a document from ArangoDB.
+type ArangoResultDoc struct {
+	ID    string           `json:"id"` // This is dbx.accession, likely the feature_id
+	Props []ArangoProperty `json:"props"`
+}
+
+// ArangoProperty represents a single property object from ArangoDB.
+type ArangoProperty struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+// ProcessedGeneData holds the gene ID and its list of HTML-stripped property values.
+type ProcessedGeneData struct {
+	GeneID            string
+	StrippedPropsText []StrippedProperty
+}
+
+// StrippedProperty holds the original property name and its stripped text.
+type StrippedProperty struct {
+	OriginalName string
+	StrippedText string
+}
+
+// GrpcUpdateResult holds the result of a gRPC update operation.
+type GrpcUpdateResult struct {
+	GeneID  string
+	Success bool
+	Message string
+	Error   error
+}
+
+// HTML Stripping Utilities
+var (
+	spaceNormalizerRegexp = regexp.MustCompile(`\s+`)
+)
 	if err != nil {
 		return fmt.Errorf("failed to execute ArangoDB query: %w", err)
 	}
