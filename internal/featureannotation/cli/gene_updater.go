@@ -1,4 +1,22 @@
 package cli
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"regexp"
+	"strings"
+	"sync"
+	"syscall"
+
+	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	"github.com/dictyBase/modware-import/internal/concurrent"
+	"github.com/dictyBase/modware-import/internal/registry"
+	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
+	"golang.org/x/net/html"
+)
+
 // DefaultAQLQuery is the default query to fetch gene data from ArangoDB.
 // Exported for use in flag.go
 const DefaultAQLQuery = `
@@ -79,15 +97,38 @@ type GrpcUpdateResult struct {
 var (
 	spaceNormalizerRegexp = regexp.MustCompile(`\s+`)
 )
+func stripHTMLWithParser(htmlString string) (string, error) {
+	processedHTMLString := strings.ReplaceAll(htmlString, "\\n", "")
+	doc, err := html.Parse(strings.NewReader(processedHTMLString))
 	if err != nil {
-		return fmt.Errorf("failed to execute ArangoDB query: %w", err)
+		return "", fmt.Errorf("failed to parse HTML: %w", err)
 	}
-	defer cursor.Close()
+	var b strings.Builder
+	extractTextFromNode(doc, &b)
+	normalizedText := spaceNormalizerRegexp.ReplaceAllString(b.String(), " ")
+	return strings.TrimSpace(normalizedText), nil
+}
 
-	if cursor.IsEmpty() {
-		params.logger.Error("No feature props found")
-		return nil
+func extractTextFromNode(node *html.Node, b *strings.Builder) {
+	if node == nil {
+		return
 	}
+	if node.Type == html.ElementNode {
+		switch node.Data {
+		case "script", "style", "noscript", "iframe", "noembed":
+			return
+		}
+	}
+	if node.Type == html.CommentNode {
+		return
+	}
+	if node.Type == html.TextNode {
+		b.WriteString(node.Data)
+	}
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		extractTextFromNode(child, b)
+	}
+}
 
 // queryArango is responsible for querying ArangoDB and sending documents to a channel.
 // It calls params.mainCancel if critical errors occur or the context is done.
