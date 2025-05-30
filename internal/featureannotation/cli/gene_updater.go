@@ -1,7 +1,31 @@
-	"github.com/dictyBase/arangomanager"
-func queryArango(params *queryArangoParams) error {
-	params.logger.Debugf("Executing ArangoDB query: %s", params.aqlQuery)
-	cursor, err := params.dbh.Search(params.aqlQuery)
+package cli
+// DefaultAQLQuery is the default query to fetch gene data from ArangoDB.
+// Exported for use in flag.go
+const DefaultAQLQuery = `
+FOR ftype IN cvterm
+ FOR feat IN feature
+    FOR dbx IN dbxref
+        FILTER ftype.name == 'gene'
+        FILTER feat.type_id == ftype.cvterm_id
+        FILTER feat.dbxref_id == dbx.dbxref_id
+        LET props = (
+            FOR fprop IN featureprop
+                FOR cvt IN cvterm
+                    FILTER cvt.name IN ['description','name description']
+                    FILTER feat.feature_id == fprop.feature_id
+                    FILTER fprop.type_id == cvt.cvterm_id
+                    RETURN {
+                        name: cvt.name,
+                        value: fprop.value
+                    }
+        )
+        FILTER LENGTH(props) > 0
+        RETURN {
+            id: dbx.accession,
+            props: props
+        }
+`
+
 // queryArangoParams holds the parameters for the queryArango function.
 type queryArangoParams struct {
 	ctx            context.Context
