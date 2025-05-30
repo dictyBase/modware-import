@@ -98,31 +98,33 @@ var (
 	spaceNormalizerRegexp = regexp.MustCompile(`\s+`)
 )
 func stripHTMLWithParser(htmlString string) (string, error) {
-	processedHTMLString := strings.ReplaceAll(htmlString, "\\n", "")
-	doc, err := html.Parse(strings.NewReader(processedHTMLString))
+	doc, err := html.Parse(
+		strings.NewReader(strings.ReplaceAll(htmlString, "\\n", "")),
+	)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse HTML: %w", err)
 	}
 	var b strings.Builder
 	extractTextFromNode(doc, &b)
-	normalizedText := spaceNormalizerRegexp.ReplaceAllString(b.String(), " ")
-	return strings.TrimSpace(normalizedText), nil
+	return strings.TrimSpace(
+		spaceNormalizerRegexp.ReplaceAllString(b.String(), " "),
+	), nil
 }
 
 func extractTextFromNode(node *html.Node, b *strings.Builder) {
 	if node == nil {
 		return
 	}
-	if node.Type == html.ElementNode {
+	switch node.Type {
+	case html.ElementNode:
+		// Skip content of certain tags
 		switch node.Data {
 		case "script", "style", "noscript", "iframe", "noembed":
 			return
 		}
-	}
-	if node.Type == html.CommentNode {
+	case html.CommentNode:
 		return
-	}
-	if node.Type == html.TextNode {
+	case html.TextNode:
 		b.WriteString(node.Data)
 	}
 	for child := node.FirstChild; child != nil; child = child.NextSibling {
