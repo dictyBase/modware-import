@@ -1,20 +1,13 @@
 package cli
+
 import (
 	"context"
-	"fmt"
-	"os"
-	"os/signal"
-	"regexp"
-	"strings"
 	"sync"
-	"syscall"
 
-	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/net/html"
 )
 
 // DefaultAQLQuery is the default query to fetch gene data from ArangoDB.
@@ -44,14 +37,6 @@ FOR ftype IN cvterm
         }
 `
 
-// queryArangoParams holds the parameters for the queryArango function.
-type queryArangoParams struct {
-	ctx            context.Context
-	config         AppConfig // Contains AQLQuery and Logger
-	arangoDocsChan chan<- ArangoResultDoc
-	mainCancel     context.CancelFunc
-}
-
 // AppConfig holds all configuration for the application.
 type AppConfig struct {
 	AQLQuery             string
@@ -61,215 +46,89 @@ type AppConfig struct {
 	Logger               *logrus.Entry
 }
 
-// ArangoResultDoc represents the structure of a document from ArangoDB.
-type ArangoResultDoc struct {
-	ID    string           `json:"id"` // This is dbx.accession, likely the feature_id
-	Props []ArangoProperty `json:"props"`
-}
-
-// ArangoProperty represents a single property object from ArangoDB.
-type ArangoProperty struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-// ProcessedGeneData holds the gene ID and its list of HTML-stripped property values.
-type ProcessedGeneData struct {
-	GeneID            string
-	StrippedPropsText []StrippedProperty
-}
-
-// StrippedProperty holds the original property name and its stripped text.
-type StrippedProperty struct {
-	OriginalName string
-	StrippedText string
-}
-
-// GrpcUpdateResult holds the result of a gRPC update operation.
-type GrpcUpdateResult struct {
-	GeneID  string
-	Success bool
-	Message string
-	Error   error
-}
-
-// HTML Stripping Utilities
-var (
-	spaceNormalizerRegexp = regexp.MustCompile(`\s+`)
-)
-func stripHTMLWithParser(htmlString string) (string, error) {
-	doc, err := html.Parse(
-		strings.NewReader(strings.ReplaceAll(htmlString, "\\n", "")),
-	)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse HTML: %w", err)
-	}
-	var b strings.Builder
-	extractTextFromNode(doc, &b)
-	return strings.TrimSpace(
-		spaceNormalizerRegexp.ReplaceAllString(b.String(), " "),
-	), nil
-}
-
-func extractTextFromNode(node *html.Node, b *strings.Builder) {
-	if node == nil {
-		return
-	}
-	switch node.Type {
-	case html.ElementNode:
-		// Skip content of certain tags
-		switch node.Data {
-		case "script", "style", "noscript", "iframe", "noembed":
-			return
-		}
-	case html.CommentNode:
-		return
-	case html.TextNode:
-		b.WriteString(node.Data)
-	}
-	for child := node.FirstChild; child != nil; child = child.NextSibling {
-		extractTextFromNode(child, b)
-	}
-}
-
-// setupSignalHandling configures handling for SIGINT and SIGTERM signals.
-func setupSignalHandling(mainCancel context.CancelFunc, logger *logrus.Entry) {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		sig := <-sigChan
-		logger.Infof("Received signal %s, initiating shutdown...", sig)
-		mainCancel()
-	}()
-}
-
-// bridgeArangoToHTMLPool transfers documents from the ArangoDB channel to the HTML processing pool.
-func bridgeArangoToHTMLPool(
-	mainCtx context.Context,
-	arangoDocsFromQueryChan <-chan ArangoResultDoc,
-	htmlProcessingPool *concurrent.Pool[ArangoResultDoc, ProcessedGeneData],
+// newAppConfigFromCliContext creates an AppConfig from CLI context and a logger.
+func newAppConfigFromCliContext(
+	cltx *cli.Context,
 	logger *logrus.Entry,
-) {
-	logger.Info("Starting Arango-to-HTML-Pool bridge...")
-	for {
-		select {
-		case <-mainCtx.Done():
-			return
-		case arangoDoc, ok := <-arangoDocsFromQueryChan:
-			if !ok {
-				return
-			}
-			htmlProcessingPool.Submit(arangoDoc)
-		}
+) AppConfig {
+	return AppConfig{
+		AQLQuery:             cltx.String("aql-query"),
+		ArangoUser:           cltx.String("arangodb-user"), // For authorship
+		NumProcessingWorkers: cltx.Int("processing-workers"),
+		NumGrpcWorkers:       cltx.Int("grpc-workers"),
+		Logger:               logger,
 	}
-}
-// queryArango is responsible for querying ArangoDB and sending documents to a channel.
-// It calls params.mainCancel if critical errors occur or the context is done.
-func queryArango(params *queryArangoParams) {
-	dbh := registry.GetArangodbConnection()
-	cursor, err := dbh.Search(params.config.AQLQuery)
-	if err != nil {
-		params.config.Logger.Errorf("error in arangodb query %v", err)
-		params.mainCancel() // Signal other goroutines to stop
-		return
-	}
-	defer cursor.Close()
-	if cursor.IsEmpty() {
-		params.config.Logger.Warn("ArangoDB querier finished (no data).")
-		params.mainCancel() // Signal other goroutines to stop
-		return
-	}
-	docCount := 0
-	for cursor.Scan() {
-		select {
-		case <-params.ctx.Done():
-			return
-		default:
-			var doc ArangoResultDoc
-			if errRead := cursor.Read(&doc); errRead != nil {
-				params.config.Logger.Errorf(
-					"Failed to read document from ArangoDB cursor: %v",
-					errRead,
-				)
-				params.mainCancel() // Signal other goroutines to stop
-			}
-			// Send the document to the channel, handling context
-			// cancellation
-			select {
-			case params.arangoDocsChan <- doc:
-				docCount++
-			case <-params.ctx.Done():
-				return
-			}
-		}
-	}
-	params.config.Logger.Infof(
-		"Successfully fetched %d documents from ArangoDB.",
-		docCount,
-	)
 }
 
-func grpcUpdateWorkerFunc(
-	config AppConfig,
-	grpcClient feature_annotation.FeatureAnnotationServiceClient,
-) concurrent.WorkerFunc[ProcessedGeneData, GrpcUpdateResult] {
-	return func(ctx context.Context, job concurrent.Job[ProcessedGeneData]) (GrpcUpdateResult, error) {
-		logger := config.Logger
-		processedData := job.Payload
-		logger.Debugf(
-			"gRPC Worker (Job %s): updating gene ID: %s",
-			job.ID,
-			processedData.GeneID,
-		)
-		result := GrpcUpdateResult{GeneID: processedData.GeneID, Success: false}
-		featAnno, err := grpcClient.GetFeatureAnnotation(
-			ctx, &feature_annotation.FeatureAnnotationId{
-				Id: processedData.GeneID,
-			})
-		if err != nil {
-			result.Message = fmt.Sprintf(
-				"failed to GetFeatureAnnotation: %v",
-				err,
-			)
-			result.Error = err
-			return result, err
-		}
-		for _, prop := range processedData.StrippedPropsText {
-			_, err := grpcClient.AddTag(ctx,
-				&feature_annotation.AddTagRequest{
-					Id: featAnno.Id,
-					Tag: &feature_annotation.TagPropertyCreate{
-						Tag:       prop.OriginalName,
-						Value:     prop.StrippedText,
-						CreatedBy: config.ArangoUser,
-					},
-				})
-			if err != nil {
-				errMsg := fmt.Sprintf(
-					"failed to AddTag for property %s: %v",
-					prop.OriginalName,
-					err,
-				)
-				result.Message = errMsg
-				result.Error = err
-				logger.Errorf(
-					"gRPC Worker (Job %s): %s for gene ID %s",
-					job.ID, errMsg, processedData.GeneID,
-				)
-				return result, err
-			}
-			logger.Debugf(
-				"gRPC Worker (Job %s): successfully added tag %s for gene ID %s",
-				job.ID,
-				prop.OriginalName,
-				processedData.GeneID,
-			)
-		}
-		result.Success = true
-		result.Message = fmt.Sprintf(
-			"Successfully added %d tags",
-			len(processedData.StrippedPropsText),
-		)
-		return result, nil
-	}
+func RunGeneUpdater(cltx *cli.Context) error {
+	logger := registry.GetLogger()
+	config := newAppConfigFromCliContext(cltx, logger)
+
+	logger.Debug("Starting gene updater application...")
+	mainCtx, mainCancel := context.WithCancel(context.Background())
+	defer mainCancel()
+	setupSignalHandling(mainCancel, logger)
+
+	arangoDocsFromQueryChan := make(
+		chan ArangoResultDoc,
+		config.NumProcessingWorkers,
+	)
+	wg := sync.WaitGroup{} // Goroutine 1: ArangoDB Querier
+	wg.Add(1)
+	go queryArango(&wg, &queryArangoParams{
+		ctx:            mainCtx,
+		config:         config,
+		arangoDocsChan: arangoDocsFromQueryChan,
+		mainCancel:     mainCancel,
+	})
+	// Setup HTML Processing Pool
+	htmlProcessingPool := concurrent.NewPool(
+		htmlProcessingWorkerFunc(config.Logger),
+		concurrent.WithWorkers[ArangoResultDoc, ProcessedGeneData](
+			config.NumProcessingWorkers,
+		),
+		concurrent.WithContext[ArangoResultDoc, ProcessedGeneData](mainCtx),
+		concurrent.WithBufferSize[ArangoResultDoc, ProcessedGeneData](
+			config.NumProcessingWorkers*2,
+		),
+	)
+	htmlProcessingPool.Start()
+	grpcUpdatePool := concurrent.NewPool(
+		grpcUpdateWorkerFunc(
+			config,
+			registry.GetFeatureAnnotationAPIClient()),
+		concurrent.WithWorkers[ProcessedGeneData, GrpcUpdateResult](
+			config.NumGrpcWorkers,
+		),
+		concurrent.WithContext[ProcessedGeneData, GrpcUpdateResult](mainCtx),
+		concurrent.WithBufferSize[ProcessedGeneData, GrpcUpdateResult](
+			config.NumGrpcWorkers*2,
+		),
+	)
+	grpcUpdatePool.Start()
+	// Start bridge from Arango Docs to HTML Processing Pool goroutine
+	wg.Add(1)
+	go bridgeArangoToHTMLPool(
+		&wg,
+		mainCtx,
+		arangoDocsFromQueryChan,
+		htmlProcessingPool,
+		logger,
+	)
+	// Start bridge from HTML Processing Results to gRPC Update Pool goroutine
+	wg.Add(1)
+	go bridgeHTMLToGrpcPool(
+		&wg,
+		mainCtx,
+		htmlProcessingPool,
+		grpcUpdatePool,
+		logger,
+	)
+	// Start gRPC Update Results Handler goroutine
+	wg.Add(1)
+	go handleGrpcResults(&wg, mainCtx, grpcUpdatePool, logger)
+	logger.Debug("Waiting for all main goroutines to complete...")
+	wg.Wait()
+	logger.Info("Gene updater application finished")
+	return nil
 }
