@@ -66,5 +66,12 @@ func allCommands() []*cli.Command {
 			Before: faclient.CSVArangodbCliSetup,
 			Action: facli.LoadCSVToArangodb,
 		},
+		{
+			Name:   "gene-updater",
+			Usage:  "Updates gene annotations by stripping HTML from properties and using a gRPC API",
+			Flags:  facli.GeneUpdaterFlags(),
+			Before: faclient.CliSetup,
+			Action: facli.RunGeneUpdater,
+		},
 	}
 }
