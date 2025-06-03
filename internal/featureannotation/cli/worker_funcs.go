@@ -127,7 +127,7 @@ func grpcUpdateWorkerFunc(
 					Tag: &feature_annotation.TagPropertyCreate{
 						Tag:       prop.OriginalName,
 						Value:     prop.StrippedText,
-						CreatedBy: config.ArangoUser,
+						CreatedBy: DefaultUserName,
 					},
 				})
 			if err != nil {
