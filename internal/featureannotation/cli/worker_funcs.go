@@ -147,7 +147,7 @@ func processSinglePropertyUpdate(
 				Tag: &feature_annotation.TagPropertyCreate{
 					Tag:       params.prop.OriginalName,
 					Value:     params.prop.StrippedText,
-					CreatedBy: params.arangoUser, // Use ArangoUser for authorship
+					CreatedBy: DefaultUserName,
 				},
 			})
 		if err != nil {
