@@ -19,6 +19,12 @@ type ProcessingMetrics struct {
 	ErrorCount     int64
 	StartTime      time.Time
 	mu             sync.RWMutex
+	// TotalFetchedFromArango stores the total number of items fetched by queryArango.
+	// This field is set by queryArango once the total count is known.
+	TotalFetchedFromArango int64
+	// AllArangoDocsFetched is a flag set to true by queryArango after all documents
+	// have been fetched and sent to the processing pipeline.
+	AllArangoDocsFetched bool
 }
 
 // DefaultAQLQuery is the default query to fetch gene data from ArangoDB.
@@ -86,25 +92,43 @@ func reportProgress(
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
+	// Helper function to log metrics
+	logCurrentMetrics := func(message string) {
+		elapsed := time.Since(metrics.StartTime)
+		rate := 0.0
+		if elapsed.Seconds() > 0 {
+			rate = float64(metrics.TotalProcessed) / elapsed.Seconds()
+		}
+		logger.WithFields(logrus.Fields{
+			"total_processed": metrics.TotalProcessed,
+			"success_count":   metrics.SuccessCount,
+			"error_count":     metrics.ErrorCount,
+			"processing_rate": fmt.Sprintf("%.2f genes/sec", rate),
+			"elapsed_time":    elapsed.String(),
+		}).Info(message)
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Debug("Stopping progress reporter due to context cancellation.")
+			metrics.mu.RLock()
+			logCurrentMetrics("Final processing report on cancellation")
+			metrics.mu.RUnlock()
+			logger.Debug(
+				"Stopping progress reporter due to context cancellation.",
+			)
 			return
 		case <-ticker.C:
 			metrics.mu.RLock()
-			elapsed := time.Since(metrics.StartTime)
-			rate := float64(metrics.TotalProcessed) / elapsed.Seconds()
-			if elapsed.Seconds() == 0 { // Avoid division by zero if no time has passed
-				rate = 0
+			logCurrentMetrics("Processing progress")
+
+			// Check if all genes fetched from ArangoDB have been processed
+			if metrics.AllArangoDocsFetched &&
+				metrics.TotalProcessed >= metrics.TotalFetchedFromArango {
+				logger.Info("All genes processed. Stopping progress reporter.")
+				metrics.mu.RUnlock() // Release lock before returning
+				return
 			}
-			logger.WithFields(logrus.Fields{
-				"total_processed": metrics.TotalProcessed,
-				"success_count":   metrics.SuccessCount,
-				"error_count":     metrics.ErrorCount,
-				"processing_rate": fmt.Sprintf("%.2f genes/sec", rate),
-				"elapsed_time":    elapsed.String(),
-			}).Info("Processing progress")
 			metrics.mu.RUnlock()
 		}
 	}
