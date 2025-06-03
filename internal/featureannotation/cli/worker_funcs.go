@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
@@ -16,6 +17,16 @@ import (
 var (
 	spaceNormalizerRegexp = regexp.MustCompile(`\s+`)
 )
+
+type processSinglePropertyUpdateParams struct {
+	ctx        context.Context
+	grpcClient feature_annotation.FeatureAnnotationServiceClient
+	featAnno   *feature_annotation.FeatureAnnotation
+	prop       StrippedProperty
+	arangoUser string
+	logger     *logrus.Entry
+	jobID      string
+}
 
 func stripHTMLWithParser(htmlString string) (string, error) {
 	doc, err := html.Parse(
@@ -95,6 +106,67 @@ func htmlProcessingWorkerFunc(
 	}
 }
 
+func processSinglePropertyUpdate(
+	params *processSinglePropertyUpdateParams,
+) error {
+	if slices.ContainsFunc(
+		params.featAnno.Attributes.Properties,
+		func(existingTag *feature_annotation.TagProperty) bool {
+			return existingTag.Tag == params.prop.OriginalName
+		},
+	) {
+		_, err := params.grpcClient.UpdateTag(
+			params.ctx,
+			&feature_annotation.UpdateTagRequest{
+				Id: params.featAnno.Id,
+				Tag: &feature_annotation.TagPropertyUpdate{
+					Tag:       params.prop.OriginalName,
+					Value:     params.prop.StrippedText,
+					UpdatedBy: DefaultUserName,
+				},
+			},
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to UpdateTag for property %s: %v",
+				params.prop.OriginalName,
+				err,
+			)
+		}
+		params.logger.Debugf(
+			"gRPC Worker (Job %s): successfully updated tag %s for gene ID %s",
+			params.jobID,
+			params.prop.OriginalName,
+			params.featAnno.Id,
+		)
+	} else {
+		// Add new tag
+		_, err := params.grpcClient.AddTag(params.ctx,
+			&feature_annotation.AddTagRequest{
+				Id: params.featAnno.Id,
+				Tag: &feature_annotation.TagPropertyCreate{
+					Tag:       params.prop.OriginalName,
+					Value:     params.prop.StrippedText,
+					CreatedBy: params.arangoUser, // Use ArangoUser for authorship
+				},
+			})
+		if err != nil {
+			return fmt.Errorf(
+				"failed to AddTag for property %s: %v",
+				params.prop.OriginalName,
+				err,
+			)
+		}
+		params.logger.Debugf(
+			"gRPC Worker (Job %s): successfully added tag %s for gene ID %s",
+			params.jobID,
+			params.prop.OriginalName,
+			params.featAnno.Id,
+		)
+	}
+	return nil
+}
+
 func grpcUpdateWorkerFunc(
 	config AppConfig,
 	grpcClient feature_annotation.FeatureAnnotationServiceClient,
@@ -121,39 +193,26 @@ func grpcUpdateWorkerFunc(
 			return result, err
 		}
 		for _, prop := range processedData.StrippedPropsText {
-			_, err := grpcClient.AddTag(ctx,
-				&feature_annotation.AddTagRequest{
-					Id: featAnno.Id,
-					Tag: &feature_annotation.TagPropertyCreate{
-						Tag:       prop.OriginalName,
-						Value:     prop.StrippedText,
-						CreatedBy: DefaultUserName,
-					},
-				})
-			if err != nil {
-				errMsg := fmt.Sprintf(
-					"failed to AddTag for property %s: %v",
-					prop.OriginalName,
-					err,
-				)
-				result.Message = errMsg
-				result.Error = err
-				logger.Errorf(
-					"gRPC Worker (Job %s): %s for gene ID %s",
-					job.ID, errMsg, processedData.GeneID,
-				)
-				return result, err
-			}
-			logger.Debugf(
-				"gRPC Worker (Job %s): successfully added tag %s for gene ID %s",
-				job.ID,
-				prop.OriginalName,
-				processedData.GeneID,
+			err := processSinglePropertyUpdate(
+				&processSinglePropertyUpdateParams{
+					ctx:        ctx,
+					grpcClient: grpcClient,
+					featAnno:   featAnno,
+					prop:       prop,
+					arangoUser: config.ArangoUser,
+					logger:     logger,
+					jobID:      job.ID,
+				},
 			)
+			if err != nil {
+				result.Message = err.Error()
+				result.Error = err
+				return result, err // Return on the first error encountered
+			}
 		}
 		result.Success = true
 		result.Message = fmt.Sprintf(
-			"Successfully added %d tags",
+			"Successfully processed %d tags",
 			len(processedData.StrippedPropsText),
 		)
 		return result, nil
