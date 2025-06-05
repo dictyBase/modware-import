@@ -8,9 +8,12 @@ import (
 	"strings"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/html"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // HTML Stripping Utilities
@@ -26,6 +29,24 @@ type processSinglePropertyUpdateParams struct {
 	arangoUser string
 	logger     *logrus.Entry
 	jobID      string
+}
+
+type handleCreateFeatureAnnotationParams struct {
+	ctx           context.Context
+	grpcClient    feature_annotation.FeatureAnnotationServiceClient
+	processedData ProcessedGeneData
+	jobID         string
+	logger        *logrus.Entry
+}
+
+type handleUpdateExistingFeatureAnnotationParams struct {
+	ctx           context.Context
+	grpcClient    feature_annotation.FeatureAnnotationServiceClient
+	featAnno      *feature_annotation.FeatureAnnotation
+	processedData ProcessedGeneData
+	config        AppConfig
+	jobID         string
+	logger        *logrus.Entry
 }
 
 func stripHTMLWithParser(htmlString string) (string, error) {
@@ -167,6 +188,85 @@ func processSinglePropertyUpdate(
 	return nil
 }
 
+func strippedPropertyToTagProperty(
+	prop StrippedProperty,
+) *feature_annotation.TagProperty {
+	return &feature_annotation.TagProperty{
+		Tag:       prop.OriginalName,
+		Value:     prop.StrippedText,
+		CreatedBy: DefaultUserName,
+	}
+}
+
+func handleCreateFeatureAnnotation(
+	params *handleCreateFeatureAnnotationParams,
+) (GrpcUpdateResult, error) {
+	result := GrpcUpdateResult{
+		GeneID:  params.processedData.GeneID,
+		Success: false,
+	}
+	_, createErr := params.grpcClient.CreateFeatureAnnotation(
+		params.ctx,
+		&feature_annotation.NewFeatureAnnotation{
+			Id:        params.processedData.GeneID,
+			CreatedBy: DefaultUserName,
+			Attributes: &feature_annotation.FeatureAnnotationAttributes{
+				Name: params.processedData.GeneID, // Use GeneID as name if not otherwise available
+				Properties: collection.Map(
+					params.processedData.StrippedPropsText,
+					strippedPropertyToTagProperty,
+				),
+			},
+		})
+	if createErr != nil {
+		result.Message = fmt.Sprintf(
+			"failed to CreateFeatureAnnotation after not found: %v",
+			createErr,
+		)
+		result.Error = createErr
+		return result, createErr
+	}
+	result.Success = true
+	result.Message = fmt.Sprintf(
+		"Successfully created FeatureAnnotation with %d tags",
+		len(params.processedData.StrippedPropsText),
+	)
+	return result, nil
+}
+
+func handleUpdateExistingFeatureAnnotation(
+	params *handleUpdateExistingFeatureAnnotationParams,
+) (GrpcUpdateResult, error) {
+	result := GrpcUpdateResult{
+		GeneID:  params.processedData.GeneID,
+		Success: false,
+	}
+	for _, prop := range params.processedData.StrippedPropsText {
+		err := processSinglePropertyUpdate(
+			&processSinglePropertyUpdateParams{
+				ctx:        params.ctx,
+				grpcClient: params.grpcClient,
+				featAnno:   params.featAnno,
+				prop:       prop,
+				arangoUser: params.config.ArangoUser,
+				logger:     params.logger,
+				jobID:      params.jobID,
+			},
+		)
+		if err != nil {
+			result.Message = err.Error()
+			result.Error = err
+			return result, err // Return on the first error encountered
+		}
+	}
+	result.Success = true
+	result.Message = fmt.Sprintf(
+		"Successfully processed %d tags",
+		len(params.processedData.StrippedPropsText),
+	)
+	return result, nil
+}
+
 func grpcUpdateWorkerFunc(
 	config AppConfig,
 	grpcClient feature_annotation.FeatureAnnotationServiceClient,
@@ -185,6 +285,17 @@ func grpcUpdateWorkerFunc(
 				Id: processedData.GeneID,
 			})
 		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				return handleCreateFeatureAnnotation(
+					&handleCreateFeatureAnnotationParams{
+						ctx:           ctx,
+						grpcClient:    grpcClient,
+						processedData: processedData,
+						jobID:         job.ID,
+						logger:        logger,
+					},
+				)
+			}
 			result.Message = fmt.Sprintf(
 				"failed to GetFeatureAnnotation: %v",
 				err,
@@ -192,29 +303,16 @@ func grpcUpdateWorkerFunc(
 			result.Error = err
 			return result, err
 		}
-		for _, prop := range processedData.StrippedPropsText {
-			err := processSinglePropertyUpdate(
-				&processSinglePropertyUpdateParams{
-					ctx:        ctx,
-					grpcClient: grpcClient,
-					featAnno:   featAnno,
-					prop:       prop,
-					arangoUser: config.ArangoUser,
-					logger:     logger,
-					jobID:      job.ID,
-				},
-			)
-			if err != nil {
-				result.Message = err.Error()
-				result.Error = err
-				return result, err // Return on the first error encountered
-			}
-		}
-		result.Success = true
-		result.Message = fmt.Sprintf(
-			"Successfully processed %d tags",
-			len(processedData.StrippedPropsText),
+		return handleUpdateExistingFeatureAnnotation(
+			&handleUpdateExistingFeatureAnnotationParams{
+				ctx:           ctx,
+				grpcClient:    grpcClient,
+				featAnno:      featAnno,
+				processedData: processedData,
+				config:        config,
+				jobID:         job.ID,
+				logger:        logger,
+			},
 		)
-		return result, nil
 	}
 }
