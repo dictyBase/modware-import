@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	fanno "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/sirupsen/logrus"
@@ -23,8 +23,8 @@ var (
 
 type processSinglePropertyUpdateParams struct {
 	ctx        context.Context
-	grpcClient feature_annotation.FeatureAnnotationServiceClient
-	featAnno   *feature_annotation.FeatureAnnotation
+	grpcClient fanno.FeatureAnnotationServiceClient
+	featAnno   *fanno.FeatureAnnotation
 	prop       StrippedProperty
 	arangoUser string
 	logger     *logrus.Entry
@@ -33,7 +33,7 @@ type processSinglePropertyUpdateParams struct {
 
 type handleCreateFeatureAnnotationParams struct {
 	ctx           context.Context
-	grpcClient    feature_annotation.FeatureAnnotationServiceClient
+	grpcClient    fanno.FeatureAnnotationServiceClient
 	processedData ProcessedGeneData
 	jobID         string
 	logger        *logrus.Entry
@@ -41,8 +41,8 @@ type handleCreateFeatureAnnotationParams struct {
 
 type handleUpdateExistingFeatureAnnotationParams struct {
 	ctx           context.Context
-	grpcClient    feature_annotation.FeatureAnnotationServiceClient
-	featAnno      *feature_annotation.FeatureAnnotation
+	grpcClient    fanno.FeatureAnnotationServiceClient
+	featAnno      *fanno.FeatureAnnotation
 	processedData ProcessedGeneData
 	config        AppConfig
 	jobID         string
@@ -96,15 +96,13 @@ func htmlProcessingWorkerFunc(
 		for _, prop := range arangoDoc.Props {
 			strippedText, err := stripHTMLWithParser(prop.Value)
 			if err != nil {
-				return ProcessedGeneData{
-						GeneID: arangoDoc.ID,
-					}, fmt.Errorf(
-						"failed to strip HTML for gene %s, property %s (Job %s): %w",
-						arangoDoc.ID,
-						prop.Name,
-						job.ID,
-						err,
-					)
+				return ProcessedGeneData{}, fmt.Errorf(
+					"failed to strip HTML for gene %s, property %s (Job %s): %w",
+					arangoDoc.ID,
+					prop.Name,
+					job.ID,
+					err,
+				)
 			}
 			strippedProps = append(
 				strippedProps,
@@ -127,8 +125,10 @@ func htmlProcessingWorkerFunc(
 	}
 }
 
-func hasTagPropertyByName(name string) func(*feature_annotation.TagProperty) bool {
-	return func(existingTag *feature_annotation.TagProperty) bool {
+func hasTagPropertyByName(
+	name string,
+) func(*fanno.TagProperty) bool {
+	return func(existingTag *fanno.TagProperty) bool {
 		return existingTag.Tag == name
 	}
 }
@@ -142,9 +142,9 @@ func processSinglePropertyUpdate(
 	) {
 		_, err := params.grpcClient.UpdateTag(
 			params.ctx,
-			&feature_annotation.UpdateTagRequest{
+			&fanno.UpdateTagRequest{
 				Id: params.featAnno.Id,
-				Tag: &feature_annotation.TagPropertyUpdate{
+				Tag: &fanno.TagPropertyUpdate{
 					Tag:       params.prop.OriginalName,
 					Value:     params.prop.StrippedText,
 					UpdatedBy: DefaultUserName,
@@ -167,9 +167,9 @@ func processSinglePropertyUpdate(
 	} else {
 		// Add new tag
 		_, err := params.grpcClient.AddTag(params.ctx,
-			&feature_annotation.AddTagRequest{
+			&fanno.AddTagRequest{
 				Id: params.featAnno.Id,
-				Tag: &feature_annotation.TagPropertyCreate{
+				Tag: &fanno.TagPropertyCreate{
 					Tag:       params.prop.OriginalName,
 					Value:     params.prop.StrippedText,
 					CreatedBy: DefaultUserName,
@@ -194,8 +194,8 @@ func processSinglePropertyUpdate(
 
 func strippedPropertyToTagProperty(
 	prop StrippedProperty,
-) *feature_annotation.TagProperty {
-	return &feature_annotation.TagProperty{
+) *fanno.TagProperty {
+	return &fanno.TagProperty{
 		Tag:       prop.OriginalName,
 		Value:     prop.StrippedText,
 		CreatedBy: DefaultUserName,
@@ -211,10 +211,10 @@ func handleCreateFeatureAnnotation(
 	}
 	_, createErr := params.grpcClient.CreateFeatureAnnotation(
 		params.ctx,
-		&feature_annotation.NewFeatureAnnotation{
+		&fanno.NewFeatureAnnotation{
 			Id:        params.processedData.GeneID,
 			CreatedBy: DefaultUserName,
-			Attributes: &feature_annotation.FeatureAnnotationAttributes{
+			Attributes: &fanno.FeatureAnnotationAttributes{
 				Name: params.processedData.GeneID, // Use GeneID as name if not otherwise available
 				Properties: collection.Map(
 					params.processedData.StrippedPropsText,
@@ -273,7 +273,7 @@ func handleUpdateExistingFeatureAnnotation(
 
 func grpcUpdateWorkerFunc(
 	config AppConfig,
-	grpcClient feature_annotation.FeatureAnnotationServiceClient,
+	grpcClient fanno.FeatureAnnotationServiceClient,
 ) concurrent.WorkerFunc[ProcessedGeneData, GrpcUpdateResult] {
 	return func(ctx context.Context, job concurrent.Job[ProcessedGeneData]) (GrpcUpdateResult, error) {
 		logger := config.Logger
@@ -285,7 +285,7 @@ func grpcUpdateWorkerFunc(
 		)
 		result := GrpcUpdateResult{GeneID: processedData.GeneID, Success: false}
 		featAnno, err := grpcClient.GetFeatureAnnotation(
-			ctx, &feature_annotation.FeatureAnnotationId{
+			ctx, &fanno.FeatureAnnotationId{
 				Id: processedData.GeneID,
 			})
 		if err != nil {
