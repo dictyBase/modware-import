@@ -164,31 +164,31 @@ func processSinglePropertyUpdate(
 			params.prop.OriginalName,
 			params.featAnno.Id,
 		)
-	} else {
-		// Add new tag
-		_, err := params.grpcClient.AddTag(params.ctx,
-			&fanno.AddTagRequest{
-				Id: params.featAnno.Id,
-				Tag: &fanno.TagPropertyCreate{
-					Tag:       params.prop.OriginalName,
-					Value:     params.prop.StrippedText,
-					CreatedBy: DefaultUserName,
-				},
-			})
-		if err != nil {
-			return fmt.Errorf(
-				"failed to AddTag for property %s: %v",
-				params.prop.OriginalName,
-				err,
-			)
-		}
-		params.logger.Debugf(
-			"gRPC Worker (Job %s): successfully added tag %s for gene ID %s",
-			params.jobID,
+		return nil
+	}
+	// Add new tag
+	_, err := params.grpcClient.AddTag(params.ctx,
+		&fanno.AddTagRequest{
+			Id: params.featAnno.Id,
+			Tag: &fanno.TagPropertyCreate{
+				Tag:       params.prop.OriginalName,
+				Value:     params.prop.StrippedText,
+				CreatedBy: DefaultUserName,
+			},
+		})
+	if err != nil {
+		return fmt.Errorf(
+			"failed to AddTag for property %s: %v",
 			params.prop.OriginalName,
-			params.featAnno.Id,
+			err,
 		)
 	}
+	params.logger.Debugf(
+		"gRPC Worker (Job %s): successfully added tag %s for gene ID %s",
+		params.jobID,
+		params.prop.OriginalName,
+		params.featAnno.Id,
+	)
 	return nil
 }
 
