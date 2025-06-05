@@ -127,14 +127,18 @@ func htmlProcessingWorkerFunc(
 	}
 }
 
+func hasTagPropertyByName(name string) func(*feature_annotation.TagProperty) bool {
+	return func(existingTag *feature_annotation.TagProperty) bool {
+		return existingTag.Tag == name
+	}
+}
+
 func processSinglePropertyUpdate(
 	params *processSinglePropertyUpdateParams,
 ) error {
 	if slices.ContainsFunc(
 		params.featAnno.Attributes.Properties,
-		func(existingTag *feature_annotation.TagProperty) bool {
-			return existingTag.Tag == params.prop.OriginalName
-		},
+		hasTagPropertyByName(params.prop.OriginalName),
 	) {
 		_, err := params.grpcClient.UpdateTag(
 			params.ctx,
