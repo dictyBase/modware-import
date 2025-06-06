@@ -30,6 +30,7 @@ func handleGrpcResults(
 
 			metrics.mu.Lock()
 			metrics.TotalProcessed++
+			metrics.JobsCompletedFromGrpcPool++
 			if result.Error != nil {
 				metrics.ErrorCount++
 				metrics.mu.Unlock()
@@ -43,6 +44,11 @@ func handleGrpcResults(
 			} else {
 				metrics.SuccessCount++
 				metrics.mu.Unlock()
+				logger.WithFields(logrus.Fields{
+					"gene_id": result.Output.GeneID,
+					"job_id":  result.JobID,
+					"stage":   "grpc_update_completed",
+				}).Debug("Job completed from gRPC pool")
 				logger.Infof(
 					"Successfully updated gene %s (Job ID %s). %s", result.Output.GeneID, result.JobID, result.Output.Message)
 			}
