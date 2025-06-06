@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/sirupsen/logrus"
@@ -47,6 +48,7 @@ func bridgeArangoToHTMLPool(
 	mainCtx context.Context,
 	arangoDocsFromQueryChan <-chan ArangoResultDoc,
 	htmlProcessingPool *concurrent.Pool[ArangoResultDoc, ProcessedGeneData],
+	metrics *ProcessingMetrics,
 	logger *logrus.Entry,
 ) {
 	defer wg.Done()
@@ -62,6 +64,13 @@ func bridgeArangoToHTMLPool(
 				return
 			}
 			htmlProcessingPool.Submit(arangoDoc)
+			metrics.mu.Lock()
+			metrics.JobsSubmittedToHTMLPool++
+			metrics.mu.Unlock()
+			logger.WithFields(logrus.Fields{
+				"job_id": arangoDoc.ID,
+				"stage":  "submitted_to_html_pool",
+			}).Debug("Job submitted for HTML processing")
 		}
 	}
 }
@@ -73,6 +82,7 @@ func bridgeHTMLToGrpcPool(
 	mainCtx context.Context,
 	htmlProcessingPool *concurrent.Pool[ArangoResultDoc, ProcessedGeneData],
 	grpcUpdatePool *concurrent.Pool[ProcessedGeneData, GrpcUpdateResult],
+	metrics *ProcessingMetrics,
 	logger *logrus.Entry,
 ) {
 	defer wg.Done()
@@ -86,20 +96,33 @@ func bridgeHTMLToGrpcPool(
 			if !ok {
 				return
 			}
+			metrics.mu.Lock()
+			metrics.JobsCompletedFromHTMLPool++
+			metrics.mu.Unlock()
 			if result.Error != nil {
 				logger.Errorf(
-					"Error from HTML processing pool for job %s: %v",
+					"HTML processing error for job %s: %v",
 					result.JobID,
 					result.Error,
 				)
-				return
+				continue
 			}
 			grpcUpdatePool.Submit(result.Output)
+			metrics.mu.Lock()
+			metrics.JobsSubmittedToGrpcPool++
+			metrics.mu.Unlock()
+			logger.WithFields(logrus.Fields{
+				"job_id": result.JobID,
+				"stage":  "submitted_to_grpc_pool",
+			}).Debug("Job submitted for gRPC update")
 		case err, ok := <-htmlProcessingPool.Errors():
 			if !ok {
 				return
 			}
 			logger.Errorf("Async error from HTML processing pool: %v", err)
+		case <-time.After(5 * time.Second):
+			logger.Debug("Timeout waiting for HTML processing result - continuing")
+			continue
 		}
 	}
 }
