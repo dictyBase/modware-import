@@ -25,6 +25,11 @@ type ProcessingMetrics struct {
 	// AllArangoDocsFetched is a flag set to true by queryArango after all documents
 	// have been fetched and sent to the processing pipeline.
 	AllArangoDocsFetched bool
+	// Intermediate tracking counters for detailed pipeline monitoring
+	JobsSubmittedToHTMLPool   int64
+	JobsCompletedFromHTMLPool int64
+	JobsSubmittedToGrpcPool   int64
+	JobsCompletedFromGrpcPool int64
 }
 
 // DefaultAQLQuery is the default query to fetch gene data from ArangoDB.
@@ -100,11 +105,16 @@ func reportProgress(
 			rate = float64(metrics.TotalProcessed) / elapsed.Seconds()
 		}
 		logger.WithFields(logrus.Fields{
+			"read_from_db":    metrics.TotalFetchedFromArango,
 			"total_processed": metrics.TotalProcessed,
 			"success_count":   metrics.SuccessCount,
 			"error_count":     metrics.ErrorCount,
 			"processing_rate": fmt.Sprintf("%.2f genes/sec", rate),
 			"elapsed_time":    elapsed.String(),
+			"html_submitted":  metrics.JobsSubmittedToHTMLPool,
+			"html_completed":  metrics.JobsCompletedFromHTMLPool,
+			"grpc_submitted":  metrics.JobsSubmittedToGrpcPool,
+			"grpc_completed":  metrics.JobsCompletedFromGrpcPool,
 		}).Info(message)
 	}
 
@@ -187,6 +197,7 @@ func RunGeneUpdater(cltx *cli.Context) error {
 		mainCtx,
 		arangoDocsFromQueryChan,
 		htmlProcessingPool,
+		config.Metrics,
 		logger,
 	)
 	// Start bridge from HTML Processing Results to gRPC Update Pool goroutine
@@ -196,6 +207,7 @@ func RunGeneUpdater(cltx *cli.Context) error {
 		mainCtx,
 		htmlProcessingPool,
 		grpcUpdatePool,
+		config.Metrics,
 		logger,
 	)
 	// Start gRPC Update Results Handler goroutine
