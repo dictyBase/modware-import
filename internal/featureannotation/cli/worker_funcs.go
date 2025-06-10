@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 
 	fanno "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/collection"
@@ -91,9 +92,25 @@ func htmlProcessingWorkerFunc(
 		ctx context.Context,
 		job concurrent.Job[ArangoResultDoc],
 	) (ProcessedGeneData, error) {
+		// Add job-level timeout
+		jobCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
 		arangoDoc := job.Payload
 		var strippedProps []StrippedProperty
 		for _, prop := range arangoDoc.Props {
+			// Check for context cancellation before processing each property
+			select {
+			case <-jobCtx.Done():
+				return ProcessedGeneData{}, fmt.Errorf(
+					"HTML processing timed out for gene %s (Job %s): %w",
+					arangoDoc.ID,
+					job.ID,
+					jobCtx.Err(),
+				)
+			default:
+				// Continue processing
+			}
+
 			strippedText, err := stripHTMLWithParser(prop.Value)
 			if err != nil {
 				return ProcessedGeneData{}, fmt.Errorf(
