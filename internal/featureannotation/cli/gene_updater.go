@@ -132,10 +132,10 @@ func reportProgress(
 			metrics.mu.RLock()
 			logCurrentMetrics("Processing progress")
 
-			// Check if all genes fetched from ArangoDB have been processed
+			// Check if all jobs have been submitted AND all submitted jobs are complete
 			if metrics.AllArangoDocsFetched &&
-				metrics.TotalProcessed >= metrics.TotalFetchedFromArango {
-				logger.Info("All genes processed. Stopping progress reporter.")
+				metrics.JobsCompletedFromGrpcPool >= metrics.JobsSubmittedToGrpcPool {
+				logger.Info("All jobs completed. Stopping progress reporter.")
 				metrics.mu.RUnlock() // Release lock before returning
 				return
 			}
