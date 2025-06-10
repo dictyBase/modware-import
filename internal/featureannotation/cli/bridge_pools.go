@@ -91,15 +91,21 @@ func bridgeHTMLToGrpcPool(
 	for {
 		select {
 		case <-mainCtx.Done():
+			logger.Debug("HTML-Pool-to-gRPC-Pool bridge: main context done, exiting.")
 			return
 		case result, ok := <-htmlProcessingPool.Results():
 			if !ok {
+				logger.Debug("HTML-Pool-to-gRPC-Pool bridge: HTML processing results channel closed.")
 				return
 			}
 			metrics.mu.Lock()
 			metrics.JobsCompletedFromHTMLPool++
 			metrics.mu.Unlock()
 			if result.Error != nil {
+				logger.WithFields(logrus.Fields{
+					"job_id": result.JobID,
+					"error":  result.Error,
+				}).Debug("HTML processing failed for job")
 				logger.Errorf(
 					"HTML processing error for job %s: %v",
 					result.JobID,
@@ -107,16 +113,22 @@ func bridgeHTMLToGrpcPool(
 				)
 				continue
 			}
+			logger.WithFields(logrus.Fields{
+				"job_id":  result.JobID,
+				"gene_id": result.Output.GeneID,
+			}).Debug("HTML processing successful for job, submitting to gRPC pool")
 			grpcUpdatePool.Submit(result.Output)
 			metrics.mu.Lock()
 			metrics.JobsSubmittedToGrpcPool++
 			metrics.mu.Unlock()
 			logger.WithFields(logrus.Fields{
-				"job_id": result.JobID,
-				"stage":  "submitted_to_grpc_pool",
+				"job_id":  result.JobID,
+				"gene_id": result.Output.GeneID,
+				"stage":   "submitted_to_grpc_pool",
 			}).Debug("Job submitted for gRPC update")
 		case err, ok := <-htmlProcessingPool.Errors():
 			if !ok {
+				logger.Debug("HTML-Pool-to-gRPC-Pool bridge: HTML processing errors channel closed.")
 				return
 			}
 			logger.Errorf("Async error from HTML processing pool: %v", err)
