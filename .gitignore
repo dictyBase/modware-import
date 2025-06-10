@@ -16,3 +16,4 @@ fannloader
 **/.claude/settings.local.json
 adump
 .claude/settings.local.json
+gene-updater.log
