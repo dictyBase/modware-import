@@ -134,7 +134,8 @@ func reportProgress(
 
 			// Check if all jobs have been submitted AND all submitted jobs are complete
 			if metrics.AllArangoDocsFetched &&
-				metrics.JobsCompletedFromGrpcPool >= metrics.JobsSubmittedToGrpcPool {
+				metrics.JobsCompletedFromGrpcPool >= metrics.JobsSubmittedToGrpcPool &&
+				metrics.TotalProcessed == metrics.SuccessCount+metrics.ErrorCount {
 				logger.Info("All jobs completed. Stopping progress reporter.")
 				metrics.mu.RUnlock() // Release lock before returning
 				return
