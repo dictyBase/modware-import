@@ -5,7 +5,7 @@ require (
 	github.com/briandowns/spinner v1.23.2
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cockroachdb/errors v1.12.0
-	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/dictyBase/aphgrpc v1.4.2
 	github.com/dictyBase/arangomanager v0.8.0
 	github.com/dictyBase/go-genproto v0.0.0-20250416011002-08ac47e2a066
@@ -47,7 +47,7 @@ require (
 )
 
 require (
-	github.com/IBM/fp-go v1.0.152
+	github.com/IBM/fp-go v1.0.153
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/arangodb/go-driver v1.6.6
 	github.com/go-playground/validator/v10 v10.26.0
@@ -57,7 +57,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.10.0
 	github.com/stretchr/testify v1.10.0
-	github.com/urfave/cli/v2 v2.27.6
+	github.com/urfave/cli/v2 v2.27.7
 	github.com/xuri/excelize/v2 v2.9.1
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/sync v0.15.0
