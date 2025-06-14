@@ -31,12 +31,12 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.0
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
-	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/net v0.40.0
+	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/net v0.41.0
 	golang.org/x/oauth2 v0.25.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/grpc v1.67.3
 	google.golang.org/protobuf v1.36.4
 	k8s.io/api v0.31.3
