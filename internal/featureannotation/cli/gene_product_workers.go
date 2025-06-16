@@ -1,4 +1,5 @@
 package cli
+
 import (
 	"context"
 	"fmt"
@@ -9,6 +10,69 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// legacyDBQueryWorkerFunc creates worker for querying legacy database
+func legacyDBQueryWorkerFunc(
+	config GeneProductAppConfig,
+) concurrent.WorkerFunc[GeneInfo, ProcessedGeneProduct] {
+	return func(
+		ctx context.Context,
+		job concurrent.Job[GeneInfo],
+	) (ProcessedGeneProduct, error) {
+		gene := job.Payload
+		logger := config.Logger
+
+		// Get legacy database connection
+		legacyDB := registry.GetArangodbConnection()
+		cursor, err := legacyDB.SearchRows(
+			GeneProductQuery,
+			map[string]interface{}{
+				"feature_id": gene.FeatureID,
+			},
+		)
+		if err != nil {
+			return ProcessedGeneProduct{}, fmt.Errorf(
+				"failed to query gene product for gene %s: %w",
+				gene.GeneID,
+				err,
+			)
+		}
+		defer cursor.Close()
+
+		// Check if we have results
+		if cursor.IsEmpty() {
+			logger.Debugf("No gene product found for gene %s", gene.GeneID)
+			return ProcessedGeneProduct{
+				GeneID:   gene.GeneID,
+				GeneName: gene.Name,
+			}, nil
+		}
+
+		result := GeneProductResult{}
+		if cursor.Scan() {
+			if err := cursor.Read(&result); err != nil {
+				return ProcessedGeneProduct{}, fmt.Errorf(
+					"failed to read gene product result: %w",
+					err,
+				)
+			}
+		}
+
+		logger.Debugf(
+			"Found gene product '%s' for gene %s",
+			result.GeneProduct,
+			gene.GeneID,
+		)
+
+		return ProcessedGeneProduct{
+			GeneID:      gene.GeneID,
+			GeneName:    gene.Name,
+			GeneProduct: result.GeneProduct,
+			CreatedBy:   result.CreatedBy,
+		}, nil
+	}
+}
+
 func createFeatureAnnotationWithProduct(
 	ctx context.Context,
 	grpcClient fanno.FeatureAnnotationServiceClient,
