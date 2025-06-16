@@ -54,6 +54,20 @@ type GeneProductMetrics struct {
 	JobsCompletedFromGrpcPool   int64
 }
 
+// IsComplete checks if all processing is finished
+func (m *GeneProductMetrics) IsComplete() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	allArangoFetched := m.AllArangoDocsFetched
+	legacyPoolDrained := m.JobsCompletedFromLegacyPool >= m.JobsSubmittedToLegacyPool
+	grpcPoolDrained := m.JobsCompletedFromGrpcPool >= m.JobsSubmittedToGrpcPool
+	allProcessed := (m.TotalFetchedFromArango == 0) ||
+		(m.TotalProcessed >= (m.TotalFetchedFromArango - m.SkippedCount))
+
+	return allArangoFetched && legacyPoolDrained && grpcPoolDrained && allProcessed
+}
+
 // GeneProductAppConfig holds configuration
 type GeneProductAppConfig struct {
 	Ctx              context.Context

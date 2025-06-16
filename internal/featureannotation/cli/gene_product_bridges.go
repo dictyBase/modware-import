@@ -183,20 +183,12 @@ func reportGeneProductProgress(params *reportGeneProductProgressParams) {
 		case <-ticker.C:
 			logCurrentMetrics("Gene product processing progress")
 
-			params.metrics.mu.RLock()
-			// Condition to stop reporter if all work is done
-			if params.metrics.AllArangoDocsFetched &&
-				params.metrics.JobsCompletedFromLegacyPool >= params.metrics.JobsSubmittedToLegacyPool && // Ensure legacy pool is drained
-				params.metrics.JobsCompletedFromGrpcPool >= params.metrics.JobsSubmittedToGrpcPool &&
-				(params.metrics.TotalFetchedFromArango == 0 || // Handle case where no docs were fetched
-					params.metrics.TotalProcessed >= (params.metrics.TotalFetchedFromArango-params.metrics.SkippedCount)) { // All fetched (minus skipped) are processed
+			if params.metrics.IsComplete() {
 				params.logger.Info(
 					"All gene product updates appear completed. Stopping progress reporter.",
 				)
-				params.metrics.mu.RUnlock()
 				return
 			}
-			params.metrics.mu.RUnlock()
 		}
 	}
 }
