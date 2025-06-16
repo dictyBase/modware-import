@@ -58,7 +58,6 @@ func allCommands() []*cli.Command {
 			Before: faclient.CliSetup,
 			Action: facli.LoadFeatureAnnotation,
 		},
-		// Add the new command definition here
 		{
 			Name:   "load-csv-to-arangodb",
 			Usage:  "Update ArangoDB collection data from CSV file",
@@ -72,6 +71,13 @@ func allCommands() []*cli.Command {
 			Flags:  facli.GeneUpdaterFlags(),
 			Before: faclient.CliSetup,
 			Action: facli.RunGeneUpdater,
+		},
+		{
+			Name:   "gene-product-updater",
+			Usage:  "Update gene products from legacy database to feature annotation service",
+			Flags:  facli.GeneProductUpdaterFlags(),
+			Before: faclient.GeneProductCliSetup, // Use the new setup function
+			Action: facli.RunGeneProductUpdater,
 		},
 	}
 }
