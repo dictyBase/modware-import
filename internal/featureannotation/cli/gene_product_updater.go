@@ -80,6 +80,45 @@ func newGeneProductConfigFromCliContext(
 	}
 }
 
+func setupLegacyQueryPool(
+	config GeneProductAppConfig,
+	mainCtx context.Context,
+) *concurrent.Pool[GeneInfo, ProcessedGeneProduct] {
+	pool := concurrent.NewPool(
+		legacyDBQueryWorkerFunc(config),
+		concurrent.WithWorkers[GeneInfo, ProcessedGeneProduct](
+			config.NumLegacyWorkers,
+		),
+		concurrent.WithContext[GeneInfo, ProcessedGeneProduct](mainCtx),
+		concurrent.WithBufferSize[GeneInfo, ProcessedGeneProduct](
+			config.NumLegacyWorkers*2,
+		),
+	)
+	pool.Start()
+	return pool
+}
+
+func setupGrpcUpdatePool(
+	config GeneProductAppConfig,
+	mainCtx context.Context,
+) *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult] {
+	pool := concurrent.NewPool(
+		geneProductGrpcWorkerFunc(
+			config,
+			registry.GetFeatureAnnotationAPIClient(),
+		),
+		concurrent.WithWorkers[ProcessedGeneProduct, GrpcUpdateResult](
+			config.NumGrpcWorkers,
+		),
+		concurrent.WithContext[ProcessedGeneProduct, GrpcUpdateResult](mainCtx),
+		concurrent.WithBufferSize[ProcessedGeneProduct, GrpcUpdateResult](
+			config.NumGrpcWorkers*2,
+		),
+	)
+	pool.Start()
+	return pool
+}
+
 // RunGeneProductUpdater is the main entry point for the gene product updater
 func RunGeneProductUpdater(cltx *cli.Context) error {
 	logger := registry.GetLogger()
@@ -108,34 +147,9 @@ func RunGeneProductUpdater(cltx *cli.Context) error {
 		mainCancel: mainCancel,
 	})
 
-	// Setup Legacy DB Query Pool
-	legacyQueryPool := concurrent.NewPool(
-		legacyDBQueryWorkerFunc(config),
-		concurrent.WithWorkers[GeneInfo, ProcessedGeneProduct](
-			config.NumLegacyWorkers,
-		),
-		concurrent.WithContext[GeneInfo, ProcessedGeneProduct](mainCtx),
-		concurrent.WithBufferSize[GeneInfo, ProcessedGeneProduct](
-			config.NumLegacyWorkers*2,
-		),
-	)
-	legacyQueryPool.Start()
-
-	// Setup gRPC Update Pool
-	grpcUpdatePool := concurrent.NewPool(
-		geneProductGrpcWorkerFunc(
-			config,
-			registry.GetFeatureAnnotationAPIClient(),
-		),
-		concurrent.WithWorkers[ProcessedGeneProduct, GrpcUpdateResult](
-			config.NumGrpcWorkers,
-		),
-		concurrent.WithContext[ProcessedGeneProduct, GrpcUpdateResult](mainCtx),
-		concurrent.WithBufferSize[ProcessedGeneProduct, GrpcUpdateResult](
-			config.NumGrpcWorkers*2,
-		),
-	)
-	grpcUpdatePool.Start()
+	// Setup Pools
+	legacyQueryPool := setupLegacyQueryPool(config, mainCtx)
+	grpcUpdatePool := setupGrpcUpdatePool(config, mainCtx)
 
 	// Bridge from ArangoDB to Legacy Query Pool
 	wg.Add(1)
