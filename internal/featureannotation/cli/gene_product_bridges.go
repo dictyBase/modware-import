@@ -1,41 +1,31 @@
 package cli
 
 import (
-	"context"
 	"fmt"
-	"sync"
 	"time"
 
-	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/sirupsen/logrus"
 )
 
 // bridgeArangoToLegacyPool transfers genes from ArangoDB to legacy query pool
-func bridgeArangoToLegacyPool(
-	wg *sync.WaitGroup,
-	mainCtx context.Context,
-	genesChan <-chan GeneInfo,
-	legacyQueryPool *concurrent.Pool[GeneInfo, ProcessedGeneProduct],
-	metrics *GeneProductMetrics,
-	logger *logrus.Entry,
-) {
-	defer wg.Done()
-	defer legacyQueryPool.Close()
+func bridgeArangoToLegacyPool(params *bridgeArangoToLegacyPoolParams) {
+	defer params.wg.Done()
+	defer params.legacyPool.Close()
 
-	logger.Info("Starting Arango-to-Legacy-Pool bridge...")
+	params.logger.Info("Starting Arango-to-Legacy-Pool bridge...")
 	for {
 		select {
-		case <-mainCtx.Done():
+		case <-params.ctx.Done():
 			return
-		case gene, ok := <-genesChan:
+		case gene, ok := <-params.genesChan:
 			if !ok {
 				return
 			}
-			legacyQueryPool.Submit(gene)
-			metrics.mu.Lock()
-			metrics.JobsSubmittedToLegacyPool++
-			metrics.mu.Unlock()
-			logger.WithFields(logrus.Fields{
+			params.legacyPool.Submit(gene)
+			params.metrics.mu.Lock()
+			params.metrics.JobsSubmittedToLegacyPool++
+			params.metrics.mu.Unlock()
+			params.logger.WithFields(logrus.Fields{
 				"gene_id": gene.GeneID,
 				"stage":   "submitted_to_legacy_pool",
 			}).Debug("Gene submitted for legacy query")
@@ -44,34 +34,27 @@ func bridgeArangoToLegacyPool(
 }
 
 // bridgeLegacyToGrpcPool transfers processed genes to gRPC update pool
-func bridgeLegacyToGrpcPool(
-	wg *sync.WaitGroup,
-	mainCtx context.Context,
-	legacyQueryPool *concurrent.Pool[GeneInfo, ProcessedGeneProduct],
-	grpcUpdatePool *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult],
-	metrics *GeneProductMetrics,
-	logger *logrus.Entry,
-) {
-	defer wg.Done()
-	defer grpcUpdatePool.Close()
+func bridgeLegacyToGrpcPool(params *bridgeLegacyToGrpcPoolParams) {
+	defer params.wg.Done()
+	defer params.grpcPool.Close()
 
-	logger.Debug("Starting Legacy-Pool-to-gRPC-Pool bridge...")
+	params.logger.Debug("Starting Legacy-Pool-to-gRPC-Pool bridge...")
 	for {
 		select {
-		case <-mainCtx.Done():
-			logger.Debug("Legacy-to-gRPC bridge: context done, exiting.")
+		case <-params.ctx.Done():
+			params.logger.Debug("Legacy-to-gRPC bridge: context done, exiting.")
 			return
-		case result, ok := <-legacyQueryPool.Results():
+		case result, ok := <-params.legacyPool.Results():
 			if !ok {
-				logger.Debug("Legacy query pool results channel closed.")
+				params.logger.Debug("Legacy query pool results channel closed.")
 				return
 			}
-			metrics.mu.Lock()
-			metrics.JobsCompletedFromLegacyPool++
-			metrics.mu.Unlock()
+			params.metrics.mu.Lock()
+			params.metrics.JobsCompletedFromLegacyPool++
+			params.metrics.mu.Unlock()
 
 			if result.Error != nil {
-				logger.WithFields(logrus.Fields{
+				params.logger.WithFields(logrus.Fields{
 					"job_id": result.JobID,
 					"error":  result.Error,
 				}).Error("Legacy query failed")
@@ -80,149 +63,140 @@ func bridgeLegacyToGrpcPool(
 
 			// Skip if no gene product
 			if result.Output.GeneProduct == "" {
-				metrics.mu.Lock()
-				metrics.SkippedCount++
-				metrics.mu.Unlock()
-				logger.Debugf(
+				params.metrics.mu.Lock()
+				params.metrics.SkippedCount++
+				params.metrics.mu.Unlock()
+				params.logger.Debugf(
 					"No gene product for gene %s, skipping gRPC update",
 					result.Output.GeneID,
 				)
 				continue
 			}
 
-			grpcUpdatePool.Submit(result.Output)
-			metrics.mu.Lock()
-			metrics.JobsSubmittedToGrpcPool++
-			metrics.mu.Unlock()
+			params.grpcPool.Submit(result.Output)
+			params.metrics.mu.Lock()
+			params.metrics.JobsSubmittedToGrpcPool++
+			params.metrics.mu.Unlock()
 
-			logger.WithFields(logrus.Fields{
+			params.logger.WithFields(logrus.Fields{
 				"gene_id": result.Output.GeneID,
 				"stage":   "submitted_to_grpc_pool",
 			}).Debug("Gene product submitted for gRPC update")
 
-		case err, ok := <-legacyQueryPool.Errors():
+		case err, ok := <-params.legacyPool.Errors():
 			if !ok {
-				logger.Debug("Legacy query pool errors channel closed.")
+				params.logger.Debug("Legacy query pool errors channel closed.")
 				return
 			}
-			logger.Errorf("Async error from legacy query pool: %v", err)
+			params.logger.Errorf("Async error from legacy query pool: %v", err)
 		case <-time.After(5 * time.Second): // Added timeout as per plan, though not strictly in bridge logic
-			logger.Debug("Timeout waiting for legacy query result - continuing")
+			params.logger.Debug(
+				"Timeout waiting for legacy query result - continuing",
+			)
 			continue
 		}
 	}
 }
 
 // handleGeneProductGrpcResults handles results from gRPC update pool
-func handleGeneProductGrpcResults(
-	wg *sync.WaitGroup,
-	mainCtx context.Context,
-	grpcUpdatePool *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult],
-	metrics *GeneProductMetrics,
-	logger *logrus.Entry,
-) {
-	defer wg.Done()
-	logger.Debug("Starting gRPC results handler...")
+func handleGeneProductGrpcResults(params *handleGeneProductGrpcResultsParams) {
+	defer params.wg.Done()
+	params.logger.Debug("Starting gRPC results handler...")
 
 	for {
 		select {
-		case <-mainCtx.Done():
+		case <-params.ctx.Done():
 			return
-		case result, ok := <-grpcUpdatePool.Results():
+		case result, ok := <-params.grpcPool.Results():
 			if !ok {
-				logger.Debug("gRPC update pool results channel closed.")
+				params.logger.Debug("gRPC update pool results channel closed.")
 				return
 			}
 
-			metrics.mu.Lock()
-			metrics.TotalProcessed++
-			metrics.JobsCompletedFromGrpcPool++
+			params.metrics.mu.Lock()
+			params.metrics.TotalProcessed++
+			params.metrics.JobsCompletedFromGrpcPool++
 			if result.Error != nil {
-				metrics.ErrorCount++
-				metrics.mu.Unlock()
-				logger.Errorf(
+				params.metrics.ErrorCount++
+				params.metrics.mu.Unlock()
+				params.logger.Errorf(
 					"Error updating gene %s: %v",
 					result.Output.GeneID,
 					result.Error,
 				)
 			} else {
-				metrics.SuccessCount++
-				metrics.mu.Unlock()
-				logger.Infof(
+				params.metrics.SuccessCount++
+				params.metrics.mu.Unlock()
+				params.logger.Infof(
 					"Successfully processed gene %s: %s",
 					result.Output.GeneID,
 					result.Output.Message,
 				)
 			}
-		case err, ok := <-grpcUpdatePool.Errors():
+		case err, ok := <-params.grpcPool.Errors():
 			if !ok {
-				logger.Debug("gRPC update pool errors channel closed.")
+				params.logger.Debug("gRPC update pool errors channel closed.")
 				return
 			}
-			metrics.mu.Lock()
-			metrics.ErrorCount++
-			metrics.mu.Unlock()
-			logger.Errorf("Async error from gRPC update pool: %v", err)
+			params.metrics.mu.Lock()
+			params.metrics.ErrorCount++
+			params.metrics.mu.Unlock()
+			params.logger.Errorf("Async error from gRPC update pool: %v", err)
 		}
 	}
 }
 
 // reportGeneProductProgress reports processing progress
-func reportGeneProductProgress(
-	wg *sync.WaitGroup,
-	ctx context.Context,
-	metrics *GeneProductMetrics,
-	logger *logrus.Entry,
-) {
-	defer wg.Done()
+func reportGeneProductProgress(params *reportGeneProductProgressParams) {
+	defer params.wg.Done()
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	logCurrentMetrics := func(message string) {
-		metrics.mu.RLock() // Changed to RLock for reading metrics
-		defer metrics.mu.RUnlock()
-		elapsed := time.Since(metrics.StartTime)
+		params.metrics.mu.RLock() // Changed to RLock for reading metrics
+		defer params.metrics.mu.RUnlock()
+		elapsed := time.Since(params.metrics.StartTime)
 		rate := 0.0
 		if elapsed.Seconds() > 0 {
-			rate = float64(metrics.TotalProcessed) / elapsed.Seconds()
+			rate = float64(params.metrics.TotalProcessed) / elapsed.Seconds()
 		}
-		logger.WithFields(logrus.Fields{
-			"read_from_db":     metrics.TotalFetchedFromArango,
-			"total_processed":  metrics.TotalProcessed,
-			"success_count":    metrics.SuccessCount,
-			"error_count":      metrics.ErrorCount,
-			"skipped_count":    metrics.SkippedCount,
+		params.logger.WithFields(logrus.Fields{
+			"read_from_db":     params.metrics.TotalFetchedFromArango,
+			"total_processed":  params.metrics.TotalProcessed,
+			"success_count":    params.metrics.SuccessCount,
+			"error_count":      params.metrics.ErrorCount,
+			"skipped_count":    params.metrics.SkippedCount,
 			"processing_rate":  fmt.Sprintf("%.2f genes/sec", rate),
 			"elapsed_time":     elapsed.String(),
-			"legacy_submitted": metrics.JobsSubmittedToLegacyPool,
-			"legacy_completed": metrics.JobsCompletedFromLegacyPool,
-			"grpc_submitted":   metrics.JobsSubmittedToGrpcPool,
-			"grpc_completed":   metrics.JobsCompletedFromGrpcPool,
+			"legacy_submitted": params.metrics.JobsSubmittedToLegacyPool,
+			"legacy_completed": params.metrics.JobsCompletedFromLegacyPool,
+			"grpc_submitted":   params.metrics.JobsSubmittedToGrpcPool,
+			"grpc_completed":   params.metrics.JobsCompletedFromGrpcPool,
 		}).Info(message)
 	}
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-params.ctx.Done():
 			logCurrentMetrics("Final gene product processing report")
 			return
 		case <-ticker.C:
 			logCurrentMetrics("Gene product processing progress")
 
-			metrics.mu.RLock()
+			params.metrics.mu.RLock()
 			// Condition to stop reporter if all work is done
-			if metrics.AllArangoDocsFetched &&
-				metrics.JobsCompletedFromLegacyPool >= metrics.JobsSubmittedToLegacyPool && // Ensure legacy pool is drained
-				metrics.JobsCompletedFromGrpcPool >= metrics.JobsSubmittedToGrpcPool &&
-				(metrics.TotalFetchedFromArango == 0 || // Handle case where no docs were fetched
-					metrics.TotalProcessed >= (metrics.TotalFetchedFromArango-metrics.SkippedCount)) { // All fetched (minus skipped) are processed
-				logger.Info(
+			if params.metrics.AllArangoDocsFetched &&
+				params.metrics.JobsCompletedFromLegacyPool >= params.metrics.JobsSubmittedToLegacyPool && // Ensure legacy pool is drained
+				params.metrics.JobsCompletedFromGrpcPool >= params.metrics.JobsSubmittedToGrpcPool &&
+				(params.metrics.TotalFetchedFromArango == 0 || // Handle case where no docs were fetched
+					params.metrics.TotalProcessed >= (params.metrics.TotalFetchedFromArango-params.metrics.SkippedCount)) { // All fetched (minus skipped) are processed
+				params.logger.Info(
 					"All gene product updates appear completed. Stopping progress reporter.",
 				)
-				metrics.mu.RUnlock()
+				params.metrics.mu.RUnlock()
 				return
 			}
-			metrics.mu.RUnlock()
+			params.metrics.mu.RUnlock()
 		}
 	}
 }

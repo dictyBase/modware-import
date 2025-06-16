@@ -64,6 +64,39 @@ type GeneProductAppConfig struct {
 	Metrics          *GeneProductMetrics
 }
 
+type bridgeArangoToLegacyPoolParams struct {
+	wg         *sync.WaitGroup
+	ctx        context.Context
+	genesChan  <-chan GeneInfo
+	legacyPool *concurrent.Pool[GeneInfo, ProcessedGeneProduct]
+	metrics    *GeneProductMetrics
+	logger     *logrus.Entry
+}
+
+type bridgeLegacyToGrpcPoolParams struct {
+	wg         *sync.WaitGroup
+	ctx        context.Context
+	legacyPool *concurrent.Pool[GeneInfo, ProcessedGeneProduct]
+	grpcPool   *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult]
+	metrics    *GeneProductMetrics
+	logger     *logrus.Entry
+}
+
+type handleGeneProductGrpcResultsParams struct {
+	wg       *sync.WaitGroup
+	ctx      context.Context
+	grpcPool *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult]
+	metrics  *GeneProductMetrics
+	logger   *logrus.Entry
+}
+
+type reportGeneProductProgressParams struct {
+	wg      *sync.WaitGroup
+	ctx     context.Context
+	metrics *GeneProductMetrics
+	logger  *logrus.Entry
+}
+
 // newGeneProductConfigFromCliContext creates config from CLI context
 func newGeneProductConfigFromCliContext(
 	cltx *cli.Context,
@@ -153,39 +186,44 @@ func RunGeneProductUpdater(cltx *cli.Context) error {
 
 	// Bridge from ArangoDB to Legacy Query Pool
 	wg.Add(1)
-	go bridgeArangoToLegacyPool(
-		&wg,
-		mainCtx,
-		genesFromQueryChan,
-		legacyQueryPool,
-		config.Metrics,
-		logger,
-	)
+	go bridgeArangoToLegacyPool(&bridgeArangoToLegacyPoolParams{
+		wg:         &wg,
+		ctx:        mainCtx,
+		genesChan:  genesFromQueryChan,
+		legacyPool: legacyQueryPool,
+		metrics:    config.Metrics,
+		logger:     logger,
+	})
 
 	// Bridge from Legacy Query Pool to gRPC Pool
 	wg.Add(1)
-	go bridgeLegacyToGrpcPool(
-		&wg,
-		mainCtx,
-		legacyQueryPool,
-		grpcUpdatePool,
-		config.Metrics,
-		logger,
-	)
+	go bridgeLegacyToGrpcPool(&bridgeLegacyToGrpcPoolParams{
+		wg:         &wg,
+		ctx:        mainCtx,
+		legacyPool: legacyQueryPool,
+		grpcPool:   grpcUpdatePool,
+		metrics:    config.Metrics,
+		logger:     logger,
+	})
 
 	// Handle gRPC Results
 	wg.Add(1)
-	go handleGeneProductGrpcResults(
-		&wg,
-		mainCtx,
-		grpcUpdatePool,
-		config.Metrics,
-		logger,
-	)
+	go handleGeneProductGrpcResults(&handleGeneProductGrpcResultsParams{
+		wg:       &wg,
+		ctx:      mainCtx,
+		grpcPool: grpcUpdatePool,
+		metrics:  config.Metrics,
+		logger:   logger,
+	})
 
 	// Progress Reporter
 	wg.Add(1)
-	go reportGeneProductProgress(&wg, mainCtx, config.Metrics, logger)
+	go reportGeneProductProgress(&reportGeneProductProgressParams{
+		wg:      &wg,
+		ctx:     mainCtx,
+		metrics: config.Metrics,
+		logger:  logger,
+	})
 
 	logger.Debug("Waiting for all goroutines to complete...")
 	wg.Wait()
