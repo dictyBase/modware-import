@@ -95,10 +95,7 @@ func processGeneEntry(params *processGeneEntryParams) error {
 		return nil
 	}
 
-	createdBy := DefaultUserName
-	if val, ok := AnnMap[entry.CreatedBy]; ok {
-		createdBy = val
-	}
+	createdBy := resolveCreator(entry)
 
 	// Set up gRPC call
 	res, err := client.CreateFeatureAnnotation(
@@ -129,4 +126,12 @@ func processGeneEntry(params *processGeneEntryParams) error {
 		res.Id,
 	)
 	return nil
+}
+
+func resolveCreator(entry *Gene) string {
+	createdBy := DefaultUserName
+	if val, ok := AnnMap[entry.CreatedBy]; ok {
+		createdBy = val
+	}
+	return createdBy
 }
