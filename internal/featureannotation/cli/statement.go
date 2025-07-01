@@ -4,8 +4,8 @@ const (
 
 	// GeneProductQuery is the AQL query for fetching gene products
 	GeneProductQuery = `
-	FOR gp IN gene_product
-    		FOR locus IN locus_gp
+    	FOR locus IN locus_gp
+		FOR gp IN gene_product
         		FILTER gp.is_automated == 0
         		FILTER locus.gene_product_no == gp.gene_product_no
         		FILTER locus.locus_no == @feature_id
