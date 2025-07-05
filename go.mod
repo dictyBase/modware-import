@@ -50,7 +50,7 @@ require (
 	github.com/IBM/fp-go v1.0.153
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/arangodb/go-driver v1.6.6
-	github.com/go-playground/validator/v10 v10.26.0
+	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/jellydator/ttlcache/v3 v3.4.0
