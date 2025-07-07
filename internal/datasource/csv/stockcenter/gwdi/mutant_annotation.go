@@ -13,8 +13,10 @@ const (
 	mutant   = "mutant"
 )
 
-var disruptRgxp = regexp.MustCompile(`^(DDB_G[0-9]{5,})`)
-var suffixRgxp = regexp.MustCompile(`(^GWDI_\d+_[A-Z]{1,2}_\d+)[a-z]{1}$`)
+var (
+	disruptRgxp = regexp.MustCompile(`^(DDB_G[0-9]{5,})`)
+	suffixRgxp  = regexp.MustCompile(`(^GWDI_\d+_[A-Z]{1,2}_\d+)[a-z]{1}$`)
+)
 
 var insrMap = map[string]string{
 	"G1": "GATC",
