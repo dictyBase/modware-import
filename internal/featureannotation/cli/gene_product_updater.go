@@ -26,8 +26,9 @@ type GeneInfo struct {
 
 // GeneProductResult holds gene product query result
 type GeneProductResult struct {
-	GeneProduct string `json:"gene_product"`
-	CreatedBy   string `json:"created_by"`
+	GeneProduct string    `json:"gene_product"`
+	CreatedBy   string    `json:"created_by"`
+	CreatedOn   time.Time `json:"created_on"`
 }
 
 // ProcessedGeneProduct holds processed gene with product
@@ -36,6 +37,7 @@ type ProcessedGeneProduct struct {
 	GeneName    string
 	GeneProduct string
 	CreatedBy   string
+	CreatedOn   time.Time
 }
 
 // GeneProductMetrics holds processing metrics

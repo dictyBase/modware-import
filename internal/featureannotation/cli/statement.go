@@ -11,7 +11,8 @@ const (
         		FILTER locus.locus_no == @feature_id
         		RETURN {
             			gene_product: gp.gene_product,
-            			created_by: gp.created_by
+            			created_by: gp.created_by,
+				created_on: gp.date_created
         		}
 `
 	// AQL query to update documents based on featureprop_id

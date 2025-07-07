@@ -9,6 +9,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/registry"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // legacyDBQueryWorkerFunc creates worker for querying legacy database
@@ -69,6 +70,7 @@ func legacyDBQueryWorkerFunc(
 			GeneName:    gene.Name,
 			GeneProduct: result.GeneProduct,
 			CreatedBy:   result.CreatedBy,
+			CreatedOn:   result.CreatedOn,
 		}, nil
 	}
 }
@@ -94,6 +96,7 @@ func createFeatureAnnotationWithProduct(
 						Tag:       GeneProductTag,
 						Value:     processedGene.GeneProduct,
 						CreatedBy: processedGene.CreatedBy,
+						CreatedAt: timestamppb.New(processedGene.CreatedOn),
 					},
 				},
 			},
