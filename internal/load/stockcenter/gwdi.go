@@ -54,7 +54,7 @@ func mutantGroups(r io.Reader) ([]stockcenter.GWDIMutantReader, error) {
 	if err != nil {
 		return mr, err
 	}
-	if err := gw.AnnotateMutant(); err != nil {
+	if err = gw.AnnotateMutant(); err != nil {
 		return mr, err
 	}
 	groups, err := gw.AllGroups()
