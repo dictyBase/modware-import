@@ -70,7 +70,7 @@ func legacyDBQueryWorkerFunc(
 			GeneName:    gene.Name,
 			GeneProduct: result.GeneProduct,
 			CreatedBy:   result.CreatedBy,
-			CreatedOn:   result.CreatedOn,
+			CreatedOn:   result.CreatedOn.Time,
 		}, nil
 	}
 }
