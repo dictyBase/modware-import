@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -14,23 +15,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const bufSize = 1024 * 1024
 
-var lis *bufconn.Listener
-
-func init() {
-	lis = bufconn.Listen(bufSize)
-}
-
-func bufDialer(context.Context, string) (net.Conn, error) {
-	return lis.Dial()
-}
-
-func setupTestServer(t *testing.T) (feature.FeatureAnnotationServiceClient, func()) {
+func setupTestServer(
+	t *testing.T,
+) (feature.FeatureAnnotationServiceClient, func()) {
 	logger := logrus.New()
 	logger.SetLevel(logrus.DebugLevel)
 
@@ -39,28 +33,36 @@ func setupTestServer(t *testing.T) (feature.FeatureAnnotationServiceClient, func
 
 	grpcServer := grpc.NewServer()
 	feature.RegisterFeatureAnnotationServiceServer(grpcServer, server)
-
+	lis := bufconn.Listen(bufSize)
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			t.Logf("Server exited with error: %v", err)
+			os.Exit(1)
 		}
 	}()
-
+	dialer := func(context.Context, string) (net.Conn, error) {
+		conn, err := lis.Dial()
+		require.NoError(
+			t,
+			err,
+			"expect no error from creating listener",
+		)
+		return conn, nil
+	}
+	resolver.SetDefaultScheme("passthrough")
 	conn, err := grpc.NewClient(
 		"bufnet",
-		grpc.WithContextDialer(bufDialer),
+		grpc.WithContextDialer(dialer),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	require.NoError(t, err)
-
-	client := feature.NewFeatureAnnotationServiceClient(conn)
-
 	cleanup := func() {
 		conn.Close()
+		lis.Close()
 		grpcServer.Stop()
 	}
 
-	return client, cleanup
+	return feature.NewFeatureAnnotationServiceClient(conn), cleanup
 }
 
 func TestCreateFeatureAnnotation(t *testing.T) {
