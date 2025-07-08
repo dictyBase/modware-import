@@ -24,7 +24,7 @@ func legacyDBQueryWorkerFunc(
 		logger := config.Logger
 
 		// Get legacy database connection
-		legacyDB := registry.GetArangodbConnection()
+		legacyDB := registry.GetLegacyArangodbConnection()
 		cursor, err := legacyDB.SearchRows(
 			GeneProductQuery,
 			map[string]interface{}{
