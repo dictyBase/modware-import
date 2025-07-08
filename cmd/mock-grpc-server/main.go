@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -49,6 +50,13 @@ func main() {
 				Usage:   "Log file path (optional)",
 				EnvVars: []string{"LOG_FILE"},
 			},
+			&cli.StringFlag{
+				Name:    "storage-type",
+				Aliases: []string{"s"},
+				Value:   "leveldb",
+				Usage:   "Storage backend type (leveldb uses in-memory storage, memory uses simple map)",
+				EnvVars: []string{"STORAGE_TYPE"},
+			},
 		},
 		Action: runServer,
 	}
@@ -61,8 +69,9 @@ func main() {
 func runServer(ctx *cli.Context) error {
 	// Parse configuration
 	cfg := &config.Config{
-		Port:     ctx.Int("port"),
-		LogLevel: ctx.String("log-level"),
+		Port:        ctx.Int("port"),
+		LogLevel:    ctx.String("log-level"),
+		StorageType: ctx.String("storage-type"),
 	}
 
 	// Setup logging
@@ -73,18 +82,23 @@ func runServer(ctx *cli.Context) error {
 	loggerInstance := loggerEntry.Logger
 
 	loggerInstance.WithFields(logrus.Fields{
-		"port":      cfg.Port,
-		"log_level": cfg.LogLevel,
+		"port":         cfg.Port,
+		"log_level":    cfg.LogLevel,
+		"storage_type": cfg.StorageType,
 	}).Info("Starting mock gRPC server")
 
-	// Initialize storage
-	storage := storage.NewMemoryStorage(loggerInstance)
+	// Initialize storage with fallback
+	storageBackend, err := createStorage(cfg, loggerInstance)
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
 
 	// Generate mock data
 	mockData := mock.GenerateFeatureAnnotations()
 	for _, annotation := range mockData {
-		if err = storage.Create(annotation); err != nil {
-			loggerInstance.WithError(err).Error("Failed to create mock annotation")
+		if err = storageBackend.Create(annotation); err != nil {
+			loggerInstance.WithError(err).
+				Error("Failed to create mock annotation")
 		}
 	}
 	loggerInstance.WithField("count", len(mockData)).
@@ -94,7 +108,10 @@ func runServer(ctx *cli.Context) error {
 	grpcServer := grpc.NewServer()
 
 	// Register services
-	featureService := server.NewFeatureAnnotationServer(storage, loggerInstance)
+	featureService := server.NewFeatureAnnotationServer(
+		storageBackend,
+		loggerInstance,
+	)
 	feature.RegisterFeatureAnnotationServiceServer(grpcServer, featureService)
 
 	// Enable reflection for debugging
@@ -116,7 +133,8 @@ func runServer(ctx *cli.Context) error {
 		grpcServer.GracefulStop()
 	}()
 
-	loggerInstance.WithField("address", lis.Addr().String()).Info("gRPC server started")
+	loggerInstance.WithField("address", lis.Addr().String()).
+		Info("gRPC server started")
 
 	// Start server
 	if err := grpcServer.Serve(lis); err != nil {
@@ -124,4 +142,33 @@ func runServer(ctx *cli.Context) error {
 	}
 
 	return nil
+}
+
+func createStorage(
+	cfg *config.Config,
+	logger *logrus.Logger,
+) (storage.FeatureAnnotationStorage, error) {
+	switch cfg.StorageType {
+	case "leveldb":
+		leveldbStorage, err := storage.NewLevelDBStorage(logger)
+		if err != nil {
+			return nil, errors.New(
+				"Failed to initialize LevelDB storage, falling back to memory storage",
+			)
+		}
+		logger.Debug("Using LevelDB in-memory storage")
+		return leveldbStorage, nil
+
+	case "memory":
+		memStorage := storage.NewMemoryStorage(logger)
+		logger.Debug("Using simple memory storage")
+		return memStorage, nil
+
+	default:
+		logger.WithField("storage_type", cfg.StorageType).
+			Warn("Unknown storage type, falling back to memory storage")
+		memStorage := storage.NewMemoryStorage(logger)
+		logger.Debug("Using memory storage as fallback")
+		return memStorage, nil
+	}
 }
