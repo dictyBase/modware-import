@@ -2,6 +2,9 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,6 +19,34 @@ const (
 	GeneProductTag = "gene product"
 )
 
+// LegacyTime handles Oracle date format "DD-MON-YY" from legacy database
+type LegacyTime struct {
+	time.Time
+}
+
+// UnmarshalJSON implements json.Unmarshaler for Oracle date format
+func (lt *LegacyTime) UnmarshalJSON(data []byte) error {
+	var dateStr string
+	if err := json.Unmarshal(data, &dateStr); err != nil {
+		return err
+	}
+
+	// Handle empty or null dates
+	if dateStr == "" || strings.ToLower(dateStr) == "null" {
+		lt.Time = time.Time{}
+		return nil
+	}
+
+	// Parse Oracle date format "DD-MON-YY" (e.g., "08-APR-03")
+	parsedTime, err := time.Parse("02-Jan-06", dateStr)
+	if err != nil {
+		return fmt.Errorf("failed to parse legacy date '%s': %w", dateStr, err)
+	}
+
+	lt.Time = parsedTime
+	return nil
+}
+
 // GeneInfo holds gene information from ArangoDB
 type GeneInfo struct {
 	Name      string `json:"name"`
@@ -26,9 +57,9 @@ type GeneInfo struct {
 
 // GeneProductResult holds gene product query result
 type GeneProductResult struct {
-	GeneProduct string    `json:"gene_product"`
-	CreatedBy   string    `json:"created_by"`
-	CreatedOn   time.Time `json:"created_on"`
+	GeneProduct string     `json:"gene_product"`
+	CreatedBy   string     `json:"created_by"`
+	CreatedOn   LegacyTime `json:"created_on"`
 }
 
 // ProcessedGeneProduct holds processed gene with product
