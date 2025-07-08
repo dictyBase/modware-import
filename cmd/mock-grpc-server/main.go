@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -152,23 +151,21 @@ func createStorage(
 	case "leveldb":
 		leveldbStorage, err := storage.NewLevelDBStorage(logger)
 		if err != nil {
-			return nil, errors.New(
-				"Failed to initialize LevelDB storage, falling back to memory storage",
+			return nil, fmt.Errorf(
+				"failed to initialize LevelDB storage: %w",
+				err,
 			)
 		}
 		logger.Debug("Using LevelDB in-memory storage")
 		return leveldbStorage, nil
 
 	case "memory":
-		memStorage := storage.NewMemoryStorage(logger)
 		logger.Debug("Using simple memory storage")
-		return memStorage, nil
+		return storage.NewMemoryStorage(logger), nil
 
 	default:
 		logger.WithField("storage_type", cfg.StorageType).
 			Warn("Unknown storage type, falling back to memory storage")
-		memStorage := storage.NewMemoryStorage(logger)
-		logger.Debug("Using memory storage as fallback")
-		return memStorage, nil
+		return storage.NewMemoryStorage(logger), nil
 	}
 }
