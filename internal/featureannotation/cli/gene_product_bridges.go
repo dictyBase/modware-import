@@ -61,27 +61,8 @@ func bridgeLegacyToGrpcPool(params *bridgeLegacyToGrpcPoolParams) {
 				continue
 			}
 
-			// Skip if no gene product
-			if result.Output.GeneProduct == "" {
-				params.metrics.mu.Lock()
-				params.metrics.SkippedCount++
-				params.metrics.mu.Unlock()
-				params.logger.Debugf(
-					"No gene product for gene %s, skipping gRPC update",
-					result.Output.GeneID,
-				)
-				continue
-			}
-
-			params.grpcPool.Submit(result.Output)
-			params.metrics.mu.Lock()
-			params.metrics.JobsSubmittedToGrpcPool++
-			params.metrics.mu.Unlock()
-
-			params.logger.WithFields(logrus.Fields{
-				"gene_id": result.Output.GeneID,
-				"stage":   "submitted_to_grpc_pool",
-			}).Debug("Gene product submitted for gRPC update")
+			// Process each gene product in the slice
+			processGeneProductSlice(result.Output, params)
 
 		case err, ok := <-params.legacyPool.Errors():
 			if !ok {
@@ -95,6 +76,37 @@ func bridgeLegacyToGrpcPool(params *bridgeLegacyToGrpcPoolParams) {
 			)
 			continue
 		}
+	}
+}
+
+// processGeneProductSlice processes a slice of gene products and submits them
+// to gRPC pool.
+func processGeneProductSlice(
+	geneProducts []ProcessedGeneProduct,
+	params *bridgeLegacyToGrpcPoolParams,
+) {
+	for _, geneProduct := range geneProducts {
+		// Skip if no gene product
+		if geneProduct.GeneProduct == "" {
+			params.metrics.mu.Lock()
+			params.metrics.SkippedCount++
+			params.metrics.mu.Unlock()
+			params.logger.Debugf(
+				"No gene product for gene %s, skipping gRPC update",
+				geneProduct.GeneID,
+			)
+			continue
+		}
+
+		params.grpcPool.Submit(geneProduct)
+		params.metrics.mu.Lock()
+		params.metrics.JobsSubmittedToGrpcPool++
+		params.metrics.mu.Unlock()
+
+		params.logger.WithFields(logrus.Fields{
+			"gene_id": geneProduct.GeneID,
+			"stage":   "submitted_to_grpc_pool",
+		}).Debug("Gene product submitted for gRPC update")
 	}
 }
 
