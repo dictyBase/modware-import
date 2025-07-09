@@ -15,11 +15,11 @@ import (
 // legacyDBQueryWorkerFunc creates worker for querying legacy database
 func legacyDBQueryWorkerFunc(
 	config GeneProductAppConfig,
-) concurrent.WorkerFunc[GeneInfo, ProcessedGeneProduct] {
+) concurrent.WorkerFunc[GeneInfo, []ProcessedGeneProduct] {
 	return func(
 		ctx context.Context,
 		job concurrent.Job[GeneInfo],
-	) (ProcessedGeneProduct, error) {
+	) ([]ProcessedGeneProduct, error) {
 		gene := job.Payload
 		logger := config.Logger
 
@@ -32,7 +32,7 @@ func legacyDBQueryWorkerFunc(
 			},
 		)
 		if err != nil {
-			return ProcessedGeneProduct{}, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"failed to query gene product for gene %s: %w",
 				gene.GeneID,
 				err,
@@ -43,35 +43,49 @@ func legacyDBQueryWorkerFunc(
 		// Check if we have results
 		if cursor.IsEmpty() {
 			logger.Debugf("No gene product found for gene %s", gene.GeneID)
-			return ProcessedGeneProduct{
+			return []ProcessedGeneProduct{{
 				GeneID:   gene.GeneID,
 				GeneName: gene.Name,
-			}, nil
+			}}, nil
 		}
 
-		result := GeneProductResult{}
-		if cursor.Scan() {
+		var processedGeneProducts []ProcessedGeneProduct
+
+		// Loop through all cursor results to get all gene products for
+		// this gene
+		for cursor.Scan() {
+			result := GeneProductResult{}
 			if err := cursor.Read(&result); err != nil {
-				return ProcessedGeneProduct{}, fmt.Errorf(
+				return nil, fmt.Errorf(
 					"failed to read gene product result: %w",
 					err,
 				)
 			}
-		}
 
+			processedGeneProducts = append(
+				processedGeneProducts,
+				ProcessedGeneProduct{
+					GeneID:      gene.GeneID,
+					GeneName:    gene.Name,
+					GeneProduct: result.GeneProduct,
+					CreatedBy:   result.CreatedBy,
+					CreatedOn:   result.CreatedOn.Time,
+				},
+			)
+
+			logger.Debugf(
+				"Found gene product '%s' for gene %s",
+				result.GeneProduct,
+				gene.GeneID,
+			)
+		}
 		logger.Debugf(
-			"Found gene product '%s' for gene %s",
-			result.GeneProduct,
+			"Found %d gene products for gene %s",
+			len(processedGeneProducts),
 			gene.GeneID,
 		)
 
-		return ProcessedGeneProduct{
-			GeneID:      gene.GeneID,
-			GeneName:    gene.Name,
-			GeneProduct: result.GeneProduct,
-			CreatedBy:   result.CreatedBy,
-			CreatedOn:   result.CreatedOn.Time,
-		}, nil
+		return processedGeneProducts, nil
 	}
 }
 
