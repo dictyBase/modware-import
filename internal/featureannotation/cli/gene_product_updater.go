@@ -115,7 +115,7 @@ type bridgeArangoToLegacyPoolParams struct {
 	wg         *sync.WaitGroup
 	ctx        context.Context
 	genesChan  <-chan GeneInfo
-	legacyPool *concurrent.Pool[GeneInfo, ProcessedGeneProduct]
+	legacyPool *concurrent.Pool[GeneInfo, []ProcessedGeneProduct]
 	metrics    *GeneProductMetrics
 	logger     *logrus.Entry
 }
@@ -123,7 +123,7 @@ type bridgeArangoToLegacyPoolParams struct {
 type bridgeLegacyToGrpcPoolParams struct {
 	wg         *sync.WaitGroup
 	ctx        context.Context
-	legacyPool *concurrent.Pool[GeneInfo, ProcessedGeneProduct]
+	legacyPool *concurrent.Pool[GeneInfo, []ProcessedGeneProduct]
 	grpcPool   *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult]
 	metrics    *GeneProductMetrics
 	logger     *logrus.Entry
@@ -163,14 +163,14 @@ func newGeneProductConfigFromCliContext(
 func setupLegacyQueryPool(
 	config GeneProductAppConfig,
 	mainCtx context.Context,
-) *concurrent.Pool[GeneInfo, ProcessedGeneProduct] {
+) *concurrent.Pool[GeneInfo, []ProcessedGeneProduct] {
 	pool := concurrent.NewPool(
 		legacyDBQueryWorkerFunc(config),
-		concurrent.WithWorkers[GeneInfo, ProcessedGeneProduct](
+		concurrent.WithWorkers[GeneInfo, []ProcessedGeneProduct](
 			config.NumLegacyWorkers,
 		),
-		concurrent.WithContext[GeneInfo, ProcessedGeneProduct](mainCtx),
-		concurrent.WithBufferSize[GeneInfo, ProcessedGeneProduct](
+		concurrent.WithContext[GeneInfo, []ProcessedGeneProduct](mainCtx),
+		concurrent.WithBufferSize[GeneInfo, []ProcessedGeneProduct](
 			config.NumLegacyWorkers*2,
 		),
 	)
