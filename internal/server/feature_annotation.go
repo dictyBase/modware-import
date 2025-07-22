@@ -3,9 +3,9 @@ package server
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"time"
 
+	"buf.build/go/protovalidate"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/storage"
 	"github.com/go-playground/validator/v10"
@@ -29,15 +29,10 @@ func NewFeatureAnnotationServer(
 	storage storage.FeatureAnnotationStorage,
 	logger *logrus.Logger,
 ) *FeatureAnnotationServer {
-	validator := validator.New()
-
-	// Register custom validation for DOI format
-	validator.RegisterValidation("doi", validateDOI)
-
 	return &FeatureAnnotationServer{
 		storage:   storage,
 		logger:    logger,
-		validator: validator,
+		validator: validator.New(),
 	}
 }
 
@@ -46,11 +41,11 @@ func (s *FeatureAnnotationServer) CreateFeatureAnnotation(
 	ctx context.Context,
 	req *feature.NewFeatureAnnotation,
 ) (*feature.FeatureAnnotation, error) {
-	s.logger.WithField("id", req.Id).Debug("CreateFeatureAnnotation called")
-
-	// Validate request
-	if err := s.validateNewFeatureAnnotation(req); err != nil {
-		return nil, err
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
 	}
 
 	// Create FeatureAnnotation from NewFeatureAnnotation
@@ -67,7 +62,6 @@ func (s *FeatureAnnotationServer) CreateFeatureAnnotation(
 
 	// Store annotation
 	if err := s.storage.Create(annotation); err != nil {
-		s.logger.WithError(err).WithField("id", req.Id).Error("Failed to create annotation")
 		return nil, err
 	}
 
@@ -80,34 +74,51 @@ func (s *FeatureAnnotationServer) GetFeatureAnnotation(
 	ctx context.Context,
 	req *feature.FeatureAnnotationId,
 ) (*feature.FeatureAnnotation, error) {
-	s.logger.WithField("id", req.Id).Debug("GetFeatureAnnotation called")
-
-	if req.Id == "" {
-		return nil, status.Error(codes.InvalidArgument, "annotation ID is required")
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
 	}
 
 	annotation, err := s.storage.GetByID(req.Id)
 	if err != nil {
-		s.logger.WithError(err).WithField("id", req.Id).Error("Failed to get annotation")
 		return nil, err
 	}
 
 	return annotation, nil
 }
 
-// GetFeatureAnnotationByName is not implemented in the current protobuf interface
-// This method would retrieve a feature annotation by name if it was in the interface
+// GetFeatureAnnotationByName retrieves a feature annotation by name
+func (s *FeatureAnnotationServer) GetFeatureAnnotationByName(
+	ctx context.Context,
+	req *feature.FeatureName,
+) (*feature.FeatureAnnotation, error) {
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
+	}
+
+	annotation, err := s.storage.GetByName(req.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return annotation, nil
+}
 
 // UpdateFeatureAnnotation updates an existing feature annotation
 func (s *FeatureAnnotationServer) UpdateFeatureAnnotation(
 	ctx context.Context,
 	req *feature.FeatureAnnotationUpdate,
 ) (*feature.FeatureAnnotation, error) {
-	s.logger.WithField("id", req.Id).Debug("UpdateFeatureAnnotation called")
-
-	// Validate request
-	if err := s.validateFeatureAnnotationUpdate(req); err != nil {
-		return nil, err
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
 	}
 
 	// Get existing annotation
@@ -131,7 +142,9 @@ func (s *FeatureAnnotationServer) UpdateFeatureAnnotation(
 
 	// Update storage
 	if err := s.storage.Update(req.Id, updated); err != nil {
-		s.logger.WithError(err).WithField("id", req.Id).Error("Failed to update annotation")
+		s.logger.WithError(err).
+			WithField("id", req.Id).
+			Error("Failed to update annotation")
 		return nil, err
 	}
 
@@ -144,17 +157,14 @@ func (s *FeatureAnnotationServer) DeleteFeatureAnnotation(
 	ctx context.Context,
 	req *feature.DeleteFeatureAnnotationRequest,
 ) (*emptypb.Empty, error) {
-	s.logger.WithFields(logrus.Fields{
-		"id":    req.Id,
-		"purge": req.Purge,
-	}).Debug("DeleteFeatureAnnotation called")
-
-	if req.Id == "" {
-		return nil, status.Error(codes.InvalidArgument, "annotation ID is required")
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
 	}
 
 	if err := s.storage.Delete(req.Id, req.Purge); err != nil {
-		s.logger.WithError(err).WithField("id", req.Id).Error("Failed to delete annotation")
 		return nil, err
 	}
 
@@ -171,14 +181,11 @@ func (s *FeatureAnnotationServer) AddTag(
 	ctx context.Context,
 	req *feature.AddTagRequest,
 ) (*feature.FeatureAnnotation, error) {
-	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,
-		"tag": req.Tag.Tag,
-	}).Debug("AddTag called")
-
-	// Validate request
-	if err := s.validateAddTagRequest(req); err != nil {
-		return nil, err
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
 	}
 
 	// Create TagProperty from TagPropertyCreate
@@ -193,10 +200,6 @@ func (s *FeatureAnnotationServer) AddTag(
 
 	// Add tag to storage
 	if err := s.storage.AddTag(req.Id, tag); err != nil {
-		s.logger.WithError(err).WithFields(logrus.Fields{
-			"id":  req.Id,
-			"tag": req.Tag.Tag,
-		}).Error("Failed to add tag")
 		return nil, err
 	}
 
@@ -219,15 +222,18 @@ func (s *FeatureAnnotationServer) ListFeatureAnnotationsByPubmedId(
 	ctx context.Context,
 	req *feature.PubmedId,
 ) (*feature.FeatureAnnotationCollection, error) {
-	s.logger.WithField("pubmed_id", req.Id).Debug("ListFeatureAnnotationsByPubmedId called")
-
-	if req.Id == "" {
-		return nil, status.Error(codes.InvalidArgument, "PubMed ID is required")
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
 	}
 
 	annotations, err := s.storage.ListByPubmedID(req.Id)
 	if err != nil {
-		s.logger.WithError(err).WithField("pubmed_id", req.Id).Error("Failed to list annotations by PubMed ID")
+		s.logger.WithError(err).
+			WithField("pubmed_id", req.Id).
+			Error("Failed to list annotations by PubMed ID")
 		return nil, err
 	}
 
@@ -241,126 +247,19 @@ func (s *FeatureAnnotationServer) ListFeatureAnnotationsByDOI(
 	ctx context.Context,
 	req *feature.DOI,
 ) (*feature.FeatureAnnotationCollection, error) {
-	s.logger.WithField("doi", req.Id).Debug("ListFeatureAnnotationsByDOI called")
-
-	// Validate DOI format
-	if req.Id == "" {
-		return nil, status.Error(codes.InvalidArgument, "DOI is required")
-	}
-
-	if !isValidDOI(req.Id) {
-		return nil, status.Error(codes.InvalidArgument, "invalid DOI format")
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
 	}
 
 	annotations, err := s.storage.ListByDOI(req.Id)
 	if err != nil {
-		s.logger.WithError(err).WithField("doi", req.Id).Error("Failed to list annotations by DOI")
 		return nil, err
 	}
 
 	return &feature.FeatureAnnotationCollection{
 		Data: annotations,
 	}, nil
-}
-
-// Validation functions
-
-func (s *FeatureAnnotationServer) validateNewFeatureAnnotation(req *feature.NewFeatureAnnotation) error {
-	if req.Id == "" {
-		return status.Error(codes.InvalidArgument, "annotation ID is required")
-	}
-
-	if req.Attributes == nil {
-		return status.Error(codes.InvalidArgument, "attributes are required")
-	}
-
-	if req.Attributes.Name == "" {
-		return status.Error(codes.InvalidArgument, "feature name is required")
-	}
-
-	if req.CreatedBy == "" {
-		return status.Error(codes.InvalidArgument, "created_by is required")
-	}
-
-	if !isValidEmail(req.CreatedBy) {
-		return status.Error(codes.InvalidArgument, "created_by must be a valid email")
-	}
-
-	// Validate DOIs in publications
-	for _, doi := range req.Attributes.Publications {
-		if !isValidDOI(doi) {
-			return status.Error(codes.InvalidArgument, fmt.Sprintf("invalid DOI format: %s", doi))
-		}
-	}
-
-	return nil
-}
-
-func (s *FeatureAnnotationServer) validateFeatureAnnotationUpdate(req *feature.FeatureAnnotationUpdate) error {
-	if req.Id == "" {
-		return status.Error(codes.InvalidArgument, "annotation ID is required")
-	}
-
-	if req.UpdatedBy == "" {
-		return status.Error(codes.InvalidArgument, "updated_by is required")
-	}
-
-	if !isValidEmail(req.UpdatedBy) {
-		return status.Error(codes.InvalidArgument, "updated_by must be a valid email")
-	}
-
-	// Validate DOIs in publications if attributes provided
-	if req.Attributes != nil {
-		for _, doi := range req.Attributes.Publications {
-			if !isValidDOI(doi) {
-				return status.Error(codes.InvalidArgument, fmt.Sprintf("invalid DOI format: %s", doi))
-			}
-		}
-	}
-
-	return nil
-}
-
-func (s *FeatureAnnotationServer) validateAddTagRequest(req *feature.AddTagRequest) error {
-	if req.Id == "" {
-		return status.Error(codes.InvalidArgument, "annotation ID is required")
-	}
-
-	if req.Tag == nil {
-		return status.Error(codes.InvalidArgument, "tag is required")
-	}
-
-	if req.Tag.Tag == "" {
-		return status.Error(codes.InvalidArgument, "tag name is required")
-	}
-
-	if req.Tag.Value == "" {
-		return status.Error(codes.InvalidArgument, "tag value is required")
-	}
-
-	if req.Tag.CreatedBy == "" {
-		return status.Error(codes.InvalidArgument, "created_by is required")
-	}
-
-	if !isValidEmail(req.Tag.CreatedBy) {
-		return status.Error(codes.InvalidArgument, "created_by must be a valid email")
-	}
-
-	return nil
-}
-
-// Helper validation functions
-
-func isValidEmail(email string) bool {
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	return emailRegex.MatchString(email)
-}
-
-func isValidDOI(doi string) bool {
-	doiRegex := regexp.MustCompile(`^10\.[0-9]{4,}(\.[0-9]+)*\/[-._;()\/:a-zA-Z0-9]+$`)
-	return doiRegex.MatchString(doi)
-}
-
-func validateDOI(fl validator.FieldLevel) bool {
-	return isValidDOI(fl.Field().String())
 }
