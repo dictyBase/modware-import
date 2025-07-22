@@ -37,6 +37,7 @@ func bridgeArangoToLegacyPool(params *bridgeArangoToLegacyPoolParams) {
 func bridgeLegacyToGrpcPool(params *bridgeLegacyToGrpcPoolParams) {
 	defer params.wg.Done()
 	defer params.grpcPool.Close()
+	defer params.batchGrpcPool.Close()
 
 	params.logger.Debug("Starting Legacy-Pool-to-gRPC-Pool bridge...")
 	for {
@@ -80,53 +81,55 @@ func bridgeLegacyToGrpcPool(params *bridgeLegacyToGrpcPoolParams) {
 }
 
 // processGeneProductSlice processes a slice of gene products and submits them
-// to gRPC pool.
+// to gRPC pool as a batch job.
 func processGeneProductSlice(
 	geneProducts []ProcessedGeneProduct,
 	params *bridgeLegacyToGrpcPoolParams,
 ) {
-	for _, geneProduct := range geneProducts {
-		// Skip if no gene product
-		if geneProduct.GeneProduct == "" {
-			params.metrics.mu.Lock()
-			params.metrics.SkippedCount++
-			params.metrics.mu.Unlock()
-			params.logger.Debugf(
-				"No gene product for gene %s, skipping gRPC update",
-				geneProduct.GeneID,
-			)
-			continue
-		}
-
-		params.grpcPool.Submit(geneProduct)
-		params.metrics.mu.Lock()
-		params.metrics.JobsSubmittedToGrpcPool++
-		params.metrics.mu.Unlock()
-
-		params.logger.WithFields(logrus.Fields{
-			"gene_id": geneProduct.GeneID,
-			"stage":   "submitted_to_grpc_pool",
-		}).Debug("Gene product submitted for gRPC update")
+	// If no gene products, skip
+	if len(geneProducts) == 0 {
+		params.logger.Debug("No gene products to process")
+		return
 	}
+
+	// Get the gene ID from the first product (all should have the same gene ID)
+	geneID := geneProducts[0].GeneID
+
+	// Create batch job and submit to batch gRPC pool
+	batchJob := BatchGeneProductJob{
+		GeneProducts: geneProducts,
+	}
+
+	params.batchGrpcPool.Submit(batchJob)
+	params.metrics.mu.Lock()
+	params.metrics.JobsSubmittedToGrpcPool++
+	params.metrics.mu.Unlock()
+
+	params.logger.WithFields(logrus.Fields{
+		"gene_id":       geneID,
+		"product_count": len(geneProducts),
+		"stage":         "submitted_to_batch_grpc_pool",
+	}).Debug("Gene products batch submitted for gRPC update")
 }
 
-// handleGeneProductGrpcResults handles results from gRPC update pool
+// handleGeneProductGrpcResults handles results from batch gRPC update pool
 func handleGeneProductGrpcResults(params *handleGeneProductGrpcResultsParams) {
 	defer params.wg.Done()
-	params.logger.Debug("Starting gRPC results handler...")
+	params.logger.Debug("Starting batch gRPC results handler...")
 
 	for {
 		select {
 		case <-params.ctx.Done():
 			return
-		case result, ok := <-params.grpcPool.Results():
+		case result, ok := <-params.batchGrpcPool.Results():
 			if !ok {
-				params.logger.Debug("gRPC update pool results channel closed.")
+				params.logger.Debug("Batch gRPC update pool results channel closed.")
 				return
 			}
 
 			params.metrics.mu.Lock()
-			params.metrics.TotalProcessed++
+			params.metrics.TotalProcessed += int64(result.Output.ProcessedCount)
+			params.metrics.SkippedCount += int64(result.Output.SkippedCount)
 			params.metrics.JobsCompletedFromGrpcPool++
 			if result.Error != nil {
 				params.metrics.ErrorCount++
@@ -139,21 +142,25 @@ func handleGeneProductGrpcResults(params *handleGeneProductGrpcResultsParams) {
 			} else {
 				params.metrics.SuccessCount++
 				params.metrics.mu.Unlock()
-				params.logger.Infof(
+				params.logger.WithFields(logrus.Fields{
+					"gene_id":         result.Output.GeneID,
+					"processed_count": result.Output.ProcessedCount,
+					"skipped_count":   result.Output.SkippedCount,
+				}).Infof(
 					"Successfully processed gene %s: %s",
 					result.Output.GeneID,
 					result.Output.Message,
 				)
 			}
-		case err, ok := <-params.grpcPool.Errors():
+		case err, ok := <-params.batchGrpcPool.Errors():
 			if !ok {
-				params.logger.Debug("gRPC update pool errors channel closed.")
+				params.logger.Debug("Batch gRPC update pool errors channel closed.")
 				return
 			}
 			params.metrics.mu.Lock()
 			params.metrics.ErrorCount++
 			params.metrics.mu.Unlock()
-			params.logger.Errorf("Async error from gRPC update pool: %v", err)
+			params.logger.Errorf("Async error from batch gRPC update pool: %v", err)
 		}
 	}
 }

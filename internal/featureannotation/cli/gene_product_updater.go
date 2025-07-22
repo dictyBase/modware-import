@@ -71,6 +71,21 @@ type ProcessedGeneProduct struct {
 	CreatedOn   time.Time
 }
 
+// BatchGeneProductJob holds a slice of gene products for batch processing
+type BatchGeneProductJob struct {
+	GeneProducts []ProcessedGeneProduct
+}
+
+// BatchGeneProductResult holds the result of batch gene product processing
+type BatchGeneProductResult struct {
+	GeneID         string
+	Success        bool
+	Message        string
+	Error          error
+	ProcessedCount int
+	SkippedCount   int
+}
+
 // GeneProductMetrics holds processing metrics
 type GeneProductMetrics struct {
 	TotalProcessed              int64
@@ -121,20 +136,22 @@ type bridgeArangoToLegacyPoolParams struct {
 }
 
 type bridgeLegacyToGrpcPoolParams struct {
-	wg         *sync.WaitGroup
-	ctx        context.Context
-	legacyPool *concurrent.Pool[GeneInfo, []ProcessedGeneProduct]
-	grpcPool   *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult]
-	metrics    *GeneProductMetrics
-	logger     *logrus.Entry
+	wg            *sync.WaitGroup
+	ctx           context.Context
+	legacyPool    *concurrent.Pool[GeneInfo, []ProcessedGeneProduct]
+	grpcPool      *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult]
+	batchGrpcPool *concurrent.Pool[BatchGeneProductJob, BatchGeneProductResult]
+	metrics       *GeneProductMetrics
+	logger        *logrus.Entry
 }
 
 type handleGeneProductGrpcResultsParams struct {
-	wg       *sync.WaitGroup
-	ctx      context.Context
-	grpcPool *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult]
-	metrics  *GeneProductMetrics
-	logger   *logrus.Entry
+	wg            *sync.WaitGroup
+	ctx           context.Context
+	grpcPool      *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult]
+	batchGrpcPool *concurrent.Pool[BatchGeneProductJob, BatchGeneProductResult]
+	metrics       *GeneProductMetrics
+	logger        *logrus.Entry
 }
 
 type reportGeneProductProgressParams struct {
@@ -199,6 +216,28 @@ func setupGrpcUpdatePool(
 	return pool
 }
 
+// setupBatchGrpcUpdatePool sets up batch gRPC update pool for gene products
+func setupBatchGrpcUpdatePool(
+	config GeneProductAppConfig,
+	mainCtx context.Context,
+) *concurrent.Pool[BatchGeneProductJob, BatchGeneProductResult] {
+	pool := concurrent.NewPool(
+		batchGeneProductGrpcWorkerFunc(
+			config,
+			registry.GetFeatureAnnotationAPIClient(),
+		),
+		concurrent.WithWorkers[BatchGeneProductJob, BatchGeneProductResult](
+			config.NumGrpcWorkers,
+		),
+		concurrent.WithContext[BatchGeneProductJob, BatchGeneProductResult](mainCtx),
+		concurrent.WithBufferSize[BatchGeneProductJob, BatchGeneProductResult](
+			config.NumGrpcWorkers*2,
+		),
+	)
+	pool.Start()
+	return pool
+}
+
 // RunGeneProductUpdater is the main entry point for the gene product updater
 func RunGeneProductUpdater(cltx *cli.Context) error {
 	logger := registry.GetLogger()
@@ -230,6 +269,7 @@ func RunGeneProductUpdater(cltx *cli.Context) error {
 	// Setup Pools
 	legacyQueryPool := setupLegacyQueryPool(config, mainCtx)
 	grpcUpdatePool := setupGrpcUpdatePool(config, mainCtx)
+	batchGrpcPool := setupBatchGrpcUpdatePool(config, mainCtx)
 
 	// Bridge from ArangoDB to Legacy Query Pool
 	wg.Add(1)
@@ -245,22 +285,24 @@ func RunGeneProductUpdater(cltx *cli.Context) error {
 	// Bridge from Legacy Query Pool to gRPC Pool
 	wg.Add(1)
 	go bridgeLegacyToGrpcPool(&bridgeLegacyToGrpcPoolParams{
-		wg:         &wg,
-		ctx:        mainCtx,
-		legacyPool: legacyQueryPool,
-		grpcPool:   grpcUpdatePool,
-		metrics:    config.Metrics,
-		logger:     logger,
+		wg:            &wg,
+		ctx:           mainCtx,
+		legacyPool:    legacyQueryPool,
+		grpcPool:      grpcUpdatePool,
+		batchGrpcPool: batchGrpcPool,
+		metrics:       config.Metrics,
+		logger:        logger,
 	})
 
 	// Handle gRPC Results
 	wg.Add(1)
 	go handleGeneProductGrpcResults(&handleGeneProductGrpcResultsParams{
-		wg:       &wg,
-		ctx:      mainCtx,
-		grpcPool: grpcUpdatePool,
-		metrics:  config.Metrics,
-		logger:   logger,
+		wg:            &wg,
+		ctx:           mainCtx,
+		grpcPool:      grpcUpdatePool,
+		batchGrpcPool: batchGrpcPool,
+		metrics:       config.Metrics,
+		logger:        logger,
 	})
 
 	// Progress Reporter
