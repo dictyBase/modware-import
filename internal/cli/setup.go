@@ -55,7 +55,7 @@ func RunDoc(cmd *cobra.Command) error {
 			return err
 		}
 		docDir := filepath.Join(dir, "docs")
-		if err := os.MkdirAll(docDir, 0700); err != nil {
+		if err := os.MkdirAll(docDir, 0o700); err != nil {
 			return err
 		}
 		if err := doc.GenMarkdownTree(cmd, docDir); err != nil {

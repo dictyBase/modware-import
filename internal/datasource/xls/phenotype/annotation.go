@@ -10,9 +10,7 @@ import (
 	"time"
 )
 
-var (
-	assayRgxp = regexp.MustCompile(`^DDASSAY_\d{6,}$`)
-)
+var assayRgxp = regexp.MustCompile(`^DDASSAY_\d{6,}$`)
 
 // PhenotypeAnnotation represents annotations related to a phenotype.
 type PhenotypeAnnotation struct {
