@@ -214,93 +214,6 @@ func (s *FeatureAnnotationServer) AddTag(
 	return annotation, nil
 }
 
-// UpdateTag updates an existing tag in a feature annotation
-func (s *FeatureAnnotationServer) UpdateTag(
-	ctx context.Context,
-	req *feature.UpdateTagRequest,
-) (*feature.FeatureAnnotation, error) {
-	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,
-		"tag": req.Tag.Tag,
-	}).Debug("UpdateTag called")
-
-	// Validate request
-	if err := s.validateUpdateTagRequest(req); err != nil {
-		return nil, err
-	}
-
-	// Create TagProperty from TagPropertyUpdate
-	now := timestamppb.New(time.Now())
-	tag := &feature.TagProperty{
-		Tag:       req.Tag.Tag,
-		Value:     req.Tag.Value,
-		UpdatedBy: req.Tag.UpdatedBy,
-		UpdatedAt: now,
-	}
-
-	// Update tag in storage
-	if err := s.storage.UpdateTag(req.Id, req.Tag.Tag, tag); err != nil {
-		s.logger.WithError(err).WithFields(logrus.Fields{
-			"id":  req.Id,
-			"tag": req.Tag.Tag,
-		}).Error("Failed to update tag")
-		return nil, err
-	}
-
-	// Return updated annotation
-	annotation, err := s.storage.GetByID(req.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,
-		"tag": req.Tag.Tag,
-	}).Info("Updated tag in feature annotation")
-
-	return annotation, nil
-}
-
-// RemoveTag removes a tag from a feature annotation
-func (s *FeatureAnnotationServer) RemoveTag(
-	ctx context.Context,
-	req *feature.RemoveTagRequest,
-) (*feature.FeatureAnnotation, error) {
-	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,
-		"tag": req.Tag,
-	}).Debug("RemoveTag called")
-
-	if req.Id == "" {
-		return nil, status.Error(codes.InvalidArgument, "annotation ID is required")
-	}
-	if req.Tag == "" {
-		return nil, status.Error(codes.InvalidArgument, "tag name is required")
-	}
-
-	// Remove tag from storage
-	if err := s.storage.RemoveTag(req.Id, req.Tag); err != nil {
-		s.logger.WithError(err).WithFields(logrus.Fields{
-			"id":  req.Id,
-			"tag": req.Tag,
-		}).Error("Failed to remove tag")
-		return nil, err
-	}
-
-	// Return updated annotation
-	annotation, err := s.storage.GetByID(req.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,
-		"tag": req.Tag,
-	}).Info("Removed tag from feature annotation")
-
-	return annotation, nil
-}
-
 // ListFeatureAnnotationsByPubmedId lists feature annotations by PubMed ID
 func (s *FeatureAnnotationServer) ListFeatureAnnotationsByPubmedId(
 	ctx context.Context,
@@ -431,34 +344,6 @@ func (s *FeatureAnnotationServer) validateAddTagRequest(req *feature.AddTagReque
 
 	if !isValidEmail(req.Tag.CreatedBy) {
 		return status.Error(codes.InvalidArgument, "created_by must be a valid email")
-	}
-
-	return nil
-}
-
-func (s *FeatureAnnotationServer) validateUpdateTagRequest(req *feature.UpdateTagRequest) error {
-	if req.Id == "" {
-		return status.Error(codes.InvalidArgument, "annotation ID is required")
-	}
-
-	if req.Tag == nil {
-		return status.Error(codes.InvalidArgument, "tag is required")
-	}
-
-	if req.Tag.Tag == "" {
-		return status.Error(codes.InvalidArgument, "tag name is required")
-	}
-
-	if req.Tag.Value == "" {
-		return status.Error(codes.InvalidArgument, "tag value is required")
-	}
-
-	if req.Tag.UpdatedBy == "" {
-		return status.Error(codes.InvalidArgument, "updated_by is required")
-	}
-
-	if !isValidEmail(req.Tag.UpdatedBy) {
-		return status.Error(codes.InvalidArgument, "updated_by must be a valid email")
 	}
 
 	return nil
