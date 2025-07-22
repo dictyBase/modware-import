@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"regexp"
 	"time"
 
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
@@ -138,4 +139,13 @@ func (s *FeatureAnnotationServer) validateUpdateTagRequest(req *feature.UpdateTa
 	}
 
 	return nil
+}
+
+// isValidEmail validates email format for deprecated methods
+// Deprecated: Used only by deprecated validation functions
+func isValidEmail(email string) bool {
+	emailRegex := regexp.MustCompile(
+		`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`,
+	)
+	return emailRegex.MatchString(email)
 }
