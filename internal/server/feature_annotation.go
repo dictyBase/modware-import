@@ -3,10 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings" // Added for custom DOI validation
 	"time"
 
 	"buf.build/go/protovalidate"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/storage"
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
@@ -84,7 +86,11 @@ func (s *FeatureAnnotationServer) CreateFeatureAnnotation(
 			if err := s.validator.Var(publication, "required,doi"); err != nil {
 				return nil, status.Error(
 					codes.InvalidArgument,
-					fmt.Sprintf("invalid DOI format in publication %d: %s", i+1, publication),
+					fmt.Sprintf(
+						"invalid DOI format in publication %d: %s",
+						i+1,
+						publication,
+					),
 				)
 			}
 		}
@@ -259,6 +265,52 @@ func (s *FeatureAnnotationServer) AddTag(
 	return annotation, nil
 }
 
+func newTagPropertyConverter(
+	tagCreate *feature.TagPropertyCreate,
+) *feature.TagProperty {
+	now := timestamppb.New(time.Now())
+	tag := &feature.TagProperty{
+		Tag:       tagCreate.Tag,
+		Value:     tagCreate.Value,
+		CreatedBy: tagCreate.CreatedBy,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	if tagCreate.CreatedAt != nil &&
+		tagCreate.CreatedAt.CheckValid() == nil {
+		tag.CreatedAt = tagCreate.CreatedAt
+		tag.UpdatedAt = tagCreate.CreatedAt
+	}
+	return tag
+}
+
+// AddTags adds multiple tags to a feature annotation
+func (s *FeatureAnnotationServer) AddTags(
+	ctx context.Context,
+	req *feature.AddTagsRequest,
+) (*feature.FeatureAnnotation, error) {
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
+	}
+	tags := collection.Map(req.Tags, newTagPropertyConverter)
+	if err := s.storage.AddTags(req.Id, tags); err != nil {
+		return nil, err
+	}
+	annotation, err := s.storage.GetByID(req.Id)
+	if err != nil {
+		return nil, err
+	}
+	s.logger.WithFields(logrus.Fields{
+		"id":        req.Id,
+		"tag_count": len(req.Tags),
+	}).Info("Added tags to feature annotation")
+
+	return annotation, nil
+}
+
 // ListFeatureAnnotationsByPubmedId lists feature annotations by PubMed ID
 func (s *FeatureAnnotationServer) ListFeatureAnnotationsByPubmedId(
 	ctx context.Context,
@@ -289,10 +341,18 @@ func (s *FeatureAnnotationServer) ListFeatureAnnotationsByDOI(
 	ctx context.Context,
 	req *feature.DOI,
 ) (*feature.FeatureAnnotationCollection, error) {
+	// Validate DOI format using go-playground/validator
+	if err := s.validator.Var(req.Id, "required,doi"); err != nil { // Changed from "url" to "doi"
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed for DOI '%s': %v", req.Id, err),
+		)
+	}
+	// Existing protovalidate check for other potential protobuf validation rules
 	if err := protovalidate.Validate(req); err != nil {
 		return nil, status.Error(
 			codes.InvalidArgument,
-			fmt.Sprintf("validation failed: %v", err),
+			fmt.Sprintf("protobuf validation failed: %v", err),
 		)
 	}
 
