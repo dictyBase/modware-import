@@ -392,6 +392,47 @@ func (s *LevelDBStorage) AddTag(id string, tag *feature.TagProperty) error {
 	return s.updateAnnotation(annotation)
 }
 
+func (s *LevelDBStorage) AddTags(id string, tags []*feature.TagProperty) error {
+	if id == "" {
+		return status.Error(codes.InvalidArgument, "ID cannot be empty")
+	}
+	if len(tags) == 0 {
+		return nil
+	}
+
+	annotation, err := s.getByIDInternal(id)
+	if err != nil {
+		return err
+	}
+
+	if annotation.Attributes == nil {
+		annotation.Attributes = &feature.FeatureAnnotationAttributes{}
+	}
+
+	for _, tag := range tags {
+		if tag == nil {
+			continue
+		}
+
+		for _, existingTag := range annotation.Attributes.Properties {
+			if existingTag.Tag == tag.Tag {
+				return status.Errorf(
+					codes.AlreadyExists,
+					"tag with name %s already exists",
+					tag.Tag,
+				)
+			}
+		}
+
+		annotation.Attributes.Properties = append(
+			annotation.Attributes.Properties,
+			tag,
+		)
+	}
+
+	return s.updateAnnotation(annotation)
+}
+
 func (s *LevelDBStorage) UpdateTag(
 	id string,
 	tagName string,
