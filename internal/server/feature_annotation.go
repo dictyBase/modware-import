@@ -25,14 +25,44 @@ type FeatureAnnotationServer struct {
 }
 
 // NewFeatureAnnotationServer creates a new FeatureAnnotationServer instance
+// validateDOI is a custom validator for DOI format.
+// A DOI typically starts with "10." and contains a "/"
+// The registrant code (part after "10." and before "/") is usually numeric.
+func validateDOI(fl validator.FieldLevel) bool {
+	doi := fl.Field().String()
+	if !strings.HasPrefix(doi, "10.") {
+		return false
+	}
+	// Find the first slash after "10."
+	slashIndex := strings.Index(doi[3:], "/")
+	if slashIndex == -1 { // No slash found after "10."
+		return false
+	}
+	// Extract the registrant code (part between "10." and the first "/")
+	registrantCode := doi[3 : 3+slashIndex]
+	if len(registrantCode) == 0 { // Registrant code cannot be empty
+		return false
+	}
+	// Check if the registrant code is purely numeric
+	for _, r := range registrantCode {
+		if r < '0' || r > '9' {
+			return false // Registrant code contains non-digits, consider it invalid for this validator
+		}
+	}
+	return true
+}
+
 func NewFeatureAnnotationServer(
 	storage storage.FeatureAnnotationStorage,
 	logger *logrus.Logger,
 ) *FeatureAnnotationServer {
+	v := validator.New()
+	// Register custom validator for DOI
+	v.RegisterValidation("doi", validateDOI)
 	return &FeatureAnnotationServer{
 		storage:   storage,
 		logger:    logger,
-		validator: validator.New(),
+		validator: v,
 	}
 }
 
@@ -46,6 +76,18 @@ func (s *FeatureAnnotationServer) CreateFeatureAnnotation(
 			codes.InvalidArgument,
 			fmt.Sprintf("validation failed: %v", err),
 		)
+	}
+
+	// Validate DOI format in publications if present
+	if req.Attributes != nil && len(req.Attributes.Publications) > 0 {
+		for i, publication := range req.Attributes.Publications {
+			if err := s.validator.Var(publication, "required,doi"); err != nil {
+				return nil, status.Error(
+					codes.InvalidArgument,
+					fmt.Sprintf("invalid DOI format in publication %d: %s", i+1, publication),
+				)
+			}
+		}
 	}
 
 	// Create FeatureAnnotation from NewFeatureAnnotation
