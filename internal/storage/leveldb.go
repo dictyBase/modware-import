@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/storage"
@@ -14,8 +15,9 @@ import (
 )
 
 type LevelDBStorage struct {
-	db     *leveldb.DB
-	logger *logrus.Logger
+	db        *leveldb.DB
+	logger    *logrus.Logger
+	validator *validator.Validate
 }
 
 func NewLevelDBStorage(
@@ -30,8 +32,9 @@ func NewLevelDBStorage(
 		)
 	}
 	leveldbStorage := &LevelDBStorage{
-		db:     db,
-		logger: logger,
+		db:        db,
+		logger:    logger,
+		validator: validator.New(),
 	}
 	return leveldbStorage, nil
 }
@@ -41,7 +44,6 @@ func (s *LevelDBStorage) Close() error {
 }
 
 func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
-	// Check if annotation already exists (outside transaction for performance)
 	key := fmt.Sprintf("annotation:%s", annotation.Id)
 	exists, err := s.db.Has([]byte(key), nil)
 	if err != nil {
@@ -58,8 +60,6 @@ func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
 			annotation.Id,
 		)
 	}
-
-	// Serialize annotation
 	data, err := proto.Marshal(annotation)
 	if err != nil {
 		return status.Errorf(
@@ -68,8 +68,6 @@ func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
 			err,
 		)
 	}
-
-	// Start transaction for atomic operations
 	txn, err := s.db.OpenTransaction()
 	if err != nil {
 		return status.Errorf(
@@ -78,8 +76,6 @@ func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
 			err,
 		)
 	}
-
-	// Store annotation
 	if err := txn.Put([]byte(key), data, nil); err != nil {
 		txn.Discard()
 		return status.Errorf(
@@ -88,7 +84,6 @@ func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
 			err,
 		)
 	}
-
 	// Update indexes
 	if err := s.updateIndexes(txn, annotation, true); err != nil {
 		txn.Discard()
@@ -98,8 +93,6 @@ func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
 			err,
 		)
 	}
-
-	// Commit transaction
 	if err := txn.Commit(); err != nil {
 		return status.Errorf(
 			codes.Internal,
@@ -107,7 +100,6 @@ func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
 			err,
 		)
 	}
-
 	s.logger.WithField("annotation_id", annotation.Id).
 		Debug("Created annotation in LevelDB")
 	return nil
@@ -116,6 +108,12 @@ func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
 func (s *LevelDBStorage) GetByID(
 	id string,
 ) (*feature.FeatureAnnotation, error) {
+	if err := s.validator.Var(id, "required"); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid id: %v", err),
+		)
+	}
 	key := fmt.Sprintf("annotation:%s", id)
 	data, err := s.db.Get([]byte(key), nil)
 	if err != nil {
@@ -156,6 +154,12 @@ func (s *LevelDBStorage) GetByID(
 func (s *LevelDBStorage) GetByName(
 	name string,
 ) (*feature.FeatureAnnotation, error) {
+	if err := s.validator.Var(name, "required"); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid name: %v", err),
+		)
+	}
 	indexKey := fmt.Sprintf("name_index:%s", name)
 	idData, err := s.db.Get([]byte(indexKey), nil)
 	if err != nil {
@@ -181,6 +185,12 @@ func (s *LevelDBStorage) Update(
 	id string,
 	annotation *feature.FeatureAnnotation,
 ) error {
+	if err := s.validator.Var(id, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid id: %v", err),
+		)
+	}
 	existing, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
@@ -249,6 +259,12 @@ func (s *LevelDBStorage) Update(
 }
 
 func (s *LevelDBStorage) Delete(id string, purge bool) error {
+	if err := s.validator.Var(id, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid id: %v", err),
+		)
+	}
 	// Get annotation (outside transaction)
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
@@ -316,6 +332,12 @@ func (s *LevelDBStorage) Delete(id string, purge bool) error {
 }
 
 func (s *LevelDBStorage) AddTag(id string, tag *feature.TagProperty) error {
+	if err := s.validator.Var(id, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid id: %v", err),
+		)
+	}
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
@@ -346,6 +368,12 @@ func (s *LevelDBStorage) AddTag(id string, tag *feature.TagProperty) error {
 }
 
 func (s *LevelDBStorage) AddTags(id string, tags []*feature.TagProperty) error {
+	if err := s.validator.Var(id, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid id: %v", err),
+		)
+	}
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
@@ -356,6 +384,12 @@ func (s *LevelDBStorage) AddTags(id string, tags []*feature.TagProperty) error {
 	for _, tag := range tags {
 		if tag == nil {
 			continue
+		}
+		if err := s.validator.Var(tag.Tag, "required"); err != nil {
+			return status.Errorf(
+				codes.InvalidArgument,
+				"tag name cannot be empty",
+			)
 		}
 
 		for _, existingTag := range annotation.Attributes.Properties {
@@ -382,6 +416,18 @@ func (s *LevelDBStorage) UpdateTag(
 	tagName string,
 	tag *feature.TagProperty,
 ) error {
+	if err := s.validator.Var(id, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid id: %v", err),
+		)
+	}
+	if err := s.validator.Var(tagName, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid tagName: %v", err),
+		)
+	}
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
@@ -412,6 +458,18 @@ func (s *LevelDBStorage) UpdateTag(
 }
 
 func (s *LevelDBStorage) RemoveTag(id string, tagName string) error {
+	if err := s.validator.Var(id, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid id: %v", err),
+		)
+	}
+	if err := s.validator.Var(tagName, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid tagName: %v", err),
+		)
+	}
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
@@ -448,6 +506,12 @@ func (s *LevelDBStorage) RemoveTag(id string, tagName string) error {
 func (s *LevelDBStorage) ListByPubmedID(
 	pubmedId string,
 ) ([]*feature.FeatureAnnotation, error) {
+	if err := s.validator.Var(pubmedId, "required"); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid pubmedId: %v", err),
+		)
+	}
 	indexKey := fmt.Sprintf("pubmed_index:%s", pubmedId)
 	idsData, err := s.db.Get([]byte(indexKey), nil)
 	if err != nil {
@@ -485,6 +549,12 @@ func (s *LevelDBStorage) ListByPubmedID(
 func (s *LevelDBStorage) ListByDOI(
 	doi string,
 ) ([]*feature.FeatureAnnotation, error) {
+	if err := s.validator.Var(doi, "required"); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid doi: %v", err),
+		)
+	}
 	indexKey := fmt.Sprintf("doi_index:%s", doi)
 	idsData, err := s.db.Get([]byte(indexKey), nil)
 	if err != nil {
