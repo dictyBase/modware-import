@@ -345,24 +345,11 @@ func (s *LevelDBStorage) AddTag(id string, tag *feature.TagProperty) error {
 	if annotation.Attributes == nil {
 		annotation.Attributes = &feature.FeatureAnnotationAttributes{}
 	}
-
-	// Check if tag already exists
-	for _, existingTag := range annotation.Attributes.Properties {
-		if existingTag.Tag == tag.Tag {
-			return status.Errorf(
-				codes.AlreadyExists,
-				"tag with name %s already exists",
-				tag.Tag,
-			)
-		}
-	}
-
 	// Add tag
 	annotation.Attributes.Properties = append(
 		annotation.Attributes.Properties,
 		tag,
 	)
-
 	// Save updated annotation (single operation, no transaction needed)
 	return s.updateAnnotation(annotation)
 }
