@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
@@ -368,33 +369,10 @@ func (s *LevelDBStorage) AddTags(id string, tags []*feature.TagProperty) error {
 	if annotation.Attributes == nil {
 		annotation.Attributes = &feature.FeatureAnnotationAttributes{}
 	}
-	for _, tag := range tags {
-		if tag == nil {
-			continue
-		}
-		if err := s.validator.Var(tag.Tag, "required"); err != nil {
-			return status.Errorf(
-				codes.InvalidArgument,
-				"tag name cannot be empty",
-			)
-		}
-
-		for _, existingTag := range annotation.Attributes.Properties {
-			if existingTag.Tag == tag.Tag {
-				return status.Errorf(
-					codes.AlreadyExists,
-					"tag with name %s already exists",
-					tag.Tag,
-				)
-			}
-		}
-
-		annotation.Attributes.Properties = append(
-			annotation.Attributes.Properties,
-			tag,
-		)
-	}
-
+	annotation.Attributes.Properties = slices.Concat(
+		annotation.Attributes.Properties,
+		tags,
+	)
 	return s.updateAnnotation(annotation)
 }
 
