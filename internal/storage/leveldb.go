@@ -41,16 +41,6 @@ func (s *LevelDBStorage) Close() error {
 }
 
 func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
-	if annotation == nil {
-		return status.Error(codes.InvalidArgument, "annotation cannot be nil")
-	}
-	if annotation.Id == "" {
-		return status.Error(
-			codes.InvalidArgument,
-			"annotation ID cannot be empty",
-		)
-	}
-
 	// Check if annotation already exists (outside transaction for performance)
 	key := fmt.Sprintf("annotation:%s", annotation.Id)
 	exists, err := s.db.Has([]byte(key), nil)
@@ -126,10 +116,6 @@ func (s *LevelDBStorage) Create(annotation *feature.FeatureAnnotation) error {
 func (s *LevelDBStorage) GetByID(
 	id string,
 ) (*feature.FeatureAnnotation, error) {
-	if id == "" {
-		return nil, status.Error(codes.InvalidArgument, "ID cannot be empty")
-	}
-
 	key := fmt.Sprintf("annotation:%s", id)
 	data, err := s.db.Get([]byte(key), nil)
 	if err != nil {
@@ -170,11 +156,6 @@ func (s *LevelDBStorage) GetByID(
 func (s *LevelDBStorage) GetByName(
 	name string,
 ) (*feature.FeatureAnnotation, error) {
-	if name == "" {
-		return nil, status.Error(codes.InvalidArgument, "name cannot be empty")
-	}
-
-	// Look up in name index
 	indexKey := fmt.Sprintf("name_index:%s", name)
 	idData, err := s.db.Get([]byte(indexKey), nil)
 	if err != nil {
@@ -200,23 +181,11 @@ func (s *LevelDBStorage) Update(
 	id string,
 	annotation *feature.FeatureAnnotation,
 ) error {
-	if id == "" {
-		return status.Error(codes.InvalidArgument, "ID cannot be empty")
-	}
-	if annotation == nil {
-		return status.Error(codes.InvalidArgument, "annotation cannot be nil")
-	}
-
-	// Get existing annotation to update indexes (outside transaction)
 	existing, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
 	}
-
-	// Update annotation ID to match
 	annotation.Id = id
-
-	// Serialize updated annotation
 	data, err := proto.Marshal(annotation)
 	if err != nil {
 		return status.Errorf(
@@ -280,18 +249,12 @@ func (s *LevelDBStorage) Update(
 }
 
 func (s *LevelDBStorage) Delete(id string, purge bool) error {
-	if id == "" {
-		return status.Error(codes.InvalidArgument, "ID cannot be empty")
-	}
-
 	// Get annotation (outside transaction)
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
 	}
-
 	key := fmt.Sprintf("annotation:%s", id)
-
 	if purge {
 		// Hard delete - use transaction for atomicity
 		txn, err := s.db.OpenTransaction()
@@ -353,20 +316,10 @@ func (s *LevelDBStorage) Delete(id string, purge bool) error {
 }
 
 func (s *LevelDBStorage) AddTag(id string, tag *feature.TagProperty) error {
-	if id == "" {
-		return status.Error(codes.InvalidArgument, "ID cannot be empty")
-	}
-	if tag == nil {
-		return status.Error(codes.InvalidArgument, "tag cannot be nil")
-	}
-
-	// Get annotation (outside transaction)
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
 	}
-
-	// Initialize attributes if nil
 	if annotation.Attributes == nil {
 		annotation.Attributes = &feature.FeatureAnnotationAttributes{}
 	}
@@ -393,22 +346,13 @@ func (s *LevelDBStorage) AddTag(id string, tag *feature.TagProperty) error {
 }
 
 func (s *LevelDBStorage) AddTags(id string, tags []*feature.TagProperty) error {
-	if id == "" {
-		return status.Error(codes.InvalidArgument, "ID cannot be empty")
-	}
-	if len(tags) == 0 {
-		return nil
-	}
-
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
 	}
-
 	if annotation.Attributes == nil {
 		annotation.Attributes = &feature.FeatureAnnotationAttributes{}
 	}
-
 	for _, tag := range tags {
 		if tag == nil {
 			continue
@@ -438,27 +382,13 @@ func (s *LevelDBStorage) UpdateTag(
 	tagName string,
 	tag *feature.TagProperty,
 ) error {
-	if id == "" {
-		return status.Error(codes.InvalidArgument, "ID cannot be empty")
-	}
-	if tagName == "" {
-		return status.Error(codes.InvalidArgument, "tag name cannot be empty")
-	}
-	if tag == nil {
-		return status.Error(codes.InvalidArgument, "tag cannot be nil")
-	}
-
-	// Get annotation (outside transaction)
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
 	}
-
-	// Initialize attributes if nil
 	if annotation.Attributes == nil {
 		annotation.Attributes = &feature.FeatureAnnotationAttributes{}
 	}
-
 	// Find and update tag
 	found := false
 	for i, existingTag := range annotation.Attributes.Properties {
@@ -482,25 +412,13 @@ func (s *LevelDBStorage) UpdateTag(
 }
 
 func (s *LevelDBStorage) RemoveTag(id string, tagName string) error {
-	if id == "" {
-		return status.Error(codes.InvalidArgument, "ID cannot be empty")
-	}
-	if tagName == "" {
-		return status.Error(codes.InvalidArgument, "tag name cannot be empty")
-	}
-
-	// Get annotation (outside transaction)
 	annotation, err := s.getByIDInternal(id)
 	if err != nil {
 		return err
 	}
-
-	// Initialize attributes if nil
 	if annotation.Attributes == nil {
 		annotation.Attributes = &feature.FeatureAnnotationAttributes{}
 	}
-
-	// Find and remove tag
 	found := false
 	newTags := make(
 		[]*feature.TagProperty,
@@ -524,21 +442,12 @@ func (s *LevelDBStorage) RemoveTag(id string, tagName string) error {
 	}
 
 	annotation.Attributes.Properties = newTags
-
-	// Save updated annotation (single operation, no transaction needed)
 	return s.updateAnnotation(annotation)
 }
 
 func (s *LevelDBStorage) ListByPubmedID(
 	pubmedId string,
 ) ([]*feature.FeatureAnnotation, error) {
-	if pubmedId == "" {
-		return nil, status.Error(
-			codes.InvalidArgument,
-			"PubMed ID cannot be empty",
-		)
-	}
-
 	indexKey := fmt.Sprintf("pubmed_index:%s", pubmedId)
 	idsData, err := s.db.Get([]byte(indexKey), nil)
 	if err != nil {
@@ -576,10 +485,6 @@ func (s *LevelDBStorage) ListByPubmedID(
 func (s *LevelDBStorage) ListByDOI(
 	doi string,
 ) ([]*feature.FeatureAnnotation, error) {
-	if doi == "" {
-		return nil, status.Error(codes.InvalidArgument, "DOI cannot be empty")
-	}
-
 	indexKey := fmt.Sprintf("doi_index:%s", doi)
 	idsData, err := s.db.Get([]byte(indexKey), nil)
 	if err != nil {
@@ -667,7 +572,6 @@ func (s *LevelDBStorage) updateAnnotation(
 			err,
 		)
 	}
-
 	key := fmt.Sprintf("annotation:%s", annotation.Id)
 	if err := s.db.Put([]byte(key), data, nil); err != nil {
 		return status.Errorf(
@@ -699,10 +603,6 @@ func (s *LevelDBStorage) updateNameIndex(
 	annotation *feature.FeatureAnnotation,
 	add bool,
 ) error {
-	if annotation.Attributes == nil || annotation.Attributes.Name == "" {
-		return nil
-	}
-
 	nameKey := fmt.Sprintf("name_index:%s", annotation.Attributes.Name)
 	if add {
 		return txn.Put([]byte(nameKey), []byte(annotation.Id), nil)
@@ -715,10 +615,6 @@ func (s *LevelDBStorage) updatePubmedIndexes(
 	annotation *feature.FeatureAnnotation,
 	add bool,
 ) error {
-	if annotation.Attributes == nil || len(annotation.Attributes.Pubmed) == 0 {
-		return nil
-	}
-
 	for _, pubmedId := range annotation.Attributes.Pubmed {
 		if err := s.updateListIndexWithTxn(txn, "pubmed_index", pubmedId, annotation.Id, add); err != nil {
 			return err
@@ -732,10 +628,6 @@ func (s *LevelDBStorage) updateDOIIndexes(
 	annotation *feature.FeatureAnnotation,
 	add bool,
 ) error {
-	if annotation.Attributes == nil || len(annotation.Attributes.Publications) == 0 {
-		return nil
-	}
-
 	for _, publication := range annotation.Attributes.Publications {
 		// Check if it's a DOI (basic check for DOI format)
 		if strings.HasPrefix(publication, "10.") {
@@ -768,7 +660,10 @@ func (s *LevelDBStorage) updateListIndexWithTxn(
 	return s.saveIndexIDs(txn, indexKey, updatedIDs)
 }
 
-func (s *LevelDBStorage) getIndexIDs(txn *leveldb.Transaction, indexKey string) ([]string, error) {
+func (s *LevelDBStorage) getIndexIDs(
+	txn *leveldb.Transaction,
+	indexKey string,
+) ([]string, error) {
 	data, err := txn.Get([]byte(indexKey), nil)
 	if err != nil && err != leveldb.ErrNotFound {
 		return nil, err
@@ -779,7 +674,10 @@ func (s *LevelDBStorage) getIndexIDs(txn *leveldb.Transaction, indexKey string) 
 	return strings.Split(string(data), ","), nil
 }
 
-func (s *LevelDBStorage) addIDToList(existingIDs []string, annotationID string) []string {
+func (s *LevelDBStorage) addIDToList(
+	existingIDs []string,
+	annotationID string,
+) []string {
 	for _, id := range existingIDs {
 		if id == annotationID {
 			return existingIDs // Already exists
@@ -788,7 +686,10 @@ func (s *LevelDBStorage) addIDToList(existingIDs []string, annotationID string) 
 	return append(existingIDs, annotationID)
 }
 
-func (s *LevelDBStorage) removeIDFromList(existingIDs []string, annotationID string) []string {
+func (s *LevelDBStorage) removeIDFromList(
+	existingIDs []string,
+	annotationID string,
+) []string {
 	newIDs := make([]string, 0, len(existingIDs))
 	for _, id := range existingIDs {
 		if id != annotationID && id != "" {
@@ -798,7 +699,11 @@ func (s *LevelDBStorage) removeIDFromList(existingIDs []string, annotationID str
 	return newIDs
 }
 
-func (s *LevelDBStorage) saveIndexIDs(txn *leveldb.Transaction, indexKey string, ids []string) error {
+func (s *LevelDBStorage) saveIndexIDs(
+	txn *leveldb.Transaction,
+	indexKey string,
+	ids []string,
+) error {
 	if len(ids) == 0 || (len(ids) == 1 && ids[0] == "") {
 		return txn.Delete([]byte(indexKey), nil)
 	}
