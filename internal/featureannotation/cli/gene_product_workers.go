@@ -90,14 +90,23 @@ func legacyDBQueryWorkerFunc(
 	}
 }
 
-func createFeatureAnnotationWithProduct(
+func handleFeatureAnnotationLookup(
 	ctx context.Context,
 	grpcClient fanno.FeatureAnnotationServiceClient,
 	processedGene ProcessedGeneProduct,
+	grpcErr error,
 ) (GrpcUpdateResult, error) {
 	result := GrpcUpdateResult{
 		GeneID:  processedGene.GeneID,
 		Success: false,
+	}
+	if status.Code(grpcErr) != codes.NotFound {
+		result.Error = grpcErr
+		result.Message = fmt.Sprintf(
+			"Failed to get feature annotation: %v",
+			grpcErr,
+		)
+		return result, grpcErr
 	}
 	_, createErr := grpcClient.CreateFeatureAnnotation(
 		ctx,
