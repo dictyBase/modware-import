@@ -27,6 +27,9 @@ type FeatureAnnotationStorage interface {
 	// AddTags adds multiple tag properties to a feature annotation
 	AddTags(id string, tags []*feature.TagProperty) error
 
+	// SetTags replaces all existing tags with the provided tags (idempotent full-update)
+	SetTags(id string, tags []*feature.TagProperty) error
+
 	// UpdateTag modifies an existing tag in a feature annotation
 	UpdateTag(id string, tagName string, tag *feature.TagProperty) error
 
