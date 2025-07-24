@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strings" // Added for custom DOI validation
 	"time"
 
 	"buf.build/go/protovalidate"
@@ -27,40 +26,11 @@ type FeatureAnnotationServer struct {
 }
 
 // NewFeatureAnnotationServer creates a new FeatureAnnotationServer instance
-// validateDOI is a custom validator for DOI format.
-// A DOI typically starts with "10." and contains a "/"
-// The registrant code (part after "10." and before "/") is usually numeric.
-func validateDOI(fl validator.FieldLevel) bool {
-	doi := fl.Field().String()
-	if !strings.HasPrefix(doi, "10.") {
-		return false
-	}
-	// Find the first slash after "10."
-	slashIndex := strings.Index(doi[3:], "/")
-	if slashIndex == -1 { // No slash found after "10."
-		return false
-	}
-	// Extract the registrant code (part between "10." and the first "/")
-	registrantCode := doi[3 : 3+slashIndex]
-	if len(registrantCode) == 0 { // Registrant code cannot be empty
-		return false
-	}
-	// Check if the registrant code is purely numeric
-	for _, r := range registrantCode {
-		if r < '0' || r > '9' {
-			return false // Registrant code contains non-digits, consider it invalid for this validator
-		}
-	}
-	return true
-}
-
 func NewFeatureAnnotationServer(
 	storage storage.FeatureAnnotationStorage,
 	logger *logrus.Logger,
 ) *FeatureAnnotationServer {
 	v := validator.New()
-	// Register custom validator for DOI
-	v.RegisterValidation("doi", validateDOI)
 	return &FeatureAnnotationServer{
 		storage:   storage,
 		logger:    logger,
@@ -78,22 +48,6 @@ func (s *FeatureAnnotationServer) CreateFeatureAnnotation(
 			codes.InvalidArgument,
 			fmt.Sprintf("validation failed: %v", err),
 		)
-	}
-
-	// Validate DOI format in publications if present
-	if req.Attributes != nil && len(req.Attributes.Publications) > 0 {
-		for i, publication := range req.Attributes.Publications {
-			if err := s.validator.Var(publication, "required,doi"); err != nil {
-				return nil, status.Error(
-					codes.InvalidArgument,
-					fmt.Sprintf(
-						"invalid DOI format in publication %d: %s",
-						i+1,
-						publication,
-					),
-				)
-			}
-		}
 	}
 
 	// Create FeatureAnnotation from NewFeatureAnnotation
@@ -265,25 +219,6 @@ func (s *FeatureAnnotationServer) AddTag(
 	return annotation, nil
 }
 
-func newTagPropertyConverter(
-	tagCreate *feature.TagPropertyCreate,
-) *feature.TagProperty {
-	now := timestamppb.New(time.Now())
-	tag := &feature.TagProperty{
-		Tag:       tagCreate.Tag,
-		Value:     tagCreate.Value,
-		CreatedBy: tagCreate.CreatedBy,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-	if tagCreate.CreatedAt != nil &&
-		tagCreate.CreatedAt.CheckValid() == nil {
-		tag.CreatedAt = tagCreate.CreatedAt
-		tag.UpdatedAt = tagCreate.CreatedAt
-	}
-	return tag
-}
-
 // AddTags adds multiple tags to a feature annotation
 func (s *FeatureAnnotationServer) AddTags(
 	ctx context.Context,
@@ -338,6 +273,38 @@ func (s *FeatureAnnotationServer) SetTags(
 	return annotation, nil
 }
 
+// RemoveTags removes a tag from a feature annotation
+func (s *FeatureAnnotationServer) RemoveTags(
+	ctx context.Context,
+	req *feature.RemoveTagsRequest,
+) (*feature.FeatureAnnotation, error) {
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
+	}
+
+	// Remove tag from storage
+	if err := s.storage.RemoveTags(req.Id, req.Tag, req.Value); err != nil {
+		return nil, err
+	}
+
+	// Return updated annotation
+	annotation, err := s.storage.GetByID(req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.WithFields(logrus.Fields{
+		"id":    req.Id,
+		"tag":   req.Tag,
+		"value": req.Value,
+	}).Info("Removed tag from feature annotation")
+
+	return annotation, nil
+}
+
 // ListFeatureAnnotationsByPubmedId lists feature annotations by PubMed ID
 func (s *FeatureAnnotationServer) ListFeatureAnnotationsByPubmedId(
 	ctx context.Context,
@@ -368,14 +335,7 @@ func (s *FeatureAnnotationServer) ListFeatureAnnotationsByDOI(
 	ctx context.Context,
 	req *feature.DOI,
 ) (*feature.FeatureAnnotationCollection, error) {
-	// Validate DOI format using go-playground/validator
-	if err := s.validator.Var(req.Id, "required,doi"); err != nil { // Changed from "url" to "doi"
-		return nil, status.Error(
-			codes.InvalidArgument,
-			fmt.Sprintf("validation failed for DOI '%s': %v", req.Id, err),
-		)
-	}
-	// Existing protovalidate check for other potential protobuf validation rules
+	// Existing protovalidate check for protobuf validation rules
 	if err := protovalidate.Validate(req); err != nil {
 		return nil, status.Error(
 			codes.InvalidArgument,
@@ -391,4 +351,23 @@ func (s *FeatureAnnotationServer) ListFeatureAnnotationsByDOI(
 	return &feature.FeatureAnnotationCollection{
 		Data: annotations,
 	}, nil
+}
+
+func newTagPropertyConverter(
+	tagCreate *feature.TagPropertyCreate,
+) *feature.TagProperty {
+	now := timestamppb.New(time.Now())
+	tag := &feature.TagProperty{
+		Tag:       tagCreate.Tag,
+		Value:     tagCreate.Value,
+		CreatedBy: tagCreate.CreatedBy,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	if tagCreate.CreatedAt != nil &&
+		tagCreate.CreatedAt.CheckValid() == nil {
+		tag.CreatedAt = tagCreate.CreatedAt
+		tag.UpdatedAt = tagCreate.CreatedAt
+	}
+	return tag
 }
