@@ -173,6 +173,19 @@ func addGeneProductTag(
 	return result, nil
 }
 
+// handleNoGeneProduct processes cases where gene product is empty
+func handleNoGeneProduct(
+	processedGene ProcessedGeneProduct,
+) (bool, GrpcUpdateResult) {
+	if processedGene.GeneProduct != "" {
+		return false, GrpcUpdateResult{}
+	}
+	return true, GrpcUpdateResult{
+		GeneID:  processedGene.GeneID,
+		Success: true,
+		Message: "No gene product to update",
+	}
+}
 // geneProductGrpcWorkerFunc creates worker for updating via gRPC
 func geneProductGrpcWorkerFunc(
 	config GeneProductAppConfig,
