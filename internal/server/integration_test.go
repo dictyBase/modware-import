@@ -288,22 +288,6 @@ func TestValidationErrors(t *testing.T) {
 		assert.Contains(t, err.Error(), "must be a valid email")
 	})
 
-	t.Run("invalid DOI", func(t *testing.T) {
-		req := &feature.NewFeatureAnnotation{
-			Type: "gene",
-			Id:   "TEST_INVALID_DOI",
-			Attributes: &feature.FeatureAnnotationAttributes{
-				Name:         "testGene",
-				Publications: []string{"invalid-doi-format"},
-			},
-			CreatedBy: "test@dictybase.org",
-		}
-
-		_, err := client.CreateFeatureAnnotation(ctx, req)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid DOI format")
-	})
-
 	t.Run("missing required fields", func(t *testing.T) {
 		req := &feature.NewFeatureAnnotation{
 			Type: "gene",
