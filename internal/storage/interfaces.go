@@ -36,6 +36,9 @@ type FeatureAnnotationStorage interface {
 	// RemoveTag removes a tag from a feature annotation
 	RemoveTag(id string, tagName string) error
 
+	// RemoveTags removes a tag with specific tag name and value from a feature annotation
+	RemoveTags(id string, tag string, value string) error
+
 	// ListByPubmedID retrieves feature annotations by PubMed ID
 	ListByPubmedID(pubmedId string) ([]*feature.FeatureAnnotation, error)
 
