@@ -10,6 +10,32 @@
 - **Code Style Guidelines**
     - Imports: Standard library first, then external packages, then internal packages
     - Prefer functional programming utilities from collection package where appropriate
+    - Use `slices.DeleteFunc` for conditional element removal instead of manual for loops
+      ```go
+      import "slices"
+      
+      // Avoid: Manual loop for conditional removal
+      var result []Item
+      for _, item := range items {
+          if !shouldRemove(item) {
+              result = append(result, item)
+          }
+      }
+      items = result
+      
+      // Preferred: Use slices.DeleteFunc
+      items = slices.DeleteFunc(items, shouldRemove)
+      
+      // Example: Remove users with specific role
+      users = slices.DeleteFunc(users, func(u User) bool {
+          return u.Role == "banned"
+      })
+      
+      // Example: Remove tags matching both name and value
+      tags = slices.DeleteFunc(tags, func(tag TagProperty) bool {
+          return tag.Name == targetName && tag.Value == targetValue
+      })
+      ```
       - Essential utility functions:
         ```go
         func Map[T, U any](ts []T, f func(T) U) []U {
