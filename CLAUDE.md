@@ -1,11 +1,11 @@
 # Go Coding Conventions
 
 -- **Build, Test, and Lint Commands**
-    - Run all tests: `gotestsum --format-hide-empty-pkg --format testdox --format-icons hivis`
-    - Run specific test: `gotestsum --format-hide-empty-pkg --format testdox --format-icons hivis -- -run TestFindSimilar ./...`
-    - Run tests with verbose output: `gotestum --format-hide-empty-pkg --format standard-verbose --format-icons hivis`
+    - Run all tests: `gotestsum --format-hide-empty-pkg --format dots`
+    - Run specific test: `gotestsum --format-hide-empty-pkg --format dots -- -run TestFindSimilar ./...`
+    - Run tests with verbose output: `gotestum --format-hide-empty-pkg --format standard-verbose`
     - Format code: `gofumpt -w .`
-    - Lint codebase: `golangcli-lint run`
+    - Lint codebase: `golangci-lint run`
 
 - **Code Style Guidelines**
     - Imports: Standard library first, then external packages, then internal packages
