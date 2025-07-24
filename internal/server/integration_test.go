@@ -314,3 +314,80 @@ func TestValidationErrors(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestSetTags(t *testing.T) {
+	client, cleanup := setupTestServer(t)
+	defer cleanup()
+	ctx := context.Background()
+	now := timestamppb.New(time.Now())
+
+	// First create an annotation
+	createReq := &feature.NewFeatureAnnotation{
+		Type: "gene",
+		Id:   "TEST_SET_TAGS",
+		Attributes: &feature.FeatureAnnotationAttributes{
+			Name: "testGeneSetTags",
+		},
+		CreatedBy: "test@dictybase.org",
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	_, err := client.CreateFeatureAnnotation(ctx, createReq)
+	require.NoError(t, err)
+
+	// Add initial tags using AddTag
+	addTagReq := &feature.AddTagRequest{
+		Id: "TEST_SET_TAGS",
+		Tag: &feature.TagPropertyCreate{
+			Tag:       "initial",
+			Value:     "initial value",
+			CreatedBy: "test@dictybase.org",
+		},
+	}
+	resp, err := client.AddTag(ctx, addTagReq)
+	require.NoError(t, err)
+	assert.Len(t, resp.Attributes.Properties, 1)
+
+	// Now use SetTags to replace all tags
+	setTagsReq := &feature.SetTagsRequest{
+		Id: "TEST_SET_TAGS",
+		Tags: []*feature.TagPropertyCreate{
+			{
+				Tag:       "function",
+				Value:     "test function",
+				CreatedBy: "test@dictybase.org",
+			},
+			{
+				Tag:       "location",
+				Value:     "nucleus",
+				CreatedBy: "test@dictybase.org",
+			},
+		},
+	}
+	resp, err = client.SetTags(ctx, setTagsReq)
+	require.NoError(t, err)
+
+	// Verify all old tags are replaced
+	assert.Len(t, resp.Attributes.Properties, 2)
+	assert.Equal(t, "function", resp.Attributes.Properties[0].Tag)
+	assert.Equal(t, "test function", resp.Attributes.Properties[0].Value)
+	assert.Equal(t, "location", resp.Attributes.Properties[1].Tag)
+	assert.Equal(t, "nucleus", resp.Attributes.Properties[1].Value)
+
+	// Test SetTags with single tag (replaces previous two tags)
+	singleSetTagsReq := &feature.SetTagsRequest{
+		Id: "TEST_SET_TAGS",
+		Tags: []*feature.TagPropertyCreate{
+			{
+				Tag:       "status",
+				Value:     "active",
+				CreatedBy: "test@dictybase.org",
+			},
+		},
+	}
+	resp, err = client.SetTags(ctx, singleSetTagsReq)
+	require.NoError(t, err)
+	assert.Len(t, resp.Attributes.Properties, 1)
+	assert.Equal(t, "status", resp.Attributes.Properties[0].Tag)
+	assert.Equal(t, "active", resp.Attributes.Properties[0].Value)
+}
