@@ -376,6 +376,24 @@ func (s *LevelDBStorage) AddTags(id string, tags []*feature.TagProperty) error {
 	return s.updateAnnotation(annotation)
 }
 
+func (s *LevelDBStorage) SetTags(id string, tags []*feature.TagProperty) error {
+	if err := s.validator.Var(id, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid id: %v", err),
+		)
+	}
+	annotation, err := s.getByIDInternal(id)
+	if err != nil {
+		return err
+	}
+	if annotation.Attributes == nil {
+		annotation.Attributes = &feature.FeatureAnnotationAttributes{}
+	}
+	annotation.Attributes.Properties = tags
+	return s.updateAnnotation(annotation)
+}
+
 func (s *LevelDBStorage) UpdateTag(
 	id string,
 	tagName string,
