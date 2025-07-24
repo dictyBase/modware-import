@@ -253,6 +253,33 @@ func (m *MemoryStorage) AddTags(id string, tags []*feature.TagProperty) error {
 	return nil
 }
 
+// SetTags replaces all existing tags with the provided tags (idempotent full-update)
+func (m *MemoryStorage) SetTags(id string, tags []*feature.TagProperty) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	annotation, exists := m.annotations[id]
+	if !exists {
+		return status.Error(
+			codes.NotFound,
+			fmt.Sprintf("annotation with ID %s not found", id),
+		)
+	}
+
+	if annotation.Attributes == nil {
+		annotation.Attributes = &feature.FeatureAnnotationAttributes{}
+	}
+
+	annotation.Attributes.Properties = tags
+
+	m.logger.WithFields(logrus.Fields{
+		"id":        id,
+		"tag_count": len(tags),
+	}).Debug("Set tags for feature annotation")
+
+	return nil
+}
+
 // UpdateTag modifies an existing tag in a feature annotation
 func (m *MemoryStorage) UpdateTag(
 	id string,
