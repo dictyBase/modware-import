@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	fanno "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/concurrent"
@@ -223,20 +224,10 @@ func geneProductGrpcWorkerFunc(
 		job concurrent.Job[ProcessedGeneProduct],
 	) (GrpcUpdateResult, error) {
 		processedGene := job.Payload
-		logger := config.Logger
-
-		result := GrpcUpdateResult{
-			GeneID:  processedGene.GeneID,
-			Success: false,
-		}
-
-		// Skip if no gene product
-		if processedGene.GeneProduct == "" {
-			result.Success = true
-			result.Message = "No gene product to update"
+		// i) No gene product
+		if ok, result := handleNoGeneProduct(processedGene); ok {
 			return result, nil
 		}
-
 		// Get existing feature annotation
 		featAnno, err := grpcClient.GetFeatureAnnotation(
 			ctx,
@@ -245,36 +236,23 @@ func geneProductGrpcWorkerFunc(
 			},
 		)
 		if err != nil {
-			if status.Code(err) == codes.NotFound {
-				// Create new feature annotation
-				return createFeatureAnnotationWithProduct(
-					ctx,
-					grpcClient,
-					processedGene,
-				)
-			}
-			result.Error = err
-			result.Message = fmt.Sprintf(
-				"Failed to get feature annotation: %v",
+			return handleFeatureAnnotationLookup(
+				ctx,
+				grpcClient,
+				processedGene,
 				err,
 			)
-			return result, err
+		}
+		// iii) Gene product already exists
+		if ok, result := handleExistingGeneProduct(
+			featAnno,
+			processedGene,
+			config.Logger,
+		); ok {
+			return result, nil
 		}
 
-		// Check if gene product tag already exists
-		for _, prop := range featAnno.Attributes.Properties {
-			if prop.Tag == GeneProductTag {
-				logger.Debugf(
-					"Gene product tag already exists for gene %s, skipping",
-					processedGene.GeneID,
-				)
-				result.Success = true
-				result.Message = "Gene product tag already exists"
-				return result, nil
-			}
-		}
-
-		// Add gene product tag
+		// iv) then goes to addgeneProductTag
 		return addGeneProductTag(ctx, grpcClient, processedGene)
 	}
 }
@@ -299,7 +277,10 @@ func batchGeneProductGrpcWorkerFunc(
 		}
 
 		// Validate and filter products
-		validProducts, skippedCount := filterValidGeneProducts(geneProducts, logger)
+		validProducts, skippedCount := filterValidGeneProducts(
+			geneProducts,
+			logger,
+		)
 		result.SkippedCount += skippedCount
 
 		if len(geneProducts) == 0 || len(validProducts) == 0 {
@@ -320,10 +301,17 @@ func batchGeneProductGrpcWorkerFunc(
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				// Create new feature annotation with all gene products
-				return createFeatureAnnotationWithMultipleProducts(ctx, grpcClient, validProducts)
+				return createFeatureAnnotationWithMultipleProducts(
+					ctx,
+					grpcClient,
+					validProducts,
+				)
 			}
 			result.Error = err
-			result.Message = fmt.Sprintf("Failed to get feature annotation: %v", err)
+			result.Message = fmt.Sprintf(
+				"Failed to get feature annotation: %v",
+				err,
+			)
 			return result, err
 		}
 
@@ -400,7 +388,12 @@ func processBatchUpdateForExistingAnnotation(
 	}
 
 	// Add new gene products using batch update
-	return updateFeatureAnnotationWithMultipleProducts(ctx, grpcClient, featAnno, newProducts)
+	return updateFeatureAnnotationWithMultipleProducts(
+		ctx,
+		grpcClient,
+		featAnno,
+		newProducts,
+	)
 }
 
 // createFeatureAnnotationWithMultipleProducts creates new feature annotation with multiple gene products
@@ -444,13 +437,19 @@ func createFeatureAnnotationWithMultipleProducts(
 	_, err := grpcClient.CreateFeatureAnnotation(ctx, req)
 	if err != nil {
 		result.Error = err
-		result.Message = fmt.Sprintf("Failed to create feature annotation: %v", err)
+		result.Message = fmt.Sprintf(
+			"Failed to create feature annotation: %v",
+			err,
+		)
 		return result, err
 	}
 
 	result.Success = true
 	result.ProcessedCount = len(geneProducts)
-	result.Message = fmt.Sprintf("Successfully created feature annotation with %d gene products", len(geneProducts))
+	result.Message = fmt.Sprintf(
+		"Successfully created feature annotation with %d gene products",
+		len(geneProducts),
+	)
 	return result, nil
 }
 
@@ -485,8 +484,14 @@ func updateFeatureAnnotationWithMultipleProducts(
 	}
 
 	// Combine existing properties with new ones
-	allProperties := make([]*fanno.TagProperty, 0, len(existingAnnotation.Attributes.Properties)+len(newProperties))
-	allProperties = append(allProperties, existingAnnotation.Attributes.Properties...)
+	allProperties := make(
+		[]*fanno.TagProperty,
+		0,
+		len(existingAnnotation.Attributes.Properties)+len(newProperties),
+	)
+	allProperties = append(
+		allProperties,
+		existingAnnotation.Attributes.Properties...)
 	allProperties = append(allProperties, newProperties...)
 
 	// Update feature annotation
@@ -501,12 +506,18 @@ func updateFeatureAnnotationWithMultipleProducts(
 	_, err := grpcClient.UpdateFeatureAnnotation(ctx, req)
 	if err != nil {
 		result.Error = err
-		result.Message = fmt.Sprintf("Failed to update feature annotation: %v", err)
+		result.Message = fmt.Sprintf(
+			"Failed to update feature annotation: %v",
+			err,
+		)
 		return result, err
 	}
 
 	result.Success = true
 	result.ProcessedCount = len(newGeneProducts)
-	result.Message = fmt.Sprintf("Successfully added %d gene products", len(newGeneProducts))
+	result.Message = fmt.Sprintf(
+		"Successfully added %d gene products",
+		len(newGeneProducts),
+	)
 	return result, nil
 }
