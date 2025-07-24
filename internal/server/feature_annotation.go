@@ -311,6 +311,33 @@ func (s *FeatureAnnotationServer) AddTags(
 	return annotation, nil
 }
 
+// SetTags replaces all existing tags with the provided tags (idempotent full-update)
+func (s *FeatureAnnotationServer) SetTags(
+	ctx context.Context,
+	req *feature.SetTagsRequest,
+) (*feature.FeatureAnnotation, error) {
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("validation failed: %v", err),
+		)
+	}
+	tags := collection.Map(req.Tags, newTagPropertyConverter)
+	if err := s.storage.SetTags(req.Id, tags); err != nil {
+		return nil, err
+	}
+	annotation, err := s.storage.GetByID(req.Id)
+	if err != nil {
+		return nil, err
+	}
+	s.logger.WithFields(logrus.Fields{
+		"id":        req.Id,
+		"tag_count": len(req.Tags),
+	}).Info("Set tags for feature annotation")
+
+	return annotation, nil
+}
+
 // ListFeatureAnnotationsByPubmedId lists feature annotations by PubMed ID
 func (s *FeatureAnnotationServer) ListFeatureAnnotationsByPubmedId(
 	ctx context.Context,
