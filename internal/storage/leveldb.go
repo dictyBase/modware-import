@@ -486,6 +486,44 @@ func (s *LevelDBStorage) RemoveTag(id string, tagName string) error {
 	return s.updateAnnotation(annotation)
 }
 
+// RemoveTags removes a tag with specific tag name and value from a feature
+// annotation.
+func (s *LevelDBStorage) RemoveTags(id string, tag string, value string) error {
+	if err := s.validator.Var(id, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid id: %v", err),
+		)
+	}
+	if err := s.validator.Var(tag, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid tag: %v", err),
+		)
+	}
+	if err := s.validator.Var(value, "required"); err != nil {
+		return status.Error(
+			codes.InvalidArgument,
+			fmt.Sprintf("invalid value: %v", err),
+		)
+	}
+
+	annotation, err := s.getByIDInternal(id)
+	if err != nil {
+		return err
+	}
+
+	annotation.Attributes.Properties = slices.DeleteFunc(
+		annotation.Attributes.Properties,
+		func(existingTag *feature.TagProperty) bool {
+			return existingTag.Tag == tag &&
+				existingTag.Value == value
+		},
+	)
+
+	return s.updateAnnotation(annotation)
+}
+
 func (s *LevelDBStorage) ListByPubmedID(
 	pubmedId string,
 ) ([]*feature.FeatureAnnotation, error) {

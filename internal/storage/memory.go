@@ -364,6 +364,56 @@ func (m *MemoryStorage) RemoveTag(id string, tagName string) error {
 	)
 }
 
+// RemoveTags removes a tag with specific tag name and value from a feature annotation
+func (m *MemoryStorage) RemoveTags(id string, tag string, value string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	annotation, exists := m.annotations[id]
+	if !exists {
+		return status.Error(
+			codes.NotFound,
+			fmt.Sprintf("annotation with ID %s not found", id),
+		)
+	}
+
+	if annotation.Attributes == nil {
+		return status.Error(
+			codes.NotFound,
+			fmt.Sprintf("tag %s with value %s not found", tag, value),
+		)
+	}
+
+	// Find and remove matching tag(s) with both tag name and value
+	var removed bool
+	var newProperties []*feature.TagProperty
+	for _, existingTag := range annotation.Attributes.Properties {
+		if existingTag.Tag == tag && existingTag.Value == value {
+			removed = true
+			// Skip this tag (don't add to newProperties)
+		} else {
+			newProperties = append(newProperties, existingTag)
+		}
+	}
+
+	if !removed {
+		return status.Error(
+			codes.NotFound,
+			fmt.Sprintf("tag %s with value %s not found", tag, value),
+		)
+	}
+
+	annotation.Attributes.Properties = newProperties
+
+	m.logger.WithFields(logrus.Fields{
+		"id":    id,
+		"tag":   tag,
+		"value": value,
+	}).Debug("Removed tag from feature annotation")
+
+	return nil
+}
+
 // ListByPubmedID retrieves feature annotations by PubMed ID
 func (m *MemoryStorage) ListByPubmedID(
 	pubmedId string,
