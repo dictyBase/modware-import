@@ -1,8 +1,21 @@
 package collection
 
 import (
-	"golang.org/x/exp/slices"
+	"slices"
 )
+
+// Filter returns a new slice containing all elements that satisfy the
+// predicate.
+func Filter[T any](slice []T, predicate func(T) bool) []T {
+	result := make([]T, 0)
+	for _, item := range slice {
+		if predicate(item) {
+			result = append(result, item)
+		}
+	}
+
+	return result
+}
 
 // Map returns the slice obtained after applying the given function over every
 // element in the given slice
