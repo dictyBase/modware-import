@@ -186,6 +186,33 @@ func handleNoGeneProduct(
 		Message: "No gene product to update",
 	}
 }
+
+// handleExistingGeneProduct checks if gene product tag already exists using slices.ContainsFunc
+func handleExistingGeneProduct(
+	featAnno *fanno.FeatureAnnotation,
+	processedGene ProcessedGeneProduct,
+	logger *logrus.Entry,
+) (bool, GrpcUpdateResult) {
+	hasGeneProduct := slices.ContainsFunc(
+		featAnno.Attributes.Properties,
+		func(prop *fanno.TagProperty) bool {
+			return prop.Tag == GeneProductTag
+		},
+	)
+	if !hasGeneProduct {
+		return false, GrpcUpdateResult{}
+	}
+	logger.Debugf(
+		"Gene product tag already exists for gene %s, skipping",
+		processedGene.GeneID,
+	)
+	return true, GrpcUpdateResult{
+		GeneID:  processedGene.GeneID,
+		Success: true,
+		Message: "Gene product tag already exists",
+	}
+}
+
 // geneProductGrpcWorkerFunc creates worker for updating via gRPC
 func geneProductGrpcWorkerFunc(
 	config GeneProductAppConfig,
