@@ -75,3 +75,28 @@ func Pipe4[T1, T2, T3, T4, T5 any](
 ) T5 {
 	return fn4(fn3(fn2(fn1(initial))))
 }
+
+// Pipe2 creates a functional pipeline by taking an initial value and applying
+// two functions in succession. The output of the first function becomes the
+// input to the second function. The final return value is the result of the
+// last function application.
+func Pipe2[T1, T2, T3 any](tup T1, f1 func(T1) T2, fn2 func(T2) T3) T3 {
+	return fn2(f1(tup))
+}
+
+// CurriedMap returns a function that, when given a slice, applies the provided
+// function to each element of the slice. This is a curried version of the Map
+// function.
+func CurriedMap[T1, T2 any](fnc func(T1) T2) func([]T1) []T2 {
+	return func(slc []T1) []T2 {
+		return Map(slc, fnc)
+	}
+}
+
+// CurriedFilter returns a function that, when given a slice, filters it based on
+// the provided predicate. This is a curried version of the Filter function.
+func CurriedFilter[T any](predicate func(T) bool) func([]T) []T {
+	return func(slice []T) []T {
+		return Filter(slice, predicate)
+	}
+}
