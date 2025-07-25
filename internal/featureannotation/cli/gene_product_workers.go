@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	fanno "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
@@ -270,28 +271,24 @@ func batchGeneProductGrpcWorkerFunc(
 		logger := config.Logger
 		geneProducts := batchJob.GeneProducts
 
+		// Validate and filter products
+		validProducts := collection.Filter(
+			geneProducts,
+			func(gp ProcessedGeneProduct) bool {
+				return gp.GeneProduct != ""
+			})
 		result := BatchGeneProductResult{
+			GeneID:         validProducts[0].GeneID,
 			Success:        false,
 			ProcessedCount: 0,
 			SkippedCount:   0,
 		}
-
-		// Validate and filter products
-		validProducts, skippedCount := filterValidGeneProducts(
-			geneProducts,
-			logger,
-		)
-		result.SkippedCount += skippedCount
-
-		if len(geneProducts) == 0 || len(validProducts) == 0 {
+		if len(validProducts) == 0 {
 			result.Success = true
 			result.Message = "No valid gene products to process"
 			return result, nil
 		}
-
-		// All gene products should have the same GeneID
-		geneID := geneProducts[0].GeneID
-		result.GeneID = geneID
+		geneID := validProducts[0].GeneID
 
 		// Get existing feature annotation
 		featAnno, err := grpcClient.GetFeatureAnnotation(
@@ -299,33 +296,19 @@ func batchGeneProductGrpcWorkerFunc(
 			&fanno.FeatureAnnotationId{Id: geneID},
 		)
 		if err != nil {
-			if status.Code(err) == codes.NotFound {
-				// Create new feature annotation with all gene products
-				return createFeatureAnnotationWithMultipleProducts(
-					ctx,
-					grpcClient,
-					validProducts,
-				)
-			}
-			result.Error = err
-			result.Message = fmt.Sprintf(
-				"Failed to get feature annotation: %v",
+			return handleNewFeatAnnoWithMulti(
+				ctx,
+				grpcClient,
+				validProducts,
 				err,
 			)
-			return result, err
 		}
 
 		// Process existing annotation
-		return processBatchUpdateForExistingAnnotation(
-			ctx,
-			grpcClient,
+		hasNew, newProducts := handleExistingFeatAnnoWithMulti(
 			featAnno,
 			validProducts,
-			result,
-			logger,
 		)
-	}
-}
 
 // filterValidGeneProducts filters out empty gene products and returns valid ones with skip count
 func filterValidGeneProducts(
