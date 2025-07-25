@@ -330,84 +330,63 @@ func filterValidGeneProducts(
 	return validProducts, skippedCount
 }
 
-// processBatchUpdateForExistingAnnotation handles batch update for existing annotations
-func processBatchUpdateForExistingAnnotation(
-	ctx context.Context,
-	grpcClient fanno.FeatureAnnotationServiceClient,
+func handleExistingFeatAnnoWithMulti(
 	featAnno *fanno.FeatureAnnotation,
 	validProducts []ProcessedGeneProduct,
-	result BatchGeneProductResult,
-	logger *logrus.Entry,
-) (BatchGeneProductResult, error) {
-	geneID := validProducts[0].GeneID
-
-	// Collect existing gene product values for comparison
-	existingValues := make(map[string]bool)
-	for _, prop := range featAnno.Attributes.Properties {
-		if prop.Tag == GeneProductTag {
-			existingValues[prop.Value] = true
-		}
-	}
+) (bool, []ProcessedGeneProduct) {
+	existingSet := mapset.NewSet(
+		collection.Pipe2(
+			featAnno.Attributes.Properties,
+			collection.CurriedFilter(
+				func(prop *fanno.TagProperty) bool {
+					return prop.Tag == GeneProductTag
+				}),
+			collection.CurriedMap(
+				func(prop *fanno.TagProperty) string {
+					return prop.Value
+				}),
+		)...)
 
 	// Filter new products that don't already exist
-	var newProducts []ProcessedGeneProduct
-	for _, product := range validProducts {
-		if !existingValues[product.GeneProduct] {
-			newProducts = append(newProducts, product)
-		} else {
-			result.SkippedCount++
-			logger.Debugf(
-				"Gene product '%s' already exists for gene %s, skipping",
-				product.GeneProduct,
-				geneID,
-			)
-		}
-	}
+	newProducts := collection.Filter(
+		validProducts,
+		func(product ProcessedGeneProduct) bool {
+			return !existingSet.Contains(product.GeneProduct)
+		})
 
-	if len(newProducts) == 0 {
-		result.Success = true
-		result.Message = "All gene products already exist"
-		return result, nil
-	}
-
-	// Add new gene products using batch update
-	return updateFeatureAnnotationWithMultipleProducts(
-		ctx,
-		grpcClient,
-		featAnno,
-		newProducts,
-	)
+	return len(newProducts) > 0, newProducts
 }
 
 // createFeatureAnnotationWithMultipleProducts creates new feature annotation with multiple gene products
-func createFeatureAnnotationWithMultipleProducts(
+func handleNewFeatAnnoWithMulti(
 	ctx context.Context,
 	grpcClient fanno.FeatureAnnotationServiceClient,
 	geneProducts []ProcessedGeneProduct,
+	grpcErr error,
 ) (BatchGeneProductResult, error) {
-	if len(geneProducts) == 0 {
-		return BatchGeneProductResult{
-			Success: true,
-			Message: "No gene products to create",
-		}, nil
-	}
-
 	geneID := geneProducts[0].GeneID
 	result := BatchGeneProductResult{
 		GeneID: geneID,
 	}
-
-	// Create properties for all gene products
-	var properties []*fanno.TagProperty
-	for _, product := range geneProducts {
-		properties = append(properties, &fanno.TagProperty{
-			Tag:       GeneProductTag,
-			Value:     product.GeneProduct,
-			CreatedBy: product.CreatedBy,
-			CreatedAt: timestamppb.New(product.CreatedOn),
-		})
+	if status.Code(grpcErr) != codes.NotFound {
+		result.Error = grpcErr
+		result.Message = fmt.Sprintf(
+			"Failed to get feature annotation: %v",
+			grpcErr,
+		)
+		return result, grpcErr
 	}
-
+	properties := collection.Map(
+		geneProducts,
+		func(product ProcessedGeneProduct) *fanno.TagProperty {
+			return &fanno.TagProperty{
+				Tag:       GeneProductTag,
+				Value:     product.GeneProduct,
+				CreatedBy: product.CreatedBy,
+				CreatedAt: timestamppb.New(product.CreatedOn),
+			}
+		},
+	)
 	// Create new feature annotation
 	req := &fanno.NewFeatureAnnotation{
 		Id:        geneID,
@@ -437,60 +416,37 @@ func createFeatureAnnotationWithMultipleProducts(
 }
 
 // updateFeatureAnnotationWithMultipleProducts updates existing feature annotation with multiple gene products
-func updateFeatureAnnotationWithMultipleProducts(
+func handleUpdateFeatAnnoWithMulti(
 	ctx context.Context,
 	grpcClient fanno.FeatureAnnotationServiceClient,
 	existingAnnotation *fanno.FeatureAnnotation,
 	newGeneProducts []ProcessedGeneProduct,
+	count int,
 ) (BatchGeneProductResult, error) {
-	if len(newGeneProducts) == 0 {
-		return BatchGeneProductResult{
-			Success: true,
-			Message: "No new gene products to add",
-		}, nil
-	}
-
 	geneID := newGeneProducts[0].GeneID
 	result := BatchGeneProductResult{
-		GeneID: geneID,
+		GeneID:       geneID,
+		SkippedCount: count,
 	}
-
 	// Create properties for new gene products
-	var newProperties []*fanno.TagProperty
-	for _, product := range newGeneProducts {
-		newProperties = append(newProperties, &fanno.TagProperty{
-			Tag:       GeneProductTag,
-			Value:     product.GeneProduct,
-			CreatedBy: product.CreatedBy,
-			CreatedAt: timestamppb.New(product.CreatedOn),
+	newProperties := collection.Map(
+		newGeneProducts,
+		func(product ProcessedGeneProduct) *fanno.TagPropertyCreate {
+			return &fanno.TagPropertyCreate{
+				Tag:       GeneProductTag,
+				Value:     product.GeneProduct,
+				CreatedBy: product.CreatedBy,
+				CreatedAt: timestamppb.New(product.CreatedOn),
+			}
 		})
-	}
-
-	// Combine existing properties with new ones
-	allProperties := make(
-		[]*fanno.TagProperty,
-		0,
-		len(existingAnnotation.Attributes.Properties)+len(newProperties),
-	)
-	allProperties = append(
-		allProperties,
-		existingAnnotation.Attributes.Properties...)
-	allProperties = append(allProperties, newProperties...)
-
-	// Update feature annotation
-	req := &fanno.FeatureAnnotationUpdate{
-		Id: geneID,
-		Attributes: &fanno.FeatureAnnotationAttributes{
-			Properties: allProperties,
-		},
-		UpdatedBy: DefaultUserName,
-	}
-
-	_, err := grpcClient.UpdateFeatureAnnotation(ctx, req)
+	_, err := grpcClient.AddTags(ctx, &fanno.AddTagsRequest{
+		Id:   existingAnnotation.Id,
+		Tags: newProperties,
+	})
 	if err != nil {
 		result.Error = err
 		result.Message = fmt.Sprintf(
-			"Failed to update feature annotation: %v",
+			"Failed to add gene products to feature annotation: %v",
 			err,
 		)
 		return result, err
