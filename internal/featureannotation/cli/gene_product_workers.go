@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	fanno "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/concurrent"
@@ -309,25 +310,26 @@ func batchGeneProductGrpcWorkerFunc(
 			featAnno,
 			validProducts,
 		)
-
-// filterValidGeneProducts filters out empty gene products and returns valid ones with skip count
-func filterValidGeneProducts(
-	geneProducts []ProcessedGeneProduct,
-	logger *logrus.Entry,
-) ([]ProcessedGeneProduct, int) {
-	var validProducts []ProcessedGeneProduct
-	skippedCount := 0
-
-	for _, product := range geneProducts {
-		if product.GeneProduct != "" {
-			validProducts = append(validProducts, product)
-		} else {
-			skippedCount++
-			logger.Debugf("Skipping empty gene product for gene %s", product.GeneID)
+		if !hasNew {
+			result.SkippedCount += len(validProducts)
+			result.Success = true
+			result.Message = "All gene products already exist"
+			logger.Debugf(
+				"Gene product already exists for gene %s, skipping",
+				geneID,
+			)
+			return result, nil
 		}
-	}
 
-	return validProducts, skippedCount
+		// Add new gene products using batch update
+		return handleUpdateFeatAnnoWithMulti(
+			ctx,
+			grpcClient,
+			featAnno,
+			newProducts,
+			len(validProducts)-len(newProducts),
+		)
+	}
 }
 
 func handleExistingFeatAnnoWithMulti(
