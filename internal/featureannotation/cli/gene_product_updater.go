@@ -113,7 +113,8 @@ func (m *GeneProductMetrics) IsComplete() bool {
 	allProcessed := (m.TotalFetchedFromArango == 0) ||
 		(m.TotalProcessed >= (m.TotalFetchedFromArango - m.SkippedCount))
 
-	return allArangoFetched && legacyPoolDrained && grpcPoolDrained && allProcessed
+	return allArangoFetched && legacyPoolDrained && grpcPoolDrained &&
+		allProcessed
 }
 
 // GeneProductAppConfig holds configuration
@@ -139,7 +140,6 @@ type bridgeLegacyToGrpcPoolParams struct {
 	wg            *sync.WaitGroup
 	ctx           context.Context
 	legacyPool    *concurrent.Pool[GeneInfo, []ProcessedGeneProduct]
-	grpcPool      *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult]
 	batchGrpcPool *concurrent.Pool[BatchGeneProductJob, BatchGeneProductResult]
 	metrics       *GeneProductMetrics
 	logger        *logrus.Entry
@@ -148,7 +148,6 @@ type bridgeLegacyToGrpcPoolParams struct {
 type handleGeneProductGrpcResultsParams struct {
 	wg            *sync.WaitGroup
 	ctx           context.Context
-	grpcPool      *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult]
 	batchGrpcPool *concurrent.Pool[BatchGeneProductJob, BatchGeneProductResult]
 	metrics       *GeneProductMetrics
 	logger        *logrus.Entry
@@ -195,27 +194,6 @@ func setupLegacyQueryPool(
 	return pool
 }
 
-func setupGrpcUpdatePool(
-	config GeneProductAppConfig,
-	mainCtx context.Context,
-) *concurrent.Pool[ProcessedGeneProduct, GrpcUpdateResult] {
-	pool := concurrent.NewPool(
-		geneProductGrpcWorkerFunc(
-			config,
-			registry.GetFeatureAnnotationAPIClient(),
-		),
-		concurrent.WithWorkers[ProcessedGeneProduct, GrpcUpdateResult](
-			config.NumGrpcWorkers,
-		),
-		concurrent.WithContext[ProcessedGeneProduct, GrpcUpdateResult](mainCtx),
-		concurrent.WithBufferSize[ProcessedGeneProduct, GrpcUpdateResult](
-			config.NumGrpcWorkers*2,
-		),
-	)
-	pool.Start()
-	return pool
-}
-
 // setupBatchGrpcUpdatePool sets up batch gRPC update pool for gene products
 func setupBatchGrpcUpdatePool(
 	config GeneProductAppConfig,
@@ -229,7 +207,9 @@ func setupBatchGrpcUpdatePool(
 		concurrent.WithWorkers[BatchGeneProductJob, BatchGeneProductResult](
 			config.NumGrpcWorkers,
 		),
-		concurrent.WithContext[BatchGeneProductJob, BatchGeneProductResult](mainCtx),
+		concurrent.WithContext[BatchGeneProductJob, BatchGeneProductResult](
+			mainCtx,
+		),
 		concurrent.WithBufferSize[BatchGeneProductJob, BatchGeneProductResult](
 			config.NumGrpcWorkers*2,
 		),
@@ -247,6 +227,7 @@ func RunGeneProductUpdater(cltx *cli.Context) error {
 	mainCtx, mainCancel := context.WithCancel(context.Background())
 	defer mainCancel()
 	config.Ctx = mainCtx
+
 	setupSignalHandling(
 		mainCancel,
 		logger,
@@ -268,7 +249,6 @@ func RunGeneProductUpdater(cltx *cli.Context) error {
 
 	// Setup Pools
 	legacyQueryPool := setupLegacyQueryPool(config, mainCtx)
-	grpcUpdatePool := setupGrpcUpdatePool(config, mainCtx)
 	batchGrpcPool := setupBatchGrpcUpdatePool(config, mainCtx)
 
 	// Bridge from ArangoDB to Legacy Query Pool
@@ -288,7 +268,6 @@ func RunGeneProductUpdater(cltx *cli.Context) error {
 		wg:            &wg,
 		ctx:           mainCtx,
 		legacyPool:    legacyQueryPool,
-		grpcPool:      grpcUpdatePool,
 		batchGrpcPool: batchGrpcPool,
 		metrics:       config.Metrics,
 		logger:        logger,
@@ -299,7 +278,6 @@ func RunGeneProductUpdater(cltx *cli.Context) error {
 	go handleGeneProductGrpcResults(&handleGeneProductGrpcResultsParams{
 		wg:            &wg,
 		ctx:           mainCtx,
-		grpcPool:      grpcUpdatePool,
 		batchGrpcPool: batchGrpcPool,
 		metrics:       config.Metrics,
 		logger:        logger,

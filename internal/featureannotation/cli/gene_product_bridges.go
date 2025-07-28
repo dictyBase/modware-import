@@ -36,7 +36,6 @@ func bridgeArangoToLegacyPool(params *bridgeArangoToLegacyPoolParams) {
 // bridgeLegacyToGrpcPool transfers processed genes to gRPC update pool
 func bridgeLegacyToGrpcPool(params *bridgeLegacyToGrpcPoolParams) {
 	defer params.wg.Done()
-	defer params.grpcPool.Close()
 	defer params.batchGrpcPool.Close()
 
 	params.logger.Debug("Starting Legacy-Pool-to-gRPC-Pool bridge...")

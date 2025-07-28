@@ -3,14 +3,12 @@ package cli
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	fanno "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/dictyBase/modware-import/internal/registry"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -90,172 +88,6 @@ func legacyDBQueryWorkerFunc(
 		)
 
 		return processedGeneProducts, nil
-	}
-}
-
-func handleFeatureAnnotationLookup(
-	ctx context.Context,
-	grpcClient fanno.FeatureAnnotationServiceClient,
-	processedGene ProcessedGeneProduct,
-	grpcErr error,
-) (GrpcUpdateResult, error) {
-	result := GrpcUpdateResult{
-		GeneID:  processedGene.GeneID,
-		Success: false,
-	}
-	if status.Code(grpcErr) != codes.NotFound {
-		result.Error = grpcErr
-		result.Message = fmt.Sprintf(
-			"Failed to get feature annotation: %v",
-			grpcErr,
-		)
-		return result, grpcErr
-	}
-	_, createErr := grpcClient.CreateFeatureAnnotation(
-		ctx,
-		&fanno.NewFeatureAnnotation{
-			Id:        processedGene.GeneID,
-			CreatedBy: DefaultUserName,
-			Attributes: &fanno.FeatureAnnotationAttributes{
-				Name: processedGene.GeneName,
-				Properties: []*fanno.TagProperty{
-					{
-						Tag:       GeneProductTag,
-						Value:     processedGene.GeneProduct,
-						CreatedBy: processedGene.CreatedBy,
-						CreatedAt: timestamppb.New(processedGene.CreatedOn),
-					},
-				},
-			},
-		},
-	)
-	if createErr != nil {
-		result.Error = createErr
-		result.Message = fmt.Sprintf(
-			"Failed to create feature annotation: %v",
-			createErr,
-		)
-		return result, createErr
-	}
-	result.Success = true
-	result.Message = "Created new feature annotation with gene product"
-	return result, nil
-}
-
-func addGeneProductTag(
-	ctx context.Context,
-	grpcClient fanno.FeatureAnnotationServiceClient,
-	processedGene ProcessedGeneProduct,
-) (GrpcUpdateResult, error) {
-	result := GrpcUpdateResult{
-		GeneID:  processedGene.GeneID,
-		Success: false,
-	}
-	_, err := grpcClient.AddTag(
-		ctx,
-		&fanno.AddTagRequest{
-			Id: processedGene.GeneID,
-			Tag: &fanno.TagPropertyCreate{
-				Tag:       GeneProductTag,
-				Value:     processedGene.GeneProduct,
-				CreatedBy: processedGene.CreatedBy,
-			},
-		},
-	)
-	if err != nil {
-		result.Error = err
-		result.Message = fmt.Sprintf(
-			"Failed to add gene product tag: %v",
-			err,
-		)
-		return result, err
-	}
-
-	result.Success = true
-	result.Message = "Successfully added gene product tag"
-	return result, nil
-}
-
-// handleNoGeneProduct processes cases where gene product is empty
-func handleNoGeneProduct(
-	processedGene ProcessedGeneProduct,
-) (bool, GrpcUpdateResult) {
-	if processedGene.GeneProduct != "" {
-		return false, GrpcUpdateResult{}
-	}
-	return true, GrpcUpdateResult{
-		GeneID:  processedGene.GeneID,
-		Success: true,
-		Message: "No gene product to update",
-	}
-}
-
-// handleExistingGeneProduct checks if gene product tag already exists using slices.ContainsFunc
-func handleExistingGeneProduct(
-	featAnno *fanno.FeatureAnnotation,
-	processedGene ProcessedGeneProduct,
-	logger *logrus.Entry,
-) (bool, GrpcUpdateResult) {
-	hasGeneProduct := slices.ContainsFunc(
-		featAnno.Attributes.Properties,
-		func(prop *fanno.TagProperty) bool {
-			return prop.Tag == GeneProductTag
-		},
-	)
-	if !hasGeneProduct {
-		return false, GrpcUpdateResult{}
-	}
-	logger.Debugf(
-		"Gene product tag already exists for gene %s, skipping",
-		processedGene.GeneID,
-	)
-	return true, GrpcUpdateResult{
-		GeneID:  processedGene.GeneID,
-		Success: true,
-		Message: "Gene product tag already exists",
-	}
-}
-
-// geneProductGrpcWorkerFunc creates worker for updating via gRPC
-func geneProductGrpcWorkerFunc(
-	config GeneProductAppConfig,
-	grpcClient fanno.FeatureAnnotationServiceClient,
-) concurrent.WorkerFunc[ProcessedGeneProduct, GrpcUpdateResult] {
-	return func(
-		ctx context.Context,
-		job concurrent.Job[ProcessedGeneProduct],
-	) (GrpcUpdateResult, error) {
-		processedGene := job.Payload
-		// i) No gene product
-		if ok, result := handleNoGeneProduct(processedGene); ok {
-			return result, nil
-		}
-		// Get existing feature annotation
-		featAnno, err := grpcClient.GetFeatureAnnotation(
-			ctx,
-			&fanno.FeatureAnnotationId{
-				Id: processedGene.GeneID,
-			},
-		)
-		if err != nil {
-			return handleFeatureAnnotationLookup(
-				ctx,
-				grpcClient,
-				processedGene,
-				err,
-			)
-		}
-		// iii) Gene product already exists
-		if ok, result := handleExistingGeneProduct(
-			featAnno,
-			processedGene,
-			config.Logger,
-		); ok {
-			return result, nil
-		}
-
-		// iv) then goes to addgeneProductTag
-		return addGeneProductTag(ctx, grpcClient, processedGene)
 	}
 }
 
