@@ -122,7 +122,9 @@ func handleGeneProductGrpcResults(params *handleGeneProductGrpcResultsParams) {
 			return
 		case result, ok := <-params.batchGrpcPool.Results():
 			if !ok {
-				params.logger.Debug("Batch gRPC update pool results channel closed.")
+				params.logger.Debug(
+					"Batch gRPC update pool results channel closed.",
+				)
 				return
 			}
 
@@ -153,13 +155,18 @@ func handleGeneProductGrpcResults(params *handleGeneProductGrpcResultsParams) {
 			}
 		case err, ok := <-params.batchGrpcPool.Errors():
 			if !ok {
-				params.logger.Debug("Batch gRPC update pool errors channel closed.")
+				params.logger.Debug(
+					"Batch gRPC update pool errors channel closed.",
+				)
 				return
 			}
 			params.metrics.mu.Lock()
 			params.metrics.ErrorCount++
 			params.metrics.mu.Unlock()
-			params.logger.Errorf("Async error from batch gRPC update pool: %v", err)
+			params.logger.Errorf(
+				"Async error from batch gRPC update pool: %v",
+				err,
+			)
 		}
 	}
 }
