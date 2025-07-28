@@ -107,14 +107,33 @@ func (m *GeneProductMetrics) IsComplete() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	return m.isPrimaryComplete() || m.isFallbackComplete()
+}
+
+// isPrimaryComplete checks the primary completion conditions
+func (m *GeneProductMetrics) isPrimaryComplete() bool {
 	allArangoFetched := m.AllArangoDocsFetched
 	legacyPoolDrained := m.JobsCompletedFromLegacyPool >= m.JobsSubmittedToLegacyPool
 	grpcPoolDrained := m.JobsCompletedFromGrpcPool >= m.JobsSubmittedToGrpcPool
 	allProcessed := (m.TotalFetchedFromArango == 0) ||
 		(m.TotalProcessed >= (m.TotalFetchedFromArango - m.SkippedCount))
 
-	return allArangoFetched && legacyPoolDrained && grpcPoolDrained &&
-		allProcessed
+	return allArangoFetched && legacyPoolDrained && grpcPoolDrained && allProcessed
+}
+
+// isFallbackComplete checks fallback completion conditions for edge cases
+func (m *GeneProductMetrics) isFallbackComplete() bool {
+	elapsed := time.Since(m.StartTime)
+	hasSignificantWork := m.TotalFetchedFromArango > 0
+	hasProcessedSomething := (m.SuccessCount + m.ErrorCount) > 0
+	poolsDrained := m.JobsCompletedFromLegacyPool >= m.JobsSubmittedToLegacyPool &&
+		m.JobsCompletedFromGrpcPool >= m.JobsSubmittedToGrpcPool
+
+	return m.AllArangoDocsFetched &&
+		poolsDrained &&
+		hasSignificantWork &&
+		hasProcessedSomething &&
+		elapsed > 2*time.Minute
 }
 
 // GeneProductAppConfig holds configuration
