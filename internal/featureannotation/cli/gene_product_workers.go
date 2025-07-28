@@ -191,6 +191,14 @@ func handleExistingFeatAnnoWithMulti(
 	return len(newProducts) > 0, newProducts
 }
 
+// resolveCreatorFromCreatedBy maps legacy creator usernames to their email addresses
+func resolveCreatorFromCreatedBy(createdBy string) string {
+	if val, ok := AnnMap[createdBy]; ok {
+		return val
+	}
+	return DefaultUserName
+}
+
 // createFeatureAnnotationWithMultipleProducts creates new feature annotation with multiple gene products
 func handleNewFeatAnnoWithMulti(
 	ctx context.Context,
@@ -216,7 +224,7 @@ func handleNewFeatAnnoWithMulti(
 			return &fanno.TagProperty{
 				Tag:       GeneProductTag,
 				Value:     product.GeneProduct,
-				CreatedBy: product.CreatedBy,
+				CreatedBy: resolveCreatorFromCreatedBy(product.CreatedBy),
 				CreatedAt: timestamppb.New(product.CreatedOn),
 			}
 		},
@@ -226,6 +234,7 @@ func handleNewFeatAnnoWithMulti(
 		Id:        geneID,
 		CreatedBy: DefaultUserName,
 		Attributes: &fanno.FeatureAnnotationAttributes{
+			Name:       geneProducts[0].GeneName,
 			Properties: properties,
 		},
 	}
@@ -269,7 +278,7 @@ func handleUpdateFeatAnnoWithMulti(
 			return &fanno.TagPropertyCreate{
 				Tag:       GeneProductTag,
 				Value:     product.GeneProduct,
-				CreatedBy: product.CreatedBy,
+				CreatedBy: resolveCreatorFromCreatedBy(product.CreatedBy),
 				CreatedAt: timestamppb.New(product.CreatedOn),
 			}
 		})
