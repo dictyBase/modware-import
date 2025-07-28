@@ -111,7 +111,7 @@ func batchGeneProductGrpcWorkerFunc(
 				return gp.GeneProduct != ""
 			})
 		result := BatchGeneProductResult{
-			GeneID:         validProducts[0].GeneID,
+			GeneID:         geneProducts[0].GeneID,
 			Success:        false,
 			ProcessedCount: 0,
 			SkippedCount:   0,
