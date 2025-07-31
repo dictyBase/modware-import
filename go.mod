@@ -32,7 +32,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/net v0.42.0
-	golang.org/x/oauth2 v0.25.0 // indirect
+	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/term v0.33.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
