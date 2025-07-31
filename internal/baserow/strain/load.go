@@ -217,7 +217,7 @@ func processFnRunnerProperties(
 			if !ok {
 				return nil
 			}
-			logger.Infof(result)
+			logger.Infof("%s", result)
 		}
 	}
 }
