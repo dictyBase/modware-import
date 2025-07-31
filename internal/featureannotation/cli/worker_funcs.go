@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 	"time"
 
@@ -142,35 +141,57 @@ func htmlProcessingWorkerFunc(
 	}
 }
 
-func hasTagPropertyByName(
+func findTagPropertyByName(
+	properties []*fanno.TagProperty,
 	name string,
-) func(*fanno.TagProperty) bool {
-	return func(existingTag *fanno.TagProperty) bool {
-		return existingTag.Tag == name
+) (*fanno.TagProperty, bool) {
+	for _, prop := range properties {
+		if prop.Tag == name {
+			return prop, true
+		}
 	}
+	return nil, false
 }
 
 func processSinglePropertyUpdate(
 	params *processSinglePropertyUpdateParams,
 ) error {
-	if slices.ContainsFunc(
+	if existingTag, found := findTagPropertyByName(
 		params.featAnno.Attributes.Properties,
-		hasTagPropertyByName(params.prop.OriginalName),
-	) {
-		_, err := params.grpcClient.UpdateTag(
+		params.prop.OriginalName,
+	); found {
+		// Remove existing tag first
+		_, err := params.grpcClient.RemoveTags(
 			params.ctx,
-			&fanno.UpdateTagRequest{
+			&fanno.RemoveTagsRequest{
+				Id:    params.featAnno.Id,
+				Tag:   params.prop.OriginalName,
+				Value: existingTag.Value,
+			},
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to RemoveTags for property %s: %v",
+				params.prop.OriginalName,
+				err,
+			)
+		}
+
+		// Add tag with updated values
+		_, err = params.grpcClient.AddTag(
+			params.ctx,
+			&fanno.AddTagRequest{
 				Id: params.featAnno.Id,
-				Tag: &fanno.TagPropertyUpdate{
+				Tag: &fanno.TagPropertyCreate{
 					Tag:       params.prop.OriginalName,
 					Value:     params.prop.StrippedText,
-					UpdatedBy: DefaultUserName,
+					CreatedBy: DefaultUserName,
 				},
 			},
 		)
 		if err != nil {
 			return fmt.Errorf(
-				"failed to UpdateTag for property %s: %v",
+				"failed to AddTag for property %s: %v",
 				params.prop.OriginalName,
 				err,
 			)
