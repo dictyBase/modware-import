@@ -1,3 +1,4 @@
+//go:build mage
 // +build mage
 
 package main
@@ -31,10 +32,14 @@ func CleanAllDB() error {
 
 // LoadData will do the following steps...
 // i)  Refresh ontology from github repository to s3 storage.
-//	   Requires a git ref.
+//
+//	Requires a git ref.
+//
 // ii) Load ontology in database
 // iii)  Refresh data from github repository to s3 storage.
-//	   Requires a git ref.
+//
+//	Requires a git ref.
+//
 // iv) Load data
 func LoadData(gitref string) error {
 	mg.SerialDeps(

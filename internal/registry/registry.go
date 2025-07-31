@@ -10,6 +10,9 @@ import (
 	"github.com/minio/minio-go/v6"
 	rds "github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
+
+	// Added for legacyDBMutex
+
 	"github.com/spf13/viper"
 	"k8s.io/client-go/kubernetes"
 )
@@ -20,7 +23,9 @@ const (
 	LogFileKey                 = "log_file"
 	RedisKey                   = "redis"
 	ArangodbSessionKey         = "arangodb_session"
+	ArangodbLegacySessionKey   = "arangodb_legacy_session"
 	Arangodb                   = "arangodb"
+	ArangodbLegacy             = "arangodb_legacy"
 	OboStorageKey              = "obostorage"
 	OboReadersKey              = "oboreaders"
 	TTLCacheKey                = "ttlcache"
@@ -28,8 +33,10 @@ const (
 	FeatureAnnotationClientKey = "feature_annotation"
 )
 
-var v = viper.New()
-var csvFilePath string // Add this global variable
+var (
+	v           = viper.New()
+	csvFilePath string // Add this global variable
+)
 
 func SetFeatureAnnotationAPIClient(cnt feature.FeatureAnnotationServiceClient) {
 	v.Set(FeatureAnnotationClientKey, cnt)
@@ -45,6 +52,14 @@ func SetArangoOboStorage(s storage.DataSource) {
 
 func SetArangoSession(s *arangomanager.Session) {
 	v.Set(ArangodbSessionKey, s)
+}
+
+func SetLegacyArangoSession(s *arangomanager.Session) {
+	v.Set(ArangodbLegacySessionKey, s)
+}
+
+func SetLegacyArangodbConnection(c *arangomanager.Database) {
+	v.Set(ArangodbLegacy, c)
 }
 
 func SetArangodbConnection(c *arangomanager.Database) {
@@ -88,9 +103,19 @@ func GetArangoOboStorage() storage.DataSource {
 	return s
 }
 
+func GetLegacyArangoSession() *arangomanager.Session {
+	s, _ := v.Get(ArangodbLegacySessionKey).(*arangomanager.Session)
+	return s
+}
+
 func GetArangoSession() *arangomanager.Session {
 	s, _ := v.Get(ArangodbSessionKey).(*arangomanager.Session)
 	return s
+}
+
+func GetLegacyArangodbConnection() *arangomanager.Database {
+	c, _ := v.Get(ArangodbLegacy).(*arangomanager.Database)
+	return c
 }
 
 func GetArangodbConnection() *arangomanager.Database {

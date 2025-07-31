@@ -10,19 +10,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const (
-	// DefaultUserName is the default creator/updater for annotations
-	DefaultUserName = "dcr@dictycr.org"
-)
-
-var annMap = map[string]string{
-	"CGM_DDB_PASC": "pgaudet@northwestern.edu",
-	"CGM_DDB_PFEY": "pfey@northwestern.edu",
-	"CGM_DDB_BOBD": "robert-dodson@northwestern.edu",
-	"CGM_DDB_KPIL": "kpilchar@northwestern.edu",
-	"CGM_DDB":      "dictybase@northwestern.edu",
-}
-
 // processGeneEntryParams holds the parameters for the processGeneEntry
 // function.
 type processGeneEntryParams struct {
@@ -108,10 +95,7 @@ func processGeneEntry(params *processGeneEntryParams) error {
 		return nil
 	}
 
-	createdBy := DefaultUserName
-	if val, ok := annMap[entry.CreatedBy]; ok {
-		createdBy = val
-	}
+	createdBy := resolveCreator(entry)
 
 	// Set up gRPC call
 	res, err := client.CreateFeatureAnnotation(
@@ -142,4 +126,12 @@ func processGeneEntry(params *processGeneEntryParams) error {
 		res.Id,
 	)
 	return nil
+}
+
+func resolveCreator(entry *Gene) string {
+	createdBy := DefaultUserName
+	if val, ok := AnnMap[entry.CreatedBy]; ok {
+		createdBy = val
+	}
+	return createdBy
 }

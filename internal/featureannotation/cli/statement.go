@@ -1,6 +1,20 @@
 package cli
 
 const (
+
+	// GeneProductQuery is the AQL query for fetching gene products
+	GeneProductQuery = `
+    	FOR locus IN locus_gp
+		FOR gp IN gene_product
+        		FILTER gp.is_automated == 0
+        		FILTER locus.gene_product_no == gp.gene_product_no
+        		FILTER locus.locus_no == @feature_id
+        		RETURN {
+            			gene_product: gp.gene_product,
+            			created_by: gp.created_by,
+				created_on: gp.date_created
+        		}
+`
 	// AQL query to update documents based on featureprop_id
 	updateAQLQuery = `
 	FOR idx IN RANGE(0,COUNT(@featureprop_ids) - 1)

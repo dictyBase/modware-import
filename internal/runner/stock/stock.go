@@ -124,7 +124,8 @@ func strain(bin string) error {
 		"-g", "strain_genes.tsv",
 		"-i", "strain_strain.tsv",
 		"--strain-annotator-input", "strain_user_annotations.csv",
-		"-p", "strain_publications.tsv"})
+		"-p", "strain_publications.tsv",
+	})
 	return sh.Run(bin, cmd...)
 }
 
@@ -138,7 +139,8 @@ func plasmid(bin string) error {
 			"-a", "plasmid_user_annotations.csv",
 			"-p", "plasmid_publications.tsv",
 			"-i", "plasmid_plasmid.tsv",
-			"-g", "plasmid_genes.tsv"},
+			"-g", "plasmid_genes.tsv",
+		},
 	)
 	return sh.Run(bin, cmd...)
 }

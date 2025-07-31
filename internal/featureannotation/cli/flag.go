@@ -136,3 +136,33 @@ func GeneUpdaterFlags() []cli.Flag {
 		geneUpdaterSpecificFlags,
 	)
 }
+
+// GeneProductUpdaterFlags returns flags for gene product updater
+func GeneProductUpdaterFlags() []cli.Flag {
+	geneProductSpecificFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:    "legacy-database",
+			Value:   "cgm_ddb",
+			Usage:   "Legacy database name to query gene products from",
+			EnvVars: []string{"LEGACY_DATABASE"},
+		},
+		&cli.IntFlag{
+			Name:    "legacy-workers",
+			Value:   4,
+			Usage:   "Number of legacy database query workers",
+			EnvVars: []string{"LEGACY_WORKERS"},
+		},
+		&cli.IntFlag{
+			Name:    "grpc-workers", // This flag was already in GeneUpdaterFlags, ensure consistency or rename if needed
+			Value:   8,
+			Usage:   "Number of gRPC update workers",
+			EnvVars: []string{"GRPC_WORKERS"},
+		},
+	}
+
+	return slices.Concat(
+		arangoDBConnectionFlags(),    // Common ArangoDB flags (for the main DB, not legacy)
+		featureAnnotationGrpcFlags(), // Common gRPC flags
+		geneProductSpecificFlags,     // Specific flags for this updater
+	)
+}

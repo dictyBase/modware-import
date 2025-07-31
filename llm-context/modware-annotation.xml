@@ -1,32 +1,36 @@
 This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
 The content has been processed where comments have been removed, content has been compressed (code blocks are separated by ⋮---- delimiter).
 
-# File Summary
+<file_summary>
+This section contains a summary of this file.
 
-## Purpose
+<purpose>
 This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
 It is designed to be easily consumable by AI systems for analysis, code review,
 or other automated processes.
+</purpose>
 
-## File Format
+<file_format>
 The content is organized as follows:
 1. This summary section
 2. Repository information
 3. Directory structure
 4. Repository files (if enabled)
 5. Multiple file entries, each consisting of:
-  a. A header with the file path (## File: path/to/file)
-  b. The full contents of the file in a code block
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
 
-## Usage Guidelines
+<usage_guidelines>
 - This file should be treated as read-only. Any changes should be made to the
   original repository files, not this packed version.
 - When processing this file, use the file path to distinguish
   between different files in the repository.
 - Be aware that this file may contain sensitive information. Handle it with
   the same level of security as you would the original repository.
+</usage_guidelines>
 
-## Notes
+<notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
 - Only files matching these patterns are included: **/*.go
@@ -35,9 +39,11 @@ The content is organized as follows:
 - Code comments have been removed from supported file types
 - Content has been compressed - code blocks are separated by ⋮---- delimiter
 - Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
 
-# Directory Structure
-```
+</file_summary>
+
+<directory_structure>
 cmd/
   modware-annotation/
     main.go
@@ -112,12 +118,12 @@ internal/
     feature_annotation.go
     organism.go
     repository.go
-```
+</directory_structure>
 
-# Files
+<files>
+This section contains the contents of the repository's files.
 
-## File: cmd/modware-annotation/main.go
-```go
+<file path="cmd/modware-annotation/main.go">
 package main
 ⋮----
 import (
@@ -155,10 +161,9 @@ func getFeatureServerFlags() []cli.Flag
 func ontoCollFlags() []cli.Flag
 ⋮----
 func annoCollFlags() []cli.Flag
-```
+</file>
 
-## File: internal/app/server/server_feature.go
-```go
+<file path="internal/app/server/server_feature.go">
 package server
 ⋮----
 import (
@@ -219,10 +224,9 @@ func allFeatureParams(
 func getFeatureGrpcOpt() []aphgrpc.Option
 ⋮----
 func featureRepoAndNatsConn(clt *cli.Context) (*featureServerParams, error)
-```
+</file>
 
-## File: internal/app/server/server.go
-```go
+<file path="internal/app/server/server.go">
 package server
 ⋮----
 import (
@@ -296,10 +300,9 @@ func allParams(
 func getGrpcOpt() []aphgrpc.Option
 ⋮----
 func repoAndNatsConn(clt *cli.Context) (*serverParams, error)
-```
+</file>
 
-## File: internal/app/service/delete_service.go
-```go
+<file path="internal/app/service/delete_service.go">
 package service
 ⋮----
 import (
@@ -323,10 +326,9 @@ empty "google.golang.org/protobuf/types/known/emptypb"
 func (s *AnnotationService) DeleteAnnotationGroup(ctx context.Context, r *annotation.GroupEntryId) (*empty.Empty, error)
 ⋮----
 func (s *AnnotationService) DeleteAnnotation(ctx context.Context, r *annotation.DeleteAnnotationRequest) (*empty.Empty, error)
-```
+</file>
 
-## File: internal/app/service/read_service.go
-```go
+<file path="internal/app/service/read_service.go">
 package service
 ⋮----
 import (
@@ -397,10 +399,9 @@ func (srv *AnnotationService) getAnnoData(
 func (srv *AnnotationService) getGroupData(
 	mga *model.AnnoGroup,
 ) []*annotation.TaggedAnnotationGroup_Data
-```
+</file>
 
-## File: internal/app/service/service.go
-```go
+<file path="internal/app/service/service.go">
 package service
 ⋮----
 import (
@@ -486,10 +487,9 @@ func getAnnoAttributes(
 func filterStrToQuery(filter string) (string, error)
 ⋮----
 var empty string
-```
+</file>
 
-## File: internal/app/service/write_service.go
-```go
+<file path="internal/app/service/write_service.go">
 package service
 ⋮----
 import (
@@ -525,10 +525,9 @@ func (s *AnnotationService) AddToAnnotationGroup(
 func (s *AnnotationService) CreateAnnotationGroup(
 	ctx context.Context, rta *annotation.AnnotationIdList,
 ) (*annotation.TaggedAnnotationGroup, error)
-```
+</file>
 
-## File: internal/app/validate/validate.go
-```go
+<file path="internal/app/validate/validate.go">
 package validate
 ⋮----
 import (
@@ -544,10 +543,9 @@ import (
 const errNo = 2
 ⋮----
 func ServerArgs(clt *cli.Context) error
-```
+</file>
 
-## File: internal/message/nats/feature_annotation.go
-```go
+<file path="internal/message/nats/feature_annotation.go">
 package nats
 ⋮----
 import (
@@ -581,10 +579,9 @@ func (fnp *featureAnnotationPublisher) Publish(
 ) error
 ⋮----
 func (fnp *featureAnnotationPublisher) Close() error
-```
+</file>
 
-## File: internal/message/nats/nats.go
-```go
+<file path="internal/message/nats/nats.go">
 package nats
 ⋮----
 import (
@@ -618,10 +615,9 @@ func (n *natsPublisher) Publish(
 ) error
 ⋮----
 func (n *natsPublisher) Close() error
-```
+</file>
 
-## File: internal/message/message.go
-```go
+<file path="internal/message/message.go">
 package message
 ⋮----
 import (
@@ -645,10 +641,9 @@ type FeatureAnnotationPublisher interface {
 
 	Close() error
 }
-```
+</file>
 
-## File: internal/model/feature_annotation.go
-```go
+<file path="internal/model/feature_annotation.go">
 package model
 ⋮----
 import (
@@ -708,10 +703,9 @@ func FeatureAnnotationSchema() ([]byte, error)
 func getDbLinksSchema() map[string]interface
 ⋮----
 func getPropertiesSchema() map[string]interface
-```
+</file>
 
-## File: internal/model/model.go
-```go
+<file path="internal/model/model.go">
 package model
 ⋮----
 import (
@@ -778,10 +772,9 @@ func UniqueModel[T comparable](slice []T) []T
 func DocToIDs(ml []*AnnoDoc) []string
 ⋮----
 func ConvToModel(i interface
-```
+</file>
 
-## File: internal/model/organism.go
-```go
+<file path="internal/model/organism.go">
 package model
 ⋮----
 import (
@@ -808,10 +801,9 @@ type OrganismDoc struct {
 }
 ⋮----
 func Schema() []byte
-```
+</file>
 
-## File: internal/repository/arangodb/annotation_delete_test.go
-```go
+<file path="internal/repository/arangodb/annotation_delete_test.go">
 package arangodb
 ⋮----
 import (
@@ -829,10 +821,9 @@ func TestRemoveFromAnnotationGroup(t *testing.T)
 func TestRemoveAnnotationGroup(t *testing.T)
 ⋮----
 func TestRemoveAnnotation(t *testing.T)
-```
+</file>
 
-## File: internal/repository/arangodb/annotation_delete.go
-```go
+<file path="internal/repository/arangodb/annotation_delete.go">
 package arangodb
 ⋮----
 import (
@@ -861,10 +852,9 @@ func (ar *arangorepository) RemoveFromAnnotationGroup(
 	groupID string,
 	idslice ...string,
 ) (*model.AnnoGroup, error)
-```
+</file>
 
-## File: internal/repository/arangodb/annotation_read_test.go
-```go
+<file path="internal/repository/arangodb/annotation_read_test.go">
 package arangodb
 ⋮----
 import (
@@ -984,10 +974,9 @@ func testAddAnnotationSuccessThird(
 	assert *require.Assertions,
 	anrepo repository.TaggedAnnotationRepository,
 )
-```
+</file>
 
-## File: internal/repository/arangodb/annotation_read.go
-```go
+<file path="internal/repository/arangodb/annotation_read.go">
 package arangodb
 ⋮----
 import (
@@ -1054,10 +1043,9 @@ var annoModel []*model.AnnoDoc
 func (ar *arangorepository) getAllAnnotations(
 	ids ...string,
 ) ([]*model.AnnoDoc, error)
-```
+</file>
 
-## File: internal/repository/arangodb/annotation_statement_test_helpers.go
-```go
+<file path="internal/repository/arangodb/annotation_statement_test_helpers.go">
 package arangodb
 ⋮----
 import (
@@ -1164,10 +1152,9 @@ func testFilterStatement(
 func testGetListAnnoStatementValidFilters(t *testing.T)
 ⋮----
 func testGetListAnnoStatementTagFilters(t *testing.T)
-```
+</file>
 
-## File: internal/repository/arangodb/annotation_statement_test.go
-```go
+<file path="internal/repository/arangodb/annotation_statement_test.go">
 package arangodb
 ⋮----
 import (
@@ -1207,10 +1194,9 @@ func TestBuildAQLStatementSecondFilter(t *testing.T)
 func TestBuildAQLStatementFilterGenerationErrors(t *testing.T)
 ⋮----
 func TestGetListAnnoStatement(t *testing.T)
-```
+</file>
 
-## File: internal/repository/arangodb/annotation_write_test.go
-```go
+<file path="internal/repository/arangodb/annotation_write_test.go">
 package arangodb
 ⋮----
 import (
@@ -1230,10 +1216,9 @@ func TestEditAnnotation(t *testing.T)
 func TestAddAnnotationGroup(t *testing.T)
 ⋮----
 func TestAppendToAnntationGroup(t *testing.T)
-```
+</file>
 
-## File: internal/repository/arangodb/annotation_write.go
-```go
+<file path="internal/repository/arangodb/annotation_write.go">
 package arangodb
 ⋮----
 import (
@@ -1269,10 +1254,9 @@ func (ar *arangorepository) RemoveAnnotationGroup(groupID string) error
 func (ar *arangorepository) AppendToAnnotationGroup(groupID string, idslice ...string) (*model.AnnoGroup, error)
 ⋮----
 func (ar *arangorepository) createAnno(params *createParams) (*model.AnnoDoc, error)
-```
+</file>
 
-## File: internal/repository/arangodb/arangodb_test.go
-```go
+<file path="internal/repository/arangodb/arangodb_test.go">
 package arangodb
 ⋮----
 import (
@@ -1389,10 +1373,9 @@ func testModelMaptoID(
 ) []string
 ⋮----
 func model2IdCallback(mod *model.AnnoDoc) string
-```
+</file>
 
-## File: internal/repository/arangodb/arangodb.go
-```go
+<file path="internal/repository/arangodb/arangodb.go">
 package arangodb
 ⋮----
 import (
@@ -1446,10 +1429,9 @@ func (ar *arangorepository) ClearAnnotations() error
 func DocumentsExists(c driver.Collection, ids ...string) error
 ⋮----
 func (ar *arangorepository) Dbh() *manager.Database
-```
+</file>
 
-## File: internal/repository/arangodb/feature_annotation_pipeline.go
-```go
+<file path="internal/repository/arangodb/feature_annotation_pipeline.go">
 package arangodb
 ⋮----
 import (
@@ -1532,17 +1514,15 @@ type featureAnnotationUpdateValidator struct {
 func stepValidateInput(state *editState) *editState
 ⋮----
 func stepRefreshDocumentState(state *editState) *editState
-```
+</file>
 
-## File: internal/repository/arangodb/field.go
-```go
+<file path="internal/repository/arangodb/field.go">
 package arangodb
 ⋮----
 func FilterMap() map[string]string
-```
+</file>
 
-## File: internal/repository/arangodb/list_filter_statement.go
-```go
+<file path="internal/repository/arangodb/list_filter_statement.go">
 package arangodb
 ⋮----
 const (
@@ -1555,10 +1535,9 @@ const (
 				%s
 				RETURN { cv: cv, cvterm: cvt }
 		)
-```
+</file>
 
-## File: internal/repository/arangodb/ontology.go
-```go
+<file path="internal/repository/arangodb/ontology.go">
 package arangodb
 ⋮----
 import (
@@ -1584,10 +1563,9 @@ var tid string
 func (ar *arangorepository) termName(tid string) (string, error)
 ⋮----
 var name string
-```
+</file>
 
-## File: internal/repository/arangodb/organism_test_helpers.go
-```go
+<file path="internal/repository/arangodb/organism_test_helpers.go">
 package arangodb
 ⋮----
 import (
@@ -1665,10 +1643,9 @@ func setUpOrganismTest(
 func getTestOrganisms() []*organism.NewOrganism
 ⋮----
 func GetConnectParamsFromDB(tra *testarango.TestArango) *manager.ConnectParams
-```
+</file>
 
-## File: internal/repository/arangodb/organism.go
-```go
+<file path="internal/repository/arangodb/organism.go">
 package arangodb
 ⋮----
 import (
@@ -1729,10 +1706,9 @@ var organisms []*model.OrganismDoc
 func (org *organismRepo) ClearOrganisms() error
 ⋮----
 func (org *organismRepo) Dbh() *manager.Database
-```
+</file>
 
-## File: internal/repository/arangodb/pairwise.go
-```go
+<file path="internal/repository/arangodb/pairwise.go">
 package arangodb
 ⋮----
 import (
@@ -1780,10 +1756,9 @@ func NewModelAnnoDocPairWiseIterator(mdl []*model.AnnoDoc) (ModelAnnoDocPairWise
 func (p *ModelAnnoDocPairWiseIterator) NextModelAnnoDocPair() bool
 ⋮----
 func (p *ModelAnnoDocPairWiseIterator) ModelAnnoDocPair() (*model.AnnoDoc, *model.AnnoDoc)
-```
+</file>
 
-## File: internal/repository/arangodb/parameters.go
-```go
+<file path="internal/repository/arangodb/parameters.go">
 package arangodb
 ⋮----
 import "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
@@ -1829,10 +1804,9 @@ type FeatureCollectionParams struct {
 
 	Graph string `validate:"required"`
 }
-```
+</file>
 
-## File: internal/repository/arangodb/statement.go
-```go
+<file path="internal/repository/arangodb/statement.go">
 package arangodb
 ⋮----
 const (
@@ -1889,10 +1863,9 @@ const (
 					is_obsolete: false,
 					version: @version,
 					created_at: DATE_ISO8601(DATE_NOW())
-```
+</file>
 
-## File: internal/repository/error.go
-```go
+<file path="internal/repository/error.go">
 package repository
 ⋮----
 import (
@@ -1951,10 +1924,9 @@ func IsOrganismNotFound(err error) bool
 type ListNotFoundError struct{}
 ⋮----
 func IsListNotFound(err error) bool
-```
+</file>
 
-## File: internal/repository/organism.go
-```go
+<file path="internal/repository/organism.go">
 package repository
 ⋮----
 import (
@@ -1985,10 +1957,9 @@ type OrganismRepository interface {
 
 	Dbh() *manager.Database
 }
-```
+</file>
 
-## File: internal/repository/repository.go
-```go
+<file path="internal/repository/repository.go">
 package repository
 ⋮----
 import (
@@ -2056,10 +2027,9 @@ type TaggedAnnotationRepository interface {
 	Dbh() *manager.Database
 	LoadOboJSON(r io.Reader) (*storage.UploadInformation, error)
 }
-```
+</file>
 
-## File: internal/app/service/feature_annotation_crud_test_helpers.go
-```go
+<file path="internal/app/service/feature_annotation_crud_test_helpers.go">
 package service
 ⋮----
 import (
@@ -2109,10 +2079,9 @@ func testGetNonExistentFeatureByName(params *testParams)
 func testGetFeatureWithEmptyName(params *testParams)
 ⋮----
 req := &feature.FeatureName{Name: ""} // Empty name
-```
+</file>
 
-## File: internal/app/service/feature_annotation_deprecated.go
-```go
+<file path="internal/app/service/feature_annotation_deprecated.go">
 package service
 ⋮----
 import (
@@ -2138,10 +2107,9 @@ func (srv *FeatureAnnotationService) RemoveTag(
 	ctx context.Context,
 	req *feature.RemoveTagRequest,
 ) (*feature.FeatureAnnotation, error)
-```
+</file>
 
-## File: internal/app/service/feature_annotation_list_test_helpers.go
-```go
+<file path="internal/app/service/feature_annotation_list_test_helpers.go">
 package service
 ⋮----
 import (
@@ -2173,10 +2141,9 @@ func testListByPubmedIdValid(params *testParams)
 func testListByPubmedIdNotFound(params *testParams)
 ⋮----
 func testListByPubmedIdInvalid(params *testParams)
-```
+</file>
 
-## File: internal/collection/collection_test.go
-```go
+<file path="internal/collection/collection_test.go">
 package collection
 ⋮----
 import (
@@ -2217,10 +2184,9 @@ func testFindEmptySlice(t *testing.T)
 func testFindNilSlice(t *testing.T)
 ⋮----
 var slice []int
-```
+</file>
 
-## File: internal/pipe/pipe_test.go
-```go
+<file path="internal/pipe/pipe_test.go">
 package pipe
 ⋮----
 import (
@@ -2269,10 +2235,9 @@ func BenchmarkPipe4(b *testing.B)
 func BenchmarkPipe8(b *testing.B)
 ⋮----
 func TestPipeEdgeCases(t *testing.T)
-```
+</file>
 
-## File: internal/pipe/pipe.go
-```go
+<file path="internal/pipe/pipe.go">
 package pipe
 ⋮----
 func Pipe2[T1, T2, T3 any](tup T1, f1 func(T1) T2, fn2 func(T2) T3) T3
@@ -2333,10 +2298,9 @@ func Pipe8[T1, T2, T3, T4, T5, T6, T7, T8, T9 any](
 	fn7 func(T7) T8,
 	fn8 func(T8) T9,
 ) T9
-```
+</file>
 
-## File: internal/repository/arangodb/annotation_statement.go
-```go
+<file path="internal/repository/arangodb/annotation_statement.go">
 package arangodb
 ⋮----
 import (
@@ -2445,10 +2409,9 @@ func determineStatementTypeFunc(ctx FilterContext) FilterContext
 func determineStatementType(
 	first, second []*query.Filter,
 ) (StatementType, bool)
-```
+</file>
 
-## File: internal/repository/arangodb/feature_annotation_deprecated.go
-```go
+<file path="internal/repository/arangodb/feature_annotation_deprecated.go">
 package arangodb
 ⋮----
 import (
@@ -2480,10 +2443,9 @@ func (fann *featureAnnoRepo) RemoveTag(
 ) error
 ⋮----
 func findTagPredicate(tag string) func(p model.TagPropertyDoc) bool
-```
+</file>
 
-## File: internal/repository/feature_annotation_deprecated.go
-```go
+<file path="internal/repository/feature_annotation_deprecated.go">
 package repository
 ⋮----
 import (
@@ -2504,10 +2466,9 @@ type DeprecatedFeatureAnnotationRepository interface {
 		req *feature.RemoveTagRequest,
 	) error
 }
-```
+</file>
 
-## File: internal/iterutil/iterutil_test.go
-```go
+<file path="internal/iterutil/iterutil_test.go">
 package iterutil
 ⋮----
 import (
@@ -2573,10 +2534,9 @@ func TestFunctionComposition(t *testing.T)
 func TestPipeComposition(t *testing.T)
 ⋮----
 func TestPipeCompositionAdvanced(t *testing.T)
-```
+</file>
 
-## File: internal/repository/arangodb/organism_test.go
-```go
+<file path="internal/repository/arangodb/organism_test.go">
 package arangodb
 ⋮----
 import (
@@ -2612,10 +2572,9 @@ func TestRemoveOrganism(t *testing.T)
 func TestListOrganisms(t *testing.T)
 ⋮----
 func TestClearOrganisms(t *testing.T)
-```
+</file>
 
-## File: internal/collection/collection.go
-```go
+<file path="internal/collection/collection.go">
 package collection
 ⋮----
 import (
@@ -2683,10 +2642,9 @@ func CurriedTFold[A, B, R any](
 func IsEmpty[T any](slice []T) bool
 ⋮----
 func Sorted[T cmp.Ordered](slice []T) []T
-```
+</file>
 
-## File: internal/iterutil/iterutil.go
-```go
+<file path="internal/iterutil/iterutil.go">
 package iterutil
 ⋮----
 import "iter"
@@ -2756,10 +2714,9 @@ func AnyWith[V any](f func(V) bool) func(iter.Seq[V]) bool
 func ReduceWith[Sum, V any](f func(Sum, V) Sum, sum Sum) func(iter.Seq[V]) Sum
 ⋮----
 func ContainsElement[V comparable](element V) func(iter.Seq[V]) bool
-```
+</file>
 
-## File: internal/repository/arangodb/feature_annotation_helpers.go
-```go
+<file path="internal/repository/arangodb/feature_annotation_helpers.go">
 package arangodb
 ⋮----
 import (
@@ -2843,10 +2800,9 @@ func setOptionalFields(
 	doc *feature.NewFeatureAnnotation,
 	faDoc *model.FeatureAnnotationDoc,
 ) *model.FeatureAnnotationDoc
-```
+</file>
 
-## File: internal/repository/feature_annotation.go
-```go
+<file path="internal/repository/feature_annotation.go">
 package repository
 ⋮----
 import (
@@ -2895,10 +2851,9 @@ type FeatureAnnotationRepository interface {
 
 	DeprecatedFeatureAnnotationRepository
 }
-```
+</file>
 
-## File: internal/app/service/feature_annotation_tags_test_helpers.go
-```go
+<file path="internal/app/service/feature_annotation_tags_test_helpers.go">
 package service
 ⋮----
 import (
@@ -3085,10 +3040,9 @@ func testRemoveTagsEmptyProperties(params *testParams)
 func testRemoveTagsNonExistentFeature(params *testParams)
 ⋮----
 func testRemoveTagsInvalidRequest(params *testParams)
-```
+</file>
 
-## File: internal/app/service/feature_annotation_test.go
-```go
+<file path="internal/app/service/feature_annotation_test.go">
 package service
 ⋮----
 import (
@@ -3116,10 +3070,9 @@ func TestAddTags(t *testing.T)
 func TestSetTags(t *testing.T)
 ⋮----
 func TestRemoveTags(t *testing.T)
-```
+</file>
 
-## File: internal/repository/arangodb/feature_statement.go
-```go
+<file path="internal/repository/arangodb/feature_statement.go">
 package arangodb
 ⋮----
 const (
@@ -3149,10 +3102,9 @@ const (
 				INSERT {
 					id: id_val,
 					created_at: DATE_ISO8601(DATE_NOW()),
-```
+</file>
 
-## File: internal/app/service/feature_annotation.go
-```go
+<file path="internal/app/service/feature_annotation.go">
 package service
 ⋮----
 import (
@@ -3268,10 +3220,9 @@ func convertToProto(
 func convertDbLink(link model.DbLinkDoc) *feature.DbLink
 ⋮----
 func convertProperty(prop model.TagPropertyDoc) *feature.TagProperty
-```
+</file>
 
-## File: internal/repository/arangodb/feature_annotation_test_helpers.go
-```go
+<file path="internal/repository/arangodb/feature_annotation_test_helpers.go">
 package arangodb
 ⋮----
 import (
@@ -3492,10 +3443,9 @@ func createRemoveTagsRequest(id, tag, value string) *feature.RemoveTagsRequest
 func verifyTagRemoved(params verifyTagRemovedParams)
 ⋮----
 func verifyOtherTagsPreserved(params verifyOtherTagsPreservedParams)
-```
+</file>
 
-## File: internal/app/service/feature_annotation_test_helpers.go
-```go
+<file path="internal/app/service/feature_annotation_test_helpers.go">
 package service
 ⋮----
 import (
@@ -3590,10 +3540,9 @@ func newTestFeature() *feature.NewFeatureAnnotation
 func assertGrpcError(params assertGrpcErrorParams)
 ⋮----
 strings.ToLower(sts.Message()), // Case-insensitive check
-```
+</file>
 
-## File: internal/repository/arangodb/feature_annotation_test.go
-```go
+<file path="internal/repository/arangodb/feature_annotation_test.go">
 package arangodb
 ⋮----
 import (
@@ -3729,10 +3678,9 @@ func TestRemoveTags_TagNotFound(t *testing.T)
 func TestRemoveTags_PartialMatch(t *testing.T)
 ⋮----
 func TestRemoveTags_EmptyProperties(t *testing.T)
-```
+</file>
 
-## File: internal/repository/arangodb/feature_annotation.go
-```go
+<file path="internal/repository/arangodb/feature_annotation.go">
 package arangodb
 ⋮----
 import (
@@ -3867,4 +3815,6 @@ func (fann *featureAnnoRepo) createPublicationEdgesTx(
 func createFeatureAnnotationDoc(
 	doc *feature.NewFeatureAnnotation,
 ) *model.FeatureAnnotationDoc
-```
+</file>
+
+</files>
