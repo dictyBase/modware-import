@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -35,7 +38,7 @@ func LoadGeneProduct(c *cli.Context) error {
 		ctx context.Context,
 		job concurrent.Job[GeneProduct],
 	) (*pb.FeatureAnnotation, error) {
-		return updateGeneProduct(ctx, client, job.Payload, user)
+		return manageGeneProduct(ctx, client, job.Payload, user, logger)
 	}
 
 	processor := concurrent.NewBatchProcessor(
@@ -65,9 +68,7 @@ func LoadGeneProduct(c *cli.Context) error {
 	}
 
 	processor.Start()
-
 	go readCSVAndProcess(reader, processor, logger)
-
 	successCount, errorCount := processResults(processor, logger)
 
 	logger.Infof(
@@ -82,54 +83,107 @@ func LoadGeneProduct(c *cli.Context) error {
 	return nil
 }
 
-func updateGeneProduct(
-	ctx context.Context, client feature.FeatureAnnotationServiceClient,
-	product GeneProduct, user string,
+func manageGeneProduct(
+	ctx context.Context,
+	client feature.FeatureAnnotationServiceClient,
+	product GeneProduct,
+	user string,
+	logger *logrus.Entry,
 ) (*pb.FeatureAnnotation, error) {
-	logger := registry.GetLogger()
 	existing, err := client.GetFeatureAnnotation(
 		ctx,
 		&pb.FeatureAnnotationId{Id: product.GeneID},
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"error finding feature annotation for %s: %w",
-			product.GeneID,
+		return handleNewGenePdtFromCsv(
+			ctx,
+			client,
+			product,
+			user,
 			err,
+			logger,
 		)
 	}
 
-	newTags := make([]*pb.TagPropertyCreate, 0)
-	for _, tag := range existing.Attributes.Properties {
-		if tag.Tag != productTag {
-			newTags = append(newTags, &pb.TagPropertyCreate{
-				Tag:       tag.Tag,
-				Value:     tag.Value,
-				CreatedBy: tag.CreatedBy,
-				CreatedAt: tag.CreatedAt,
-			})
-		}
+	ok := slices.ContainsFunc(
+		existing.Attributes.Properties,
+		func(tag *pb.TagProperty) bool {
+			return tag.Tag == productTag &&
+				tag.Value == product.Product
+		},
+	)
+	if ok {
+		logger.Debugf(
+			"gene product %s already exists for %s",
+			product.Product,
+			product.GeneID,
+		)
+		return existing, nil
 	}
-	newTags = append(newTags, &pb.TagPropertyCreate{
-		Tag:       productTag,
-		Value:     product.Product,
-		CreatedBy: user,
-		CreatedAt: timestamppb.Now(),
-	})
 
-	updated, err := client.SetTags(ctx, &pb.SetTagsRequest{
-		Id:   product.GeneID,
-		Tags: newTags,
+	updated, err := client.AddTag(ctx, &pb.AddTagRequest{
+		Id: product.GeneID,
+		Tag: &pb.TagPropertyCreate{
+			Tag:       productTag,
+			Value:     product.Product,
+			CreatedBy: user,
+			CreatedAt: timestamppb.Now(),
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error setting tags for %s: %w",
+			"error creating tags for %s: %w",
 			product.GeneID,
 			err,
 		)
 	}
 	logger.Debugf("successfully updated gene product for %s", updated.Id)
 	return updated, nil
+}
+
+func handleNewGenePdtFromCsv(
+	ctx context.Context,
+	client feature.FeatureAnnotationServiceClient,
+	product GeneProduct,
+	user string,
+	grpcErr error,
+	logger *logrus.Entry,
+) (*pb.FeatureAnnotation, error) {
+	if status.Code(grpcErr) != codes.NotFound {
+		return nil, fmt.Errorf(
+			"error finding feature annotation for %s: %w",
+			product.GeneID,
+			grpcErr,
+		)
+	}
+	logger.Debugf(
+		"creating new feature annotation for %s",
+		product.GeneID,
+	)
+	nfa := &pb.NewFeatureAnnotation{
+		Id:        product.GeneID,
+		CreatedBy: user,
+		CreatedAt: timestamppb.Now(),
+		Attributes: &pb.FeatureAnnotationAttributes{
+			Name: product.GeneID,
+			Properties: []*pb.TagProperty{{
+				Tag:       productTag,
+				Value:     product.Product,
+				CreatedBy: user,
+				CreatedAt: timestamppb.Now(),
+			}},
+		},
+	}
+	created, err := client.CreateFeatureAnnotation(ctx, nfa)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error creating annotation for %s: %w",
+			product.GeneID,
+			err,
+		)
+	}
+	logger.Debugf("created new feature annotation %s", created.Id)
+	return created, nil
 }
 
 func readCSVAndProcess(
