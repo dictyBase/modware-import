@@ -100,6 +100,7 @@ func allCommands() []*cli.Command {
 			Name:   "gene-product-updater",
 			Usage:  "Update gene products from legacy database to feature annotation service",
 			Flags:  facli.GeneProductUpdaterFlags(),
+			Flags:  facli.GeneProductFromCsvFlag(),
 			Before: faclient.GeneProductCliSetup, // Use the new setup function
 			Action: facli.RunGeneProductUpdater,
 		},

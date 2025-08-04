@@ -6,6 +6,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func GeneProductFromCsvFlag() []cli.Flag {
+	return slices.Concat(
+		LoadGeneProductFlag(),
+		featureAnnotationGrpcFlags(),
+	)
+}
+
 func LoadGeneProductFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
