@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	facli "github.com/dictyBase/modware-import/internal/featureannotation/cli"
 	faclient "github.com/dictyBase/modware-import/internal/featureannotation/client"
 	"github.com/dictyBase/modware-import/internal/logger"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -49,6 +52,27 @@ func main() {
 	}
 }
 
+func setupGrpcClient(c *cli.Context) error {
+	conn, err := grpc.NewClient(
+		fmt.Sprintf(
+			"%s:%s",
+			c.String("feature-annotation-grpc-host"),
+			c.String("feature-annotation-grpc-port"),
+		),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error connecting to feature annotation service: %s",
+			err,
+		)
+	}
+	registry.SetFeatureAnnotationAPIClient(
+		feature_annotation.NewFeatureAnnotationServiceClient(conn),
+	)
+	return nil
+}
+
 func allCommands() []*cli.Command {
 	return []*cli.Command{
 		{
@@ -78,6 +102,27 @@ func allCommands() []*cli.Command {
 			Flags:  facli.GeneProductUpdaterFlags(),
 			Before: faclient.GeneProductCliSetup, // Use the new setup function
 			Action: facli.RunGeneProductUpdater,
+		},
+		{
+			Name:  "load-gene-product",
+			Usage: "Load gene products from a CSV file",
+			Flags: append(
+				facli.LoadGeneProductFlag(),
+				&cli.StringFlag{
+					Name:     "feature-annotation-grpc-host",
+					Usage:    "gRPC host for feature annotation service",
+					Required: true,
+					EnvVars:  []string{"FEATURE_ANNOTATION_GRPC_HOST"},
+				},
+				&cli.StringFlag{
+					Name:     "feature-annotation-grpc-port",
+					Usage:    "gRPC port for feature annotation service",
+					Required: true,
+					EnvVars:  []string{"FEATURE_ANNOTATION_GRPC_PORT"},
+				},
+			),
+			Before: setupGrpcClient,
+			Action: facli.LoadGeneProduct,
 		},
 	}
 }
