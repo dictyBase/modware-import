@@ -100,28 +100,13 @@ func allCommands() []*cli.Command {
 			Name:   "gene-product-updater",
 			Usage:  "Update gene products from legacy database to feature annotation service",
 			Flags:  facli.GeneProductUpdaterFlags(),
-			Flags:  facli.GeneProductFromCsvFlag(),
 			Before: faclient.GeneProductCliSetup, // Use the new setup function
 			Action: facli.RunGeneProductUpdater,
 		},
 		{
-			Name:  "load-gene-product",
-			Usage: "Load gene products from a CSV file",
-			Flags: append(
-				facli.LoadGeneProductFlag(),
-				&cli.StringFlag{
-					Name:     "feature-annotation-grpc-host",
-					Usage:    "gRPC host for feature annotation service",
-					Required: true,
-					EnvVars:  []string{"FEATURE_ANNOTATION_GRPC_HOST"},
-				},
-				&cli.StringFlag{
-					Name:     "feature-annotation-grpc-port",
-					Usage:    "gRPC port for feature annotation service",
-					Required: true,
-					EnvVars:  []string{"FEATURE_ANNOTATION_GRPC_PORT"},
-				},
-			),
+			Name:   "load-gene-product",
+			Usage:  "Load gene products from a CSV file",
+			Flags:  facli.GeneProductFromCsvFlag(),
 			Before: setupGrpcClient,
 			Action: facli.LoadGeneProduct,
 		},
