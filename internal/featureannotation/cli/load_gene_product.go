@@ -29,6 +29,23 @@ type GeneProduct struct {
 	Product string
 }
 
+type manageGeneProductParams struct {
+	ctx     context.Context
+	client  feature.FeatureAnnotationServiceClient
+	product GeneProduct
+	user    string
+	logger  *logrus.Entry
+}
+
+type handleNewGenePdtFromCsvParams struct {
+	ctx     context.Context
+	client  feature.FeatureAnnotationServiceClient
+	product GeneProduct
+	user    string
+	grpcErr error
+	logger  *logrus.Entry
+}
+
 func LoadGeneProduct(c *cli.Context) error {
 	logger := registry.GetLogger()
 	client := registry.GetFeatureAnnotationAPIClient()
@@ -38,7 +55,13 @@ func LoadGeneProduct(c *cli.Context) error {
 		ctx context.Context,
 		job concurrent.Job[GeneProduct],
 	) (*pb.FeatureAnnotation, error) {
-		return manageGeneProduct(ctx, client, job.Payload, user, logger)
+		return manageGeneProduct(&manageGeneProductParams{
+			ctx:     ctx,
+			client:  client,
+			product: job.Payload,
+			user:    user,
+			logger:  logger,
+		})
 	}
 
 	processor := concurrent.NewBatchProcessor(
@@ -84,24 +107,22 @@ func LoadGeneProduct(c *cli.Context) error {
 }
 
 func manageGeneProduct(
-	ctx context.Context,
-	client feature.FeatureAnnotationServiceClient,
-	product GeneProduct,
-	user string,
-	logger *logrus.Entry,
+	params *manageGeneProductParams,
 ) (*pb.FeatureAnnotation, error) {
-	existing, err := client.GetFeatureAnnotation(
-		ctx,
-		&pb.FeatureAnnotationId{Id: product.GeneID},
+	existing, err := params.client.GetFeatureAnnotation(
+		params.ctx,
+		&pb.FeatureAnnotationId{Id: params.product.GeneID},
 	)
 	if err != nil {
 		return handleNewGenePdtFromCsv(
-			ctx,
-			client,
-			product,
-			user,
-			err,
-			logger,
+			&handleNewGenePdtFromCsvParams{
+				ctx:     params.ctx,
+				client:  params.client,
+				product: params.product,
+				user:    params.user,
+				grpcErr: err,
+				logger:  params.logger,
+			},
 		)
 	}
 
@@ -109,80 +130,71 @@ func manageGeneProduct(
 		existing.Attributes.Properties,
 		func(tag *pb.TagProperty) bool {
 			return tag.Tag == productTag &&
-				tag.Value == product.Product
+				tag.Value == params.product.Product
 		},
 	)
 	if ok {
-		logger.Debugf(
+		params.logger.Debugf(
 			"gene product %s already exists for %s",
-			product.Product,
-			product.GeneID,
+			params.product.Product,
+			params.product.GeneID,
 		)
 		return existing, nil
 	}
 
-	updated, err := client.AddTag(ctx, &pb.AddTagRequest{
-		Id: product.GeneID,
+	updated, err := params.client.AddTag(params.ctx, &pb.AddTagRequest{
+		Id: params.product.GeneID,
 		Tag: &pb.TagPropertyCreate{
 			Tag:       productTag,
-			Value:     product.Product,
-			CreatedBy: user,
+			Value:     params.product.Product,
+			CreatedBy: params.user,
 			CreatedAt: timestamppb.Now(),
 		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error creating tags for %s: %w",
-			product.GeneID,
+			params.product.GeneID,
 			err,
 		)
 	}
-	logger.Debugf("successfully updated gene product for %s", updated.Id)
+	params.logger.Debugf("successfully updated gene product for %s", updated.Id)
 	return updated, nil
 }
 
 func handleNewGenePdtFromCsv(
-	ctx context.Context,
-	client feature.FeatureAnnotationServiceClient,
-	product GeneProduct,
-	user string,
-	grpcErr error,
-	logger *logrus.Entry,
+	params *handleNewGenePdtFromCsvParams,
 ) (*pb.FeatureAnnotation, error) {
-	if status.Code(grpcErr) != codes.NotFound {
+	if status.Code(params.grpcErr) != codes.NotFound {
 		return nil, fmt.Errorf(
 			"error finding feature annotation for %s: %w",
-			product.GeneID,
-			grpcErr,
+			params.product.GeneID,
+			params.grpcErr,
 		)
 	}
-	logger.Debugf(
-		"creating new feature annotation for %s",
-		product.GeneID,
-	)
 	nfa := &pb.NewFeatureAnnotation{
-		Id:        product.GeneID,
-		CreatedBy: user,
+		Id:        params.product.GeneID,
+		CreatedBy: params.user,
 		CreatedAt: timestamppb.Now(),
 		Attributes: &pb.FeatureAnnotationAttributes{
-			Name: product.GeneID,
+			Name: params.product.GeneID,
 			Properties: []*pb.TagProperty{{
 				Tag:       productTag,
-				Value:     product.Product,
-				CreatedBy: user,
+				Value:     params.product.Product,
+				CreatedBy: params.user,
 				CreatedAt: timestamppb.Now(),
 			}},
 		},
 	}
-	created, err := client.CreateFeatureAnnotation(ctx, nfa)
+	created, err := params.client.CreateFeatureAnnotation(params.ctx, nfa)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error creating annotation for %s: %w",
-			product.GeneID,
+			params.product.GeneID,
 			err,
 		)
 	}
-	logger.Debugf("created new feature annotation %s", created.Id)
+	params.logger.Debugf("created new feature annotation %s", created.Id)
 	return created, nil
 }
 
