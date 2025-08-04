@@ -26,32 +26,6 @@ type GeneProduct struct {
 	Product string
 }
 
-func LoadGeneProductFlag() []cli.Flag {
-	return []cli.Flag{
-		&cli.StringFlag{
-			Name:     "input",
-			Aliases:  []string{"i"},
-			Usage:    "input CSV file with gene products",
-			Required: true,
-		},
-		&cli.IntFlag{
-			Name:  "workers",
-			Usage: "number of concurrent workers for loading",
-			Value: 4,
-		},
-		&cli.IntFlag{
-			Name:  "batch-size",
-			Usage: "batch size for loading",
-			Value: 100,
-		},
-		&cli.StringFlag{
-			Name:     "user",
-			Usage:    "email of the user running the load",
-			Required: true,
-		},
-	}
-}
-
 func LoadGeneProduct(c *cli.Context) error {
 	logger := registry.GetLogger()
 	client := registry.GetFeatureAnnotationAPIClient()

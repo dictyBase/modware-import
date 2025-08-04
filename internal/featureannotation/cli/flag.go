@@ -6,6 +6,32 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func LoadGeneProductFlag() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:     "input",
+			Aliases:  []string{"i"},
+			Usage:    "input CSV file with gene products",
+			Required: true,
+		},
+		&cli.IntFlag{
+			Name:  "workers",
+			Usage: "number of concurrent workers for loading",
+			Value: 4,
+		},
+		&cli.IntFlag{
+			Name:  "batch-size",
+			Usage: "batch size for loading",
+			Value: 100,
+		},
+		&cli.StringFlag{
+			Name:     "user",
+			Usage:    "email of the user running the load",
+			Required: true,
+		},
+	}
+}
+
 // arangoDBConnectionFlags returns a common set of ArangoDB connection flags.
 func arangoDBConnectionFlags() []cli.Flag {
 	return []cli.Flag{
