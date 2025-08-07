@@ -6,6 +6,13 @@
 
 Cli application for importing dictybase data.
 
+## Table of Contents
+- [Components](#components)
+  - [Data Importer](#data-importer)
+  - [Mock gRPC Server for Feature Annotation Service](#mock-grpc-server-for-feature-annotation-service)
+- [Documentation](#documentation)
+- [Misc Badges](#misc-badges)
+
 ## Components
 
 ### Data Importer
