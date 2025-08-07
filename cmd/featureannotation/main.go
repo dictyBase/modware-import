@@ -79,5 +79,12 @@ func allCommands() []*cli.Command {
 			Before: faclient.GeneProductCliSetup, // Use the new setup function
 			Action: facli.RunGeneProductUpdater,
 		},
+		{
+			Name:   "load-gene-product-from-csv",
+			Usage:  "Load gene products from a CSV file",
+			Flags:  facli.GeneProductFromCsvFlag(),
+			Before: faclient.GeneProductCsvCliSetup,
+			Action: facli.LoadGeneProduct,
+		},
 	}
 }
