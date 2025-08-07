@@ -78,8 +78,10 @@ func LoadGeneProduct(c *cli.Context) error {
 	}
 
 	processor.Start()
-	processor.AddBatch(products)
-	processor.Close()
+	go func() {
+		defer processor.Close()
+		processor.AddBatch(products)
+	}()
 
 	successCount, errorCount := processResults(processor, logger)
 
