@@ -15,10 +15,10 @@ func GeneProductFromCsvFlag() []cli.Flag {
 
 func LoadGeneProductFlag() []cli.Flag {
 	return []cli.Flag{
-		&cli.StringFlag{
+		&cli.StringSliceFlag{
 			Name:     "input",
 			Aliases:  []string{"i"},
-			Usage:    "input CSV file with gene products",
+			Usage:    "one or more input CSV files with gene products",
 			Required: true,
 		},
 		&cli.IntFlag{
