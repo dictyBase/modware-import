@@ -72,26 +72,15 @@ func LoadGeneProduct(c *cli.Context) error {
 		),
 	)
 
-	file, err := os.Open(c.String("input"))
+	products, err := readAndDeduplicate(c.StringSlice("input"), logger)
 	if err != nil {
-		return fmt.Errorf(
-			"error opening input file %s: %w",
-			c.String("input"),
-			err,
-		)
-	}
-	defer file.Close()
-
-	reader := csv.NewReader(file)
-	if _, err := reader.Read(); err != nil {
-		if err == io.EOF {
-			return fmt.Errorf("empty csv file %s", c.String("input"))
-		}
-		return fmt.Errorf("error reading header from csv: %w", err)
+		return err
 	}
 
 	processor.Start()
-	go readCSVAndProcess(reader, processor, logger)
+	processor.AddBatch(products)
+	processor.Close()
+
 	successCount, errorCount := processResults(processor, logger)
 
 	logger.Infof(
@@ -104,6 +93,52 @@ func LoadGeneProduct(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func readAndDeduplicate(
+	files []string,
+	logger *logrus.Entry,
+) ([]GeneProduct, error) {
+	seen := make(map[string]bool)
+	var products []GeneProduct
+	for _, file := range files {
+		f, err := os.Open(file)
+		if err != nil {
+			return nil, fmt.Errorf("error opening input file %s: %w", file, err)
+		}
+		defer f.Close()
+		reader := csv.NewReader(f)
+		if _, err := reader.Read(); err != nil {
+			if err == io.EOF {
+				logger.Warnf("empty csv file %s", file)
+				continue
+			}
+			return nil, fmt.Errorf("error reading header from csv: %w", err)
+		}
+		for {
+			record, err := reader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				logger.Errorf("error reading record from csv: %s", err)
+				continue
+			}
+			if len(record) < 2 {
+				logger.Warnf("skipping malformed record: %v", record)
+				continue
+			}
+			if seen[record[0]] {
+				continue
+			}
+			products = append(
+				products,
+				GeneProduct{GeneID: record[0], Product: record[1]},
+			)
+			seen[record[0]] = true
+		}
+	}
+	return products, nil
 }
 
 func manageGeneProduct(
@@ -158,7 +193,10 @@ func manageGeneProduct(
 			err,
 		)
 	}
-	params.logger.Debugf("successfully updated gene product for %s", updated.Id)
+	params.logger.Debugf(
+		"successfully updated gene product for %s",
+		updated.Id,
+	)
 	return updated, nil
 }
 
@@ -196,29 +234,6 @@ func handleNewGenePdtFromCsv(
 	}
 	params.logger.Debugf("created new feature annotation %s", created.Id)
 	return created, nil
-}
-
-func readCSVAndProcess(
-	reader *csv.Reader,
-	processor *concurrent.BatchProcessor[GeneProduct, *pb.FeatureAnnotation],
-	logger *logrus.Entry,
-) {
-	defer processor.Close()
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			logger.Errorf("error reading record from csv: %s", err)
-			continue
-		}
-		if len(record) < 2 {
-			logger.Warnf("skipping malformed record: %v", record)
-			continue
-		}
-		processor.Add(GeneProduct{GeneID: record[0], Product: record[1]})
-	}
 }
 
 func processResults(
