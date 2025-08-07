@@ -6,6 +6,7 @@ import (
 
 	"github.com/arangodb/go-driver" // Add this import
 	"github.com/dictyBase/arangomanager"
+	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
@@ -111,4 +112,25 @@ func CSVArangodbCliSetup(cltx *cli.Context) error {
 		return err
 	}
 	return verifyAndRegisterCSVFile(cltx)
+}
+
+func GeneProductCsvCliSetup(c *cli.Context) error {
+	conn, err := grpc.NewClient(
+		fmt.Sprintf(
+			"%s:%s",
+			c.String("feature-annotation-grpc-host"),
+			c.String("feature-annotation-grpc-port"),
+		),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error connecting to feature annotation service: %s",
+			err,
+		)
+	}
+	registry.SetFeatureAnnotationAPIClient(
+		feature_annotation.NewFeatureAnnotationServiceClient(conn),
+	)
+	return nil
 }
