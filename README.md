@@ -128,6 +128,7 @@ Mock gRPC Server
 ## Documentation 
 * [Importer](docs/import.md)
 * [k8s](docs/k8s.md)
+* [Feature Annotation CLI](docs/featureannotation.md)
 
 
 # Misc Badges
