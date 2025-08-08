@@ -86,5 +86,12 @@ func allCommands() []*cli.Command {
 			Before: faclient.GeneProductCsvCliSetup,
 			Action: facli.LoadGeneProduct,
 		},
+		{
+			Name:   "load-synonyms",
+			Usage:  "Load synonyms from ArangoDB to feature annotation service",
+			Flags:  facli.SynonymLoaderFlags(),
+			Before: faclient.CliSetup,
+			Action: facli.RunSynonymLoader,
+		},
 	}
 }
