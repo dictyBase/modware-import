@@ -53,7 +53,7 @@ func LoadFeatureAnnotation(cltx *cli.Context) error {
 	defer result.Close()
 
 	if result.IsEmpty() {
-		logger.Error("No PubMed references found in feature annotations")
+		logger.Error("No active genes found in chado")
 		return nil
 	}
 
