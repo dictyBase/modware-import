@@ -199,3 +199,19 @@ func GeneProductUpdaterFlags() []cli.Flag {
 		geneProductSpecificFlags,     // Specific flags for this updater
 	)
 }
+
+// SynonymLoaderFlags returns all flags required for the synonym loader command.
+func SynonymLoaderFlags() []cli.Flag {
+	return slices.Concat(
+		arangoDBConnectionFlags(),
+		featureAnnotationGrpcFlags(),
+		[]cli.Flag{
+			&cli.IntFlag{
+				Name:    "grpc-workers",
+				Value:   4,
+				Usage:   "Number of gRPC update workers",
+				EnvVars: []string{"GRPC_WORKERS"},
+			},
+		},
+	)
+}
