@@ -31,6 +31,7 @@ const (
 				FILTER feat.dbxref_id == dbx.dbxref_id
 				FILTER cvt.name == 'gene'
 				FILTER feat.is_obsolete == 0
+				FILTER feat.is_deleted == 0
 				RETURN {
 					name: feat.uniquename,
 					gene_id: dbx.accession,
