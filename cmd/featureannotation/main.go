@@ -56,7 +56,7 @@ func allCommands() []*cli.Command {
 			Usage:  "Load feature annotations from ArangoDB to feature annotation service",
 			Flags:  facli.LoadFeatureAnnotationFlag(),
 			Before: faclient.CliSetup,
-			Action: facli.LoadFeatureAnnotation,
+			Action: facli.RunFeatureAnnotationLoader,
 		},
 		{
 			Name:   "load-csv-to-arangodb",
