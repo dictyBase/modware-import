@@ -105,6 +105,20 @@ func LoadFeatureAnnotationFlag() []cli.Flag {
 	return slices.Concat(
 		arangoDBConnectionFlags(),
 		featureAnnotationGrpcFlags(),
+		[]cli.Flag{
+			&cli.IntFlag{
+				Name:    "pubmed-workers",
+				Value:   4,
+				Usage:   "Number of pubmed fetcher workers",
+				EnvVars: []string{"PUBMED_WORKERS"},
+			},
+			&cli.IntFlag{
+				Name:    "grpc-workers",
+				Value:   8,
+				Usage:   "Number of gRPC create workers",
+				EnvVars: []string{"GRPC_WORKERS"},
+			},
+		},
 	)
 }
 
