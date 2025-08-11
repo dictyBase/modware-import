@@ -528,63 +528,96 @@ func annotationCreatorWorkerFunc(
 			return result, nil
 		}
 
-		_, err := grpcClient.GetFeatureAnnotation(
+		exists, err := checkAnnotationExists(
 			ctx,
-			&fanno.FeatureAnnotationId{Id: geneWithPubmed.GeneID},
+			grpcClient,
+			geneWithPubmed.GeneID,
 		)
 		if err != nil {
-			if status.Code(err) != codes.NotFound {
-				result.Error = err
-				result.Message = fmt.Sprintf(
-					"failed to check for feature annotation for gene %s: %v",
-					geneWithPubmed.GeneID,
-					err,
-				)
-				return result, err
-			}
-			res, err := grpcClient.CreateFeatureAnnotation(
-				ctx,
-				&fanno.NewFeatureAnnotation{
-					Type:       "gene",
-					Id:         geneWithPubmed.GeneID,
-					IsObsolete: false,
-					CreatedBy: resolveCreatorFromCreatedBy(
-						geneWithPubmed.CreatedBy,
-					),
-					CreatedAt: timestamppb.Now(),
-					UpdatedAt: timestamppb.Now(),
-					Attributes: &fanno.FeatureAnnotationAttributes{
-						Name:   geneWithPubmed.Name,
-						Pubmed: geneWithPubmed.Pubmeds,
-					},
-				})
-			if err != nil {
-				result.Error = err
-				result.Message = fmt.Sprintf(
-					"failed to create feature annotation for gene %s: %v",
-					geneWithPubmed.GeneID,
-					err,
-				)
-				return result, err
-			}
+			result.Error = err
+			result.Message = fmt.Sprintf(
+				"failed to check for feature annotation for gene %s: %v",
+				geneWithPubmed.GeneID,
+				err,
+			)
+			return result, err
+		}
 
+		if exists {
+			logger.Infof(
+				"Annotation for gene %s already exists, skipping creation.",
+				geneWithPubmed.GeneID,
+			)
 			result.Success = true
 			result.Message = fmt.Sprintf(
-				"Created new feature annotation record %s for feature name %s",
-				res.Attributes.Name,
-				res.Id,
+				"Skipped, annotation for gene %s already exists",
+				geneWithPubmed.GeneID,
 			)
 			return result, nil
 		}
-		logger.Infof(
-			"Annotation for gene %s already exists, skipping creation.",
-			geneWithPubmed.GeneID,
-		)
+
+		res, err := createNewAnnotation(ctx, grpcClient, geneWithPubmed)
+		if err != nil {
+			result.Error = err
+			result.Message = fmt.Sprintf(
+				"failed to create feature annotation for gene %s: %v",
+				geneWithPubmed.GeneID,
+				err,
+			)
+			return result, err
+		}
+
 		result.Success = true
 		result.Message = fmt.Sprintf(
-			"Skipped, annotation for gene %s already exists",
-			geneWithPubmed.GeneID,
+			"Created new feature annotation record %s for feature name %s",
+			res.Attributes.Name,
+			res.Id,
 		)
 		return result, nil
 	}
+}
+
+// checkAnnotationExists checks if a feature annotation already exists.
+// It returns true if it exists, false if it does not exist (NotFound),
+// and an error for any other grpc status.
+func checkAnnotationExists(
+	ctx context.Context,
+	client fanno.FeatureAnnotationServiceClient,
+	geneID string,
+) (bool, error) {
+	_, err := client.GetFeatureAnnotation(
+		ctx,
+		&fanno.FeatureAnnotationId{Id: geneID},
+	)
+	if err == nil {
+		return true, nil // Exists
+	}
+	if status.Code(err) == codes.NotFound {
+		return false, nil // Does not exist
+	}
+	return false, err // Other error
+}
+
+func createNewAnnotation(
+	ctx context.Context,
+	grpcClient fanno.FeatureAnnotationServiceClient,
+	geneWithPubmed GeneWithPubmed,
+) (*fanno.FeatureAnnotation, error) {
+	return grpcClient.CreateFeatureAnnotation(
+		ctx,
+		&fanno.NewFeatureAnnotation{
+			Type:       "gene",
+			Id:         geneWithPubmed.GeneID,
+			IsObsolete: false,
+			CreatedAt:  timestamppb.Now(),
+			UpdatedAt:  timestamppb.Now(),
+			CreatedBy: resolveCreatorFromCreatedBy(
+				geneWithPubmed.CreatedBy,
+			),
+			Attributes: &fanno.FeatureAnnotationAttributes{
+				Name:   geneWithPubmed.Name,
+				Pubmed: geneWithPubmed.Pubmeds,
+			},
+		},
+	)
 }
