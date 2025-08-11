@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	fanno "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/concurrent"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
@@ -460,7 +460,7 @@ func pubmedFetcherWorkerFunc(
 
 		pubmedResult, err := dbh.SearchRows(
 			ListPubmedsByFeature,
-			map[string]interface{}{
+			map[string]any{
 				"feature_id": gene.FeatureID,
 			},
 		)
@@ -503,7 +503,7 @@ func pubmedFetcherWorkerFunc(
 
 func annotationCreatorWorkerFunc(
 	config FeatureAnnotationAppConfig,
-	grpcClient feature_annotation.FeatureAnnotationServiceClient,
+	grpcClient fanno.FeatureAnnotationServiceClient,
 ) concurrent.WorkerFunc[GeneWithPubmed, GrpcAnnotationResult] {
 	return func(
 		ctx context.Context,
@@ -528,7 +528,7 @@ func annotationCreatorWorkerFunc(
 
 		res, err := grpcClient.CreateFeatureAnnotation(
 			ctx,
-			&feature_annotation.NewFeatureAnnotation{
+			&fanno.NewFeatureAnnotation{
 				Type:       "gene",
 				Id:         geneWithPubmed.GeneID,
 				IsObsolete: false,
@@ -537,7 +537,7 @@ func annotationCreatorWorkerFunc(
 				),
 				CreatedAt: timestamppb.Now(),
 				UpdatedAt: timestamppb.Now(),
-				Attributes: &feature_annotation.FeatureAnnotationAttributes{
+				Attributes: &fanno.FeatureAnnotationAttributes{
 					Name:   geneWithPubmed.Name,
 					Pubmed: geneWithPubmed.Pubmeds,
 				},
