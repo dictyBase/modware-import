@@ -25,7 +25,9 @@ type Gene struct {
 
 type GeneWithPubmed struct {
 	Gene
-	Pubmeds []string
+	Pubmeds    []string
+	Skip       bool
+	SkipReason string
 }
 
 type GrpcAnnotationResult struct {
@@ -105,8 +107,9 @@ func RunFeatureAnnotationLoader(cltx *cli.Context) error {
 		mainCancel: mainCancel,
 	})
 
-	pubmedFetchPool := setupPubmedFetchPool(config, mainCtx)
-	annotationCreatePool := setupAnnotationCreatePool(config, mainCtx)
+	client := registry.GetFeatureAnnotationAPIClient()
+	pubmedFetchPool := setupPubmedFetchPool(config, mainCtx, client)
+	annotationCreatePool := setupAnnotationCreatePool(config, mainCtx, client)
 
 	wg.Add(1)
 	go func() {
@@ -230,9 +233,10 @@ func queryActiveGenesForAnnotation(
 func setupPubmedFetchPool(
 	config FeatureAnnotationAppConfig,
 	mainCtx context.Context,
+	grpcClient fanno.FeatureAnnotationServiceClient,
 ) *concurrent.Pool[Gene, GeneWithPubmed] {
 	pool := concurrent.NewPool(
-		pubmedFetcherWorkerFunc(config),
+		pubmedFetcherWorkerFunc(config, grpcClient),
 		concurrent.WithWorkers[Gene, GeneWithPubmed](config.NumPubmedWorkers),
 		concurrent.WithContext[Gene, GeneWithPubmed](mainCtx),
 		concurrent.WithBufferSize[Gene, GeneWithPubmed](
@@ -246,11 +250,12 @@ func setupPubmedFetchPool(
 func setupAnnotationCreatePool(
 	config FeatureAnnotationAppConfig,
 	mainCtx context.Context,
+	grpcClient fanno.FeatureAnnotationServiceClient,
 ) *concurrent.Pool[GeneWithPubmed, GrpcAnnotationResult] {
 	pool := concurrent.NewPool(
 		annotationCreatorWorkerFunc(
 			config,
-			registry.GetFeatureAnnotationAPIClient(),
+			grpcClient,
 		),
 		concurrent.WithWorkers[GeneWithPubmed, GrpcAnnotationResult](
 			config.NumGrpcWorkers,
@@ -451,6 +456,7 @@ func reportAnnotationProgress(params *reportAnnotationProgressParams) {
 
 func pubmedFetcherWorkerFunc(
 	config FeatureAnnotationAppConfig,
+	grpcClient fanno.FeatureAnnotationServiceClient,
 ) concurrent.WorkerFunc[Gene, GeneWithPubmed] {
 	return func(
 		ctx context.Context,
@@ -458,8 +464,24 @@ func pubmedFetcherWorkerFunc(
 	) (GeneWithPubmed, error) {
 		gene := job.Payload
 		logger := config.Logger
-		dbh := registry.GetArangodbConnection()
 
+		exists, err := checkAnnotationExists(ctx, grpcClient, gene.GeneID)
+		if err != nil {
+			return GeneWithPubmed{}, fmt.Errorf(
+				"error checking for feature annotation for gene %s: %w",
+				gene.GeneID,
+				err,
+			)
+		}
+		if exists {
+			return GeneWithPubmed{
+				Gene:       gene,
+				Skip:       true,
+				SkipReason: "annotation already exists",
+			}, nil
+		}
+
+		dbh := registry.GetArangodbConnection()
 		pubmedResult, err := dbh.SearchRows(
 			ListPubmedsByFeature,
 			map[string]any{
@@ -475,14 +497,6 @@ func pubmedFetcherWorkerFunc(
 		}
 		defer pubmedResult.Close()
 
-		if pubmedResult.IsEmpty() {
-			logger.Infof(
-				"No PubMed references found for feature %d",
-				gene.FeatureID,
-			)
-			return GeneWithPubmed{Gene: gene, Pubmeds: []string{}}, nil
-		}
-
 		var pubmedIDs []string
 		for pubmedResult.Scan() {
 			var pubmed string
@@ -495,6 +509,19 @@ func pubmedFetcherWorkerFunc(
 			}
 			pubmedIDs = append(pubmedIDs, pubmed)
 		}
+
+		if len(pubmedIDs) == 0 {
+			logger.Infof(
+				"No PubMed references found for feature %d",
+				gene.FeatureID,
+			)
+			return GeneWithPubmed{
+				Gene:       gene,
+				Skip:       true,
+				SkipReason: "no pubmed entries found",
+			}, nil
+		}
+
 		logger.Infof("Feature %d has PubMed reference: %v",
 			gene.FeatureID,
 			pubmedIDs,
@@ -518,41 +545,14 @@ func annotationCreatorWorkerFunc(
 			Success: false,
 		}
 
-		if len(geneWithPubmed.Pubmeds) == 0 {
+		if geneWithPubmed.Skip {
 			logger.Infof(
-				"Skipping feature %s with no PubMed IDs",
+				"Skipping gene %s: %s",
 				geneWithPubmed.GeneID,
+				geneWithPubmed.SkipReason,
 			)
 			result.Success = true
-			result.Message = "Skipped, no pubmed IDs"
-			return result, nil
-		}
-
-		exists, err := checkAnnotationExists(
-			ctx,
-			grpcClient,
-			geneWithPubmed.GeneID,
-		)
-		if err != nil {
-			result.Error = err
-			result.Message = fmt.Sprintf(
-				"failed to check for feature annotation for gene %s: %v",
-				geneWithPubmed.GeneID,
-				err,
-			)
-			return result, err
-		}
-
-		if exists {
-			logger.Infof(
-				"Annotation for gene %s already exists, skipping creation.",
-				geneWithPubmed.GeneID,
-			)
-			result.Success = true
-			result.Message = fmt.Sprintf(
-				"Skipped, annotation for gene %s already exists",
-				geneWithPubmed.GeneID,
-			)
+			result.Message = fmt.Sprintf("Skipped, %s", geneWithPubmed.SkipReason)
 			return result, nil
 		}
 
