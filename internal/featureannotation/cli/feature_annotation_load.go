@@ -33,6 +33,7 @@ type GeneWithPubmed struct {
 type GrpcAnnotationResult struct {
 	GeneID  string
 	Success bool
+	Skipped bool
 	Message string
 	Error   error
 }
@@ -253,10 +254,7 @@ func setupAnnotationCreatePool(
 	grpcClient fanno.FeatureAnnotationServiceClient,
 ) *concurrent.Pool[GeneWithPubmed, GrpcAnnotationResult] {
 	pool := concurrent.NewPool(
-		annotationCreatorWorkerFunc(
-			config,
-			grpcClient,
-		),
+		annotationCreatorWorkerFunc(grpcClient),
 		concurrent.WithWorkers[GeneWithPubmed, GrpcAnnotationResult](
 			config.NumGrpcWorkers,
 		),
@@ -385,11 +383,19 @@ func handleAnnotationGrpcResults(params *handleAnnotationGrpcResultsParams) {
 			} else {
 				params.metrics.SuccessCount++
 				params.metrics.mu.Unlock()
-				params.logger.Infof(
-					"Successfully created annotation for gene %s: %s",
-					result.Output.GeneID,
-					result.Output.Message,
-				)
+				if result.Output.Skipped {
+					params.logger.Infof(
+						"Annotation processing for gene %s: %s",
+						result.Output.GeneID,
+						result.Output.Message,
+					)
+				} else {
+					params.logger.Infof(
+						"Successfully created annotation for gene %s: %s",
+						result.Output.GeneID,
+						result.Output.Message,
+					)
+				}
 			}
 		case err, ok := <-params.grpcPool.Errors():
 			if !ok {
@@ -511,10 +517,6 @@ func pubmedFetcherWorkerFunc(
 		}
 
 		if len(pubmedIDs) == 0 {
-			logger.Infof(
-				"No PubMed references found for feature %d",
-				gene.FeatureID,
-			)
 			return GeneWithPubmed{
 				Gene:       gene,
 				Skip:       true,
@@ -522,7 +524,7 @@ func pubmedFetcherWorkerFunc(
 			}, nil
 		}
 
-		logger.Infof("Feature %d has PubMed reference: %v",
+		logger.Debugf("Feature %d has PubMed reference: %v",
 			gene.FeatureID,
 			pubmedIDs,
 		)
@@ -531,7 +533,6 @@ func pubmedFetcherWorkerFunc(
 }
 
 func annotationCreatorWorkerFunc(
-	config FeatureAnnotationAppConfig,
 	grpcClient fanno.FeatureAnnotationServiceClient,
 ) concurrent.WorkerFunc[GeneWithPubmed, GrpcAnnotationResult] {
 	return func(
@@ -539,20 +540,18 @@ func annotationCreatorWorkerFunc(
 		job concurrent.Job[GeneWithPubmed],
 	) (GrpcAnnotationResult, error) {
 		geneWithPubmed := job.Payload
-		logger := config.Logger
 		result := GrpcAnnotationResult{
 			GeneID:  geneWithPubmed.GeneID,
 			Success: false,
 		}
 
 		if geneWithPubmed.Skip {
-			logger.Infof(
-				"Skipping gene %s: %s",
-				geneWithPubmed.GeneID,
+			result.Success = true
+			result.Skipped = true
+			result.Message = fmt.Sprintf(
+				"Skipped, %s",
 				geneWithPubmed.SkipReason,
 			)
-			result.Success = true
-			result.Message = fmt.Sprintf("Skipped, %s", geneWithPubmed.SkipReason)
 			return result, nil
 		}
 
