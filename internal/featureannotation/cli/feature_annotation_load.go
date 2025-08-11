@@ -11,6 +11,8 @@ import (
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -526,37 +528,62 @@ func annotationCreatorWorkerFunc(
 			return result, nil
 		}
 
-		res, err := grpcClient.CreateFeatureAnnotation(
+		_, err := grpcClient.GetFeatureAnnotation(
 			ctx,
-			&fanno.NewFeatureAnnotation{
-				Type:       "gene",
-				Id:         geneWithPubmed.GeneID,
-				IsObsolete: false,
-				CreatedBy: resolveCreatorFromCreatedBy(
-					geneWithPubmed.CreatedBy,
-				),
-				CreatedAt: timestamppb.Now(),
-				UpdatedAt: timestamppb.Now(),
-				Attributes: &fanno.FeatureAnnotationAttributes{
-					Name:   geneWithPubmed.Name,
-					Pubmed: geneWithPubmed.Pubmeds,
-				},
-			})
+			&fanno.FeatureAnnotationId{Id: geneWithPubmed.GeneID},
+		)
 		if err != nil {
-			result.Error = err
-			result.Message = fmt.Sprintf(
-				"failed to create feature annotation for gene %s: %v",
-				geneWithPubmed.GeneID,
-				err,
-			)
-			return result, err
-		}
+			if status.Code(err) != codes.NotFound {
+				result.Error = err
+				result.Message = fmt.Sprintf(
+					"failed to check for feature annotation for gene %s: %v",
+					geneWithPubmed.GeneID,
+					err,
+				)
+				return result, err
+			}
+			res, err := grpcClient.CreateFeatureAnnotation(
+				ctx,
+				&fanno.NewFeatureAnnotation{
+					Type:       "gene",
+					Id:         geneWithPubmed.GeneID,
+					IsObsolete: false,
+					CreatedBy: resolveCreatorFromCreatedBy(
+						geneWithPubmed.CreatedBy,
+					),
+					CreatedAt: timestamppb.Now(),
+					UpdatedAt: timestamppb.Now(),
+					Attributes: &fanno.FeatureAnnotationAttributes{
+						Name:   geneWithPubmed.Name,
+						Pubmed: geneWithPubmed.Pubmeds,
+					},
+				})
+			if err != nil {
+				result.Error = err
+				result.Message = fmt.Sprintf(
+					"failed to create feature annotation for gene %s: %v",
+					geneWithPubmed.GeneID,
+					err,
+				)
+				return result, err
+			}
 
+			result.Success = true
+			result.Message = fmt.Sprintf(
+				"Created new feature annotation record %s for feature name %s",
+				res.Attributes.Name,
+				res.Id,
+			)
+			return result, nil
+		}
+		logger.Infof(
+			"Annotation for gene %s already exists, skipping creation.",
+			geneWithPubmed.GeneID,
+		)
 		result.Success = true
 		result.Message = fmt.Sprintf(
-			"Created new feature annotation record %s for feature name %s",
-			res.Attributes.Name,
-			res.Id,
+			"Skipped, annotation for gene %s already exists",
+			geneWithPubmed.GeneID,
 		)
 		return result, nil
 	}
