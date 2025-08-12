@@ -151,9 +151,10 @@ func RunFeatureAnnotationLoader(cltx *cli.Context) error {
 	go func() {
 		defer wg.Done()
 		reportAnnotationProgress(&reportAnnotationProgressParams{
-			ctx:     mainCtx,
-			metrics: config.Metrics,
-			logger:  logger,
+			ctx:        mainCtx,
+			metrics:    config.Metrics,
+			logger:     logger,
+			mainCancel: mainCancel,
 		})
 	}()
 
@@ -411,13 +412,14 @@ func handleAnnotationGrpcResults(params *handleAnnotationGrpcResultsParams) {
 }
 
 type reportAnnotationProgressParams struct {
-	ctx     context.Context
-	metrics *FeatureAnnotationMetrics
-	logger  *logrus.Entry
+	ctx        context.Context
+	metrics    *FeatureAnnotationMetrics
+	logger     *logrus.Entry
+	mainCancel context.CancelFunc
 }
 
 func reportAnnotationProgress(params *reportAnnotationProgressParams) {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
 	logCurrentMetrics := func(message string) {
@@ -449,11 +451,11 @@ func reportAnnotationProgress(params *reportAnnotationProgressParams) {
 			return
 		case <-ticker.C:
 			logCurrentMetrics("Annotation processing progress")
-
 			if params.metrics.IsComplete() {
 				params.logger.Info(
 					"All annotation updates appear completed. Stopping progress reporter.",
 				)
+				params.mainCancel()
 				return
 			}
 		}
