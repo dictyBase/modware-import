@@ -40,7 +40,7 @@ require (
 	google.golang.org/protobuf v1.36.7
 	k8s.io/api v0.33.4
 	k8s.io/apimachinery v0.33.4
-	k8s.io/client-go v0.33.3
+	k8s.io/client-go v0.33.4
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 )
