@@ -449,7 +449,6 @@ func grpcSynonymWorkerFunc(
 			return result, err
 		}
 
-		// Merge synonyms
 		existingSynonyms := mapset.NewSet(
 			featAnno.Attributes.Synonyms...)
 		newSynonyms := collection.Filter(
@@ -472,7 +471,7 @@ func grpcSynonymWorkerFunc(
 			&fanno.FeatureAnnotationUpdate{
 				Id:        featAnno.Id,
 				UpdatedBy: DefaultUserName,
-				Attributes: &fanno.FeatureAnnotationAttributes{
+				UpdateAttributes: &fanno.FeatureAnnotationUpdateAttributes{
 					Synonyms: newSynonyms,
 				},
 			},
