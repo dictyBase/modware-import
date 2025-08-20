@@ -129,12 +129,27 @@ func (s *FeatureAnnotationServer) UpdateFeatureAnnotation(
 		return nil, err
 	}
 
+	// Determine which attributes to use
+	// When both are provided, update_attributes takes precedence (as per proto spec)
+	var attributes *feature.FeatureAnnotationAttributes
+	switch {
+	case req.UpdateAttributes != nil:
+		// Handle partial updates with update_attributes
+		attributes = applyPartialUpdate(existing.Attributes, req.UpdateAttributes)
+	case req.Attributes != nil: //nolint:staticcheck // Intentional use of deprecated field for backward compatibility
+		// Fall back to deprecated attributes field for backward compatibility
+		attributes = req.Attributes //nolint:staticcheck // Intentional use of deprecated field for backward compatibility
+	default:
+		// Keep existing attributes if neither is provided
+		attributes = existing.Attributes
+	}
+
 	// Create updated annotation
 	now := timestamppb.New(time.Now())
 	updated := &feature.FeatureAnnotation{
 		Type:       req.Type,
 		Id:         req.Id,
-		Attributes: req.Attributes,
+		Attributes: attributes,
 		CreatedBy:  existing.CreatedBy, // Preserve original creator
 		UpdatedBy:  req.UpdatedBy,
 		CreatedAt:  existing.CreatedAt, // Preserve creation time
@@ -370,4 +385,43 @@ func newTagPropertyConverter(
 		tag.UpdatedAt = tagCreate.CreatedAt
 	}
 	return tag
+}
+
+// applyPartialUpdate merges update attributes with existing attributes
+// Only non-empty fields from updateAttrs are applied to existing attributes
+func applyPartialUpdate(
+	existing *feature.FeatureAnnotationAttributes,
+	updateAttrs *feature.FeatureAnnotationUpdateAttributes,
+) *feature.FeatureAnnotationAttributes {
+	// Start with a copy of existing attributes
+	result := &feature.FeatureAnnotationAttributes{
+		Name:         existing.Name,
+		Synonyms:     existing.Synonyms,
+		Publications: existing.Publications,
+		Pubmed:       existing.Pubmed,
+		Dblinks:      existing.Dblinks,
+		Properties:   existing.Properties,
+	}
+
+	// Apply partial updates - only update fields that are provided
+	if updateAttrs.Name != "" {
+		result.Name = updateAttrs.Name
+	}
+	if len(updateAttrs.Synonyms) > 0 {
+		result.Synonyms = updateAttrs.Synonyms
+	}
+	if len(updateAttrs.Publications) > 0 {
+		result.Publications = updateAttrs.Publications
+	}
+	if len(updateAttrs.Pubmed) > 0 {
+		result.Pubmed = updateAttrs.Pubmed
+	}
+	if len(updateAttrs.Dblinks) > 0 {
+		result.Dblinks = updateAttrs.Dblinks
+	}
+	if len(updateAttrs.Properties) > 0 {
+		result.Properties = updateAttrs.Properties
+	}
+
+	return result
 }
