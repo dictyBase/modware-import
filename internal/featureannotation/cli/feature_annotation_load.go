@@ -519,17 +519,17 @@ func pubmedFetcherWorkerFunc(
 		}
 
 		if len(pubmedIDs) == 0 {
-			return GeneWithPubmed{
-				Gene:       gene,
-				Skip:       true,
-				SkipReason: "no pubmed entries found",
-			}, nil
+			logger.Infof(
+				"no pubmed entries found for feature %d, gene %s, proceeding to load",
+				gene.FeatureID,
+				gene.GeneID,
+			)
+		} else {
+			logger.Debugf("Feature %d has PubMed reference: %v",
+				gene.FeatureID,
+				pubmedIDs,
+			)
 		}
-
-		logger.Debugf("Feature %d has PubMed reference: %v",
-			gene.FeatureID,
-			pubmedIDs,
-		)
 		return GeneWithPubmed{Gene: gene, Pubmeds: pubmedIDs}, nil
 	}
 }
@@ -604,6 +604,12 @@ func createNewAnnotation(
 	grpcClient fanno.FeatureAnnotationServiceClient,
 	geneWithPubmed GeneWithPubmed,
 ) (*fanno.FeatureAnnotation, error) {
+	attrs := &fanno.FeatureAnnotationAttributes{
+		Name: geneWithPubmed.Name,
+	}
+	if len(geneWithPubmed.Pubmeds) > 0 {
+		attrs.Pubmed = geneWithPubmed.Pubmeds
+	}
 	return grpcClient.CreateFeatureAnnotation(
 		ctx,
 		&fanno.NewFeatureAnnotation{
@@ -615,10 +621,7 @@ func createNewAnnotation(
 			CreatedBy: resolveCreatorFromCreatedBy(
 				geneWithPubmed.CreatedBy,
 			),
-			Attributes: &fanno.FeatureAnnotationAttributes{
-				Name:   geneWithPubmed.Name,
-				Pubmed: geneWithPubmed.Pubmeds,
-			},
+			Attributes: attrs,
 		},
 	)
 }
