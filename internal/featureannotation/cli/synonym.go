@@ -46,6 +46,13 @@ type SynonymMetrics struct {
 	JobsCompletedFromGrpcPool int64
 }
 
+// gRPCJobsCompleted returns the number of jobs completed by the gRPC pool.
+func (m *SynonymMetrics) gRPCJobsCompleted() int64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.JobsCompletedFromGrpcPool
+}
+
 // IsComplete checks if all processing is finished.
 func (m *SynonymMetrics) IsComplete() bool {
 	m.mu.RLock()
@@ -388,7 +395,7 @@ func reportSynonymProgress(params *reportSynonymProgressParams) {
 			"processing_rate": fmt.Sprintf("%.2f genes/sec", rate),
 			"elapsed_time":    elapsed.String(),
 			"grpc_submitted":  params.metrics.JobsSubmittedToGrpcPool,
-			"grpc_completed":  params.metrics.JobsCompletedFromGrpcPool,
+			"grpc_completed":  params.metrics.gRPCJobsCompleted(),
 		}).Info(message)
 	}
 
@@ -399,13 +406,14 @@ func reportSynonymProgress(params *reportSynonymProgressParams) {
 			return
 		case <-ticker.C:
 			logCurrentMetrics("Synonym processing progress")
-
+		default:
 			if params.metrics.IsComplete() {
 				params.logger.Info(
 					"All synonym updates appear completed. Stopping progress reporter.",
 				)
 				return
 			}
+			time.Sleep(5 * time.Second)
 		}
 	}
 }
