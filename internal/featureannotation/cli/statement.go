@@ -63,6 +63,12 @@ const (
 	LET gene_type_id = FIRST(
     		FOR t IN cvterm FILTER t.name == "gene" LIMIT 1 RETURN t.cvterm_id
 	)
+	LET feat_org_id = FIRST(
+    		FOR org IN organism 
+        	FILTER org.common_name == "dicty" 
+        	LIMIT 1 
+        	RETURN org.organism_id
+	)
 	LET synonym_type_id = FIRST(
 		FOR cv IN cv
 			FOR t IN cvterm 
@@ -76,24 +82,21 @@ const (
 	// Step 2: Start from the features that are genes. This is our primary loop.
 	FOR feat IN feature
     		FOR dbx IN dbxref
-        // Use a subquery to efficiently gather all synonyms for the current feature.
-        // With the indexes, this subquery is extremely fast.
-        LET synonyms = (
-            FOR fsyn IN feature_synonym
-                FOR syn IN synonym_
-                    FILTER fsyn.feature_id == feat.feature_id 
-                    FILTER syn.synonym_id == fsyn.synonym_id 
-                    FILTER syn.type_id == synonym_type_id
-                    RETURN syn.name
-        )
-
 		FILTER feat.is_obsolete == 0
 		FILTER feat.is_deleted == 0
 		FILTER feat.type_id == gene_type_id
-
-	//Join to the dbxref to get the gene's accession ID.
-      	// This join is done once per gene.
+        	FILTER feat.organism_id == feat_org_id
         	FILTER feat.dbxref_id == dbx.dbxref_id
+        // Use a subquery to efficiently gather all synonyms for the current feature.
+        // With the indexes, this subquery is extremely fast.
+		LET synonyms = (
+		    FOR fsyn IN feature_synonym
+			FOR syn IN synonym_
+			    FILTER fsyn.feature_id == feat.feature_id 
+			    FILTER syn.synonym_id == fsyn.synonym_id 
+			    FILTER syn.type_id == synonym_type_id
+			    RETURN syn.name
+		)
       	// Only genes is synonyms
         	FILTER LENGTH(synonyms) > 0
         // Return the final composed document.
