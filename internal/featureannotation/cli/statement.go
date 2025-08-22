@@ -24,20 +24,31 @@ const (
 	`
 
 	ListActiveGenesQ = `
-	FOR cvt IN cvterm 
-		FOR feat IN feature 
-			FOR dbx IN dbxref
-				FILTER cvt.cvterm_id == feat.type_id
-				FILTER feat.dbxref_id == dbx.dbxref_id
-				FILTER cvt.name == 'gene'
-				FILTER feat.is_obsolete == 0
-				FILTER feat.is_deleted == 0
-				RETURN {
-					name: feat.uniquename,
-					gene_id: dbx.accession,
-					feature_id: feat.feature_id,
-					created_by: feat.created_by
-				}
+	LET gene_type_id = FIRST(
+    		FOR t IN cvterm 
+		FILTER t.name == "gene" 
+		LIMIT 1 
+		RETURN t.cvterm_id
+	)
+
+	LET feat_org_id = FIRST(
+    		FOR org IN organism 
+        	FILTER org.common_name == "dicty" 
+        	LIMIT 1 
+        	RETURN org.organism_id
+	)
+
+	FOR feat IN feature
+    		FOR dbx IN dbxref
+        		FILTER feat.type_id == gene_type_id
+        		FILTER feat.dbxref_id == dbx.dbxref_id
+        		FILTER feat.organism_id == feat_org_id
+			RETURN {
+				name: feat.uniquename,
+				gene_id: dbx.accession,
+				feature_id: feat.feature_id,
+				created_by: feat.created_by
+			}
 `
 	ListPubmedsByFeature = `
 		FOR fpub IN feature_pub
