@@ -1,5 +1,15 @@
 ### Feature Annotation CLI
-A command-line application for managing feature annotations.
+A command-line application for managing feature annotations with support for loading data from various sources and updating gene information.
+
+## Table of Contents
+- [load-feature-annotation](#load-feature-annotation) - Load feature annotations from ArangoDB to gRPC service
+- [load-csv-to-arangodb](#load-csv-to-arangodb) - Update ArangoDB collection from CSV file
+- [gene-updater](#gene-updater) - Update gene annotations by stripping HTML and using gRPC
+- [gene-product-updater](#gene-product-updater) - Update gene products from legacy database
+- [load-gene-product-from-csv](#load-gene-product-from-csv) - Load gene products from CSV files
+- [load-synonyms](#load-synonyms) - Load synonyms from ArangoDB to gRPC service
+
+---
 
 #### `load-feature-annotation`
 This subcommand loads feature annotations from an ArangoDB instance into the feature annotation service via gRPC.
@@ -20,6 +30,8 @@ featureannotation load-feature-annotation [command options]
 | `--is-secure` | Use TLS for ArangoDB connection | `ARANGODB_IS_SECURE` | `false` | No |
 | `--feature-annotation-grpc-host` | Feature annotation gRPC host | `ANNO_FEAT_API_SERVICE_HOST` | `anno-feat-api` | No |
 | `--feature-annotation-grpc-port` | Feature annotation gRPC port | `ANNO_FEAT_API_SERVICE_PORT` | `9250` | No |
+| `--pubmed-workers` | Number of pubmed fetcher workers | `PUBMED_WORKERS` | `4` | No |
+| `--grpc-workers` | Number of gRPC create workers | `GRPC_WORKERS` | `8` | No |
 
 ---
 
@@ -95,3 +107,46 @@ featureannotation gene-product-updater [command options]
 | `--is-secure` | Use TLS for ArangoDB connection | `ARANGODB_IS_SECURE` | `false` | No |
 | `--feature-annotation-grpc-host` | Feature annotation gRPC host | `ANNO_FEAT_API_SERVICE_HOST` | `anno-feat-api` | No |
 | `--feature-annotation-grpc-port` | Feature annotation gRPC port | `ANNO_FEAT_API_SERVICE_PORT` | `9250` | No |
+
+---
+
+#### `load-gene-product-from-csv`
+This subcommand loads gene products from CSV files into the feature annotation service.
+
+**Usage:**
+```bash
+featureannotation load-gene-product-from-csv [command options]
+```
+
+**Options:**
+| Flag | Description | Environment Variable | Default | Required |
+|---|---|---|---|---|
+| `--input`, `-i` | One or more input CSV files with gene products | | | Yes |
+| `--workers` | Number of concurrent workers for loading | | `4` | No |
+| `--batch-size` | Batch size for loading | | `100` | No |
+| `--user` | Email of the user running the load | | | Yes |
+| `--feature-annotation-grpc-host` | Feature annotation gRPC host | `ANNO_FEAT_API_SERVICE_HOST` | `anno-feat-api` | No |
+| `--feature-annotation-grpc-port` | Feature annotation gRPC port | `ANNO_FEAT_API_SERVICE_PORT` | `9250` | No |
+
+---
+
+#### `load-synonyms`
+This subcommand loads synonyms from ArangoDB to the feature annotation service.
+
+**Usage:**
+```bash
+featureannotation load-synonyms [command options]
+```
+
+**Options:**
+| Flag | Description | Environment Variable | Default | Required |
+|---|---|---|---|---|
+| `--arangodb-user` | ArangoDB user name | `ARANGODB_USER` | | Yes |
+| `--arangodb-pass` | ArangoDB password | `ARANGODB_PASS` | | Yes |
+| `--arangodb-database` | ArangoDB database name | `ARANGODB_DATABASE` | | Yes |
+| `--arangodb-host` | ArangoDB host | `ARANGODB_SERVICE_HOST` | `arangodb` | No |
+| `--arangodb-port` | ArangoDB port | `ARANGODB_SERVICE_PORT` | `8529` | No |
+| `--is-secure` | Use TLS for ArangoDB connection | `ARANGODB_IS_SECURE` | `false` | No |
+| `--feature-annotation-grpc-host` | Feature annotation gRPC host | `ANNO_FEAT_API_SERVICE_HOST` | `anno-feat-api` | No |
+| `--feature-annotation-grpc-port` | Feature annotation gRPC port | `ANNO_FEAT_API_SERVICE_PORT` | `9250` | No |
+| `--grpc-workers` | Number of gRPC update workers | `GRPC_WORKERS` | `4` | No |
