@@ -1,6 +1,38 @@
 ### Feature Annotation CLI
 A command-line application for managing feature annotations with support for loading data from various sources and updating gene information.
 
+## Execution Sequence
+
+The feature annotation subcommands should be executed in the following sequence, with all commands depending on the initial `load-feature-annotation`:
+
+```mermaid
+flowchart TD
+    A["1. load-feature-annotation<br/>(Required foundation)"] --> B["1a. load-csv-to-arangodb<br/>(Optional: Update ArangoDB from CSV)"]
+    A --> C["2. gene-updater<br/>(Update gene annotations)"]
+    A --> D["3. gene-product-updater<br/>(Update gene products from legacy DB)"]
+    A --> E["4. load-gene-product-from-csv<br/>(Load gene products from CSV)"]
+    A --> F["5. load-synonyms<br/>(Load synonyms to gRPC service)"]
+    
+    B -.-> C
+    B -.-> D
+    B -.-> E
+    B -.-> F
+    
+    style A fill:#e1f5fe,stroke:#01579b,stroke-width:3px
+    style B fill:#fff3e0,stroke:#e65100,stroke-width:2px,stroke-dasharray: 5 5
+    style C fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style D fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    style E fill:#fff8e1,stroke:#e65100,stroke-width:2px
+    style F fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+```
+
+**Legend:**
+- **Solid arrows**: Required dependencies
+- **Dashed arrows**: Optional sequence (if step 1a is executed)
+- **Blue**: Foundation command (must run first)
+- **Orange**: Data loading/updating commands
+- **Purple/Green/Pink**: Processing and enhancement commands
+
 ## Table of Contents
 - [load-feature-annotation](#load-feature-annotation) - Load feature annotations from ArangoDB to gRPC service
 - [load-csv-to-arangodb](#load-csv-to-arangodb) - Update ArangoDB collection from CSV file
