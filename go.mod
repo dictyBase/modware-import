@@ -57,7 +57,7 @@ require (
 	github.com/jellydator/ttlcache/v3 v3.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.12.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/xuri/excelize/v2 v2.9.1
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
