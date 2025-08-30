@@ -11,8 +11,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4 h1:vdT7QwBhJJEVNFMBNhRSFDRCB6O16T28VhvqRgqFyn8=
 github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4/go.mod h1:SvXOG8ElV28oAiG9zv91SDe5+9PfIr7PPccpr8YyXNs=
-github.com/IBM/fp-go v1.0.153 h1:KkzjWvInCfW1queBSpb1DV2/ZkaTIKVqV3dO8WfOvas=
-github.com/IBM/fp-go v1.0.153/go.mod h1:nP/DzXfi+FphWiZw4Iivp+ZT2lCWuP/H1hkRPNmC+OM=
+github.com/IBM/fp-go v1.0.155 h1:0Y5YmLdGLr6K32hDia6lW2R4HWjVchB7K6b8M0qQaoU=
+github.com/IBM/fp-go v1.0.155/go.mod h1:xQx8D6UU4EDtyYmR99rVYVyLpC4rNYXLl/l5ye8KfrE=
 github.com/Microsoft/go-winio v0.5.2/go.mod h1:WpS1mjBmmwHBEWmogvA2mj8546UReBk4v8QkMxJ6pZY=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
@@ -71,8 +71,6 @@ github.com/dictyBase/aphgrpc v1.4.2 h1:jkNyIpUBATNVNTM99TfAHln8UEpzyvNNNuM2+UY6t
 github.com/dictyBase/aphgrpc v1.4.2/go.mod h1:rzi2U95QntAuS6XpqespgZmQ8Ujo2Sq2R5FyhW5adA8=
 github.com/dictyBase/arangomanager v0.8.0 h1:wXWmq7QYBn37eGs0nELPxqccMbTvx9G99k/crHwfDAw=
 github.com/dictyBase/arangomanager v0.8.0/go.mod h1:Fm3AuYBeMccsYcu8M6iq2a96XlPIe4Y55x95TAWmGs4=
-github.com/dictyBase/go-genproto v0.0.0-20250714184734-732389f8acb6 h1:w4uL7TGaFkx+auQAOVB//u6fNZ/I50mZE+28VcbR9KI=
-github.com/dictyBase/go-genproto v0.0.0-20250714184734-732389f8acb6/go.mod h1:rlUPhBs4duDUE73MswuLGW9UzbkcTWqQsbpsp/pGqTg=
 github.com/dictyBase/go-genproto v0.0.0-20250812211349-c01bdbe25058 h1:+tJZbSiQi6XfhbRSHDFT9uue0x37SW4hOh7ypD0OQaM=
 github.com/dictyBase/go-genproto v0.0.0-20250812211349-c01bdbe25058/go.mod h1:rlUPhBs4duDUE73MswuLGW9UzbkcTWqQsbpsp/pGqTg=
 github.com/dictyBase/go-obograph v1.6.0 h1:otuiEadRCJ25o6X/5tWhDjiiAbK0R8LBLQpBxVREotc=
@@ -340,8 +338,8 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
-github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
+github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8=
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
 github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca h1:Ld/zXl5t4+D69SiV4JoN7kkfvJdOWlPpfxrzxpLMoUk=
