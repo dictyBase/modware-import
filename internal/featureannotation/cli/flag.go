@@ -6,6 +6,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// GeneProductFromCsvFlag returns all flags required for loading gene products from CSV files.
+// It combines gene product specific flags with gRPC connection flags.
 func GeneProductFromCsvFlag() []cli.Flag {
 	return slices.Concat(
 		LoadGeneProductFlag(),
@@ -13,33 +15,75 @@ func GeneProductFromCsvFlag() []cli.Flag {
 	)
 }
 
+// GeneDescriptionFromCsvFlag returns all flags required for loading gene descriptions from CSV files.
+// It combines gene description specific flags with gRPC connection flags.
+func GeneDescriptionFromCsvFlag() []cli.Flag {
+	return slices.Concat(
+		LoadGeneDescriptionFlag(),
+		featureAnnotationGrpcFlags(),
+	)
+}
+
+// LoadGeneProductFlag returns flags specific to gene product loading operations.
+// Input validation is performed during command execution to ensure files exist
+// and user email is properly formatted.
 func LoadGeneProductFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringSliceFlag{
 			Name:     "input",
 			Aliases:  []string{"i"},
-			Usage:    "one or more input CSV files with gene products",
+			Usage:    "one or more input CSV files with gene products (must exist and be readable)",
 			Required: true,
 		},
 		&cli.IntFlag{
 			Name:  "workers",
-			Usage: "number of concurrent workers for loading",
+			Usage: "number of concurrent workers for loading (1-50)",
 			Value: 4,
 		},
 		&cli.IntFlag{
 			Name:  "batch-size",
-			Usage: "batch size for loading",
+			Usage: "batch size for loading (1-1000)",
 			Value: 100,
 		},
 		&cli.StringFlag{
 			Name:     "user",
-			Usage:    "email of the user running the load",
+			Usage:    "email address of the user running the load",
+			Required: true,
+		},
+	}
+}
+
+// LoadGeneDescriptionFlag returns flags specific to gene description loading operations.
+// Input validation is performed during command execution to ensure the file exists
+// and user email is properly formatted.
+func LoadGeneDescriptionFlag() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:     "input",
+			Aliases:  []string{"i"},
+			Usage:    "input CSV file with gene descriptions (must exist and be readable)",
+			Required: true,
+		},
+		&cli.IntFlag{
+			Name:  "workers",
+			Usage: "number of concurrent workers for loading (1-50)",
+			Value: 4,
+		},
+		&cli.IntFlag{
+			Name:  "batch-size",
+			Usage: "batch size for loading (1-1000)",
+			Value: 100,
+		},
+		&cli.StringFlag{
+			Name:     "user",
+			Usage:    "email address of the user running the load",
 			Required: true,
 		},
 	}
 }
 
 // arangoDBConnectionFlags returns a common set of ArangoDB connection flags.
+// These flags are used across multiple commands that need to connect to ArangoDB.
 func arangoDBConnectionFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
@@ -82,6 +126,7 @@ func arangoDBConnectionFlags() []cli.Flag {
 }
 
 // featureAnnotationGrpcFlags returns gRPC flags for the feature annotation service.
+// These flags configure the connection to the feature annotation gRPC API.
 func featureAnnotationGrpcFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
@@ -99,8 +144,8 @@ func featureAnnotationGrpcFlags() []cli.Flag {
 	}
 }
 
-// LoadFeatureAnnotationFlag returns all flags required for loading feature
-// annotations
+// LoadFeatureAnnotationFlag returns all flags required for loading feature annotations.
+// It combines ArangoDB connection flags, gRPC flags, and pubmed/grpc worker configuration.
 func LoadFeatureAnnotationFlag() []cli.Flag {
 	return slices.Concat(
 		arangoDBConnectionFlags(),
@@ -122,7 +167,8 @@ func LoadFeatureAnnotationFlag() []cli.Flag {
 	)
 }
 
-// LoadCSVToArangodbFlag returns all flags required for loading CSV data to ArangoDB
+// LoadCSVToArangodbFlag returns all flags required for loading CSV data to ArangoDB.
+// It combines ArangoDB connection flags with CSV processing specific flags.
 func LoadCSVToArangodbFlag() []cli.Flag {
 	csvFlags := []cli.Flag{
 		&cli.StringFlag{
