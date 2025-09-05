@@ -2,9 +2,9 @@ package client
 
 import (
 	"fmt"
-	"os" // Add this import
+	"os"
 
-	"github.com/arangodb/go-driver" // Add this import
+	"github.com/arangodb/go-driver"
 	"github.com/dictyBase/arangomanager"
 	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// CliSetup configures both ArangoDB and gRPC connections for feature annotation operations.
+// This is used by commands that need both database and API access.
 func CliSetup(cltx *cli.Context) error {
 	// Setup ArangoDB session
 	tls := cltx.Bool("is-secure")
@@ -28,7 +30,7 @@ func CliSetup(cltx *cli.Context) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("error connecting to arangodb: %s", err)
+		return fmt.Errorf("error connecting to arangodb: %w", err)
 	}
 	registry.SetArangoSession(session)
 	registry.SetArangodbConnection(db)
@@ -44,7 +46,7 @@ func CliSetup(cltx *cli.Context) error {
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"error connecting to feature annotation service: %s",
+			"error connecting to feature annotation service: %w",
 			err,
 		)
 	}
@@ -54,6 +56,8 @@ func CliSetup(cltx *cli.Context) error {
 	return nil
 }
 
+// setupArangoDBConnection establishes a connection to ArangoDB using CLI context parameters.
+// Returns the database connection and registers it with the global registry.
 func setupArangoDBConnection(
 	cltx *cli.Context,
 ) (*arangomanager.Database, error) {
@@ -75,6 +79,7 @@ func setupArangoDBConnection(
 	return database, nil
 }
 
+// verifyArangoDBCollection checks that the specified collection exists in the database.
 func verifyArangoDBCollection(
 	cltx *cli.Context,
 	database *arangomanager.Database,
@@ -90,6 +95,7 @@ func verifyArangoDBCollection(
 	return nil
 }
 
+// verifyAndRegisterCSVFile validates that the CSV file exists and registers its path.
 func verifyAndRegisterCSVFile(cltx *cli.Context) error {
 	csvFilePath := cltx.String("csv-file")
 	if _, err := os.Stat(csvFilePath); err != nil {
@@ -114,7 +120,10 @@ func CSVArangodbCliSetup(cltx *cli.Context) error {
 	return verifyAndRegisterCSVFile(cltx)
 }
 
-func GeneProductCsvCliSetup(c *cli.Context) error {
+// commonCsvCliSetup establishes a gRPC connection to the feature annotation service.
+// This is used by CSV-based loading commands that only need API access.
+// File validation is handled by the validation structs in the action functions.
+func commonCsvCliSetup(c *cli.Context) error {
 	conn, err := grpc.NewClient(
 		fmt.Sprintf(
 			"%s:%s",
@@ -125,7 +134,7 @@ func GeneProductCsvCliSetup(c *cli.Context) error {
 	)
 	if err != nil {
 		return fmt.Errorf(
-			"error connecting to feature annotation service: %s",
+			"error connecting to feature annotation service: %w",
 			err,
 		)
 	}
@@ -133,4 +142,16 @@ func GeneProductCsvCliSetup(c *cli.Context) error {
 		feature_annotation.NewFeatureAnnotationServiceClient(conn),
 	)
 	return nil
+}
+
+// GeneProductCsvCliSetup configures the environment for gene product CSV loading operations.
+// It establishes the gRPC connection. File validation is handled by validation structs.
+func GeneProductCsvCliSetup(c *cli.Context) error {
+	return commonCsvCliSetup(c)
+}
+
+// GeneDescriptionCsvCliSetup configures the environment for gene description CSV loading operations.
+// It establishes the gRPC connection. File validation is handled by validation structs.
+func GeneDescriptionCsvCliSetup(c *cli.Context) error {
+	return commonCsvCliSetup(c)
 }
