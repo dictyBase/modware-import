@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// CliSetup configures both ArangoDB and gRPC connections for feature annotation operations.
-// This is used by commands that need both database and API access.
+// CliSetup configures both ArangoDB and gRPC connections for feature annotation
+// operations. This is used by commands that need both database and API access.
 func CliSetup(cltx *cli.Context) error {
 	// Setup ArangoDB session
 	tls := cltx.Bool("is-secure")
@@ -120,9 +120,10 @@ func CSVArangodbCliSetup(cltx *cli.Context) error {
 	return verifyAndRegisterCSVFile(cltx)
 }
 
-// commonCsvCliSetup establishes a gRPC connection to the feature annotation service.
-// This is used by CSV-based loading commands that only need API access.
-// File validation is handled by the validation structs in the action functions.
+// commonCsvCliSetup establishes a gRPC connection to the feature annotation
+// service. This is used by CSV-based loading commands that only need API
+// access. File validation is handled by the validation structs in the action
+// functions.
 func commonCsvCliSetup(c *cli.Context) error {
 	conn, err := grpc.NewClient(
 		fmt.Sprintf(
@@ -144,14 +145,16 @@ func commonCsvCliSetup(c *cli.Context) error {
 	return nil
 }
 
-// GeneProductCsvCliSetup configures the environment for gene product CSV loading operations.
-// It establishes the gRPC connection. File validation is handled by validation structs.
+// GeneProductCsvCliSetup configures the environment for gene product CSV
+// loading operations. It establishes the gRPC connection. File validation is
+// handled by validation structs.
 func GeneProductCsvCliSetup(c *cli.Context) error {
 	return commonCsvCliSetup(c)
 }
 
-// GeneDescriptionCsvCliSetup configures the environment for gene description CSV loading operations.
-// It establishes the gRPC connection. File validation is handled by validation structs.
+// GeneDescriptionCsvCliSetup configures the environment for gene description
+// CSV loading operations. It establishes the gRPC connection. File validation
+// is handled by validation structs.
 func GeneDescriptionCsvCliSetup(c *cli.Context) error {
 	return commonCsvCliSetup(c)
 }
