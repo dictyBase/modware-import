@@ -93,5 +93,12 @@ func allCommands() []*cli.Command {
 			Before: faclient.CliSetup,
 			Action: facli.RunSynonymLoader,
 		},
+		{
+			Name:   "load-gene-description-from-csv",
+			Usage:  "Load gene descriptions from a CSV file",
+			Flags:  facli.GeneDescriptionFromCsvFlag(),
+			Before: faclient.GeneDescriptionCsvCliSetup,
+			Action: facli.LoadGeneDescription,
+		},
 	}
 }
