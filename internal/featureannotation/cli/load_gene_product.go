@@ -72,15 +72,12 @@ func LoadGeneProduct(c *cli.Context) error {
 		),
 	)
 
-	products, err := readAndDeduplicate(c.StringSlice("input"), logger)
-	if err != nil {
-		return err
-	}
-
 	processor.Start()
+
+	// Stream CSV records directly to processor in a separate goroutine
 	go func() {
 		defer processor.Close()
-		processor.AddBatch(products)
+		streamGeneProductsFromCSVFiles(c.StringSlice("input"), processor, logger)
 	}()
 
 	successCount, errorCount := processResults(processor, logger)
@@ -97,50 +94,155 @@ func LoadGeneProduct(c *cli.Context) error {
 	return nil
 }
 
-func readAndDeduplicate(
+// streamGeneProductsFromCSVFiles processes multiple CSV files and streams gene products directly to the processor.
+// It handles multiple input files sequentially, maintaining duplicate detection across all files.
+func streamGeneProductsFromCSVFiles(
 	files []string,
+	processor *concurrent.BatchProcessor[GeneProduct, *pb.FeatureAnnotation],
 	logger *logrus.Entry,
-) ([]GeneProduct, error) {
-	seen := make(map[string]bool)
-	var products []GeneProduct
-	for _, file := range files {
-		f, err := os.Open(file)
-		if err != nil {
-			return nil, fmt.Errorf("error opening input file %s: %w", file, err)
-		}
-		defer f.Close()
-		reader := csv.NewReader(f)
-		if _, err := reader.Read(); err != nil {
-			if err == io.EOF {
-				logger.Warnf("empty csv file %s", file)
-				continue
-			}
-			return nil, fmt.Errorf("error reading header from csv: %w", err)
-		}
-		for {
-			record, err := reader.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				logger.Errorf("error reading record from csv: %s", err)
-				continue
-			}
-			if len(record) < 2 {
-				logger.Warnf("skipping malformed record: %v", record)
-				continue
-			}
-			if seen[record[0]] {
-				continue
-			}
-			products = append(
-				products,
-				GeneProduct{GeneID: record[0], Product: record[1]},
-			)
-			seen[record[0]] = true
-		}
+) {
+	seen := make(map[string]struct{})
+	totalProcessed := 0
+
+	for fileIndex, file := range files {
+		fileProcessed := processGeneProductFile(file, fileIndex, len(files), seen, processor, logger, &totalProcessed)
+
+		logger.Infof("completed file %s: processed %d gene products", file, fileProcessed)
 	}
-	return products, nil
+
+	logger.Infof("completed streaming %d gene products from %d files", totalProcessed, len(files))
+}
+
+// processGeneProductFile handles processing of a single CSV file
+func processGeneProductFile(
+	file string,
+	fileIndex, totalFiles int,
+	seen map[string]struct{},
+	processor *concurrent.BatchProcessor[GeneProduct, *pb.FeatureAnnotation],
+	logger *logrus.Entry,
+	totalProcessed *int,
+) int {
+	logger.Infof("processing file %d of %d: %s", fileIndex+1, totalFiles, file)
+
+	reader, cleanup, err := openGeneProductCSV(file, logger)
+	if err != nil {
+		logger.Errorf("Error opening file %s: %v", file, err)
+		return 0
+	}
+	if reader == nil {
+		return 0 // Empty file
+	}
+	defer cleanup()
+
+	return processGeneProductRecords(reader, file, seen, processor, logger, totalProcessed)
+}
+
+// openGeneProductCSV opens and validates a CSV file for gene products
+func openGeneProductCSV(file string, logger *logrus.Entry) (*csv.Reader, func(), error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error opening input file %s: %w", file, err)
+	}
+
+	reader := csv.NewReader(f)
+	if _, err := reader.Read(); err != nil {
+		f.Close()
+		if err == io.EOF {
+			logger.Warnf("empty csv file %s", file)
+			return nil, nil, nil
+		}
+		return nil, nil, fmt.Errorf("error reading header from csv: %w", err)
+	}
+
+	cleanup := func() { f.Close() }
+	return reader, cleanup, nil
+}
+
+// processGeneProductRecords processes all records in a CSV file
+func processGeneProductRecords(
+	reader *csv.Reader,
+	filename string,
+	seen map[string]struct{},
+	processor *concurrent.BatchProcessor[GeneProduct, *pb.FeatureAnnotation],
+	logger *logrus.Entry,
+	totalProcessed *int,
+) int {
+	lineNumber := 2 // Start at 2 since we skipped header
+	fileProcessed := 0
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			logger.Errorf("error reading record from csv at line %d in file %s: %s", lineNumber, filename, err)
+			lineNumber++
+			continue
+		}
+
+		if processGeneProductRecord(record, filename, seen, processor, logger, lineNumber) {
+			fileProcessed++
+			*totalProcessed++
+			reportCSVProgress(*totalProcessed, logger)
+		}
+		lineNumber++
+	}
+
+	return fileProcessed
+}
+
+// processGeneProductRecord validates and processes a single gene product record
+func processGeneProductRecord(
+	record []string,
+	filename string,
+	seen map[string]struct{},
+	processor *concurrent.BatchProcessor[GeneProduct, *pb.FeatureAnnotation],
+	logger *logrus.Entry,
+	lineNumber int,
+) bool {
+	if !isValidGeneProductRecord(record, filename, logger, lineNumber) {
+		return false
+	}
+
+	if isDuplicateGeneProduct(record[0], filename, seen, logger, lineNumber) {
+		return false
+	}
+
+	product := GeneProduct{GeneID: record[0], Product: record[1]}
+	processor.Add(product)
+	seen[record[0]] = struct{}{}
+	return true
+}
+
+// isValidGeneProductRecord checks if the CSV record has the required format
+func isValidGeneProductRecord(record []string, filename string, logger *logrus.Entry, lineNumber int) bool {
+	if len(record) < 2 {
+		logger.Warnf("skipping malformed record at line %d in file %s: %v", lineNumber, filename, record)
+		return false
+	}
+	return true
+}
+
+// isDuplicateGeneProduct checks if the gene ID has already been processed
+func isDuplicateGeneProduct(
+	geneID, filename string,
+	seen map[string]struct{},
+	logger *logrus.Entry,
+	lineNumber int,
+) bool {
+	if _, exists := seen[geneID]; exists {
+		logger.Warnf("duplicate gene ID %s found at line %d in file %s, skipping", geneID, lineNumber, filename)
+		return true
+	}
+	return false
+}
+
+// reportCSVProgress logs progress every 1000 records
+func reportCSVProgress(totalProcessed int, logger *logrus.Entry) {
+	if totalProcessed%1000 == 0 {
+		logger.Infof("processed %d gene products across all files", totalProcessed)
+	}
 }
 
 func manageGeneProduct(
