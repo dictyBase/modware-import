@@ -107,7 +107,27 @@ func (m *GeneProductMetrics) IsComplete() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.isPrimaryComplete() || m.isFallbackComplete()
+	primary := m.isPrimaryComplete()
+	fallback := m.isFallbackComplete()
+
+	// Log completion status for debugging
+	if primary || fallback {
+		logger := registry.GetLogger()
+		logger.WithFields(map[string]any{
+			"primary_complete":     primary,
+			"fallback_complete":    fallback,
+			"all_arango_fetched":   m.AllArangoDocsFetched,
+			"legacy_submitted":     m.JobsSubmittedToLegacyPool,
+			"legacy_completed":     m.JobsCompletedFromLegacyPool,
+			"grpc_submitted":       m.JobsSubmittedToGrpcPool,
+			"grpc_completed":       m.JobsCompletedFromGrpcPool,
+			"total_processed":      m.TotalProcessed,
+			"total_fetched_arango": m.TotalFetchedFromArango,
+			"skipped_count":        m.SkippedCount,
+		}).Debug("Completion conditions met")
+	}
+
+	return primary || fallback
 }
 
 // isPrimaryComplete checks the primary completion conditions
@@ -118,7 +138,8 @@ func (m *GeneProductMetrics) isPrimaryComplete() bool {
 	allProcessed := (m.TotalFetchedFromArango == 0) ||
 		(m.TotalProcessed >= (m.TotalFetchedFromArango - m.SkippedCount))
 
-	return allArangoFetched && legacyPoolDrained && grpcPoolDrained && allProcessed
+	return allArangoFetched && legacyPoolDrained && grpcPoolDrained &&
+		allProcessed
 }
 
 // isFallbackComplete checks fallback completion conditions for edge cases
@@ -129,11 +150,17 @@ func (m *GeneProductMetrics) isFallbackComplete() bool {
 	poolsDrained := m.JobsCompletedFromLegacyPool >= m.JobsSubmittedToLegacyPool &&
 		m.JobsCompletedFromGrpcPool >= m.JobsSubmittedToGrpcPool
 
-	return m.AllArangoDocsFetched &&
+	// More lenient fallback conditions to prevent hanging
+	basicCompletion := m.AllArangoDocsFetched && poolsDrained
+	timeoutCompletion := elapsed > 2*time.Minute && hasProcessedSomething &&
+		poolsDrained
+
+	// If we have processed some work and pools are drained, we're likely done
+	workCompletion := hasSignificantWork && hasProcessedSomething &&
 		poolsDrained &&
-		hasSignificantWork &&
-		hasProcessedSomething &&
-		elapsed > 2*time.Minute
+		elapsed > 30*time.Second
+
+	return basicCompletion || timeoutCompletion || workCompletion
 }
 
 // GeneProductAppConfig holds configuration
