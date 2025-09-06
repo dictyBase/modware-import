@@ -40,3 +40,10 @@ func GeneProductCliSetup(cltx *cli.Context) error {
 	registry.SetLegacyArangoSession(legacySess)
 	return nil
 }
+
+// CleanupGeneProductResources cleans up resources used by gene product operations
+func CleanupGeneProductResources() error {
+	// Note: ArangoDB sessions are managed by the arangomanager library
+	// and don't require explicit cleanup in this implementation
+	return nil
+}
