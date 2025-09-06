@@ -7,6 +7,103 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// handleLegacyResultsChannelClosure handles the closure of the legacy pool results channel
+func handleLegacyResultsChannelClosure(errorsChan <-chan error, logger *logrus.Entry) {
+	logger.Debug("Legacy query pool results channel closed.")
+	// Check if errors channel is also closed
+	select {
+	case err, errOk := <-errorsChan:
+		if !errOk {
+			logger.Debug("Legacy query pool errors channel also closed, exiting bridge.")
+		} else {
+			logger.Errorf("Final async error from legacy query pool: %v", err)
+		}
+	default:
+		// No error to process, continue
+	}
+}
+
+// handleLegacyErrorsChannelClosure handles the closure of the legacy pool errors channel
+func handleLegacyErrorsChannelClosure(params *bridgeLegacyToGrpcPoolParams) bool {
+	params.logger.Debug("Legacy query pool errors channel closed.")
+	return true // Always exit when errors channel closes
+}
+
+// handleGrpcResultsChannelClosure handles closure of the gRPC results channel
+func handleGrpcResultsChannelClosure(errorsChan <-chan error, logger *logrus.Entry) {
+	logger.Debug("Batch gRPC update pool results channel closed.")
+	// Check if errors channel is also closed
+	select {
+	case err, errOk := <-errorsChan:
+		if !errOk {
+			logger.Debug("Batch gRPC update pool errors channel also closed, exiting handler.")
+		} else {
+			logger.Errorf("Final async error from batch gRPC update pool: %v", err)
+		}
+	default:
+		// No error to process, continue
+	}
+}
+
+// handleGrpcErrorsChannelClosure handles closure of the gRPC errors channel
+func handleGrpcErrorsChannelClosure(params *handleGeneProductGrpcResultsParams) bool {
+	params.logger.Debug("Batch gRPC update pool errors channel closed.")
+	return true
+}
+
+// processLegacyPoolResult processes a successful result from the legacy pool
+func processLegacyPoolResult(
+	resultOutput []ProcessedGeneProduct,
+	resultError error,
+	jobID string,
+	params *bridgeLegacyToGrpcPoolParams,
+) {
+	params.metrics.mu.Lock()
+	params.metrics.JobsCompletedFromLegacyPool++
+	params.metrics.mu.Unlock()
+
+	if resultError != nil {
+		params.logger.WithFields(logrus.Fields{
+			"job_id": jobID,
+			"error":  resultError,
+		}).Error("Legacy query failed")
+		return
+	}
+
+	// Process each gene product in the slice
+	processGeneProductSlice(resultOutput, params)
+}
+
+// updateGrpcMetrics updates metrics and logs for a gRPC result
+func updateGrpcMetrics(result BatchGeneProductResult, error error, params *handleGeneProductGrpcResultsParams) {
+	params.metrics.mu.Lock()
+	params.metrics.TotalProcessed += int64(result.ProcessedCount)
+	params.metrics.SkippedCount += int64(result.SkippedCount)
+	params.metrics.JobsCompletedFromGrpcPool++
+
+	if error != nil {
+		params.metrics.ErrorCount++
+		params.metrics.mu.Unlock()
+		params.logger.Errorf(
+			"Error updating gene %s: %v",
+			result.GeneID,
+			error,
+		)
+	} else {
+		params.metrics.SuccessCount++
+		params.metrics.mu.Unlock()
+		params.logger.WithFields(logrus.Fields{
+			"gene_id":         result.GeneID,
+			"processed_count": result.ProcessedCount,
+			"skipped_count":   result.SkippedCount,
+		}).Infof(
+			"Successfully processed gene %s: %s",
+			result.GeneID,
+			result.Message,
+		)
+	}
+}
+
 // bridgeArangoToLegacyPool transfers genes from ArangoDB to legacy query pool
 func bridgeArangoToLegacyPool(params *bridgeArangoToLegacyPoolParams) {
 	defer params.wg.Done()
@@ -36,44 +133,44 @@ func bridgeArangoToLegacyPool(params *bridgeArangoToLegacyPoolParams) {
 // bridgeLegacyToGrpcPool transfers processed genes to gRPC update pool
 func bridgeLegacyToGrpcPool(params *bridgeLegacyToGrpcPoolParams) {
 	defer params.wg.Done()
-	defer params.batchGrpcPool.Close()
+	defer func() {
+		params.logger.Debug("Closing batch gRPC pool...")
+		params.batchGrpcPool.Close()
+		params.logger.Debug("Batch gRPC pool closed")
+	}()
 
 	params.logger.Debug("Starting Legacy-Pool-to-gRPC-Pool bridge...")
+
+	resultsChan := params.legacyPool.Results()
+	errorsChan := params.legacyPool.Errors()
+
 	for {
 		select {
 		case <-params.ctx.Done():
 			params.logger.Debug("Legacy-to-gRPC bridge: context done, exiting.")
 			return
-		case result, ok := <-params.legacyPool.Results():
+		case result, ok := <-resultsChan:
 			if !ok {
-				params.logger.Debug("Legacy query pool results channel closed.")
+				handleLegacyResultsChannelClosure(errorsChan, params.logger)
 				return
-			}
-			params.metrics.mu.Lock()
-			params.metrics.JobsCompletedFromLegacyPool++
-			params.metrics.mu.Unlock()
-
-			if result.Error != nil {
-				params.logger.WithFields(logrus.Fields{
-					"job_id": result.JobID,
-					"error":  result.Error,
-				}).Error("Legacy query failed")
-				continue
+			} else {
+				processLegacyPoolResult(result.Output, result.Error, result.JobID, params)
 			}
 
-			// Process each gene product in the slice
-			processGeneProductSlice(result.Output, params)
-
-		case err, ok := <-params.legacyPool.Errors():
+		case err, ok := <-errorsChan:
 			if !ok {
-				params.logger.Debug("Legacy query pool errors channel closed.")
-				return
+				if handleLegacyErrorsChannelClosure(params) {
+					return
+				}
 			}
 			params.logger.Errorf("Async error from legacy query pool: %v", err)
-		case <-time.After(5 * time.Second): // Added timeout as per plan, though not strictly in bridge logic
-			params.logger.Debug(
-				"Timeout waiting for legacy query result - continuing",
-			)
+		case <-time.After(10 * time.Second):
+			// Longer timeout with completion check
+			params.logger.Debug("Timeout waiting for legacy query result - checking completion status")
+			if params.metrics.IsComplete() {
+				params.logger.Debug("Metrics indicate completion, exiting legacy-to-gRPC bridge")
+				return
+			}
 			continue
 		}
 	}
@@ -116,57 +213,43 @@ func handleGeneProductGrpcResults(params *handleGeneProductGrpcResultsParams) {
 	defer params.wg.Done()
 	params.logger.Debug("Starting batch gRPC results handler...")
 
+	resultsChan := params.batchGrpcPool.Results()
+	errorsChan := params.batchGrpcPool.Errors()
+
 	for {
 		select {
 		case <-params.ctx.Done():
+			params.logger.Debug("gRPC results handler: context done, exiting.")
 			return
-		case result, ok := <-params.batchGrpcPool.Results():
+		case result, ok := <-resultsChan:
 			if !ok {
-				params.logger.Debug(
-					"Batch gRPC update pool results channel closed.",
-				)
+				handleGrpcResultsChannelClosure(errorsChan, params.logger)
 				return
+			} else {
+				updateGrpcMetrics(result.Output, result.Error, params)
 			}
-
-			params.metrics.mu.Lock()
-			params.metrics.TotalProcessed += int64(result.Output.ProcessedCount)
-			params.metrics.SkippedCount += int64(result.Output.SkippedCount)
-			params.metrics.JobsCompletedFromGrpcPool++
-			if result.Error != nil {
+		case err, ok := <-errorsChan:
+			if !ok {
+				if handleGrpcErrorsChannelClosure(params) {
+					return
+				}
+			} else {
+				params.metrics.mu.Lock()
 				params.metrics.ErrorCount++
 				params.metrics.mu.Unlock()
 				params.logger.Errorf(
-					"Error updating gene %s: %v",
-					result.Output.GeneID,
-					result.Error,
-				)
-			} else {
-				params.metrics.SuccessCount++
-				params.metrics.mu.Unlock()
-				params.logger.WithFields(logrus.Fields{
-					"gene_id":         result.Output.GeneID,
-					"processed_count": result.Output.ProcessedCount,
-					"skipped_count":   result.Output.SkippedCount,
-				}).Infof(
-					"Successfully processed gene %s: %s",
-					result.Output.GeneID,
-					result.Output.Message,
+					"Async error from batch gRPC update pool: %v",
+					err,
 				)
 			}
-		case err, ok := <-params.batchGrpcPool.Errors():
-			if !ok {
-				params.logger.Debug(
-					"Batch gRPC update pool errors channel closed.",
-				)
+		case <-time.After(10 * time.Second):
+			// Check completion status during timeout
+			params.logger.Debug("Timeout waiting for gRPC results - checking completion status")
+			if params.metrics.IsComplete() {
+				params.logger.Debug("Metrics indicate completion, exiting gRPC results handler")
 				return
 			}
-			params.metrics.mu.Lock()
-			params.metrics.ErrorCount++
-			params.metrics.mu.Unlock()
-			params.logger.Errorf(
-				"Async error from batch gRPC update pool: %v",
-				err,
-			)
+			continue
 		}
 	}
 }
@@ -185,18 +268,24 @@ func reportGeneProductProgress(params *reportGeneProductProgressParams) {
 		if elapsed.Seconds() > 0 {
 			rate = float64(params.metrics.TotalProcessed) / elapsed.Seconds()
 		}
+
+		// Check completion status for debugging
+		isComplete := params.metrics.IsComplete()
+
 		params.logger.WithFields(logrus.Fields{
-			"read_from_db":     params.metrics.TotalFetchedFromArango,
-			"total_processed":  params.metrics.TotalProcessed,
-			"success_count":    params.metrics.SuccessCount,
-			"error_count":      params.metrics.ErrorCount,
-			"skipped_count":    params.metrics.SkippedCount,
-			"processing_rate":  fmt.Sprintf("%.2f genes/sec", rate),
-			"elapsed_time":     elapsed.String(),
-			"legacy_submitted": params.metrics.JobsSubmittedToLegacyPool,
-			"legacy_completed": params.metrics.JobsCompletedFromLegacyPool,
-			"grpc_submitted":   params.metrics.JobsSubmittedToGrpcPool,
-			"grpc_completed":   params.metrics.JobsCompletedFromGrpcPool,
+			"read_from_db":       params.metrics.TotalFetchedFromArango,
+			"total_processed":    params.metrics.TotalProcessed,
+			"success_count":      params.metrics.SuccessCount,
+			"error_count":        params.metrics.ErrorCount,
+			"skipped_count":      params.metrics.SkippedCount,
+			"processing_rate":    fmt.Sprintf("%.2f genes/sec", rate),
+			"elapsed_time":       elapsed.String(),
+			"legacy_submitted":   params.metrics.JobsSubmittedToLegacyPool,
+			"legacy_completed":   params.metrics.JobsCompletedFromLegacyPool,
+			"grpc_submitted":     params.metrics.JobsSubmittedToGrpcPool,
+			"grpc_completed":     params.metrics.JobsCompletedFromGrpcPool,
+			"all_arango_fetched": params.metrics.AllArangoDocsFetched,
+			"is_complete":        isComplete,
 		}).Info(message)
 	}
 
