@@ -27,7 +27,7 @@ require (
 	github.com/mwitkow/go-proto-validators v0.3.0 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.9.1
+	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.20.0
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	golang.org/x/crypto v0.41.0 // indirect
@@ -126,7 +126,7 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tiendc/go-deepcopy v1.6.0 // indirect
