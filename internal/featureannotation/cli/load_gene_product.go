@@ -20,10 +20,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const (
-	productTag = "gene_product"
-)
-
 type GeneProduct struct {
 	GeneID  string
 	Product string
@@ -77,7 +73,11 @@ func LoadGeneProduct(c *cli.Context) error {
 	// Stream CSV records directly to processor in a separate goroutine
 	go func() {
 		defer processor.Close()
-		streamGeneProductsFromCSVFiles(c.StringSlice("input"), processor, logger)
+		streamGeneProductsFromCSVFiles(
+			c.StringSlice("input"),
+			processor,
+			logger,
+		)
 	}()
 
 	successCount, errorCount := processResults(processor, logger)
@@ -105,12 +105,28 @@ func streamGeneProductsFromCSVFiles(
 	totalProcessed := 0
 
 	for fileIndex, file := range files {
-		fileProcessed := processGeneProductFile(file, fileIndex, len(files), seen, processor, logger, &totalProcessed)
+		fileProcessed := processGeneProductFile(
+			file,
+			fileIndex,
+			len(files),
+			seen,
+			processor,
+			logger,
+			&totalProcessed,
+		)
 
-		logger.Infof("completed file %s: processed %d gene products", file, fileProcessed)
+		logger.Infof(
+			"completed file %s: processed %d gene products",
+			file,
+			fileProcessed,
+		)
 	}
 
-	logger.Infof("completed streaming %d gene products from %d files", totalProcessed, len(files))
+	logger.Infof(
+		"completed streaming %d gene products from %d files",
+		totalProcessed,
+		len(files),
+	)
 }
 
 // processGeneProductFile handles processing of a single CSV file
@@ -134,14 +150,28 @@ func processGeneProductFile(
 	}
 	defer cleanup()
 
-	return processGeneProductRecords(reader, file, seen, processor, logger, totalProcessed)
+	return processGeneProductRecords(
+		reader,
+		file,
+		seen,
+		processor,
+		logger,
+		totalProcessed,
+	)
 }
 
 // openGeneProductCSV opens and validates a CSV file for gene products
-func openGeneProductCSV(file string, logger *logrus.Entry) (*csv.Reader, func(), error) {
+func openGeneProductCSV(
+	file string,
+	logger *logrus.Entry,
+) (*csv.Reader, func(), error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error opening input file %s: %w", file, err)
+		return nil, nil, fmt.Errorf(
+			"error opening input file %s: %w",
+			file,
+			err,
+		)
 	}
 
 	reader := csv.NewReader(f)
@@ -176,12 +206,24 @@ func processGeneProductRecords(
 			break
 		}
 		if err != nil {
-			logger.Errorf("error reading record from csv at line %d in file %s: %s", lineNumber, filename, err)
+			logger.Errorf(
+				"error reading record from csv at line %d in file %s: %s",
+				lineNumber,
+				filename,
+				err,
+			)
 			lineNumber++
 			continue
 		}
 
-		if processGeneProductRecord(record, filename, seen, processor, logger, lineNumber) {
+		if processGeneProductRecord(
+			record,
+			filename,
+			seen,
+			processor,
+			logger,
+			lineNumber,
+		) {
 			fileProcessed++
 			*totalProcessed++
 			reportCSVProgress(*totalProcessed, logger)
@@ -216,9 +258,19 @@ func processGeneProductRecord(
 }
 
 // isValidGeneProductRecord checks if the CSV record has the required format
-func isValidGeneProductRecord(record []string, filename string, logger *logrus.Entry, lineNumber int) bool {
+func isValidGeneProductRecord(
+	record []string,
+	filename string,
+	logger *logrus.Entry,
+	lineNumber int,
+) bool {
 	if len(record) < 2 {
-		logger.Warnf("skipping malformed record at line %d in file %s: %v", lineNumber, filename, record)
+		logger.Warnf(
+			"skipping malformed record at line %d in file %s: %v",
+			lineNumber,
+			filename,
+			record,
+		)
 		return false
 	}
 	return true
@@ -232,7 +284,12 @@ func isDuplicateGeneProduct(
 	lineNumber int,
 ) bool {
 	if _, exists := seen[geneID]; exists {
-		logger.Warnf("duplicate gene ID %s found at line %d in file %s, skipping", geneID, lineNumber, filename)
+		logger.Warnf(
+			"duplicate gene ID %s found at line %d in file %s, skipping",
+			geneID,
+			lineNumber,
+			filename,
+		)
 		return true
 	}
 	return false
@@ -241,7 +298,10 @@ func isDuplicateGeneProduct(
 // reportCSVProgress logs progress every 1000 records
 func reportCSVProgress(totalProcessed int, logger *logrus.Entry) {
 	if totalProcessed%1000 == 0 {
-		logger.Infof("processed %d gene products across all files", totalProcessed)
+		logger.Infof(
+			"processed %d gene products across all files",
+			totalProcessed,
+		)
 	}
 }
 
@@ -268,7 +328,7 @@ func manageGeneProduct(
 	ok := slices.ContainsFunc(
 		existing.Attributes.Properties,
 		func(tag *pb.TagProperty) bool {
-			return tag.Tag == productTag &&
+			return tag.Tag == GeneProductTag &&
 				tag.Value == params.product.Product
 		},
 	)
@@ -284,7 +344,7 @@ func manageGeneProduct(
 	updated, err := params.client.AddTag(params.ctx, &pb.AddTagRequest{
 		Id: params.product.GeneID,
 		Tag: &pb.TagPropertyCreate{
-			Tag:       productTag,
+			Tag:       GeneProductTag,
 			Value:     params.product.Product,
 			CreatedBy: params.user,
 			CreatedAt: timestamppb.Now(),
@@ -321,7 +381,7 @@ func handleNewGenePdtFromCsv(
 		Attributes: &pb.FeatureAnnotationAttributes{
 			Name: params.product.GeneID,
 			Properties: []*pb.TagProperty{{
-				Tag:       productTag,
+				Tag:       GeneProductTag,
 				Value:     params.product.Product,
 				CreatedBy: params.user,
 				CreatedAt: timestamppb.Now(),
