@@ -275,3 +275,28 @@ func SynonymLoaderFlags() []cli.Flag {
 		},
 	)
 }
+
+// ParseUnknowmeDataFlags returns flags for parsing unknowme HTML data to CSV files.
+// Input validation is performed during command execution to ensure files exist.
+func ParseUnknowmeDataFlags() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:     "input",
+			Aliases:  []string{"i"},
+			Usage:    "input HTML file to parse (must exist and be readable)",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:    "gene-product-output",
+			Aliases: []string{"p"},
+			Usage:   "output CSV file for gene products",
+			Value:   "gene_products.csv",
+		},
+		&cli.StringFlag{
+			Name:    "gene-description-output",
+			Aliases: []string{"d"},
+			Usage:   "output CSV file for gene descriptions",
+			Value:   "gene_descriptions.csv",
+		},
+	}
+}
