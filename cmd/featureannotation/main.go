@@ -100,5 +100,11 @@ func allCommands() []*cli.Command {
 			Before: faclient.GeneDescriptionCsvCliSetup,
 			Action: facli.LoadGeneDescription,
 		},
+		{
+			Name:   "parse-unknowme-data",
+			Usage:  "Parse unknowme HTML data and extract gene information to CSV files",
+			Flags:  facli.ParseUnknowmeDataFlags(),
+			Action: facli.ParseUnknowmeData,
+		},
 	}
 }
