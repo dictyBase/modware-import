@@ -64,24 +64,43 @@ func parseHTMLTable(filename string) ([]GeneDataRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	var records []GeneDataRecord
 	ddbGeneRegex := regexp.MustCompile(`^DDB_G\d+`)
-
-	// Find all table rows
-	doc.Find("table tr").Each(func(i int, row *goquery.Selection) {
-		cells := row.Find("td")
-		if cells.Length() == 0 {
-			return // Skip header rows or empty rows
-		}
-
-		cellTexts := extractCellTexts(cells)
-		if record := processRowForGeneData(cellTexts, ddbGeneRegex); record != nil {
-			records = append(records, *record)
-		}
-	})
+	doc.Find("table tr").
+		Each(extractRowData).
+		Each(func(i int, row *goquery.Selection) {
+			row.Find("td").
+				FilterFunction(func(i int, cell *goquery.Selection) bool {
+					if i == 0 {
+						return ddbGeneRegex.MatchString(cell.Text())
+					}
+					return true
+				})
+		}).
+		Each(func(i int, row *goquery.Selection) {
+			rec := GeneDataRecord{}
+			row.Find("td").Each(func(j int, cell *goquery.Selection) {
+				switch j {
+				case 0:
+					rec.GeneID = cell.Text()
+				case 1:
+					rec.GeneProduct = cell.Text()
+				case 2:
+					rec.Description = cell.Text()
+				}
+			})
+			records = append(records, rec)
+		})
 
 	return records, nil
+}
+
+func extractRowData(i int, row *goquery.Selection) {
+	row.Find("td").FilterFunction(NotEmptyCell)
+}
+
+func NotEmptyCell(i int, cell *goquery.Selection) bool {
+	return len(strings.TrimSpace(cell.Text())) > 0
 }
 
 // loadHTMLDocument loads and parses an HTML file
@@ -98,63 +117,6 @@ func loadHTMLDocument(filename string) (*goquery.Document, error) {
 	}
 
 	return doc, nil
-}
-
-// extractCellTexts extracts and cleans text from table cells
-func extractCellTexts(cells *goquery.Selection) []string {
-	var cellTexts []string
-	cells.Each(func(j int, cell *goquery.Selection) {
-		text := strings.TrimSpace(cell.Text())
-		// Clean up text by removing HTML artifacts
-		text = strings.ReplaceAll(text, "\n", " ")
-		text = regexp.MustCompile(`\s+`).ReplaceAllString(text, " ")
-		cellTexts = append(cellTexts, text)
-	})
-	return cellTexts
-}
-
-// processRowForGeneData processes a table row and extracts gene data if it contains a DDB_G entry
-func processRowForGeneData(cellTexts []string, ddbGeneRegex *regexp.Regexp) *GeneDataRecord {
-	if len(cellTexts) == 0 || !ddbGeneRegex.MatchString(cellTexts[0]) {
-		return nil
-	}
-
-	geneID := cellTexts[0]
-	firstNonEmpty, secondNonEmpty := findNonEmptyColumns(cellTexts[1:])
-
-	// Only create record if we found at least one non-empty column
-	if firstNonEmpty == "" {
-		return nil
-	}
-
-	return &GeneDataRecord{
-		GeneID:      geneID,
-		GeneProduct: firstNonEmpty,
-		Description: secondNonEmpty,
-	}
-}
-
-// findNonEmptyColumns finds the first two non-empty columns from a slice of cell texts
-func findNonEmptyColumns(cellTexts []string) (string, string) {
-	var firstNonEmpty, secondNonEmpty string
-	nonEmptyCount := 0
-
-	for _, cellText := range cellTexts {
-		if nonEmptyCount >= 2 {
-			break
-		}
-
-		if cellText != "" && cellText != " " {
-			if nonEmptyCount == 0 {
-				firstNonEmpty = cellText
-			} else {
-				secondNonEmpty = cellText
-			}
-			nonEmptyCount++
-		}
-	}
-
-	return firstNonEmpty, secondNonEmpty
 }
 
 // generateGeneProductCSV creates a CSV file with GeneID and gene_product columns
@@ -188,7 +150,10 @@ func generateGeneProductCSV(records []GeneDataRecord, filename string) error {
 }
 
 // generateGeneDescriptionCSV creates a CSV file with GeneID and gene_description columns
-func generateGeneDescriptionCSV(records []GeneDataRecord, filename string) error {
+func generateGeneDescriptionCSV(
+	records []GeneDataRecord,
+	filename string,
+) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
