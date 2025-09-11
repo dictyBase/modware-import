@@ -145,11 +145,14 @@ func generateGeneProductCSV(records []GeneDataRecord, filename string) error {
 
 	// Write data rows
 	for _, record := range records {
-		if record.GeneProduct != "" {
-			err = writer.Write([]string{record.GeneID, record.GeneProduct})
-			if err != nil {
-				return fmt.Errorf("failed to write record: %w", err)
-			}
+		if record.GeneProduct == "" {
+			continue
+		}
+		if err := writer.Write([]string{
+			record.GeneID,
+			record.GeneProduct,
+		}); err != nil {
+			return fmt.Errorf("failed to write record: %w", err)
 		}
 	}
 
@@ -178,11 +181,14 @@ func generateGeneDescriptionCSV(
 
 	// Write data rows
 	for _, record := range records {
-		if record.Description != "" {
-			err = writer.Write([]string{record.GeneID, record.Description})
-			if err != nil {
-				return fmt.Errorf("failed to write record: %w", err)
-			}
+		if record.Description == "" {
+			continue
+		}
+		if err := writer.Write([]string{
+			record.GeneID,
+			record.Description,
+		}); err != nil {
+			return fmt.Errorf("failed to write record: %w", err)
 		}
 	}
 
