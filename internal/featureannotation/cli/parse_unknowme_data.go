@@ -130,12 +130,22 @@ func parseHTMLTableIter(filename string) (iter.Seq[GeneDataRecord], error) {
 }
 
 // extractTextFromColumns searches for non-empty text in the specified column range
+// It first checks for h2 elements within td cells, then falls back to direct text content
 func extractTextFromColumns(
 	cells *goquery.Selection,
 	startCol, endCol int,
 ) string {
 	for i := startCol; i <= endCol && i < cells.Length(); i++ {
-		text := strings.TrimSpace(cells.Eq(i).Text())
+		cell := cells.Eq(i)
+
+		// First try to extract text from h2 elements within the cell
+		h2Text := strings.TrimSpace(cell.Find("h2").Text())
+		if h2Text != "" {
+			return h2Text
+		}
+
+		// Fall back to direct text content of the cell
+		text := strings.TrimSpace(cell.Text())
 		if text != "" {
 			return text
 		}
