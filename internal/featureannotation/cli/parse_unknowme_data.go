@@ -64,43 +64,50 @@ func parseHTMLTable(filename string) ([]GeneDataRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var records []GeneDataRecord
 	ddbGeneRegex := regexp.MustCompile(`^DDB_G\d+`)
-	doc.Find("table tr").
-		Each(extractRowData).
-		Each(func(i int, row *goquery.Selection) {
-			row.Find("td").
-				FilterFunction(func(i int, cell *goquery.Selection) bool {
-					if i == 0 {
-						return ddbGeneRegex.MatchString(cell.Text())
-					}
-					return true
-				})
-		}).
-		Each(func(i int, row *goquery.Selection) {
-			rec := GeneDataRecord{}
-			row.Find("td").Each(func(j int, cell *goquery.Selection) {
-				switch j {
-				case 0:
-					rec.GeneID = cell.Text()
-				case 1:
-					rec.GeneProduct = cell.Text()
-				case 2:
-					rec.Description = cell.Text()
-				}
-			})
-			records = append(records, rec)
-		})
+
+	doc.Find("table tr").Each(func(i int, row *goquery.Selection) {
+		cells := row.Find("td")
+
+		// Skip rows that don't have at least 3 cells
+		if cells.Length() < 3 {
+			return
+		}
+
+		// Check if first cell contains DDB_G ID
+		firstCellText := strings.TrimSpace(cells.Eq(0).Text())
+		if !ddbGeneRegex.MatchString(firstCellText) {
+			return
+		}
+
+		// Extract the three columns with proper text trimming
+		// Based on HTML analysis: gene products in columns 3-4, descriptions in columns 6-7
+		record := GeneDataRecord{
+			GeneID:      firstCellText,
+			GeneProduct: extractTextFromColumns(cells, 3, 4),
+			Description: extractTextFromColumns(cells, 6, 7),
+		}
+
+		records = append(records, record)
+	})
 
 	return records, nil
 }
 
-func extractRowData(i int, row *goquery.Selection) {
-	row.Find("td").FilterFunction(NotEmptyCell)
-}
-
-func NotEmptyCell(i int, cell *goquery.Selection) bool {
-	return len(strings.TrimSpace(cell.Text())) > 0
+// extractTextFromColumns searches for non-empty text in the specified column range
+func extractTextFromColumns(
+	cells *goquery.Selection,
+	startCol, endCol int,
+) string {
+	for i := startCol; i <= endCol && i < cells.Length(); i++ {
+		text := strings.TrimSpace(cells.Eq(i).Text())
+		if text != "" {
+			return text
+		}
+	}
+	return ""
 }
 
 // loadHTMLDocument loads and parses an HTML file
