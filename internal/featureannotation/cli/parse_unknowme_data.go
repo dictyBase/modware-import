@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/csv"
 	"fmt"
+	"iter"
 	"os"
 	"regexp"
 	"strings"
@@ -30,70 +31,102 @@ func ParseUnknowmeData(cliCtx *cli.Context) error {
 		return fmt.Errorf("input file does not exist: %s", inputFile)
 	}
 
-	// Parse HTML file
-	records, err := parseHTMLTable(inputFile)
+	// Create iterator for gene products CSV
+	geneProductIter, err := parseHTMLTableIter(inputFile)
 	if err != nil {
-		return fmt.Errorf("failed to parse HTML table: %w", err)
+		return fmt.Errorf(
+			"failed to create iterator for gene products: %w",
+			err,
+		)
 	}
 
-	if len(records) == 0 {
-		return fmt.Errorf("no gene data records found in the HTML file")
+	// Count records while generating gene product CSV for reporting
+	var totalRecords int
+	countingIter := func(yield func(GeneDataRecord) bool) {
+		for record := range geneProductIter {
+			totalRecords++
+			if !yield(record) {
+				return
+			}
+		}
 	}
 
-	// Generate CSV files
-	err = generateGeneProductCSV(records, geneProductOutput)
+	// Generate gene product CSV
+	err = generateGeneProductCSVFromIter(countingIter, geneProductOutput)
 	if err != nil {
 		return fmt.Errorf("failed to generate gene product CSV: %w", err)
 	}
 
-	err = generateGeneDescriptionCSV(records, geneDescriptionOutput)
+	// Create a second iterator for gene descriptions CSV
+	geneDescriptionIter, err := parseHTMLTableIter(inputFile)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to create iterator for gene descriptions: %w",
+			err,
+		)
+	}
+
+	// Generate gene description CSV
+	err = generateGeneDescriptionCSVFromIter(
+		geneDescriptionIter,
+		geneDescriptionOutput,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to generate gene description CSV: %w", err)
 	}
 
-	fmt.Printf("Successfully processed %d gene records\n", len(records))
+	// Validate we found records
+	if totalRecords == 0 {
+		return fmt.Errorf("no gene data records found in the HTML file")
+	}
+
+	fmt.Printf("Successfully processed %d gene records\n", totalRecords)
 	fmt.Printf("Gene products written to: %s\n", geneProductOutput)
 	fmt.Printf("Gene descriptions written to: %s\n", geneDescriptionOutput)
 
 	return nil
 }
 
-// parseHTMLTable extracts gene data from an HTML table
-func parseHTMLTable(filename string) ([]GeneDataRecord, error) {
+// parseHTMLTableIter extracts gene data from an HTML table using an iterator pattern.
+// Returns an iter.Seq that yields GeneDataRecord items lazily for memory-efficient processing.
+func parseHTMLTableIter(filename string) (iter.Seq[GeneDataRecord], error) {
 	doc, err := loadHTMLDocument(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	var records []GeneDataRecord
 	ddbGeneRegex := regexp.MustCompile(`^DDB_G\d+`)
 
-	doc.Find("table tr").Each(func(i int, row *goquery.Selection) {
-		cells := row.Find("td")
+	// Return an iterator function that yields GeneDataRecord items
+	return func(yield func(GeneDataRecord) bool) {
+		doc.Find("table tr").Each(func(i int, row *goquery.Selection) {
+			cells := row.Find("td")
 
-		// Skip rows that don't have at least 3 cells
-		if cells.Length() < 3 {
-			return
-		}
+			// Skip rows that don't have at least 3 cells
+			if cells.Length() < 3 {
+				return
+			}
 
-		// Check if first cell contains DDB_G ID
-		firstCellText := strings.TrimSpace(cells.Eq(0).Text())
-		if !ddbGeneRegex.MatchString(firstCellText) {
-			return
-		}
+			// Check if first cell contains DDB_G ID
+			firstCellText := strings.TrimSpace(cells.Eq(0).Text())
+			if !ddbGeneRegex.MatchString(firstCellText) {
+				return
+			}
 
-		// Extract the three columns with proper text trimming
-		// Based on HTML analysis: gene products in columns 3-4, descriptions in columns 6-7
-		record := GeneDataRecord{
-			GeneID:      firstCellText,
-			GeneProduct: extractTextFromColumns(cells, 3, 4),
-			Description: extractTextFromColumns(cells, 6, 7),
-		}
+			// Extract the three columns with proper text trimming
+			// Based on HTML analysis: gene products in columns 3-4, descriptions in columns 6-7
+			record := GeneDataRecord{
+				GeneID:      firstCellText,
+				GeneProduct: extractTextFromColumns(cells, 3, 4),
+				Description: extractTextFromColumns(cells, 6, 7),
+			}
 
-		records = append(records, record)
-	})
-
-	return records, nil
+			// Yield the record and check if iteration should continue
+			if !yield(record) {
+				return // Early termination requested by consumer
+			}
+		})
+	}, nil
 }
 
 // extractTextFromColumns searches for non-empty text in the specified column range
@@ -126,8 +159,11 @@ func loadHTMLDocument(filename string) (*goquery.Document, error) {
 	return doc, nil
 }
 
-// generateGeneProductCSV creates a CSV file with GeneID and gene_product columns
-func generateGeneProductCSV(records []GeneDataRecord, filename string) error {
+// generateGeneProductCSVFromIter creates a CSV file with GeneID and gene_product columns using an iterator
+func generateGeneProductCSVFromIter(
+	iter iter.Seq[GeneDataRecord],
+	filename string,
+) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
@@ -143,8 +179,8 @@ func generateGeneProductCSV(records []GeneDataRecord, filename string) error {
 		return fmt.Errorf("failed to write header: %w", err)
 	}
 
-	// Write data rows
-	for _, record := range records {
+	// Write data rows using iterator
+	for record := range iter {
 		if record.GeneProduct == "" {
 			continue
 		}
@@ -159,9 +195,9 @@ func generateGeneProductCSV(records []GeneDataRecord, filename string) error {
 	return nil
 }
 
-// generateGeneDescriptionCSV creates a CSV file with GeneID and gene_description columns
-func generateGeneDescriptionCSV(
-	records []GeneDataRecord,
+// generateGeneDescriptionCSVFromIter creates a CSV file with GeneID and gene_description columns using an iterator
+func generateGeneDescriptionCSVFromIter(
+	iter iter.Seq[GeneDataRecord],
 	filename string,
 ) error {
 	file, err := os.Create(filename)
@@ -179,8 +215,8 @@ func generateGeneDescriptionCSV(
 		return fmt.Errorf("failed to write header: %w", err)
 	}
 
-	// Write data rows
-	for _, record := range records {
+	// Write data rows using iterator
+	for record := range iter {
 		if record.Description == "" {
 			continue
 		}
