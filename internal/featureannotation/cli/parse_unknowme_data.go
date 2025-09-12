@@ -31,19 +31,31 @@ func ParseUnknowmeData(cliCtx *cli.Context) error {
 		return fmt.Errorf("input file does not exist: %s", inputFile)
 	}
 
-	// Create iterator for gene products CSV
-	geneProductIter, err := parseHTMLTableIter(inputFile)
+	// Create iterator for processing gene data
+	geneDataIter, err := parseHTMLTableIter(inputFile)
 	if err != nil {
-		return fmt.Errorf(
-			"failed to create iterator for gene products: %w",
-			err,
-		)
+		return fmt.Errorf("failed to create iterator: %w", err)
 	}
 
-	// Count records while generating gene product CSV for reporting
+	// Create CSV writers
+	geneProductWriter, err := NewGeneProductCSVWriter(geneProductOutput)
+	if err != nil {
+		return fmt.Errorf("failed to create gene product writer: %w", err)
+	}
+	defer geneProductWriter.Close()
+
+	geneDescriptionWriter, err := NewGeneDescriptionCSVWriter(
+		geneDescriptionOutput,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create gene description writer: %w", err)
+	}
+	defer geneDescriptionWriter.Close()
+
+	// Count records while processing for reporting
 	var totalRecords int
 	countingIter := func(yield func(GeneDataRecord) bool) {
-		for record := range geneProductIter {
+		for record := range geneDataIter {
 			totalRecords++
 			if !yield(record) {
 				return
@@ -51,28 +63,14 @@ func ParseUnknowmeData(cliCtx *cli.Context) error {
 		}
 	}
 
-	// Generate gene product CSV
-	err = generateGeneProductCSVFromIter(countingIter, geneProductOutput)
-	if err != nil {
-		return fmt.Errorf("failed to generate gene product CSV: %w", err)
-	}
-
-	// Create a second iterator for gene descriptions CSV
-	geneDescriptionIter, err := parseHTMLTableIter(inputFile)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to create iterator for gene descriptions: %w",
-			err,
-		)
-	}
-
-	// Generate gene description CSV
-	err = generateGeneDescriptionCSVFromIter(
-		geneDescriptionIter,
-		geneDescriptionOutput,
+	// Process records with both writers using single iteration
+	err = processRecordsWithWriters(
+		countingIter,
+		geneProductWriter,
+		geneDescriptionWriter,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to generate gene description CSV: %w", err)
+		return fmt.Errorf("failed to process records: %w", err)
 	}
 
 	// Validate we found records
@@ -164,78 +162,6 @@ func loadHTMLDocument(filename string) (*goquery.Document, error) {
 	return doc, nil
 }
 
-// generateGeneProductCSVFromIter creates a CSV file with GeneID and gene_product columns using an iterator
-func generateGeneProductCSVFromIter(
-	iter iter.Seq[GeneDataRecord],
-	filename string,
-) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
-	}
-	defer file.Close()
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	// Write header
-	err = writer.Write([]string{"GeneID", "gene_product"})
-	if err != nil {
-		return fmt.Errorf("failed to write header: %w", err)
-	}
-
-	// Write data rows using iterator
-	for record := range iter {
-		if skipGeneProduct(record) {
-			continue
-		}
-		if err := writer.Write([]string{
-			record.GeneID,
-			record.GeneProduct,
-		}); err != nil {
-			return fmt.Errorf("failed to write record: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// generateGeneDescriptionCSVFromIter creates a CSV file with GeneID and gene_description columns using an iterator
-func generateGeneDescriptionCSVFromIter(
-	iter iter.Seq[GeneDataRecord],
-	filename string,
-) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
-	}
-	defer file.Close()
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	// Write header
-	err = writer.Write([]string{"GeneID", "gene_description"})
-	if err != nil {
-		return fmt.Errorf("failed to write header: %w", err)
-	}
-
-	// Write data rows using iterator
-	for record := range iter {
-		if record.Description == "" {
-			continue
-		}
-		if err := writer.Write([]string{
-			record.GeneID,
-			record.Description,
-		}); err != nil {
-			return fmt.Errorf("failed to write record: %w", err)
-		}
-	}
-
-	return nil
-}
-
 func skipGeneProduct(gp GeneDataRecord) bool {
 	if gp.GeneProduct == "" ||
 		strings.Contains(
@@ -245,4 +171,115 @@ func skipGeneProduct(gp GeneDataRecord) bool {
 		return true
 	}
 	return false
+}
+
+// CSVRecordWriter defines a common interface for writing gene data records to CSV
+type CSVRecordWriter interface {
+	WriteRecord(record GeneDataRecord) error
+	ShouldSkip(record GeneDataRecord) bool
+	Close() error
+}
+
+// GeneProductCSVWriter writes gene product data to CSV format
+type GeneProductCSVWriter struct {
+	writer *csv.Writer
+	file   *os.File
+}
+
+// NewGeneProductCSVWriter creates a new CSV writer for gene products
+func NewGeneProductCSVWriter(filename string) (*GeneProductCSVWriter, error) {
+	file, err := os.Create(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file: %w", err)
+	}
+
+	writer := csv.NewWriter(file)
+
+	// Write header
+	err = writer.Write([]string{"GeneID", "gene_product"})
+	if err != nil {
+		file.Close()
+		return nil, fmt.Errorf("failed to write header: %w", err)
+	}
+
+	return &GeneProductCSVWriter{
+		writer: writer,
+		file:   file,
+	}, nil
+}
+
+func (w *GeneProductCSVWriter) WriteRecord(record GeneDataRecord) error {
+	return w.writer.Write([]string{record.GeneID, record.GeneProduct})
+}
+
+func (w *GeneProductCSVWriter) ShouldSkip(record GeneDataRecord) bool {
+	return skipGeneProduct(record)
+}
+
+func (w *GeneProductCSVWriter) Close() error {
+	w.writer.Flush()
+	return w.file.Close()
+}
+
+// GeneDescriptionCSVWriter writes gene description data to CSV format
+type GeneDescriptionCSVWriter struct {
+	writer *csv.Writer
+	file   *os.File
+}
+
+// NewGeneDescriptionCSVWriter creates a new CSV writer for gene descriptions
+func NewGeneDescriptionCSVWriter(
+	filename string,
+) (*GeneDescriptionCSVWriter, error) {
+	file, err := os.Create(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file: %w", err)
+	}
+
+	writer := csv.NewWriter(file)
+
+	// Write header
+	err = writer.Write([]string{"GeneID", "gene_description"})
+	if err != nil {
+		file.Close()
+		return nil, fmt.Errorf("failed to write header: %w", err)
+	}
+
+	return &GeneDescriptionCSVWriter{
+		writer: writer,
+		file:   file,
+	}, nil
+}
+
+func (w *GeneDescriptionCSVWriter) WriteRecord(record GeneDataRecord) error {
+	return w.writer.Write([]string{record.GeneID, record.Description})
+}
+
+func (w *GeneDescriptionCSVWriter) ShouldSkip(record GeneDataRecord) bool {
+	return record.Description == ""
+}
+
+func (w *GeneDescriptionCSVWriter) Close() error {
+	w.writer.Flush()
+	return w.file.Close()
+}
+
+// processRecordsWithWriters iterates through records once and writes to multiple CSV writers
+func processRecordsWithWriters(
+	iter iter.Seq[GeneDataRecord],
+	writers ...CSVRecordWriter,
+) error {
+	for record := range iter {
+		for _, writer := range writers {
+			if !writer.ShouldSkip(record) {
+				if err := writer.WriteRecord(record); err != nil {
+					return fmt.Errorf(
+						"failed to write record: %w",
+						err,
+					)
+				}
+			}
+		}
+	}
+	return nil
 }
