@@ -101,9 +101,10 @@ func parseHTMLTableIter(filename string) (iter.Seq[GeneDataRecord], error) {
 	return func(yield func(GeneDataRecord) bool) {
 		doc.Find("table tr").Each(func(i int, row *goquery.Selection) {
 			cells := row.Find("td")
+			clen := cells.Length()
 
 			// Skip rows that don't have at least 3 cells
-			if cells.Length() < 3 {
+			if clen < 3 {
 				return
 			}
 
@@ -113,12 +114,30 @@ func parseHTMLTableIter(filename string) (iter.Seq[GeneDataRecord], error) {
 				return
 			}
 
-			// Extract the three columns with proper text trimming
-			// Based on HTML analysis: gene products in columns 3-4, descriptions in columns 6-7
+			// Extract gene product first to determine description scanning range
+			geneProduct, geneProductCol := extractTextFromColumnsWithIndex(
+				cells,
+				3,
+				7,
+			)
+			// Determine description scanning range based on gene product location
+			var description string
+			if geneProductCol != -1 {
+				// Gene product found: start description scanning after gene product column
+				description = extractTextFromColumns(
+					cells,
+					geneProductCol+1,
+					clen-1,
+				)
+			} else {
+				// Gene product not found: scan all remaining cells for description
+				description = extractTextFromColumns(cells, 1, clen-1)
+			}
+
 			record := GeneDataRecord{
 				GeneID:      firstCellText,
-				GeneProduct: extractTextFromColumns(cells, 3, 4),
-				Description: extractTextFromColumns(cells, 6, 7),
+				GeneProduct: geneProduct,
+				Description: description,
 			}
 
 			// Yield the record and check if iteration should continue
@@ -127,30 +146,6 @@ func parseHTMLTableIter(filename string) (iter.Seq[GeneDataRecord], error) {
 			}
 		})
 	}, nil
-}
-
-// extractTextFromColumns searches for non-empty text in the specified column range
-// It first checks for h2 elements within td cells, then falls back to direct text content
-func extractTextFromColumns(
-	cells *goquery.Selection,
-	startCol, endCol int,
-) string {
-	for i := startCol; i <= endCol && i < cells.Length(); i++ {
-		cell := cells.Eq(i)
-
-		// First try to extract text from h2 elements within the cell
-		h2Text := strings.TrimSpace(cell.Find("h2").Text())
-		if h2Text != "" {
-			return h2Text
-		}
-
-		// Fall back to direct text content of the cell
-		text := strings.TrimSpace(cell.Text())
-		if text != "" {
-			return text
-		}
-	}
-	return ""
 }
 
 // loadHTMLDocument loads and parses an HTML file
@@ -191,7 +186,7 @@ func generateGeneProductCSVFromIter(
 
 	// Write data rows using iterator
 	for record := range iter {
-		if record.GeneProduct == "" {
+		if skipGeneProduct(record) {
 			continue
 		}
 		if err := writer.Write([]string{
@@ -239,4 +234,15 @@ func generateGeneDescriptionCSVFromIter(
 	}
 
 	return nil
+}
+
+func skipGeneProduct(gp GeneDataRecord) bool {
+	if gp.GeneProduct == "" ||
+		strings.Contains(
+			gp.GeneProduct,
+			"no gp",
+		) || strings.Contains(gp.GeneProduct, "unknown") {
+		return true
+	}
+	return false
 }
