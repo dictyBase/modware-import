@@ -9,141 +9,394 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/urfave/cli/v2"
 )
 
 // GeneDataRecord represents a single gene data record
 type GeneDataRecord struct {
-	GeneID      string
-	GeneProduct string
-	Description string
+	GeneID      string `validate:"required,min=1" json:"gene_id"`
+	GeneProduct string `                          json:"gene_product"`
+	Description string `                          json:"description"`
+}
+
+// ParseUnknowmeDataParams contains all parameters for the ParseUnknowmeData function
+type ParseUnknowmeDataParams struct {
+	InputFile             string `validate:"required,min=1" json:"input_file"`
+	GeneProductOutput     string `validate:"required,min=1" json:"gene_product_output"`
+	GeneDescriptionOutput string `validate:"required,min=1" json:"gene_description_output"`
+}
+
+// ParsingConfig holds configuration for parsing operations
+type ParsingConfig struct {
+	ddbGeneRegex           *regexp.Regexp
+	geneProductStartColumn int
+	geneProductEndColumn   int
+	skipEmptyProduct       bool
+	skipEmptyDescription   bool
+}
+
+// ParsingOption is a function that configures ParsingConfig
+type ParsingOption func(*ParsingConfig)
+
+// WithGeneProductColumnRange sets the column range for searching gene products
+func WithGeneProductColumnRange(startCol, endCol int) ParsingOption {
+	return func(config *ParsingConfig) {
+		config.geneProductStartColumn = startCol
+		config.geneProductEndColumn = endCol
+	}
+}
+
+// WithSkipEmptyProduct controls whether to skip records with empty gene products
+func WithSkipEmptyProduct(skip bool) ParsingOption {
+	return func(config *ParsingConfig) {
+		config.skipEmptyProduct = skip
+	}
+}
+
+// WithSkipEmptyDescription controls whether to skip records with empty descriptions
+func WithSkipEmptyDescription(skip bool) ParsingOption {
+	return func(config *ParsingConfig) {
+		config.skipEmptyDescription = skip
+	}
+}
+
+// NewParsingConfig creates a new ParsingConfig with default values and applies options
+func NewParsingConfig(opts ...ParsingOption) *ParsingConfig {
+	config := &ParsingConfig{
+		ddbGeneRegex:           regexp.MustCompile(`^DDB_G\d+`),
+		geneProductStartColumn: 3,
+		geneProductEndColumn:   7,
+		skipEmptyProduct:       true,
+		skipEmptyDescription:   true,
+	}
+
+	for _, opt := range opts {
+		opt(config)
+	}
+
+	return config
 }
 
 // ParseUnknowmeData processes an HTML file containing gene data table and extracts
 // DDB_G entries with their corresponding gene product and description information
 func ParseUnknowmeData(cliCtx *cli.Context) error {
-	inputFile := cliCtx.String("input")
-	geneProductOutput := cliCtx.String("gene-product-output")
-	geneDescriptionOutput := cliCtx.String("gene-description-output")
-
-	// Validate input file exists
-	if _, err := os.Stat(inputFile); os.IsNotExist(err) {
-		return fmt.Errorf("input file does not exist: %s", inputFile)
+	params := ParseUnknowmeDataParams{
+		InputFile:             cliCtx.String("input"),
+		GeneProductOutput:     cliCtx.String("gene-product-output"),
+		GeneDescriptionOutput: cliCtx.String("gene-description-output"),
 	}
+
+	// Validate parameters
+	if err := ValidateStruct(params); err != nil {
+		return fmt.Errorf("validation failed: %w", err)
+	}
+
+	return processUnknowmeDataWithParams(params)
+}
+
+// processUnknowmeDataWithParams performs the actual processing with validated parameters
+func processUnknowmeDataWithParams(params ParseUnknowmeDataParams) error {
+	// Validate input file exists
+	if err := validateInputFileExists(params.InputFile); err != nil {
+		return fmt.Errorf("input file validation failed: %w", err)
+	}
+
+	// Create parsing configuration with default options
+	parsingConfig := NewParsingConfig()
 
 	// Create iterator for processing gene data
-	geneDataIter, err := parseHTMLTableIter(inputFile)
-	if err != nil {
-		return fmt.Errorf("failed to create iterator: %w", err)
-	}
-
-	// Create CSV writers
-	geneProductWriter, err := NewGeneProductCSVWriter(geneProductOutput)
-	if err != nil {
-		return fmt.Errorf("failed to create gene product writer: %w", err)
-	}
-	defer geneProductWriter.Close()
-
-	geneDescriptionWriter, err := NewGeneDescriptionCSVWriter(
-		geneDescriptionOutput,
+	geneDataIterator, err := createGeneDataIterator(
+		params.InputFile,
+		parsingConfig,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create gene description writer: %w", err)
-	}
-	defer geneDescriptionWriter.Close()
-
-	// Count records while processing for reporting
-	var totalRecords int
-	countingIter := func(yield func(GeneDataRecord) bool) {
-		for record := range geneDataIter {
-			totalRecords++
-			if !yield(record) {
-				return
-			}
-		}
+		return fmt.Errorf("failed to create gene data iterator: %w", err)
 	}
 
-	// Process records with both writers using single iteration
-	err = processRecordsWithWriters(
-		countingIter,
-		geneProductWriter,
-		geneDescriptionWriter,
-	)
+	// Create CSV writers using functional approach
+	csvWriterParams := CSVWriterCreationParams{
+		GeneProductOutputFile:     params.GeneProductOutput,
+		GeneDescriptionOutputFile: params.GeneDescriptionOutput,
+	}
+
+	writers, err := createCSVWriters(csvWriterParams)
 	if err != nil {
-		return fmt.Errorf("failed to process records: %w", err)
+		return fmt.Errorf("failed to create CSV writers: %w", err)
+	}
+	defer closeAllWriters(writers)
+
+	// Process records and count for reporting
+	processingResult, err := processGeneDataRecords(geneDataIterator, writers)
+	if err != nil {
+		return fmt.Errorf("failed to process gene data records: %w", err)
 	}
 
-	// Validate we found records
-	if totalRecords == 0 {
-		return fmt.Errorf("no gene data records found in the HTML file")
+	// Validate processing results
+	if err := validateProcessingResults(processingResult); err != nil {
+		return fmt.Errorf("processing validation failed: %w", err)
 	}
 
-	fmt.Printf("Successfully processed %d gene records\n", totalRecords)
-	fmt.Printf("Gene products written to: %s\n", geneProductOutput)
-	fmt.Printf("Gene descriptions written to: %s\n", geneDescriptionOutput)
+	// Report successful processing
+	reportProcessingResults(processingResult, params)
 
 	return nil
 }
 
-// parseHTMLTableIter extracts gene data from an HTML table using an iterator pattern.
-// Returns an iter.Seq that yields GeneDataRecord items lazily for memory-efficient processing.
-func parseHTMLTableIter(filename string) (iter.Seq[GeneDataRecord], error) {
-	doc, err := loadHTMLDocument(filename)
+// CSVWriterCreationParams contains parameters for creating CSV writers
+type CSVWriterCreationParams struct {
+	GeneProductOutputFile     string `validate:"required,min=1" json:"gene_product_output_file"`
+	GeneDescriptionOutputFile string `validate:"required,min=1" json:"gene_description_output_file"`
+}
+
+// ProcessingResult contains the results of processing gene data records
+type ProcessingResult struct {
+	TotalRecordsProcessed     int
+	GeneProductRecordsWritten int
+	DescriptionRecordsWritten int
+}
+
+// validateInputFileExists checks if the input file exists and is readable
+func validateInputFileExists(inputFile string) error {
+	if _, err := os.Stat(inputFile); os.IsNotExist(err) {
+		return fmt.Errorf("input file does not exist: %s", inputFile)
+	}
+	return nil
+}
+
+// createGeneDataIterator creates an iterator for processing gene data from HTML
+func createGeneDataIterator(
+	filename string,
+	config *ParsingConfig,
+) (iter.Seq[GeneDataRecord], error) {
+	htmlDocument, err := loadHTMLDocument(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load HTML document: %w", err)
 	}
 
-	ddbGeneRegex := regexp.MustCompile(`^DDB_G\d+`)
+	return createIteratorFromDocument(htmlDocument, config), nil
+}
 
-	// Return an iterator function that yields GeneDataRecord items
-	return func(yield func(GeneDataRecord) bool) {
-		doc.Find("table tr").Each(func(i int, row *goquery.Selection) {
-			cells := row.Find("td")
-			clen := cells.Length()
+// createCSVWriters creates all required CSV writers
+func createCSVWriters(
+	params CSVWriterCreationParams,
+) ([]CSVRecordWriter, error) {
+	if err := ValidateStruct(params); err != nil {
+		return nil, fmt.Errorf(
+			"CSV writer parameters validation failed: %w",
+			err,
+		)
+	}
 
-			// Skip rows that don't have at least 3 cells
-			if clen < 3 {
-				return
-			}
+	geneProductWriter, err := NewGeneProductCSVWriter(
+		params.GeneProductOutputFile,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gene product writer: %w", err)
+	}
 
-			// Check if first cell contains DDB_G ID
-			firstCellText := strings.TrimSpace(cells.Eq(0).Text())
-			if !ddbGeneRegex.MatchString(firstCellText) {
-				return
-			}
+	geneDescriptionWriter, err := NewGeneDescriptionCSVWriter(
+		params.GeneDescriptionOutputFile,
+	)
+	if err != nil {
+		geneProductWriter.Close()
+		return nil, fmt.Errorf(
+			"failed to create gene description writer: %w",
+			err,
+		)
+	}
 
-			// Extract gene product first to determine description scanning range
-			geneProduct, geneProductCol := extractTextFromColumnsWithIndex(
-				cells,
-				3,
-				7,
+	return []CSVRecordWriter{geneProductWriter, geneDescriptionWriter}, nil
+}
+
+// closeAllWriters closes all CSV writers and handles errors
+func closeAllWriters(writers []CSVRecordWriter) {
+	for _, writer := range writers {
+		if err := writer.Close(); err != nil {
+			// Log error but don't fail since this is cleanup
+			fmt.Printf("Warning: failed to close writer: %v\n", err)
+		}
+	}
+}
+
+// processGeneDataRecords processes all gene data records using the provided writers
+func processGeneDataRecords(
+	geneDataIterator iter.Seq[GeneDataRecord],
+	writers []CSVRecordWriter,
+) (*ProcessingResult, error) {
+	result := &ProcessingResult{}
+
+	for record := range geneDataIterator {
+		result.TotalRecordsProcessed++
+
+		// Validate individual record
+		if err := ValidateStruct(record); err != nil {
+			return nil, fmt.Errorf(
+				"record validation failed for gene %s: %w",
+				record.GeneID,
+				err,
 			)
-			// Determine description scanning range based on gene product location
-			var description string
-			if geneProductCol != -1 {
-				// Gene product found: start description scanning after gene product column
-				description = extractTextFromColumns(
-					cells,
-					geneProductCol+1,
-					clen-1,
+		}
+
+		// Process record with each writer
+		err := processRecordWithWriters(record, writers, result)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to process record %s: %w",
+				record.GeneID,
+				err,
+			)
+		}
+	}
+
+	return result, nil
+}
+
+// processRecordWithWriters processes a single record with all writers
+func processRecordWithWriters(
+	record GeneDataRecord,
+	writers []CSVRecordWriter,
+	result *ProcessingResult,
+) error {
+	for i, writer := range writers {
+		if !writer.ShouldSkip(record) {
+			if err := writer.WriteRecord(record); err != nil {
+				return fmt.Errorf(
+					"failed to write record with writer %d: %w",
+					i,
+					err,
 				)
-			} else {
-				// Gene product not found: scan all remaining cells for description
-				description = extractTextFromColumns(cells, 1, clen-1)
 			}
 
-			record := GeneDataRecord{
-				GeneID:      firstCellText,
-				GeneProduct: geneProduct,
-				Description: description,
+			// Update counters based on writer type
+			switch writer.(type) {
+			case *GeneProductCSVWriter:
+				result.GeneProductRecordsWritten++
+			case *GeneDescriptionCSVWriter:
+				result.DescriptionRecordsWritten++
 			}
+		}
+	}
+	return nil
+}
 
-			// Yield the record and check if iteration should continue
-			if !yield(record) {
-				return // Early termination requested by consumer
-			}
-		})
-	}, nil
+// validateProcessingResults validates the processing results
+func validateProcessingResults(result *ProcessingResult) error {
+	if result.TotalRecordsProcessed == 0 {
+		return fmt.Errorf("no gene data records found in the HTML file")
+	}
+	return nil
+}
+
+// reportProcessingResults reports the results of processing
+func reportProcessingResults(
+	result *ProcessingResult,
+	params ParseUnknowmeDataParams,
+) {
+	fmt.Printf(
+		"Successfully processed %d gene records\n",
+		result.TotalRecordsProcessed,
+	)
+	fmt.Printf(
+		"Gene products written to: %s (%d records)\n",
+		params.GeneProductOutput,
+		result.GeneProductRecordsWritten,
+	)
+	fmt.Printf("Gene descriptions written to: %s (%d records)\n",
+		params.GeneDescriptionOutput, result.DescriptionRecordsWritten)
+}
+
+// createIteratorFromDocument creates an iterator from a parsed HTML document
+func createIteratorFromDocument(
+	htmlDocument *goquery.Document,
+	config *ParsingConfig,
+) iter.Seq[GeneDataRecord] {
+	return func(yield func(GeneDataRecord) bool) {
+		htmlDocument.Find("table tr").
+			Each(func(i int, row *goquery.Selection) {
+				record, shouldProcess := processTableRow(row, config)
+				if shouldProcess {
+					if !yield(record) {
+						return // Early termination requested by consumer
+					}
+				}
+			})
+	}
+}
+
+// processTableRow processes a single table row and returns a gene data record
+func processTableRow(
+	row *goquery.Selection,
+	config *ParsingConfig,
+) (GeneDataRecord, bool) {
+	cells := row.Find("td")
+	cellCount := cells.Length()
+
+	// Skip rows that don't have at least 3 cells
+	if cellCount < 3 {
+		return GeneDataRecord{}, false
+	}
+
+	// Extract and validate gene ID
+	geneID := extractGeneID(cells)
+	if !isValidGeneID(geneID, config.ddbGeneRegex) {
+		return GeneDataRecord{}, false
+	}
+
+	// Extract gene product and description using functional approach
+	geneProduct, geneProductColumn := extractGeneProductWithIndex(
+		cells,
+		config,
+	)
+	description := extractGeneDescription(
+		cells,
+		geneProductColumn,
+		cellCount,
+	)
+
+	record := GeneDataRecord{
+		GeneID:      geneID,
+		GeneProduct: geneProduct,
+		Description: description,
+	}
+
+	return record, true
+}
+
+// extractGeneID extracts the gene ID from the first cell
+func extractGeneID(cells *goquery.Selection) string {
+	return strings.TrimSpace(cells.Eq(0).Text())
+}
+
+// isValidGeneID checks if the gene ID matches the expected pattern
+func isValidGeneID(geneID string, regex *regexp.Regexp) bool {
+	return regex.MatchString(geneID)
+}
+
+// extractGeneProductWithIndex extracts gene product and returns its column
+// index
+func extractGeneProductWithIndex(
+	cells *goquery.Selection,
+	config *ParsingConfig,
+) (string, int) {
+	return extractTextFromColumnsWithIndex(
+		cells,
+		config.geneProductStartColumn,
+		config.geneProductEndColumn,
+	)
+}
+
+// extractGeneDescription extracts description based on gene product location
+func extractGeneDescription(
+	cells *goquery.Selection,
+	geneProductColumn, cellCount int,
+) string {
+	if geneProductColumn != -1 {
+		// Gene product found: start description scanning after gene product column
+		return extractTextFromColumns(cells, geneProductColumn+1, cellCount-1)
+	}
+	// Gene product not found: scan all remaining cells for description
+	return extractTextFromColumns(cells, 1, cellCount-1)
 }
 
 // loadHTMLDocument loads and parses an HTML file
@@ -162,15 +415,26 @@ func loadHTMLDocument(filename string) (*goquery.Document, error) {
 	return doc, nil
 }
 
-func skipGeneProduct(gp GeneDataRecord) bool {
-	if gp.GeneProduct == "" ||
-		strings.Contains(
-			gp.GeneProduct,
-			"no gp",
-		) || strings.Contains(gp.GeneProduct, "unknown") {
-		return true
-	}
-	return false
+// skipGeneProduct determines if a gene product record should be skipped
+func skipGeneProduct(record GeneDataRecord) bool {
+	return isEmptyGeneProduct(record.GeneProduct) ||
+		containsExcludedGeneProductTerms(record.GeneProduct)
+}
+
+// isEmptyGeneProduct checks if the gene product is empty
+func isEmptyGeneProduct(geneProduct string) bool {
+	return strings.TrimSpace(geneProduct) == ""
+}
+
+// containsExcludedGeneProductTerms checks if gene product contains excluded terms
+func containsExcludedGeneProductTerms(geneProduct string) bool {
+	excludedTerms := []string{"no gp", "unknown"}
+	lowerGeneProduct := strings.ToLower(geneProduct)
+
+	_, found := collection.Find(excludedTerms, func(term string) bool {
+		return strings.Contains(lowerGeneProduct, term)
+	})
+	return found
 }
 
 // CSVRecordWriter defines a common interface for writing gene data records to CSV
@@ -186,24 +450,44 @@ type GeneProductCSVWriter struct {
 	file   *os.File
 }
 
+// GeneProductCSVWriterParams contains parameters for creating a gene product CSV writer
+type GeneProductCSVWriterParams struct {
+	Filename string `validate:"required,min=1" json:"filename"`
+}
+
 // NewGeneProductCSVWriter creates a new CSV writer for gene products
 func NewGeneProductCSVWriter(filename string) (*GeneProductCSVWriter, error) {
-	file, err := os.Create(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create file: %w", err)
+	params := GeneProductCSVWriterParams{Filename: filename}
+	return NewGeneProductCSVWriterWithParams(params)
+}
+
+// NewGeneProductCSVWriterWithParams creates a new CSV writer for gene products with validated parameters
+func NewGeneProductCSVWriterWithParams(
+	params GeneProductCSVWriterParams,
+) (*GeneProductCSVWriter, error) {
+	if err := ValidateStruct(params); err != nil {
+		return nil, fmt.Errorf(
+			"gene product CSV writer parameters validation failed: %w",
+			err,
+		)
 	}
 
-	writer := csv.NewWriter(file)
-
-	// Write header
-	err = writer.Write([]string{"GeneID", "gene_product"})
+	file, err := os.Create(params.Filename)
 	if err != nil {
+		return nil, fmt.Errorf("failed to create gene product file: %w", err)
+	}
+
+	csvWriter := csv.NewWriter(file)
+
+	// Write header using predefined structure
+	header := []string{"GeneID", "gene_product"}
+	if err := csvWriter.Write(header); err != nil {
 		file.Close()
-		return nil, fmt.Errorf("failed to write header: %w", err)
+		return nil, fmt.Errorf("failed to write gene product header: %w", err)
 	}
 
 	return &GeneProductCSVWriter{
-		writer: writer,
+		writer: csvWriter,
 		file:   file,
 	}, nil
 }
@@ -227,26 +511,52 @@ type GeneDescriptionCSVWriter struct {
 	file   *os.File
 }
 
+// GeneDescriptionCSVWriterParams contains parameters for creating a gene description CSV writer
+type GeneDescriptionCSVWriterParams struct {
+	Filename string `validate:"required,min=1" json:"filename"`
+}
+
 // NewGeneDescriptionCSVWriter creates a new CSV writer for gene descriptions
 func NewGeneDescriptionCSVWriter(
 	filename string,
 ) (*GeneDescriptionCSVWriter, error) {
-	file, err := os.Create(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create file: %w", err)
+	params := GeneDescriptionCSVWriterParams{Filename: filename}
+	return NewGeneDescriptionCSVWriterWithParams(params)
+}
+
+// NewGeneDescriptionCSVWriterWithParams creates a new CSV writer for gene descriptions with validated parameters
+func NewGeneDescriptionCSVWriterWithParams(
+	params GeneDescriptionCSVWriterParams,
+) (*GeneDescriptionCSVWriter, error) {
+	if err := ValidateStruct(params); err != nil {
+		return nil, fmt.Errorf(
+			"gene description CSV writer parameters validation failed: %w",
+			err,
+		)
 	}
 
-	writer := csv.NewWriter(file)
-
-	// Write header
-	err = writer.Write([]string{"GeneID", "gene_description"})
+	file, err := os.Create(params.Filename)
 	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create gene description file: %w",
+			err,
+		)
+	}
+
+	csvWriter := csv.NewWriter(file)
+
+	// Write header using predefined structure
+	header := []string{"GeneID", "gene_description"}
+	if err := csvWriter.Write(header); err != nil {
 		file.Close()
-		return nil, fmt.Errorf("failed to write header: %w", err)
+		return nil, fmt.Errorf(
+			"failed to write gene description header: %w",
+			err,
+		)
 	}
 
 	return &GeneDescriptionCSVWriter{
-		writer: writer,
+		writer: csvWriter,
 		file:   file,
 	}, nil
 }
@@ -256,30 +566,20 @@ func (w *GeneDescriptionCSVWriter) WriteRecord(record GeneDataRecord) error {
 }
 
 func (w *GeneDescriptionCSVWriter) ShouldSkip(record GeneDataRecord) bool {
-	return record.Description == ""
+	return shouldSkipGeneDescription(record)
+}
+
+// shouldSkipGeneDescription determines if a gene description record should be skipped
+func shouldSkipGeneDescription(record GeneDataRecord) bool {
+	return isEmptyGeneDescription(record.Description)
+}
+
+// isEmptyGeneDescription checks if the gene description is empty
+func isEmptyGeneDescription(description string) bool {
+	return strings.TrimSpace(description) == ""
 }
 
 func (w *GeneDescriptionCSVWriter) Close() error {
 	w.writer.Flush()
 	return w.file.Close()
-}
-
-// processRecordsWithWriters iterates through records once and writes to multiple CSV writers
-func processRecordsWithWriters(
-	iter iter.Seq[GeneDataRecord],
-	writers ...CSVRecordWriter,
-) error {
-	for record := range iter {
-		for _, writer := range writers {
-			if !writer.ShouldSkip(record) {
-				if err := writer.WriteRecord(record); err != nil {
-					return fmt.Errorf(
-						"failed to write record: %w",
-						err,
-					)
-				}
-			}
-		}
-	}
-	return nil
 }
