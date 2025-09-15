@@ -30,7 +30,7 @@ type WorkspaceInvitation struct {
 	// The permissions that the user is going to get within the workspace after accepting the invitation.
 	Permissions *string `json:"permissions,omitempty"`
 	// An optional message that the invitor can provide. This will be visible to the receiver of the invitation.
-	Message *string `json:"message,omitempty"`
+	Message   *string   `json:"message,omitempty"`
 	CreatedOn time.Time `json:"created_on"`
 }
 
@@ -241,7 +241,7 @@ func (o *WorkspaceInvitation) SetCreatedOn(v time.Time) {
 }
 
 func (o WorkspaceInvitation) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -299,5 +299,3 @@ func (v *NullableWorkspaceInvitation) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -21,7 +21,7 @@ type TypeFc4Enum string
 // List of TypeFc4Enum
 const (
 	LEFT_BORDER_COLOR TypeFc4Enum = "left_border_color"
-	BACKGROUND_COLOR TypeFc4Enum = "background_color"
+	BACKGROUND_COLOR  TypeFc4Enum = "background_color"
 )
 
 // All allowed values of TypeFc4Enum enum
@@ -108,4 +108,3 @@ func (v *NullableTypeFc4Enum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

@@ -18,7 +18,7 @@ import (
 // Export - struct for Export
 type Export struct {
 	BaseExporterOptions *BaseExporterOptions
-	CsvExporterOptions *CsvExporterOptions
+	CsvExporterOptions  *CsvExporterOptions
 }
 
 // BaseExporterOptionsAsExport is a convenience function that returns BaseExporterOptions wrapped in Export
@@ -34,7 +34,6 @@ func CsvExporterOptionsAsExport(v *CsvExporterOptions) Export {
 		CsvExporterOptions: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *Export) UnmarshalJSON(data []byte) error {
@@ -93,7 +92,7 @@ func (src Export) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *Export) GetActualInstance() (interface{}) {
+func (obj *Export) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -144,5 +143,3 @@ func (v *NullableExport) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

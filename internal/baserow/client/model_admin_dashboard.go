@@ -19,24 +19,24 @@ var _ MappedNullable = &AdminDashboard{}
 
 // AdminDashboard struct for AdminDashboard
 type AdminDashboard struct {
-	TotalUsers int32 `json:"total_users"`
-	TotalGroups int32 `json:"total_groups"`
-	TotalWorkspaces int32 `json:"total_workspaces"`
-	TotalApplications int32 `json:"total_applications"`
-	NewUsersLast24Hours int32 `json:"new_users_last_24_hours"`
-	NewUsersLast7Days int32 `json:"new_users_last_7_days"`
-	NewUsersLast30Days int32 `json:"new_users_last_30_days"`
-	PreviousNewUsersLast24Hours int32 `json:"previous_new_users_last_24_hours"`
-	PreviousNewUsersLast7Days int32 `json:"previous_new_users_last_7_days"`
-	PreviousNewUsersLast30Days int32 `json:"previous_new_users_last_30_days"`
-	ActiveUsersLast24Hours int32 `json:"active_users_last_24_hours"`
-	ActiveUsersLast7Days int32 `json:"active_users_last_7_days"`
-	ActiveUsersLast30Days int32 `json:"active_users_last_30_days"`
-	PreviousActiveUsersLast24Hours int32 `json:"previous_active_users_last_24_hours"`
-	PreviousActiveUsersLast7Days int32 `json:"previous_active_users_last_7_days"`
-	PreviousActiveUsersLast30Days int32 `json:"previous_active_users_last_30_days"`
-	NewUsersPerDay []AdminDashboardPerDay `json:"new_users_per_day"`
-	ActiveUsersPerDay []AdminDashboardPerDay `json:"active_users_per_day"`
+	TotalUsers                     int32                  `json:"total_users"`
+	TotalGroups                    int32                  `json:"total_groups"`
+	TotalWorkspaces                int32                  `json:"total_workspaces"`
+	TotalApplications              int32                  `json:"total_applications"`
+	NewUsersLast24Hours            int32                  `json:"new_users_last_24_hours"`
+	NewUsersLast7Days              int32                  `json:"new_users_last_7_days"`
+	NewUsersLast30Days             int32                  `json:"new_users_last_30_days"`
+	PreviousNewUsersLast24Hours    int32                  `json:"previous_new_users_last_24_hours"`
+	PreviousNewUsersLast7Days      int32                  `json:"previous_new_users_last_7_days"`
+	PreviousNewUsersLast30Days     int32                  `json:"previous_new_users_last_30_days"`
+	ActiveUsersLast24Hours         int32                  `json:"active_users_last_24_hours"`
+	ActiveUsersLast7Days           int32                  `json:"active_users_last_7_days"`
+	ActiveUsersLast30Days          int32                  `json:"active_users_last_30_days"`
+	PreviousActiveUsersLast24Hours int32                  `json:"previous_active_users_last_24_hours"`
+	PreviousActiveUsersLast7Days   int32                  `json:"previous_active_users_last_7_days"`
+	PreviousActiveUsersLast30Days  int32                  `json:"previous_active_users_last_30_days"`
+	NewUsersPerDay                 []AdminDashboardPerDay `json:"new_users_per_day"`
+	ActiveUsersPerDay              []AdminDashboardPerDay `json:"active_users_per_day"`
 }
 
 // NewAdminDashboard instantiates a new AdminDashboard object
@@ -507,7 +507,7 @@ func (o *AdminDashboard) SetActiveUsersPerDay(v []AdminDashboardPerDay) {
 }
 
 func (o AdminDashboard) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -572,5 +572,3 @@ func (v *NullableAdminDashboard) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

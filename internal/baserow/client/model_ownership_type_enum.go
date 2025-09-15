@@ -21,7 +21,7 @@ type OwnershipTypeEnum string
 // List of OwnershipTypeEnum
 const (
 	COLLABORATIVE OwnershipTypeEnum = "collaborative"
-	PERSONAL OwnershipTypeEnum = "personal"
+	PERSONAL      OwnershipTypeEnum = "personal"
 )
 
 // All allowed values of OwnershipTypeEnum enum
@@ -108,4 +108,3 @@ func (v *NullableOwnershipTypeEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

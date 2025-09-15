@@ -20,16 +20,16 @@ var _ MappedNullable = &UserAdminResponse{}
 
 // UserAdminResponse Serializes the safe user attributes to expose for a response back to the user.
 type UserAdminResponse struct {
-	Id int32 `json:"id"`
-	Username string `json:"username"`
-	Name string `json:"name"`
-	Groups []UserAdminGroups `json:"groups"`
+	Id         int32             `json:"id"`
+	Username   string            `json:"username"`
+	Name       string            `json:"name"`
+	Groups     []UserAdminGroups `json:"groups"`
 	Workspaces []UserAdminGroups `json:"workspaces"`
-	LastLogin NullableTime `json:"last_login,omitempty"`
-	DateJoined *time.Time `json:"date_joined,omitempty"`
+	LastLogin  NullableTime      `json:"last_login,omitempty"`
+	DateJoined *time.Time        `json:"date_joined,omitempty"`
 	// Designates whether this user should be treated as active. Set this to false instead of deleting accounts.
 	IsActive *bool `json:"is_active,omitempty"`
-	// Designates whether this user is an admin and has access to all workspaces and Baserow's admin areas. 
+	// Designates whether this user is an admin and has access to all workspaces and Baserow's admin areas.
 	IsStaff *bool `json:"is_staff,omitempty"`
 }
 
@@ -207,6 +207,7 @@ func (o *UserAdminResponse) HasLastLogin() bool {
 func (o *UserAdminResponse) SetLastLogin(v time.Time) {
 	o.LastLogin.Set(&v)
 }
+
 // SetLastLoginNil sets the value for LastLogin to be an explicit nil
 func (o *UserAdminResponse) SetLastLoginNil() {
 	o.LastLogin.Set(nil)
@@ -314,7 +315,7 @@ func (o *UserAdminResponse) SetIsStaff(v bool) {
 }
 
 func (o UserAdminResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -378,5 +379,3 @@ func (v *NullableUserAdminResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

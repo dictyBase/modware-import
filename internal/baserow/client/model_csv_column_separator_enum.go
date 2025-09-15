@@ -20,12 +20,12 @@ type CsvColumnSeparatorEnum string
 
 // List of CsvColumnSeparatorEnum
 const (
-	COMMA CsvColumnSeparatorEnum = ","
-	SEMICOLON CsvColumnSeparatorEnum = ";"
-	PIPE CsvColumnSeparatorEnum = "|"
-	TAB CsvColumnSeparatorEnum = "tab"
+	COMMA            CsvColumnSeparatorEnum = ","
+	SEMICOLON        CsvColumnSeparatorEnum = ";"
+	PIPE             CsvColumnSeparatorEnum = "|"
+	TAB              CsvColumnSeparatorEnum = "tab"
 	RECORD_SEPARATOR CsvColumnSeparatorEnum = "record_separator"
-	UNIT_SEPARATOR CsvColumnSeparatorEnum = "unit_separator"
+	UNIT_SEPARATOR   CsvColumnSeparatorEnum = "unit_separator"
 )
 
 // All allowed values of CsvColumnSeparatorEnum enum
@@ -116,4 +116,3 @@ func (v *NullableCsvColumnSeparatorEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

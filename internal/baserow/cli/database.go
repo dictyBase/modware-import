@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-
 	"slices"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
@@ -83,7 +82,7 @@ func CreateAccessToken(cltx *cli.Context) error {
 		err := os.WriteFile(
 			cltx.String("refresh-token-path"),
 			[]byte(resp.GetRefreshToken()),
-			0600,
+			0o600,
 		)
 		if err != nil {
 			return cli.Exit(

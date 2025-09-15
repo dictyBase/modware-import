@@ -20,19 +20,19 @@ var _ MappedNullable = &TrashContents{}
 
 // TrashContents struct for TrashContents
 type TrashContents struct {
-	Id int32 `json:"id"`
+	Id             int32  `json:"id"`
 	UserWhoTrashed string `json:"user_who_trashed"`
 	// If an API consumer hasn't yet adopted the \"workspace\" `trash_item_type`, give them the option to return \"group\" by testing the `respond_with_workspace_rename` querystring.
-	TrashItemType string `json:"trash_item_type"`
-	TrashItemId int32 `json:"trash_item_id"`
-	ParentTrashItemId NullableInt32 `json:"parent_trash_item_id,omitempty"`
-	TrashedAt time.Time `json:"trashed_at"`
-	Application NullableInt32 `json:"application,omitempty"`
-	Group int32 `json:"group"`
-	Workspace int32 `json:"workspace"`
-	Name string `json:"name"`
-	Names []string `json:"names,omitempty"`
-	ParentName NullableString `json:"parent_name,omitempty"`
+	TrashItemType     string         `json:"trash_item_type"`
+	TrashItemId       int32          `json:"trash_item_id"`
+	ParentTrashItemId NullableInt32  `json:"parent_trash_item_id,omitempty"`
+	TrashedAt         time.Time      `json:"trashed_at"`
+	Application       NullableInt32  `json:"application,omitempty"`
+	Group             int32          `json:"group"`
+	Workspace         int32          `json:"workspace"`
+	Name              string         `json:"name"`
+	Names             []string       `json:"names,omitempty"`
+	ParentName        NullableString `json:"parent_name,omitempty"`
 }
 
 // NewTrashContents instantiates a new TrashContents object
@@ -188,6 +188,7 @@ func (o *TrashContents) HasParentTrashItemId() bool {
 func (o *TrashContents) SetParentTrashItemId(v int32) {
 	o.ParentTrashItemId.Set(&v)
 }
+
 // SetParentTrashItemIdNil sets the value for ParentTrashItemId to be an explicit nil
 func (o *TrashContents) SetParentTrashItemIdNil() {
 	o.ParentTrashItemId.Set(nil)
@@ -254,6 +255,7 @@ func (o *TrashContents) HasApplication() bool {
 func (o *TrashContents) SetApplication(v int32) {
 	o.Application.Set(&v)
 }
+
 // SetApplicationNil sets the value for Application to be an explicit nil
 func (o *TrashContents) SetApplicationNil() {
 	o.Application.Set(nil)
@@ -401,6 +403,7 @@ func (o *TrashContents) HasParentName() bool {
 func (o *TrashContents) SetParentName(v string) {
 	o.ParentName.Set(&v)
 }
+
 // SetParentNameNil sets the value for ParentName to be an explicit nil
 func (o *TrashContents) SetParentNameNil() {
 	o.ParentName.Set(nil)
@@ -412,7 +415,7 @@ func (o *TrashContents) UnsetParentName() {
 }
 
 func (o TrashContents) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -479,5 +482,3 @@ func (v *NullableTrashContents) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

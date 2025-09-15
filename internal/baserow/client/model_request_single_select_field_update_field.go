@@ -19,8 +19,8 @@ var _ MappedNullable = &RequestSingleSelectFieldUpdateField{}
 
 // RequestSingleSelectFieldUpdateField struct for RequestSingleSelectFieldUpdateField
 type RequestSingleSelectFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
-	Type *Type712Enum `json:"type,omitempty"`
+	Name          *string        `json:"name,omitempty"`
+	Type          *Type712Enum   `json:"type,omitempty"`
 	SelectOptions []SelectOption `json:"select_options,omitempty"`
 }
 
@@ -138,7 +138,7 @@ func (o *RequestSingleSelectFieldUpdateField) SetSelectOptions(v []SelectOption)
 }
 
 func (o RequestSingleSelectFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -194,5 +194,3 @@ func (v *NullableRequestSingleSelectFieldUpdateField) UnmarshalJSON(src []byte) 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

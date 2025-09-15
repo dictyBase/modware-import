@@ -19,12 +19,12 @@ var _ MappedNullable = &RatingFieldCreateField{}
 
 // RatingFieldCreateField struct for RatingFieldCreateField
 type RatingFieldCreateField struct {
-	Name string `json:"name"`
+	Name string      `json:"name"`
 	Type Type712Enum `json:"type"`
 	// Maximum value the rating can take.
 	MaxValue *int32 `json:"max_value,omitempty"`
 	// Color of the symbols.
-	Color *string `json:"color,omitempty"`
+	Color *string    `json:"color,omitempty"`
 	Style *StyleEnum `json:"style,omitempty"`
 }
 
@@ -192,7 +192,7 @@ func (o *RatingFieldCreateField) SetStyle(v StyleEnum) {
 }
 
 func (o RatingFieldCreateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -250,5 +250,3 @@ func (v *NullableRatingFieldCreateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

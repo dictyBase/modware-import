@@ -19,10 +19,10 @@ var _ MappedNullable = &Table{}
 
 // Table struct for Table
 type Table struct {
-	Id int32 `json:"id"`
+	Id   int32  `json:"id"`
 	Name string `json:"name"`
 	// Lowest first.
-	Order int32 `json:"order"`
+	Order      int32 `json:"order"`
 	DatabaseId int32 `json:"database_id"`
 }
 
@@ -144,7 +144,7 @@ func (o *Table) SetDatabaseId(v int32) {
 }
 
 func (o Table) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -195,5 +195,3 @@ func (v *NullableTable) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -19,8 +19,8 @@ var _ MappedNullable = &SingleSelectFieldCreateField{}
 
 // SingleSelectFieldCreateField struct for SingleSelectFieldCreateField
 type SingleSelectFieldCreateField struct {
-	Name string `json:"name"`
-	Type Type712Enum `json:"type"`
+	Name          string         `json:"name"`
+	Type          Type712Enum    `json:"type"`
 	SelectOptions []SelectOption `json:"select_options,omitempty"`
 }
 
@@ -124,7 +124,7 @@ func (o *SingleSelectFieldCreateField) SetSelectOptions(v []SelectOption) {
 }
 
 func (o SingleSelectFieldCreateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -176,5 +176,3 @@ func (v *NullableSingleSelectFieldCreateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

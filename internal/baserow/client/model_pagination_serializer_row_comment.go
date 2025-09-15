@@ -25,7 +25,7 @@ type PaginationSerializerRowComment struct {
 	Next NullableString `json:"next"`
 	// URL to the previous page.
 	Previous NullableString `json:"previous"`
-	Results []RowComment `json:"results"`
+	Results  []RowComment   `json:"results"`
 }
 
 // NewPaginationSerializerRowComment instantiates a new PaginationSerializerRowComment object
@@ -150,7 +150,7 @@ func (o *PaginationSerializerRowComment) SetResults(v []RowComment) {
 }
 
 func (o PaginationSerializerRowComment) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -201,5 +201,3 @@ func (v *NullablePaginationSerializerRowComment) UnmarshalJSON(src []byte) error
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

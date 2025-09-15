@@ -31,8 +31,8 @@ type AirtableImportJobJob struct {
 	// The group ID where the Airtable base must be imported into.
 	GroupId int32 `json:"group_id"`
 	// The workspace ID where the Airtable base must be imported into.
-	WorkspaceId int32 `json:"workspace_id"`
-	Database Application `json:"database"`
+	WorkspaceId int32       `json:"workspace_id"`
+	Database    Application `json:"database"`
 	// Public ID of the shared Airtable base that must be imported.
 	AirtableShareId string `json:"airtable_share_id"`
 }
@@ -287,7 +287,7 @@ func (o *AirtableImportJobJob) SetAirtableShareId(v string) {
 }
 
 func (o AirtableImportJobJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -345,5 +345,3 @@ func (v *NullableAirtableImportJobJob) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

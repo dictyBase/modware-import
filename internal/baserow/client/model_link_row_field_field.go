@@ -19,9 +19,9 @@ var _ MappedNullable = &LinkRowFieldField{}
 
 // LinkRowFieldField struct for LinkRowFieldField
 type LinkRowFieldField struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -273,6 +273,7 @@ func (o *LinkRowFieldField) HasLinkRowTableId() bool {
 func (o *LinkRowFieldField) SetLinkRowTableId(v int32) {
 	o.LinkRowTableId.Set(&v)
 }
+
 // SetLinkRowTableIdNil sets the value for LinkRowTableId to be an explicit nil
 func (o *LinkRowFieldField) SetLinkRowTableIdNil() {
 	o.LinkRowTableId.Set(nil)
@@ -341,6 +342,7 @@ func (o *LinkRowFieldField) HasLinkRowTable() bool {
 func (o *LinkRowFieldField) SetLinkRowTable(v int32) {
 	o.LinkRowTable.Set(&v)
 }
+
 // SetLinkRowTableNil sets the value for LinkRowTable to be an explicit nil
 func (o *LinkRowFieldField) SetLinkRowTableNil() {
 	o.LinkRowTable.Set(nil)
@@ -376,7 +378,7 @@ func (o *LinkRowFieldField) SetLinkRowRelatedField(v int32) {
 }
 
 func (o LinkRowFieldField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -440,5 +442,3 @@ func (v *NullableLinkRowFieldField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

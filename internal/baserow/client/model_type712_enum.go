@@ -20,25 +20,25 @@ type Type712Enum string
 
 // List of Type712Enum
 const (
-	TEXT Type712Enum = "text"
-	LONG_TEXT Type712Enum = "long_text"
-	URL Type712Enum = "url"
-	EMAIL Type712Enum = "email"
-	NUMBER Type712Enum = "number"
-	RATING Type712Enum = "rating"
-	BOOLEAN Type712Enum = "boolean"
-	DATE Type712Enum = "date"
-	LAST_MODIFIED Type712Enum = "last_modified"
-	CREATED_ON Type712Enum = "created_on"
-	LINK_ROW Type712Enum = "link_row"
-	FILE Type712Enum = "file"
-	SINGLE_SELECT Type712Enum = "single_select"
-	MULTIPLE_SELECT Type712Enum = "multiple_select"
-	PHONE_NUMBER Type712Enum = "phone_number"
-	FORMULA Type712Enum = "formula"
-	COUNT Type712Enum = "count"
-	ROLLUP Type712Enum = "rollup"
-	LOOKUP Type712Enum = "lookup"
+	TEXT                   Type712Enum = "text"
+	LONG_TEXT              Type712Enum = "long_text"
+	URL                    Type712Enum = "url"
+	EMAIL                  Type712Enum = "email"
+	NUMBER                 Type712Enum = "number"
+	RATING                 Type712Enum = "rating"
+	BOOLEAN                Type712Enum = "boolean"
+	DATE                   Type712Enum = "date"
+	LAST_MODIFIED          Type712Enum = "last_modified"
+	CREATED_ON             Type712Enum = "created_on"
+	LINK_ROW               Type712Enum = "link_row"
+	FILE                   Type712Enum = "file"
+	SINGLE_SELECT          Type712Enum = "single_select"
+	MULTIPLE_SELECT        Type712Enum = "multiple_select"
+	PHONE_NUMBER           Type712Enum = "phone_number"
+	FORMULA                Type712Enum = "formula"
+	COUNT                  Type712Enum = "count"
+	ROLLUP                 Type712Enum = "rollup"
+	LOOKUP                 Type712Enum = "lookup"
 	MULTIPLE_COLLABORATORS Type712Enum = "multiple_collaborators"
 )
 
@@ -144,4 +144,3 @@ func (v *NullableType712Enum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

@@ -21,10 +21,10 @@ var _ MappedNullable = &GitLabAuthProviderModelAuthProvider{}
 type GitLabAuthProviderModelAuthProvider struct {
 	Id int32 `json:"id"`
 	// The type of the related field.
-	Type string `json:"type"`
-	Domain NullableString `json:"domain,omitempty"`
-	Enabled *bool `json:"enabled,omitempty"`
-	Name string `json:"name"`
+	Type    string         `json:"type"`
+	Domain  NullableString `json:"domain,omitempty"`
+	Enabled *bool          `json:"enabled,omitempty"`
+	Name    string         `json:"name"`
 	// Base URL of the authorization server
 	BaseUrl string `json:"base_url"`
 	// App ID, or consumer key
@@ -136,6 +136,7 @@ func (o *GitLabAuthProviderModelAuthProvider) HasDomain() bool {
 func (o *GitLabAuthProviderModelAuthProvider) SetDomain(v string) {
 	o.Domain.Set(&v)
 }
+
 // SetDomainNil sets the value for Domain to be an explicit nil
 func (o *GitLabAuthProviderModelAuthProvider) SetDomainNil() {
 	o.Domain.Set(nil)
@@ -275,7 +276,7 @@ func (o *GitLabAuthProviderModelAuthProvider) SetSecret(v string) {
 }
 
 func (o GitLabAuthProviderModelAuthProvider) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -334,5 +335,3 @@ func (v *NullableGitLabAuthProviderModelAuthProvider) UnmarshalJSON(src []byte) 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

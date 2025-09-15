@@ -18,7 +18,7 @@ import (
 // AdminListUsers400ResponseDetail - struct for AdminListUsers400ResponseDetail
 type AdminListUsers400ResponseDetail struct {
 	MapmapOfStringinterface *map[string]interface{}
-	String *string
+	String                  *string
 }
 
 // map[string]interface{}AsAdminListUsers400ResponseDetail is a convenience function that returns map[string]interface{} wrapped in AdminListUsers400ResponseDetail
@@ -34,7 +34,6 @@ func StringAsAdminListUsers400ResponseDetail(v *string) AdminListUsers400Respons
 		String: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *AdminListUsers400ResponseDetail) UnmarshalJSON(data []byte) error {
@@ -93,7 +92,7 @@ func (src AdminListUsers400ResponseDetail) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *AdminListUsers400ResponseDetail) GetActualInstance() (interface{}) {
+func (obj *AdminListUsers400ResponseDetail) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -144,5 +143,3 @@ func (v *NullableAdminListUsers400ResponseDetail) UnmarshalJSON(src []byte) erro
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

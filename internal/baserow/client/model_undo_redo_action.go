@@ -74,6 +74,7 @@ func (o *UndoRedoAction) HasActionType() bool {
 func (o *UndoRedoAction) SetActionType(v string) {
 	o.ActionType.Set(&v)
 }
+
 // SetActionTypeNil sets the value for ActionType to be an explicit nil
 func (o *UndoRedoAction) SetActionTypeNil() {
 	o.ActionType.Set(nil)
@@ -116,6 +117,7 @@ func (o *UndoRedoAction) HasActionScope() bool {
 func (o *UndoRedoAction) SetActionScope(v string) {
 	o.ActionScope.Set(&v)
 }
+
 // SetActionScopeNil sets the value for ActionScope to be an explicit nil
 func (o *UndoRedoAction) SetActionScopeNil() {
 	o.ActionScope.Set(nil)
@@ -127,7 +129,7 @@ func (o *UndoRedoAction) UnsetActionScope() {
 }
 
 func (o UndoRedoAction) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -180,5 +182,3 @@ func (v *NullableUndoRedoAction) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

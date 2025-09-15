@@ -21,13 +21,13 @@ var _ MappedNullable = &RowComment{}
 // RowComment struct for RowComment
 type RowComment struct {
 	Id int32 `json:"id"`
-	// The table the row this comment is for is found in. 
+	// The table the row this comment is for is found in.
 	TableId int32 `json:"table_id"`
 	// The id of the row the comment is for.
 	RowId int32 `json:"row_id"`
 	// The users comment.
-	Comment string `json:"comment"`
-	FirstName *string `json:"first_name,omitempty"`
+	Comment   string    `json:"comment"`
+	FirstName *string   `json:"first_name,omitempty"`
 	CreatedOn time.Time `json:"created_on"`
 	UpdatedOn time.Time `json:"updated_on"`
 	// The user who made the comment.
@@ -261,7 +261,7 @@ func (o *RowComment) SetUserId(v int32) {
 }
 
 func (o RowComment) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -318,5 +318,3 @@ func (v *NullableRowComment) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

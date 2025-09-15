@@ -106,6 +106,7 @@ func (o *ExampleRowRequest) HasField1() bool {
 func (o *ExampleRowRequest) SetField1(v string) {
 	o.Field1.Set(&v)
 }
+
 // SetField1Nil sets the value for Field1 to be an explicit nil
 func (o *ExampleRowRequest) SetField1Nil() {
 	o.Field1.Set(nil)
@@ -148,6 +149,7 @@ func (o *ExampleRowRequest) HasField2() bool {
 func (o *ExampleRowRequest) SetField2(v string) {
 	o.Field2.Set(&v)
 }
+
 // SetField2Nil sets the value for Field2 to be an explicit nil
 func (o *ExampleRowRequest) SetField2Nil() {
 	o.Field2.Set(nil)
@@ -190,6 +192,7 @@ func (o *ExampleRowRequest) HasField3() bool {
 func (o *ExampleRowRequest) SetField3(v string) {
 	o.Field3.Set(&v)
 }
+
 // SetField3Nil sets the value for Field3 to be an explicit nil
 func (o *ExampleRowRequest) SetField3Nil() {
 	o.Field3.Set(nil)
@@ -232,6 +235,7 @@ func (o *ExampleRowRequest) HasField4() bool {
 func (o *ExampleRowRequest) SetField4(v string) {
 	o.Field4.Set(&v)
 }
+
 // SetField4Nil sets the value for Field4 to be an explicit nil
 func (o *ExampleRowRequest) SetField4Nil() {
 	o.Field4.Set(nil)
@@ -274,6 +278,7 @@ func (o *ExampleRowRequest) HasField5() bool {
 func (o *ExampleRowRequest) SetField5(v float64) {
 	o.Field5.Set(&v)
 }
+
 // SetField5Nil sets the value for Field5 to be an explicit nil
 func (o *ExampleRowRequest) SetField5Nil() {
 	o.Field5.Set(nil)
@@ -380,6 +385,7 @@ func (o *ExampleRowRequest) HasField8() bool {
 func (o *ExampleRowRequest) SetField8(v string) {
 	o.Field8.Set(&v)
 }
+
 // SetField8Nil sets the value for Field8 to be an explicit nil
 func (o *ExampleRowRequest) SetField8Nil() {
 	o.Field8.Set(nil)
@@ -487,6 +493,7 @@ func (o *ExampleRowRequest) HasField13() bool {
 func (o *ExampleRowRequest) SetField13(v int32) {
 	o.Field13.Set(&v)
 }
+
 // SetField13Nil sets the value for Field13 to be an explicit nil
 func (o *ExampleRowRequest) SetField13Nil() {
 	o.Field13.Set(nil)
@@ -561,6 +568,7 @@ func (o *ExampleRowRequest) HasField15() bool {
 func (o *ExampleRowRequest) SetField15(v string) {
 	o.Field15.Set(&v)
 }
+
 // SetField15Nil sets the value for Field15 to be an explicit nil
 func (o *ExampleRowRequest) SetField15Nil() {
 	o.Field15.Set(nil)
@@ -604,7 +612,7 @@ func (o *ExampleRowRequest) SetField20(v []Collaborator) {
 }
 
 func (o ExampleRowRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -693,5 +701,3 @@ func (v *NullableExampleRowRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

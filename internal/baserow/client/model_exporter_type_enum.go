@@ -20,9 +20,9 @@ type ExporterTypeEnum string
 
 // List of ExporterTypeEnum
 const (
-	CSV ExporterTypeEnum = "csv"
+	CSV  ExporterTypeEnum = "csv"
 	JSON ExporterTypeEnum = "json"
-	XML ExporterTypeEnum = "xml"
+	XML  ExporterTypeEnum = "xml"
 )
 
 // All allowed values of ExporterTypeEnum enum
@@ -110,4 +110,3 @@ func (v *NullableExporterTypeEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

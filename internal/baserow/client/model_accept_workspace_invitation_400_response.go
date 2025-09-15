@@ -20,7 +20,7 @@ var _ MappedNullable = &AcceptWorkspaceInvitation400Response{}
 // AcceptWorkspaceInvitation400Response struct for AcceptWorkspaceInvitation400Response
 type AcceptWorkspaceInvitation400Response struct {
 	// Machine readable error indicating what went wrong.
-	Error *string `json:"error,omitempty"`
+	Error  *string                          `json:"error,omitempty"`
 	Detail *AdminListUsers400ResponseDetail `json:"detail,omitempty"`
 }
 
@@ -106,7 +106,7 @@ func (o *AcceptWorkspaceInvitation400Response) SetDetail(v AdminListUsers400Resp
 }
 
 func (o AcceptWorkspaceInvitation400Response) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -159,5 +159,3 @@ func (v *NullableAcceptWorkspaceInvitation400Response) UnmarshalJSON(src []byte)
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -20,16 +20,16 @@ var _ MappedNullable = &UserWorkspaceInvitation{}
 
 // UserWorkspaceInvitation This serializer is used for displaying the invitation to the user that doesn't have access to the workspace yet, so not for invitation management purposes.
 type UserWorkspaceInvitation struct {
-	Id int32 `json:"id"`
+	Id        int32  `json:"id"`
 	InvitedBy string `json:"invited_by"`
-	Group string `json:"group"`
+	Group     string `json:"group"`
 	Workspace string `json:"workspace"`
 	// The email address of the user that the invitation is meant for. Only a user with that email address can accept it.
 	Email string `json:"email"`
 	// An optional message that the invitor can provide. This will be visible to the receiver of the invitation.
-	Message string `json:"message"`
-	CreatedOn time.Time `json:"created_on"`
-	EmailExists bool `json:"email_exists"`
+	Message     string    `json:"message"`
+	CreatedOn   time.Time `json:"created_on"`
+	EmailExists bool      `json:"email_exists"`
 }
 
 // NewUserWorkspaceInvitation instantiates a new UserWorkspaceInvitation object
@@ -250,7 +250,7 @@ func (o *UserWorkspaceInvitation) SetEmailExists(v bool) {
 }
 
 func (o UserWorkspaceInvitation) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -305,5 +305,3 @@ func (v *NullableUserWorkspaceInvitation) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

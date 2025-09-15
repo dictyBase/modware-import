@@ -19,12 +19,12 @@ var _ MappedNullable = &RequestLastModifiedFieldUpdateField{}
 
 // RequestLastModifiedFieldUpdateField struct for RequestLastModifiedFieldUpdateField
 type RequestLastModifiedFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
-	Type *Type712Enum `json:"type,omitempty"`
+	Name       *string         `json:"name,omitempty"`
+	Type       *Type712Enum    `json:"type,omitempty"`
 	DateFormat *DateFormatEnum `json:"date_format,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime *bool `json:"date_include_time,omitempty"`
-	DateTimeFormat *DateTimeFormatEnum `json:"date_time_format,omitempty"`
+	DateIncludeTime *bool               `json:"date_include_time,omitempty"`
+	DateTimeFormat  *DateTimeFormatEnum `json:"date_time_format,omitempty"`
 	// Indicates if the timezone should be shown.
 	DateShowTzinfo *bool `json:"date_show_tzinfo,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
@@ -274,6 +274,7 @@ func (o *RequestLastModifiedFieldUpdateField) HasDateForceTimezone() bool {
 func (o *RequestLastModifiedFieldUpdateField) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *RequestLastModifiedFieldUpdateField) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -316,6 +317,7 @@ func (o *RequestLastModifiedFieldUpdateField) HasDateForceTimezoneOffset() bool 
 func (o *RequestLastModifiedFieldUpdateField) SetDateForceTimezoneOffset(v int32) {
 	o.DateForceTimezoneOffset.Set(&v)
 }
+
 // SetDateForceTimezoneOffsetNil sets the value for DateForceTimezoneOffset to be an explicit nil
 func (o *RequestLastModifiedFieldUpdateField) SetDateForceTimezoneOffsetNil() {
 	o.DateForceTimezoneOffset.Set(nil)
@@ -327,7 +329,7 @@ func (o *RequestLastModifiedFieldUpdateField) UnsetDateForceTimezoneOffset() {
 }
 
 func (o RequestLastModifiedFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -398,5 +400,3 @@ func (v *NullableRequestLastModifiedFieldUpdateField) UnmarshalJSON(src []byte) 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -19,7 +19,7 @@ var _ MappedNullable = &RequestEmailFieldUpdateField{}
 
 // RequestEmailFieldUpdateField struct for RequestEmailFieldUpdateField
 type RequestEmailFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
+	Name *string      `json:"name,omitempty"`
 	Type *Type712Enum `json:"type,omitempty"`
 }
 
@@ -105,7 +105,7 @@ func (o *RequestEmailFieldUpdateField) SetType(v Type712Enum) {
 }
 
 func (o RequestEmailFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -158,5 +158,3 @@ func (v *NullableRequestEmailFieldUpdateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

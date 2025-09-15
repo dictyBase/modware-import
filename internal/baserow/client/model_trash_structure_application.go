@@ -19,9 +19,9 @@ var _ MappedNullable = &TrashStructureApplication{}
 
 // TrashStructureApplication struct for TrashStructureApplication
 type TrashStructureApplication struct {
-	Id int32 `json:"id"`
-	Name string `json:"name"`
-	Trashed *bool `json:"trashed,omitempty"`
+	Id      int32  `json:"id"`
+	Name    string `json:"name"`
+	Trashed *bool  `json:"trashed,omitempty"`
 }
 
 // NewTrashStructureApplication instantiates a new TrashStructureApplication object
@@ -124,7 +124,7 @@ func (o *TrashStructureApplication) SetTrashed(v bool) {
 }
 
 func (o TrashStructureApplication) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -176,5 +176,3 @@ func (v *NullableTrashStructureApplication) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

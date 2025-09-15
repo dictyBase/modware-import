@@ -26,13 +26,13 @@ type TableWebhook struct {
 	// The additional headers as an object where the key is the name and the value the value.
 	Headers map[string]interface{} `json:"headers"`
 	// All the calls that this webhook made.
-	Calls []TableWebhookCall `json:"calls"`
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
+	Calls     []TableWebhookCall `json:"calls"`
+	CreatedOn time.Time          `json:"created_on"`
+	UpdatedOn time.Time          `json:"updated_on"`
 	// Indicates whether the field names must be used as payload key instead of the id.
 	UseUserFieldNames *bool `json:"use_user_field_names,omitempty"`
 	// The URL that must be called when the webhook is triggered.
-	Url string `json:"url"`
+	Url           string             `json:"url"`
 	RequestMethod *RequestMethodEnum `json:"request_method,omitempty"`
 	// An internal name of the webhook.
 	Name string `json:"name"`
@@ -422,7 +422,7 @@ func (o *TableWebhook) SetActive(v bool) {
 }
 
 func (o TableWebhook) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -492,5 +492,3 @@ func (v *NullableTableWebhook) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

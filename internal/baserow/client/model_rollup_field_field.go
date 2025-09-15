@@ -19,9 +19,9 @@ var _ MappedNullable = &RollupFieldField{}
 
 // RollupFieldField struct for RollupFieldField
 type RollupFieldField struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -31,24 +31,24 @@ type RollupFieldField struct {
 	// Indicates whether the field is a read only field. If true, it's not possible to update the cell value.
 	ReadOnly bool `json:"read_only"`
 	// Indicates if the time zone should be shown.
-	DateShowTzinfo NullableBool `json:"date_show_tzinfo,omitempty"`
-	DateFormat NullableCountFieldCreateFieldDateFormat `json:"date_format,omitempty"`
+	DateShowTzinfo   NullableBool                                  `json:"date_show_tzinfo,omitempty"`
+	DateFormat       NullableCountFieldCreateFieldDateFormat       `json:"date_format,omitempty"`
 	ArrayFormulaType NullableCountFieldCreateFieldArrayFormulaType `json:"array_formula_type,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
 	DateForceTimezone NullableString `json:"date_force_timezone,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime NullableBool `json:"date_include_time,omitempty"`
-	Nullable bool `json:"nullable"`
-	DateTimeFormat NullableCountFieldCreateFieldDateTimeFormat `json:"date_time_format,omitempty"`
+	DateIncludeTime     NullableBool                                     `json:"date_include_time,omitempty"`
+	Nullable            bool                                             `json:"nullable"`
+	DateTimeFormat      NullableCountFieldCreateFieldDateTimeFormat      `json:"date_time_format,omitempty"`
 	NumberDecimalPlaces NullableCountFieldCreateFieldNumberDecimalPlaces `json:"number_decimal_places,omitempty"`
-	Error NullableString `json:"error,omitempty"`
+	Error               NullableString                                   `json:"error,omitempty"`
 	// The id of the link row field to rollup values for.
 	ThroughFieldId NullableInt32 `json:"through_field_id,omitempty"`
 	// The id of the field in the table linked to by the through_field to rollup.
 	TargetFieldId NullableInt32 `json:"target_field_id,omitempty"`
 	// The rollup formula function that must be applied.
-	RollupFunction *string `json:"rollup_function,omitempty"`
-	FormulaType *FormulaTypeEnum `json:"formula_type,omitempty"`
+	RollupFunction *string          `json:"rollup_function,omitempty"`
+	FormulaType    *FormulaTypeEnum `json:"formula_type,omitempty"`
 }
 
 // NewRollupFieldField instantiates a new RollupFieldField object
@@ -283,6 +283,7 @@ func (o *RollupFieldField) HasDateShowTzinfo() bool {
 func (o *RollupFieldField) SetDateShowTzinfo(v bool) {
 	o.DateShowTzinfo.Set(&v)
 }
+
 // SetDateShowTzinfoNil sets the value for DateShowTzinfo to be an explicit nil
 func (o *RollupFieldField) SetDateShowTzinfoNil() {
 	o.DateShowTzinfo.Set(nil)
@@ -325,6 +326,7 @@ func (o *RollupFieldField) HasDateFormat() bool {
 func (o *RollupFieldField) SetDateFormat(v CountFieldCreateFieldDateFormat) {
 	o.DateFormat.Set(&v)
 }
+
 // SetDateFormatNil sets the value for DateFormat to be an explicit nil
 func (o *RollupFieldField) SetDateFormatNil() {
 	o.DateFormat.Set(nil)
@@ -367,6 +369,7 @@ func (o *RollupFieldField) HasArrayFormulaType() bool {
 func (o *RollupFieldField) SetArrayFormulaType(v CountFieldCreateFieldArrayFormulaType) {
 	o.ArrayFormulaType.Set(&v)
 }
+
 // SetArrayFormulaTypeNil sets the value for ArrayFormulaType to be an explicit nil
 func (o *RollupFieldField) SetArrayFormulaTypeNil() {
 	o.ArrayFormulaType.Set(nil)
@@ -409,6 +412,7 @@ func (o *RollupFieldField) HasDateForceTimezone() bool {
 func (o *RollupFieldField) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *RollupFieldField) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -451,6 +455,7 @@ func (o *RollupFieldField) HasDateIncludeTime() bool {
 func (o *RollupFieldField) SetDateIncludeTime(v bool) {
 	o.DateIncludeTime.Set(&v)
 }
+
 // SetDateIncludeTimeNil sets the value for DateIncludeTime to be an explicit nil
 func (o *RollupFieldField) SetDateIncludeTimeNil() {
 	o.DateIncludeTime.Set(nil)
@@ -517,6 +522,7 @@ func (o *RollupFieldField) HasDateTimeFormat() bool {
 func (o *RollupFieldField) SetDateTimeFormat(v CountFieldCreateFieldDateTimeFormat) {
 	o.DateTimeFormat.Set(&v)
 }
+
 // SetDateTimeFormatNil sets the value for DateTimeFormat to be an explicit nil
 func (o *RollupFieldField) SetDateTimeFormatNil() {
 	o.DateTimeFormat.Set(nil)
@@ -559,6 +565,7 @@ func (o *RollupFieldField) HasNumberDecimalPlaces() bool {
 func (o *RollupFieldField) SetNumberDecimalPlaces(v CountFieldCreateFieldNumberDecimalPlaces) {
 	o.NumberDecimalPlaces.Set(&v)
 }
+
 // SetNumberDecimalPlacesNil sets the value for NumberDecimalPlaces to be an explicit nil
 func (o *RollupFieldField) SetNumberDecimalPlacesNil() {
 	o.NumberDecimalPlaces.Set(nil)
@@ -601,6 +608,7 @@ func (o *RollupFieldField) HasError() bool {
 func (o *RollupFieldField) SetError(v string) {
 	o.Error.Set(&v)
 }
+
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *RollupFieldField) SetErrorNil() {
 	o.Error.Set(nil)
@@ -643,6 +651,7 @@ func (o *RollupFieldField) HasThroughFieldId() bool {
 func (o *RollupFieldField) SetThroughFieldId(v int32) {
 	o.ThroughFieldId.Set(&v)
 }
+
 // SetThroughFieldIdNil sets the value for ThroughFieldId to be an explicit nil
 func (o *RollupFieldField) SetThroughFieldIdNil() {
 	o.ThroughFieldId.Set(nil)
@@ -685,6 +694,7 @@ func (o *RollupFieldField) HasTargetFieldId() bool {
 func (o *RollupFieldField) SetTargetFieldId(v int32) {
 	o.TargetFieldId.Set(&v)
 }
+
 // SetTargetFieldIdNil sets the value for TargetFieldId to be an explicit nil
 func (o *RollupFieldField) SetTargetFieldIdNil() {
 	o.TargetFieldId.Set(nil)
@@ -760,7 +770,7 @@ func (o *RollupFieldField) SetFormulaType(v FormulaTypeEnum) {
 }
 
 func (o RollupFieldField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -853,5 +863,3 @@ func (v *NullableRollupFieldField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

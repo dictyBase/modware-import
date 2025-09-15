@@ -19,14 +19,13 @@ import (
 	"strings"
 )
 
-
 // AdminApiService AdminApi service
 type AdminApiService service
 
 type ApiAdminDeleteUserRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *AdminApiService
-	userId int32
+	userId     int32
 }
 
 func (r ApiAdminDeleteUserRequest) Execute() (*http.Response, error) {
@@ -36,28 +35,28 @@ func (r ApiAdminDeleteUserRequest) Execute() (*http.Response, error) {
 /*
 AdminDeleteUser Method for AdminDeleteUser
 
-Deletes the specified user, if the requesting user has admin permissions. You cannot delete yourself. 
+Deletes the specified user, if the requesting user has admin permissions. You cannot delete yourself.
 
 This is a **premium** feature.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param userId The id of the user to delete
- @return ApiAdminDeleteUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param userId The id of the user to delete
+	@return ApiAdminDeleteUserRequest
 */
 func (a *AdminApiService) AdminDeleteUser(ctx context.Context, userId int32) ApiAdminDeleteUserRequest {
 	return ApiAdminDeleteUserRequest{
 		ApiService: a,
-		ctx: ctx,
-		userId: userId,
+		ctx:        ctx,
+		userId:     userId,
 	}
 }
 
 // Execute executes the request
 func (a *AdminApiService) AdminDeleteUserExecute(r ApiAdminDeleteUserRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminApiService.AdminDeleteUser")
@@ -118,8 +117,8 @@ func (a *AdminApiService) AdminDeleteUserExecute(r ApiAdminDeleteUserRequest) (*
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		return localVarHTTPResponse, newErr
@@ -129,9 +128,9 @@ func (a *AdminApiService) AdminDeleteUserExecute(r ApiAdminDeleteUserRequest) (*
 }
 
 type ApiAdminEditUserRequest struct {
-	ctx context.Context
-	ApiService *AdminApiService
-	userId int32
+	ctx                    context.Context
+	ApiService             *AdminApiService
+	userId                 int32
 	patchedUserAdminUpdate *PatchedUserAdminUpdate
 }
 
@@ -147,30 +146,31 @@ func (r ApiAdminEditUserRequest) Execute() (*UserAdminResponse, *http.Response, 
 /*
 AdminEditUser Method for AdminEditUser
 
-Updates specified user attributes and returns the updated user if the requesting user is staff. You cannot update yourself to no longer be an admin or active. 
+Updates specified user attributes and returns the updated user if the requesting user is staff. You cannot update yourself to no longer be an admin or active.
 
 This is a **premium** feature.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param userId The id of the user to edit
- @return ApiAdminEditUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param userId The id of the user to edit
+	@return ApiAdminEditUserRequest
 */
 func (a *AdminApiService) AdminEditUser(ctx context.Context, userId int32) ApiAdminEditUserRequest {
 	return ApiAdminEditUserRequest{
 		ApiService: a,
-		ctx: ctx,
-		userId: userId,
+		ctx:        ctx,
+		userId:     userId,
 	}
 }
 
 // Execute executes the request
-//  @return UserAdminResponse
+//
+//	@return UserAdminResponse
 func (a *AdminApiService) AdminEditUserExecute(r ApiAdminEditUserRequest) (*UserAdminResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *UserAdminResponse
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UserAdminResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminApiService.AdminEditUser")
@@ -233,8 +233,8 @@ func (a *AdminApiService) AdminEditUserExecute(r ApiAdminEditUserRequest) (*User
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
@@ -253,8 +253,8 @@ func (a *AdminApiService) AdminEditUserExecute(r ApiAdminEditUserRequest) (*User
 }
 
 type ApiAdminImpersonateUserRequest struct {
-	ctx context.Context
-	ApiService *AdminApiService
+	ctx                         context.Context
+	ApiService                  *AdminApiService
 	baserowImpersonateAuthToken *BaserowImpersonateAuthToken
 }
 
@@ -274,24 +274,25 @@ This endpoint allows staff to impersonate another user by requesting a JWT token
 
 This is a **premium** feature.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiAdminImpersonateUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiAdminImpersonateUserRequest
 */
 func (a *AdminApiService) AdminImpersonateUser(ctx context.Context) ApiAdminImpersonateUserRequest {
 	return ApiAdminImpersonateUserRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return AdminImpersonateUser200Response
+//
+//	@return AdminImpersonateUser200Response
 func (a *AdminApiService) AdminImpersonateUserExecute(r ApiAdminImpersonateUserRequest) (*AdminImpersonateUser200Response, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *AdminImpersonateUser200Response
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *AdminImpersonateUser200Response
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminApiService.AdminImpersonateUser")
@@ -365,12 +366,12 @@ func (a *AdminApiService) AdminImpersonateUserExecute(r ApiAdminImpersonateUserR
 }
 
 type ApiAdminListUsersRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *AdminApiService
-	page *int32
-	search *string
-	size *int32
-	sorts *string
+	page       *int32
+	search     *string
+	size       *int32
+	sorts      *string
 }
 
 // Defines which page should be returned.
@@ -404,28 +405,29 @@ func (r ApiAdminListUsersRequest) Execute() ([]UserAdminResponse, *http.Response
 /*
 AdminListUsers Method for AdminListUsers
 
-Returns all users with detailed information on each user, if the requesting user is staff. 
+Returns all users with detailed information on each user, if the requesting user is staff.
 
 This is a **premium** feature.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiAdminListUsersRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiAdminListUsersRequest
 */
 func (a *AdminApiService) AdminListUsers(ctx context.Context) ApiAdminListUsersRequest {
 	return ApiAdminListUsersRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []UserAdminResponse
+//
+//	@return []UserAdminResponse
 func (a *AdminApiService) AdminListUsersExecute(r ApiAdminListUsersRequest) ([]UserAdminResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []UserAdminResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []UserAdminResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminApiService.AdminListUsers")
@@ -497,8 +499,8 @@ func (a *AdminApiService) AdminListUsersExecute(r ApiAdminListUsersRequest) ([]U
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr

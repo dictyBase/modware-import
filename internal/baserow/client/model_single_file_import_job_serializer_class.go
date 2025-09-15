@@ -33,9 +33,9 @@ type SingleFileImportJobSerializerClass struct {
 	// The name of the new table.
 	Name *string `json:"name,omitempty"`
 	// Table id where the data will be imported.
-	TableId *int32 `json:"table_id,omitempty"`
-	FirstRowHeader *bool `json:"first_row_header,omitempty"`
-	Report FileImportJobJobReport `json:"report"`
+	TableId        *int32                 `json:"table_id,omitempty"`
+	FirstRowHeader *bool                  `json:"first_row_header,omitempty"`
+	Report         FileImportJobJobReport `json:"report"`
 }
 
 // NewSingleFileImportJobSerializerClass instantiates a new SingleFileImportJobSerializerClass object
@@ -338,7 +338,7 @@ func (o *SingleFileImportJobSerializerClass) SetReport(v FileImportJobJobReport)
 }
 
 func (o SingleFileImportJobSerializerClass) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -403,5 +403,3 @@ func (v *NullableSingleFileImportJobSerializerClass) UnmarshalJSON(src []byte) e
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

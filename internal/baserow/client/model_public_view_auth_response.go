@@ -65,7 +65,7 @@ func (o *PublicViewAuthResponse) SetAccessToken(v string) {
 }
 
 func (o PublicViewAuthResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -113,5 +113,3 @@ func (v *NullablePublicViewAuthResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -20,9 +20,9 @@ var _ MappedNullable = &CsvExporterOptions{}
 // CsvExporterOptions struct for CsvExporterOptions
 type CsvExporterOptions struct {
 	// Optional: The view for this table to export using its filters, sorts and other view specific settings.
-	ViewId NullableInt32 `json:"view_id,omitempty"`
-	ExporterType ExporterTypeEnum `json:"exporter_type"`
-	ExportCharset *ExportCharsetEnum `json:"export_charset,omitempty"`
+	ViewId             NullableInt32           `json:"view_id,omitempty"`
+	ExporterType       ExporterTypeEnum        `json:"exporter_type"`
+	ExportCharset      *ExportCharsetEnum      `json:"export_charset,omitempty"`
 	CsvColumnSeparator *CsvColumnSeparatorEnum `json:"csv_column_separator,omitempty"`
 	// Whether or not to generate a header row at the top of the csv file.
 	CsvIncludeHeader *bool `json:"csv_include_header,omitempty"`
@@ -90,6 +90,7 @@ func (o *CsvExporterOptions) HasViewId() bool {
 func (o *CsvExporterOptions) SetViewId(v int32) {
 	o.ViewId.Set(&v)
 }
+
 // SetViewIdNil sets the value for ViewId to be an explicit nil
 func (o *CsvExporterOptions) SetViewIdNil() {
 	o.ViewId.Set(nil)
@@ -221,7 +222,7 @@ func (o *CsvExporterOptions) SetCsvIncludeHeader(v bool) {
 }
 
 func (o CsvExporterOptions) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -281,5 +282,3 @@ func (v *NullableCsvExporterOptions) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

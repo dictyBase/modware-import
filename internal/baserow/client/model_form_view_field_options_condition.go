@@ -19,7 +19,7 @@ var _ MappedNullable = &FormViewFieldOptionsCondition{}
 
 // FormViewFieldOptionsCondition struct for FormViewFieldOptionsCondition
 type FormViewFieldOptionsCondition struct {
-	Id int32 `json:"id"`
+	Id    int32 `json:"id"`
 	Field int32 `json:"field"`
 	// Indicates how the field's value must be compared to the filter's value. The filter is always in this order `field` `type` `value` (example: `field_1` `contains` `Test`).
 	Type string `json:"type"`
@@ -152,7 +152,7 @@ func (o *FormViewFieldOptionsCondition) SetValue(v string) {
 }
 
 func (o FormViewFieldOptionsCondition) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -205,5 +205,3 @@ func (v *NullableFormViewFieldOptionsCondition) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

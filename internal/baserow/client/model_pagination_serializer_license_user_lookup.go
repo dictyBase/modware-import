@@ -24,8 +24,8 @@ type PaginationSerializerLicenseUserLookup struct {
 	// URL to the next page.
 	Next NullableString `json:"next"`
 	// URL to the previous page.
-	Previous NullableString `json:"previous"`
-	Results []LicenseUserLookup `json:"results"`
+	Previous NullableString      `json:"previous"`
+	Results  []LicenseUserLookup `json:"results"`
 }
 
 // NewPaginationSerializerLicenseUserLookup instantiates a new PaginationSerializerLicenseUserLookup object
@@ -150,7 +150,7 @@ func (o *PaginationSerializerLicenseUserLookup) SetResults(v []LicenseUserLookup
 }
 
 func (o PaginationSerializerLicenseUserLookup) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -201,5 +201,3 @@ func (v *NullablePaginationSerializerLicenseUserLookup) UnmarshalJSON(src []byte
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

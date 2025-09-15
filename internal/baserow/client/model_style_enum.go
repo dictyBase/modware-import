@@ -20,11 +20,11 @@ type StyleEnum string
 
 // List of StyleEnum
 const (
-	STAR StyleEnum = "star"
-	HEART StyleEnum = "heart"
+	STAR      StyleEnum = "star"
+	HEART     StyleEnum = "heart"
 	THUMBS_UP StyleEnum = "thumbs-up"
-	FLAG StyleEnum = "flag"
-	SMILE StyleEnum = "smile"
+	FLAG      StyleEnum = "flag"
+	SMILE     StyleEnum = "smile"
 )
 
 // All allowed values of StyleEnum enum
@@ -114,4 +114,3 @@ func (v *NullableStyleEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

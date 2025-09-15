@@ -19,9 +19,9 @@ var _ MappedNullable = &PhoneNumberFieldFieldSerializerWithRelatedFields{}
 
 // PhoneNumberFieldFieldSerializerWithRelatedFields struct for PhoneNumberFieldFieldSerializerWithRelatedFields
 type PhoneNumberFieldFieldSerializerWithRelatedFields struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -259,7 +259,7 @@ func (o *PhoneNumberFieldFieldSerializerWithRelatedFields) SetRelatedFields(v []
 }
 
 func (o PhoneNumberFieldFieldSerializerWithRelatedFields) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -316,5 +316,3 @@ func (v *NullablePhoneNumberFieldFieldSerializerWithRelatedFields) UnmarshalJSON
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

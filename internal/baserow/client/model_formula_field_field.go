@@ -19,9 +19,9 @@ var _ MappedNullable = &FormulaFieldField{}
 
 // FormulaFieldField struct for FormulaFieldField
 type FormulaFieldField struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -31,19 +31,19 @@ type FormulaFieldField struct {
 	// Indicates whether the field is a read only field. If true, it's not possible to update the cell value.
 	ReadOnly bool `json:"read_only"`
 	// Indicates if the time zone should be shown.
-	DateShowTzinfo NullableBool `json:"date_show_tzinfo,omitempty"`
-	DateFormat NullableCountFieldCreateFieldDateFormat `json:"date_format,omitempty"`
+	DateShowTzinfo   NullableBool                                  `json:"date_show_tzinfo,omitempty"`
+	DateFormat       NullableCountFieldCreateFieldDateFormat       `json:"date_format,omitempty"`
 	ArrayFormulaType NullableCountFieldCreateFieldArrayFormulaType `json:"array_formula_type,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
 	DateForceTimezone NullableString `json:"date_force_timezone,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime NullableBool `json:"date_include_time,omitempty"`
-	Nullable bool `json:"nullable"`
-	DateTimeFormat NullableCountFieldCreateFieldDateTimeFormat `json:"date_time_format,omitempty"`
+	DateIncludeTime     NullableBool                                     `json:"date_include_time,omitempty"`
+	Nullable            bool                                             `json:"nullable"`
+	DateTimeFormat      NullableCountFieldCreateFieldDateTimeFormat      `json:"date_time_format,omitempty"`
 	NumberDecimalPlaces NullableCountFieldCreateFieldNumberDecimalPlaces `json:"number_decimal_places,omitempty"`
-	Error string `json:"error"`
-	Formula string `json:"formula"`
-	FormulaType *FormulaTypeEnum `json:"formula_type,omitempty"`
+	Error               string                                           `json:"error"`
+	Formula             string                                           `json:"formula"`
+	FormulaType         *FormulaTypeEnum                                 `json:"formula_type,omitempty"`
 }
 
 // NewFormulaFieldField instantiates a new FormulaFieldField object
@@ -280,6 +280,7 @@ func (o *FormulaFieldField) HasDateShowTzinfo() bool {
 func (o *FormulaFieldField) SetDateShowTzinfo(v bool) {
 	o.DateShowTzinfo.Set(&v)
 }
+
 // SetDateShowTzinfoNil sets the value for DateShowTzinfo to be an explicit nil
 func (o *FormulaFieldField) SetDateShowTzinfoNil() {
 	o.DateShowTzinfo.Set(nil)
@@ -322,6 +323,7 @@ func (o *FormulaFieldField) HasDateFormat() bool {
 func (o *FormulaFieldField) SetDateFormat(v CountFieldCreateFieldDateFormat) {
 	o.DateFormat.Set(&v)
 }
+
 // SetDateFormatNil sets the value for DateFormat to be an explicit nil
 func (o *FormulaFieldField) SetDateFormatNil() {
 	o.DateFormat.Set(nil)
@@ -364,6 +366,7 @@ func (o *FormulaFieldField) HasArrayFormulaType() bool {
 func (o *FormulaFieldField) SetArrayFormulaType(v CountFieldCreateFieldArrayFormulaType) {
 	o.ArrayFormulaType.Set(&v)
 }
+
 // SetArrayFormulaTypeNil sets the value for ArrayFormulaType to be an explicit nil
 func (o *FormulaFieldField) SetArrayFormulaTypeNil() {
 	o.ArrayFormulaType.Set(nil)
@@ -406,6 +409,7 @@ func (o *FormulaFieldField) HasDateForceTimezone() bool {
 func (o *FormulaFieldField) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *FormulaFieldField) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -448,6 +452,7 @@ func (o *FormulaFieldField) HasDateIncludeTime() bool {
 func (o *FormulaFieldField) SetDateIncludeTime(v bool) {
 	o.DateIncludeTime.Set(&v)
 }
+
 // SetDateIncludeTimeNil sets the value for DateIncludeTime to be an explicit nil
 func (o *FormulaFieldField) SetDateIncludeTimeNil() {
 	o.DateIncludeTime.Set(nil)
@@ -514,6 +519,7 @@ func (o *FormulaFieldField) HasDateTimeFormat() bool {
 func (o *FormulaFieldField) SetDateTimeFormat(v CountFieldCreateFieldDateTimeFormat) {
 	o.DateTimeFormat.Set(&v)
 }
+
 // SetDateTimeFormatNil sets the value for DateTimeFormat to be an explicit nil
 func (o *FormulaFieldField) SetDateTimeFormatNil() {
 	o.DateTimeFormat.Set(nil)
@@ -556,6 +562,7 @@ func (o *FormulaFieldField) HasNumberDecimalPlaces() bool {
 func (o *FormulaFieldField) SetNumberDecimalPlaces(v CountFieldCreateFieldNumberDecimalPlaces) {
 	o.NumberDecimalPlaces.Set(&v)
 }
+
 // SetNumberDecimalPlacesNil sets the value for NumberDecimalPlaces to be an explicit nil
 func (o *FormulaFieldField) SetNumberDecimalPlacesNil() {
 	o.NumberDecimalPlaces.Set(nil)
@@ -647,7 +654,7 @@ func (o *FormulaFieldField) SetFormulaType(v FormulaTypeEnum) {
 }
 
 func (o FormulaFieldField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -730,5 +737,3 @@ func (v *NullableFormulaFieldField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

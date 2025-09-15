@@ -65,7 +65,7 @@ func (o *RequestRestoreSnapshotJobCreateJob) SetType(v Type4afEnum) {
 }
 
 func (o RequestRestoreSnapshotJobCreateJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -113,5 +113,3 @@ func (v *NullableRequestRestoreSnapshotJobCreateJob) UnmarshalJSON(src []byte) e
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

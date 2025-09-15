@@ -23,7 +23,7 @@ type TokenObtainPairWithUser struct {
 	// Deprecated. Use `email` instead.
 	// Deprecated
 	Username *string `json:"username,omitempty"`
-	Password string `json:"password"`
+	Password string  `json:"password"`
 }
 
 // NewTokenObtainPairWithUser instantiates a new TokenObtainPairWithUser object
@@ -136,7 +136,7 @@ func (o *TokenObtainPairWithUser) SetPassword(v string) {
 }
 
 func (o TokenObtainPairWithUser) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -190,5 +190,3 @@ func (v *NullableTokenObtainPairWithUser) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

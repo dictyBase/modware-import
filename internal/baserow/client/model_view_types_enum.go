@@ -20,9 +20,9 @@ type ViewTypesEnum string
 
 // List of ViewTypesEnum
 const (
-	GRID ViewTypesEnum = "grid"
-	GALLERY ViewTypesEnum = "gallery"
-	KANBAN ViewTypesEnum = "kanban"
+	GRID     ViewTypesEnum = "grid"
+	GALLERY  ViewTypesEnum = "gallery"
+	KANBAN   ViewTypesEnum = "kanban"
 	CALENDAR ViewTypesEnum = "calendar"
 )
 
@@ -113,4 +113,3 @@ func (v *NullableViewTypesEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

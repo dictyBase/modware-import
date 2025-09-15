@@ -84,6 +84,7 @@ func (o *PatchedUndoRedoRequestScopes) HasRoot() bool {
 func (o *PatchedUndoRedoRequestScopes) SetRoot(v bool) {
 	o.Root.Set(&v)
 }
+
 // SetRootNil sets the value for Root to be an explicit nil
 func (o *PatchedUndoRedoRequestScopes) SetRootNil() {
 	o.Root.Set(nil)
@@ -126,6 +127,7 @@ func (o *PatchedUndoRedoRequestScopes) HasWorkspace() bool {
 func (o *PatchedUndoRedoRequestScopes) SetWorkspace(v int32) {
 	o.Workspace.Set(&v)
 }
+
 // SetWorkspaceNil sets the value for Workspace to be an explicit nil
 func (o *PatchedUndoRedoRequestScopes) SetWorkspaceNil() {
 	o.Workspace.Set(nil)
@@ -168,6 +170,7 @@ func (o *PatchedUndoRedoRequestScopes) HasGroup() bool {
 func (o *PatchedUndoRedoRequestScopes) SetGroup(v int32) {
 	o.Group.Set(&v)
 }
+
 // SetGroupNil sets the value for Group to be an explicit nil
 func (o *PatchedUndoRedoRequestScopes) SetGroupNil() {
 	o.Group.Set(nil)
@@ -210,6 +213,7 @@ func (o *PatchedUndoRedoRequestScopes) HasApplication() bool {
 func (o *PatchedUndoRedoRequestScopes) SetApplication(v int32) {
 	o.Application.Set(&v)
 }
+
 // SetApplicationNil sets the value for Application to be an explicit nil
 func (o *PatchedUndoRedoRequestScopes) SetApplicationNil() {
 	o.Application.Set(nil)
@@ -252,6 +256,7 @@ func (o *PatchedUndoRedoRequestScopes) HasTable() bool {
 func (o *PatchedUndoRedoRequestScopes) SetTable(v int32) {
 	o.Table.Set(&v)
 }
+
 // SetTableNil sets the value for Table to be an explicit nil
 func (o *PatchedUndoRedoRequestScopes) SetTableNil() {
 	o.Table.Set(nil)
@@ -294,6 +299,7 @@ func (o *PatchedUndoRedoRequestScopes) HasView() bool {
 func (o *PatchedUndoRedoRequestScopes) SetView(v int32) {
 	o.View.Set(&v)
 }
+
 // SetViewNil sets the value for View to be an explicit nil
 func (o *PatchedUndoRedoRequestScopes) SetViewNil() {
 	o.View.Set(nil)
@@ -336,6 +342,7 @@ func (o *PatchedUndoRedoRequestScopes) HasTeamsInWorkspace() bool {
 func (o *PatchedUndoRedoRequestScopes) SetTeamsInWorkspace(v int32) {
 	o.TeamsInWorkspace.Set(&v)
 }
+
 // SetTeamsInWorkspaceNil sets the value for TeamsInWorkspace to be an explicit nil
 func (o *PatchedUndoRedoRequestScopes) SetTeamsInWorkspaceNil() {
 	o.TeamsInWorkspace.Set(nil)
@@ -347,7 +354,7 @@ func (o *PatchedUndoRedoRequestScopes) UnsetTeamsInWorkspace() {
 }
 
 func (o PatchedUndoRedoRequestScopes) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -415,5 +422,3 @@ func (v *NullablePatchedUndoRedoRequestScopes) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

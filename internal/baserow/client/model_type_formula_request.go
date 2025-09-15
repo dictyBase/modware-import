@@ -20,7 +20,7 @@ var _ MappedNullable = &TypeFormulaRequest{}
 // TypeFormulaRequest struct for TypeFormulaRequest
 type TypeFormulaRequest struct {
 	Formula string `json:"formula"`
-	Name string `json:"name"`
+	Name    string `json:"name"`
 }
 
 // NewTypeFormulaRequest instantiates a new TypeFormulaRequest object
@@ -91,7 +91,7 @@ func (o *TypeFormulaRequest) SetName(v string) {
 }
 
 func (o TypeFormulaRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableTypeFormulaRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

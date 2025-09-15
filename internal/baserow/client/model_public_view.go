@@ -19,17 +19,17 @@ var _ MappedNullable = &PublicView{}
 
 // PublicView struct for PublicView
 type PublicView struct {
-	Id string `json:"id"`
-	Table PublicViewTable `json:"table"`
-	Name string `json:"name"`
-	Order int32 `json:"order"`
-	Type string `json:"type"`
+	Id       string           `json:"id"`
+	Table    PublicViewTable  `json:"table"`
+	Name     string           `json:"name"`
+	Order    int32            `json:"order"`
+	Type     string           `json:"type"`
 	Sortings []PublicViewSort `json:"sortings"`
 	// Indicates whether the view is publicly accessible to visitors.
 	Public *bool `json:"public,omitempty"`
 	// The unique slug where the view can be accessed publicly on.
-	Slug string `json:"slug"`
-	ShowLogo *bool `json:"show_logo,omitempty"`
+	Slug     string `json:"slug"`
+	ShowLogo *bool  `json:"show_logo,omitempty"`
 }
 
 // NewPublicView instantiates a new PublicView object
@@ -289,7 +289,7 @@ func (o *PublicView) SetShowLogo(v bool) {
 }
 
 func (o PublicView) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -349,5 +349,3 @@ func (v *NullablePublicView) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

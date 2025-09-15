@@ -15,13 +15,13 @@ import (
 	"fmt"
 )
 
-// ValueProviderTypeEnum * `` -  * `single_select_color` - single_select_color * `conditional_color` - conditional_color
+// ValueProviderTypeEnum * “ -  * `single_select_color` - single_select_color * `conditional_color` - conditional_color
 type ValueProviderTypeEnum string
 
 // List of ValueProviderTypeEnum
 const (
 	SINGLE_SELECT_COLOR ValueProviderTypeEnum = "single_select_color"
-	CONDITIONAL_COLOR ValueProviderTypeEnum = "conditional_color"
+	CONDITIONAL_COLOR   ValueProviderTypeEnum = "conditional_color"
 )
 
 // All allowed values of ValueProviderTypeEnum enum
@@ -108,4 +108,3 @@ func (v *NullableValueProviderTypeEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

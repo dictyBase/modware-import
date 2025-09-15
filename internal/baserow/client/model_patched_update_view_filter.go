@@ -20,8 +20,8 @@ var _ MappedNullable = &PatchedUpdateViewFilter{}
 // PatchedUpdateViewFilter struct for PatchedUpdateViewFilter
 type PatchedUpdateViewFilter struct {
 	// The field of which the value must be compared to the filter value.
-	Field *int32 `json:"field,omitempty"`
-	Type *Type51aEnum `json:"type,omitempty"`
+	Field *int32       `json:"field,omitempty"`
+	Type  *Type51aEnum `json:"type,omitempty"`
 	// The filter value that must be compared to the field's value.
 	Value *string `json:"value,omitempty"`
 }
@@ -140,7 +140,7 @@ func (o *PatchedUpdateViewFilter) SetValue(v string) {
 }
 
 func (o PatchedUpdateViewFilter) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -196,5 +196,3 @@ func (v *NullablePatchedUpdateViewFilter) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

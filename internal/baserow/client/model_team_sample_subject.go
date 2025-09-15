@@ -20,7 +20,7 @@ var _ MappedNullable = &TeamSampleSubject{}
 // TeamSampleSubject struct for TeamSampleSubject
 type TeamSampleSubject struct {
 	// The subject's unique identifier.
-	SubjectId int32 `json:"subject_id"`
+	SubjectId   int32              `json:"subject_id"`
 	SubjectType SubjectType3ffEnum `json:"subject_type"`
 	// The subject's label. Defaults to a user's first name.
 	SubjectLabel string `json:"subject_label"`
@@ -146,7 +146,7 @@ func (o *TeamSampleSubject) SetTeamSubjectId(v int32) {
 }
 
 func (o TeamSampleSubject) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -197,5 +197,3 @@ func (v *NullableTeamSampleSubject) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

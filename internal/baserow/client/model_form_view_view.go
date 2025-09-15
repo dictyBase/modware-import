@@ -19,31 +19,31 @@ var _ MappedNullable = &FormViewView{}
 
 // FormViewView struct for FormViewView
 type FormViewView struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
-	Order int32 `json:"order"`
-	Type string `json:"type"`
-	Table Table `json:"table"`
-	FilterType *ConditionTypeEnum `json:"filter_type,omitempty"`
-	Filters []ViewFilter `json:"filters,omitempty"`
-	Sortings []ViewSort `json:"sortings,omitempty"`
-	Decorations []ViewDecoration `json:"decorations,omitempty"`
+	Id          int32              `json:"id"`
+	TableId     int32              `json:"table_id"`
+	Name        string             `json:"name"`
+	Order       int32              `json:"order"`
+	Type        string             `json:"type"`
+	Table       Table              `json:"table"`
+	FilterType  *ConditionTypeEnum `json:"filter_type,omitempty"`
+	Filters     []ViewFilter       `json:"filters,omitempty"`
+	Sortings    []ViewSort         `json:"sortings,omitempty"`
+	Decorations []ViewDecoration   `json:"decorations,omitempty"`
 	// Allows users to see results unfiltered while still keeping the filters saved for the view.
 	FiltersDisabled *bool `json:"filters_disabled,omitempty"`
 	// Indicates whether the public view is password protected or not.  :return: True if the public view is password protected, False otherwise.
-	PublicViewHasPassword bool `json:"public_view_has_password"`
-	ShowLogo *bool `json:"show_logo,omitempty"`
-	OwnershipType string `json:"ownership_type"`
+	PublicViewHasPassword bool   `json:"public_view_has_password"`
+	ShowLogo              *bool  `json:"show_logo,omitempty"`
+	OwnershipType         string `json:"ownership_type"`
 	// The title that is displayed at the beginning of the form.
 	Title *string `json:"title,omitempty"`
 	// The description that is displayed at the beginning of the form.
-	Description *string `json:"description,omitempty"`
-	Mode *ModeEnum `json:"mode,omitempty"`
-	CoverImage NullableFormViewCreateViewCoverImage `json:"cover_image,omitempty"`
-	LogoImage NullableFormViewCreateViewLogoImage `json:"logo_image,omitempty"`
+	Description *string                              `json:"description,omitempty"`
+	Mode        *ModeEnum                            `json:"mode,omitempty"`
+	CoverImage  NullableFormViewCreateViewCoverImage `json:"cover_image,omitempty"`
+	LogoImage   NullableFormViewCreateViewLogoImage  `json:"logo_image,omitempty"`
 	// The text displayed on the submit button.
-	SubmitText *string `json:"submit_text,omitempty"`
+	SubmitText   *string           `json:"submit_text,omitempty"`
 	SubmitAction *SubmitActionEnum `json:"submit_action,omitempty"`
 	// If the `submit_action` is MESSAGE, then this message will be shown to the visitor after submitting the form.
 	SubmitActionMessage *string `json:"submit_action_message,omitempty"`
@@ -593,6 +593,7 @@ func (o *FormViewView) HasCoverImage() bool {
 func (o *FormViewView) SetCoverImage(v FormViewCreateViewCoverImage) {
 	o.CoverImage.Set(&v)
 }
+
 // SetCoverImageNil sets the value for CoverImage to be an explicit nil
 func (o *FormViewView) SetCoverImageNil() {
 	o.CoverImage.Set(nil)
@@ -635,6 +636,7 @@ func (o *FormViewView) HasLogoImage() bool {
 func (o *FormViewView) SetLogoImage(v FormViewCreateViewLogoImage) {
 	o.LogoImage.Set(&v)
 }
+
 // SetLogoImageNil sets the value for LogoImage to be an explicit nil
 func (o *FormViewView) SetLogoImageNil() {
 	o.LogoImage.Set(nil)
@@ -830,7 +832,7 @@ func (o *FormViewView) SetSlug(v string) {
 }
 
 func (o FormViewView) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -934,5 +936,3 @@ func (v *NullableFormViewView) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

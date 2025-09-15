@@ -19,19 +19,18 @@ import (
 	"strings"
 )
 
-
 // DatabaseTableRowsApiService DatabaseTableRowsApi service
 type DatabaseTableRowsApiService service
 
 type ApiBatchCreateDatabaseTableRowsRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	tableId int32
-	exampleBatchRowsRequest *ExampleBatchRowsRequest
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTableRowsApiService
+	tableId                     int32
+	exampleBatchRowsRequest     *ExampleBatchRowsRequest
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
-	before *int32
-	userFieldNames *bool
+	before                      *int32
+	userFieldNames              *bool
 }
 
 func (r ApiBatchCreateDatabaseTableRowsRequest) ExampleBatchRowsRequest(exampleBatchRowsRequest ExampleBatchRowsRequest) ApiBatchCreateDatabaseTableRowsRequest {
@@ -72,28 +71,29 @@ BatchCreateDatabaseTableRows Method for BatchCreateDatabaseTableRows
 
 Creates new rows in the table if the user has access to the related table's workspace. The accepted body fields are depending on the fields that the table has. For a complete overview of fields use the **list_database_table_fields** to list them all. None of the fields are required, if they are not provided the value is going to be `null` or `false` or some default value is that is set. If you want to add a value for the field with for example id `10`, the key must be named `field_10`. Or instead if the `user_field_names` GET param is provided the key must be the name of the field. Of course multiple fields can be provided in one request. In the examples below you will find all the different field types, the numbers/ids in the example are just there for example purposes, the field_ID must be replaced with the actual id of the field or the name of the field if `user_field_names` is provided.
 
- **WARNING:** This endpoint doesn't yet work with row created webhooks.
+	**WARNING:** This endpoint doesn't yet work with row created webhooks.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Creates the rows in the table.
- @return ApiBatchCreateDatabaseTableRowsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Creates the rows in the table.
+	@return ApiBatchCreateDatabaseTableRowsRequest
 */
 func (a *DatabaseTableRowsApiService) BatchCreateDatabaseTableRows(ctx context.Context, tableId int32) ApiBatchCreateDatabaseTableRowsRequest {
 	return ApiBatchCreateDatabaseTableRowsRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return ExampleBatchRowsResponse
+//
+//	@return ExampleBatchRowsResponse
 func (a *DatabaseTableRowsApiService) BatchCreateDatabaseTableRowsExecute(r ApiBatchCreateDatabaseTableRowsRequest) (*ExampleBatchRowsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ExampleBatchRowsResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ExampleBatchRowsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.BatchCreateDatabaseTableRows")
@@ -171,8 +171,8 @@ func (a *DatabaseTableRowsApiService) BatchCreateDatabaseTableRowsExecute(r ApiB
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -182,8 +182,8 @@ func (a *DatabaseTableRowsApiService) BatchCreateDatabaseTableRowsExecute(r ApiB
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -193,8 +193,8 @@ func (a *DatabaseTableRowsApiService) BatchCreateDatabaseTableRowsExecute(r ApiB
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -212,11 +212,11 @@ func (a *DatabaseTableRowsApiService) BatchCreateDatabaseTableRowsExecute(r ApiB
 }
 
 type ApiBatchDeleteDatabaseTableRowsRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	tableId int32
-	batchDeleteRows *BatchDeleteRows
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTableRowsApiService
+	tableId                     int32
+	batchDeleteRows             *BatchDeleteRows
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -246,26 +246,26 @@ BatchDeleteDatabaseTableRows Method for BatchDeleteDatabaseTableRows
 
 Deletes existing rows in the table if the user has access to the table's workspace.
 
- **WARNING:**  This endpoint doesn't yet work with row deleted webhooks.
+	**WARNING:**  This endpoint doesn't yet work with row deleted webhooks.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Deletes the rows in the table related to the value.
- @return ApiBatchDeleteDatabaseTableRowsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Deletes the rows in the table related to the value.
+	@return ApiBatchDeleteDatabaseTableRowsRequest
 */
 func (a *DatabaseTableRowsApiService) BatchDeleteDatabaseTableRows(ctx context.Context, tableId int32) ApiBatchDeleteDatabaseTableRowsRequest {
 	return ApiBatchDeleteDatabaseTableRowsRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
 func (a *DatabaseTableRowsApiService) BatchDeleteDatabaseTableRowsExecute(r ApiBatchDeleteDatabaseTableRowsRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.BatchDeleteDatabaseTableRows")
@@ -337,8 +337,8 @@ func (a *DatabaseTableRowsApiService) BatchDeleteDatabaseTableRowsExecute(r ApiB
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -348,8 +348,8 @@ func (a *DatabaseTableRowsApiService) BatchDeleteDatabaseTableRowsExecute(r ApiB
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -358,12 +358,12 @@ func (a *DatabaseTableRowsApiService) BatchDeleteDatabaseTableRowsExecute(r ApiB
 }
 
 type ApiBatchUpdateDatabaseTableRowsRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	tableId int32
-	clientSessionId *string
-	clientUndoRedoActionGroupId *string
-	userFieldNames *bool
+	ctx                                  context.Context
+	ApiService                           *DatabaseTableRowsApiService
+	tableId                              int32
+	clientSessionId                      *string
+	clientUndoRedoActionGroupId          *string
+	userFieldNames                       *bool
 	patchedExampleBatchUpdateRowsRequest *PatchedExampleBatchUpdateRowsRequest
 }
 
@@ -399,28 +399,29 @@ BatchUpdateDatabaseTableRows Method for BatchUpdateDatabaseTableRows
 
 Updates existing rows in the table if the user has access to the related table's workspace. The accepted body fields are depending on the fields that the table has. For a complete overview of fields use the **list_database_table_fields** endpoint to list them all. None of the fields are required, if they are not provided the value is not going to be updated. When you want to update a value for the field with id `10`, the key must be named `field_10`. Or if the GET parameter `user_field_names` is provided the key of the field to update must be the name of the field. Multiple different fields to update can be provided for each row. In the examples below you will find all the different field types, the numbers/ids in the example are just there for example purposes, the field_ID must be replaced with the actual id of the field or the name of the field if `user_field_names` is provided.
 
- **WARNING:** This endpoint doesn't yet work with row updated webhooks.
+	**WARNING:** This endpoint doesn't yet work with row updated webhooks.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Updates the rows in the table.
- @return ApiBatchUpdateDatabaseTableRowsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Updates the rows in the table.
+	@return ApiBatchUpdateDatabaseTableRowsRequest
 */
 func (a *DatabaseTableRowsApiService) BatchUpdateDatabaseTableRows(ctx context.Context, tableId int32) ApiBatchUpdateDatabaseTableRowsRequest {
 	return ApiBatchUpdateDatabaseTableRowsRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return ExampleBatchRowsResponse
+//
+//	@return ExampleBatchRowsResponse
 func (a *DatabaseTableRowsApiService) BatchUpdateDatabaseTableRowsExecute(r ApiBatchUpdateDatabaseTableRowsRequest) (*ExampleBatchRowsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ExampleBatchRowsResponse
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ExampleBatchRowsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.BatchUpdateDatabaseTableRows")
@@ -492,8 +493,8 @@ func (a *DatabaseTableRowsApiService) BatchUpdateDatabaseTableRowsExecute(r ApiB
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -503,8 +504,8 @@ func (a *DatabaseTableRowsApiService) BatchUpdateDatabaseTableRowsExecute(r ApiB
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -514,8 +515,8 @@ func (a *DatabaseTableRowsApiService) BatchUpdateDatabaseTableRowsExecute(r ApiB
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -533,13 +534,13 @@ func (a *DatabaseTableRowsApiService) BatchUpdateDatabaseTableRowsExecute(r ApiB
 }
 
 type ApiCreateDatabaseTableRowRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	tableId int32
-	clientSessionId *string
-	clientUndoRedoActionGroupId *string
-	before *int32
-	userFieldNames *bool
+	ctx                                           context.Context
+	ApiService                                    *DatabaseTableRowsApiService
+	tableId                                       int32
+	clientSessionId                               *string
+	clientUndoRedoActionGroupId                   *string
+	before                                        *int32
+	userFieldNames                                *bool
 	exampleRowRequestSerializerWithUserFieldNames *ExampleRowRequestSerializerWithUserFieldNames
 }
 
@@ -581,26 +582,27 @@ CreateDatabaseTableRow Method for CreateDatabaseTableRow
 
 Creates a new row in the table if the user has access to the related table's workspace. The accepted body fields are depending on the fields that the table has. For a complete overview of fields use the **list_database_table_fields** to list them all. None of the fields are required, if they are not provided the value is going to be `null` or `false` or some default value is that is set. If you want to add a value for the field with for example id `10`, the key must be named `field_10`. Or instead if the `user_field_names` GET param is provided the key must be the name of the field. Of course multiple fields can be provided in one request. In the examples below you will find all the different field types, the numbers/ids in the example are just there for example purposes, the field_ID must be replaced with the actual id of the field or the name of the field if `user_field_names` is provided.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Creates a row in the table related to the provided value.
- @return ApiCreateDatabaseTableRowRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Creates a row in the table related to the provided value.
+	@return ApiCreateDatabaseTableRowRequest
 */
 func (a *DatabaseTableRowsApiService) CreateDatabaseTableRow(ctx context.Context, tableId int32) ApiCreateDatabaseTableRowRequest {
 	return ApiCreateDatabaseTableRowRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return ExampleRowResponseSerializerWithUserFieldNames
+//
+//	@return ExampleRowResponseSerializerWithUserFieldNames
 func (a *DatabaseTableRowsApiService) CreateDatabaseTableRowExecute(r ApiCreateDatabaseTableRowRequest) (*ExampleRowResponseSerializerWithUserFieldNames, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ExampleRowResponseSerializerWithUserFieldNames
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ExampleRowResponseSerializerWithUserFieldNames
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.CreateDatabaseTableRow")
@@ -675,8 +677,8 @@ func (a *DatabaseTableRowsApiService) CreateDatabaseTableRowExecute(r ApiCreateD
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -686,8 +688,8 @@ func (a *DatabaseTableRowsApiService) CreateDatabaseTableRowExecute(r ApiCreateD
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -697,8 +699,8 @@ func (a *DatabaseTableRowsApiService) CreateDatabaseTableRowExecute(r ApiCreateD
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -716,11 +718,11 @@ func (a *DatabaseTableRowsApiService) CreateDatabaseTableRowExecute(r ApiCreateD
 }
 
 type ApiDeleteDatabaseTableRowRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	rowId int32
-	tableId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTableRowsApiService
+	rowId                       int32
+	tableId                     int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -745,26 +747,26 @@ DeleteDatabaseTableRow Method for DeleteDatabaseTableRow
 
 Deletes an existing row in the table if the user has access to the table's workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param rowId Deletes the row related to the value.
- @param tableId Deletes the row in the table related to the value.
- @return ApiDeleteDatabaseTableRowRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param rowId Deletes the row related to the value.
+	@param tableId Deletes the row in the table related to the value.
+	@return ApiDeleteDatabaseTableRowRequest
 */
 func (a *DatabaseTableRowsApiService) DeleteDatabaseTableRow(ctx context.Context, rowId int32, tableId int32) ApiDeleteDatabaseTableRowRequest {
 	return ApiDeleteDatabaseTableRowRequest{
 		ApiService: a,
-		ctx: ctx,
-		rowId: rowId,
-		tableId: tableId,
+		ctx:        ctx,
+		rowId:      rowId,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
 func (a *DatabaseTableRowsApiService) DeleteDatabaseTableRowExecute(r ApiDeleteDatabaseTableRowRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.DeleteDatabaseTableRow")
@@ -832,8 +834,8 @@ func (a *DatabaseTableRowsApiService) DeleteDatabaseTableRowExecute(r ApiDeleteD
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -843,8 +845,8 @@ func (a *DatabaseTableRowsApiService) DeleteDatabaseTableRowExecute(r ApiDeleteD
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -853,14 +855,14 @@ func (a *DatabaseTableRowsApiService) DeleteDatabaseTableRowExecute(r ApiDeleteD
 }
 
 type ApiGetAdjacentDatabaseTableRowRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	rowId int32
-	tableId int32
-	previous *bool
-	search *string
+	ctx            context.Context
+	ApiService     *DatabaseTableRowsApiService
+	rowId          int32
+	tableId        int32
+	previous       *bool
+	search         *string
 	userFieldNames *bool
-	viewId *int32
+	viewId         *int32
 }
 
 // A flag query parameter which if provided returns theprevious row to the specified row_id. If it&#39;s not setit will return the next row.
@@ -875,7 +877,7 @@ func (r ApiGetAdjacentDatabaseTableRowRequest) Search(search string) ApiGetAdjac
 	return r
 }
 
-// A flag query parameter which if provided the returned json will use the user specified field names instead of internal Baserow field names (field_123 etc). 
+// A flag query parameter which if provided the returned json will use the user specified field names instead of internal Baserow field names (field_123 etc).
 func (r ApiGetAdjacentDatabaseTableRowRequest) UserFieldNames(userFieldNames bool) ApiGetAdjacentDatabaseTableRowRequest {
 	r.userFieldNames = &userFieldNames
 	return r
@@ -896,28 +898,29 @@ GetAdjacentDatabaseTableRow Method for GetAdjacentDatabaseTableRow
 
 Fetches the adjacent row to a given row_id in the table with the given table_id. If the previous flag is set it will return the previous row, otherwise it will return the next row. You can specifya view_id and it will apply the filters and sorts of the provided view.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param rowId Returns the row adjacent the provided value.
- @param tableId Returns the row of the table related to the provided value.
- @return ApiGetAdjacentDatabaseTableRowRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param rowId Returns the row adjacent the provided value.
+	@param tableId Returns the row of the table related to the provided value.
+	@return ApiGetAdjacentDatabaseTableRowRequest
 */
 func (a *DatabaseTableRowsApiService) GetAdjacentDatabaseTableRow(ctx context.Context, rowId int32, tableId int32) ApiGetAdjacentDatabaseTableRowRequest {
 	return ApiGetAdjacentDatabaseTableRowRequest{
 		ApiService: a,
-		ctx: ctx,
-		rowId: rowId,
-		tableId: tableId,
+		ctx:        ctx,
+		rowId:      rowId,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return ExampleRowResponseSerializerWithUserFieldNames
+//
+//	@return ExampleRowResponseSerializerWithUserFieldNames
 func (a *DatabaseTableRowsApiService) GetAdjacentDatabaseTableRowExecute(r ApiGetAdjacentDatabaseTableRowRequest) (*ExampleRowResponseSerializerWithUserFieldNames, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ExampleRowResponseSerializerWithUserFieldNames
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ExampleRowResponseSerializerWithUserFieldNames
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.GetAdjacentDatabaseTableRow")
@@ -991,8 +994,8 @@ func (a *DatabaseTableRowsApiService) GetAdjacentDatabaseTableRowExecute(r ApiGe
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1002,8 +1005,8 @@ func (a *DatabaseTableRowsApiService) GetAdjacentDatabaseTableRowExecute(r ApiGe
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1021,14 +1024,14 @@ func (a *DatabaseTableRowsApiService) GetAdjacentDatabaseTableRowExecute(r ApiGe
 }
 
 type ApiGetDatabaseTableRowRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	rowId int32
-	tableId int32
+	ctx            context.Context
+	ApiService     *DatabaseTableRowsApiService
+	rowId          int32
+	tableId        int32
 	userFieldNames *bool
 }
 
-// A flag query parameter which if provided the returned json will use the user specified field names instead of internal Baserow field names (field_123 etc). 
+// A flag query parameter which if provided the returned json will use the user specified field names instead of internal Baserow field names (field_123 etc).
 func (r ApiGetDatabaseTableRowRequest) UserFieldNames(userFieldNames bool) ApiGetDatabaseTableRowRequest {
 	r.userFieldNames = &userFieldNames
 	return r
@@ -1043,28 +1046,29 @@ GetDatabaseTableRow Method for GetDatabaseTableRow
 
 Fetches an existing row from the table if the user has access to the related table's workspace. The properties of the returned row depend on which fields the table has. For a complete overview of fields use the **list_database_table_fields** endpoint to list them all. In the example all field types are listed, but normally the number in field_{id} key is going to be the id of the field of the field. Or if the GET parameter `user_field_names` is provided then the keys will be the name of the field. The value is what the user has provided and the format of it depends on the fields type.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param rowId Returns the row related the provided value.
- @param tableId Returns the row of the table related to the provided value.
- @return ApiGetDatabaseTableRowRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param rowId Returns the row related the provided value.
+	@param tableId Returns the row of the table related to the provided value.
+	@return ApiGetDatabaseTableRowRequest
 */
 func (a *DatabaseTableRowsApiService) GetDatabaseTableRow(ctx context.Context, rowId int32, tableId int32) ApiGetDatabaseTableRowRequest {
 	return ApiGetDatabaseTableRowRequest{
 		ApiService: a,
-		ctx: ctx,
-		rowId: rowId,
-		tableId: tableId,
+		ctx:        ctx,
+		rowId:      rowId,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return ExampleRowResponseSerializerWithUserFieldNames
+//
+//	@return ExampleRowResponseSerializerWithUserFieldNames
 func (a *DatabaseTableRowsApiService) GetDatabaseTableRowExecute(r ApiGetDatabaseTableRowRequest) (*ExampleRowResponseSerializerWithUserFieldNames, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ExampleRowResponseSerializerWithUserFieldNames
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ExampleRowResponseSerializerWithUserFieldNames
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.GetDatabaseTableRow")
@@ -1129,8 +1133,8 @@ func (a *DatabaseTableRowsApiService) GetDatabaseTableRowExecute(r ApiGetDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -1140,8 +1144,8 @@ func (a *DatabaseTableRowsApiService) GetDatabaseTableRowExecute(r ApiGetDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1151,8 +1155,8 @@ func (a *DatabaseTableRowsApiService) GetDatabaseTableRowExecute(r ApiGetDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1170,9 +1174,9 @@ func (a *DatabaseTableRowsApiService) GetDatabaseTableRowExecute(r ApiGetDatabas
 }
 
 type ApiListDatabaseTableRowNamesRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTableRowsApiService
-	tableId *string
+	tableId    *string
 }
 
 // A list of comma separated row ids to query from the table with id {id}. For example, if you want the name of row &#x60;42&#x60; and &#x60;43&#x60; from table &#x60;28&#x60; this parameter will be &#x60;table__28&#x3D;42,43&#x60;. You can specify multiple rows for different tables but every tables must be in the same database. You need at least read permission on all specified tables.
@@ -1190,24 +1194,25 @@ ListDatabaseTableRowNames Method for ListDatabaseTableRowNames
 
 Returns the names of the given row of the given tables. The nameof a row is the primary field value for this row. The result can be usedfor example, when you want to display the name of a linked row from another table.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListDatabaseTableRowNamesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListDatabaseTableRowNamesRequest
 */
 func (a *DatabaseTableRowsApiService) ListDatabaseTableRowNames(ctx context.Context) ApiListDatabaseTableRowNamesRequest {
 	return ApiListDatabaseTableRowNamesRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return ListDatabaseTableRowNames200Response
+//
+//	@return ListDatabaseTableRowNames200Response
 func (a *DatabaseTableRowsApiService) ListDatabaseTableRowNamesExecute(r ApiListDatabaseTableRowNamesRequest) (*ListDatabaseTableRowNames200Response, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ListDatabaseTableRowNames200Response
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ListDatabaseTableRowNames200Response
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.ListDatabaseTableRowNames")
@@ -1270,8 +1275,8 @@ func (a *DatabaseTableRowsApiService) ListDatabaseTableRowNamesExecute(r ApiList
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -1281,8 +1286,8 @@ func (a *DatabaseTableRowsApiService) ListDatabaseTableRowNamesExecute(r ApiList
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1292,8 +1297,8 @@ func (a *DatabaseTableRowsApiService) ListDatabaseTableRowNamesExecute(r ApiList
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1311,19 +1316,19 @@ func (a *DatabaseTableRowsApiService) ListDatabaseTableRowNamesExecute(r ApiList
 }
 
 type ApiListDatabaseTableRowsRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	tableId int32
-	exclude *string
+	ctx               context.Context
+	ApiService        *DatabaseTableRowsApiService
+	tableId           int32
+	exclude           *string
 	filterFieldFilter *string
-	filterType *string
-	include *string
-	orderBy *string
-	page *int32
-	search *string
-	size *int32
-	userFieldNames *bool
-	viewId *int32
+	filterType        *string
+	include           *string
+	orderBy           *string
+	page              *int32
+	search            *string
+	size              *int32
+	userFieldNames    *bool
+	viewId            *int32
 }
 
 // All the fields are included in the response by default. You can select a subset of fields by providing the exclude query parameter. If you for example provide the following GET parameter &#x60;exclude&#x3D;field_1,field_2&#x60; then the fields with id &#x60;1&#x60; and id &#x60;2&#x60; are going to be excluded from the selection and response. If the &#x60;user_field_names&#x60; parameter is provided then instead exclude should be a comma separated list of the actual field names. For field names with commas you should surround the name with quotes like so: &#x60;exclude&#x3D;My Field,\&quot;Field With , \&quot;&#x60;. A backslash can be used to escape field names which contain double quotes like so: &#x60;exclude&#x3D;My Field,Field with \\\&quot;&#x60;.
@@ -1374,7 +1379,7 @@ func (r ApiListDatabaseTableRowsRequest) Size(size int32) ApiListDatabaseTableRo
 	return r
 }
 
-// A flag query parameter which if provided the returned json will use the user specified field names instead of internal Baserow field names (field_123 etc). 
+// A flag query parameter which if provided the returned json will use the user specified field names instead of internal Baserow field names (field_123 etc).
 func (r ApiListDatabaseTableRowsRequest) UserFieldNames(userFieldNames bool) ApiListDatabaseTableRowsRequest {
 	r.userFieldNames = &userFieldNames
 	return r
@@ -1395,26 +1400,27 @@ ListDatabaseTableRows Method for ListDatabaseTableRows
 
 Lists all the rows of the table related to the provided parameter if the user has access to the related database's workspace. The response is paginated by a page/size style. It is also possible to provide an optional search query, only rows where the data matches the search query are going to be returned then. The properties of the returned rows depends on which fields the table has. For a complete overview of fields use the **list_database_table_fields** endpoint to list them all. In the example all field types are listed, but normally the number in field_{id} key is going to be the id of the field. Or if the GET parameter `user_field_names` is provided then the keys will be the name of the field. The value is what the user has provided and the format of it depends on the fields type.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Returns the rows of the table related to the provided value.
- @return ApiListDatabaseTableRowsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Returns the rows of the table related to the provided value.
+	@return ApiListDatabaseTableRowsRequest
 */
 func (a *DatabaseTableRowsApiService) ListDatabaseTableRows(ctx context.Context, tableId int32) ApiListDatabaseTableRowsRequest {
 	return ApiListDatabaseTableRowsRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return PaginationSerializerExampleRowResponseSerializerWithUserFieldNames
+//
+//	@return PaginationSerializerExampleRowResponseSerializerWithUserFieldNames
 func (a *DatabaseTableRowsApiService) ListDatabaseTableRowsExecute(r ApiListDatabaseTableRowsRequest) (*PaginationSerializerExampleRowResponseSerializerWithUserFieldNames, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *PaginationSerializerExampleRowResponseSerializerWithUserFieldNames
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *PaginationSerializerExampleRowResponseSerializerWithUserFieldNames
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.ListDatabaseTableRows")
@@ -1505,8 +1511,8 @@ func (a *DatabaseTableRowsApiService) ListDatabaseTableRowsExecute(r ApiListData
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -1516,8 +1522,8 @@ func (a *DatabaseTableRowsApiService) ListDatabaseTableRowsExecute(r ApiListData
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1527,8 +1533,8 @@ func (a *DatabaseTableRowsApiService) ListDatabaseTableRowsExecute(r ApiListData
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1546,14 +1552,14 @@ func (a *DatabaseTableRowsApiService) ListDatabaseTableRowsExecute(r ApiListData
 }
 
 type ApiMoveDatabaseTableRowRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	rowId int32
-	tableId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTableRowsApiService
+	rowId                       int32
+	tableId                     int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
-	beforeId *int32
-	userFieldNames *bool
+	beforeId                    *int32
+	userFieldNames              *bool
 }
 
 // An optional header that marks the action performed by this request as having occurred in a particular client session. Then using the undo/redo endpoints with the same ClientSessionId header this action can be undone/redone.
@@ -1574,7 +1580,7 @@ func (r ApiMoveDatabaseTableRowRequest) BeforeId(beforeId int32) ApiMoveDatabase
 	return r
 }
 
-// A flag query parameter which if provided the returned json will use the user specified field names instead of internal Baserow field names (field_123 etc). 
+// A flag query parameter which if provided the returned json will use the user specified field names instead of internal Baserow field names (field_123 etc).
 func (r ApiMoveDatabaseTableRowRequest) UserFieldNames(userFieldNames bool) ApiMoveDatabaseTableRowRequest {
 	r.userFieldNames = &userFieldNames
 	return r
@@ -1589,28 +1595,29 @@ MoveDatabaseTableRow Method for MoveDatabaseTableRow
 
 Moves the row related to given `row_id` parameter to another position. It is only possible to move the row before another existing row or to the end. If the `before_id` is provided then the row related to the `row_id` parameter is moved before that row. If the `before_id` parameter is not provided, then the row will be moved to the end.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param rowId Moves the row related to the value.
- @param tableId Moves the row in the table related to the value.
- @return ApiMoveDatabaseTableRowRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param rowId Moves the row related to the value.
+	@param tableId Moves the row in the table related to the value.
+	@return ApiMoveDatabaseTableRowRequest
 */
 func (a *DatabaseTableRowsApiService) MoveDatabaseTableRow(ctx context.Context, rowId int32, tableId int32) ApiMoveDatabaseTableRowRequest {
 	return ApiMoveDatabaseTableRowRequest{
 		ApiService: a,
-		ctx: ctx,
-		rowId: rowId,
-		tableId: tableId,
+		ctx:        ctx,
+		rowId:      rowId,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return ExampleRowResponseSerializerWithUserFieldNames
+//
+//	@return ExampleRowResponseSerializerWithUserFieldNames
 func (a *DatabaseTableRowsApiService) MoveDatabaseTableRowExecute(r ApiMoveDatabaseTableRowRequest) (*ExampleRowResponseSerializerWithUserFieldNames, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ExampleRowResponseSerializerWithUserFieldNames
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ExampleRowResponseSerializerWithUserFieldNames
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.MoveDatabaseTableRow")
@@ -1684,8 +1691,8 @@ func (a *DatabaseTableRowsApiService) MoveDatabaseTableRowExecute(r ApiMoveDatab
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -1695,8 +1702,8 @@ func (a *DatabaseTableRowsApiService) MoveDatabaseTableRowExecute(r ApiMoveDatab
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1706,8 +1713,8 @@ func (a *DatabaseTableRowsApiService) MoveDatabaseTableRowExecute(r ApiMoveDatab
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1725,13 +1732,13 @@ func (a *DatabaseTableRowsApiService) MoveDatabaseTableRowExecute(r ApiMoveDatab
 }
 
 type ApiUpdateDatabaseTableRowRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableRowsApiService
-	rowId int32
-	tableId int32
-	clientSessionId *string
-	clientUndoRedoActionGroupId *string
-	userFieldNames *bool
+	ctx                                                        context.Context
+	ApiService                                                 *DatabaseTableRowsApiService
+	rowId                                                      int32
+	tableId                                                    int32
+	clientSessionId                                            *string
+	clientUndoRedoActionGroupId                                *string
+	userFieldNames                                             *bool
 	patchedExampleUpdateRowRequestSerializerWithUserFieldNames *PatchedExampleUpdateRowRequestSerializerWithUserFieldNames
 }
 
@@ -1767,28 +1774,29 @@ UpdateDatabaseTableRow Method for UpdateDatabaseTableRow
 
 Updates an existing row in the table if the user has access to the related table's workspace. The accepted body fields are depending on the fields that the table has. For a complete overview of fields use the **list_database_table_fields** endpoint to list them all. None of the fields are required, if they are not provided the value is not going to be updated. When you want to update a value for the field with id `10`, the key must be named `field_10`. Or if the GET parameter `user_field_names` is provided the key of the field to update must be the name of the field. Multiple different fields to update can be provided in one request. In the examples below you will find all the different field types, the numbers/ids in the example are just there for example purposes, the field_ID must be replaced with the actual id of the field or the name of the field if `user_field_names` is provided.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param rowId Updates the row related to the value.
- @param tableId Updates the row in the table related to the value.
- @return ApiUpdateDatabaseTableRowRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param rowId Updates the row related to the value.
+	@param tableId Updates the row in the table related to the value.
+	@return ApiUpdateDatabaseTableRowRequest
 */
 func (a *DatabaseTableRowsApiService) UpdateDatabaseTableRow(ctx context.Context, rowId int32, tableId int32) ApiUpdateDatabaseTableRowRequest {
 	return ApiUpdateDatabaseTableRowRequest{
 		ApiService: a,
-		ctx: ctx,
-		rowId: rowId,
-		tableId: tableId,
+		ctx:        ctx,
+		rowId:      rowId,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return ExampleRowResponseSerializerWithUserFieldNames
+//
+//	@return ExampleRowResponseSerializerWithUserFieldNames
 func (a *DatabaseTableRowsApiService) UpdateDatabaseTableRowExecute(r ApiUpdateDatabaseTableRowRequest) (*ExampleRowResponseSerializerWithUserFieldNames, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ExampleRowResponseSerializerWithUserFieldNames
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ExampleRowResponseSerializerWithUserFieldNames
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableRowsApiService.UpdateDatabaseTableRow")
@@ -1861,8 +1869,8 @@ func (a *DatabaseTableRowsApiService) UpdateDatabaseTableRowExecute(r ApiUpdateD
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -1872,8 +1880,8 @@ func (a *DatabaseTableRowsApiService) UpdateDatabaseTableRowExecute(r ApiUpdateD
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1883,8 +1891,8 @@ func (a *DatabaseTableRowsApiService) UpdateDatabaseTableRowExecute(r ApiUpdateD
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

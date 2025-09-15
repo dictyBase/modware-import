@@ -21,7 +21,7 @@ type ConditionTypeEnum string
 // List of ConditionTypeEnum
 const (
 	AND ConditionTypeEnum = "AND"
-	OR ConditionTypeEnum = "OR"
+	OR  ConditionTypeEnum = "OR"
 )
 
 // All allowed values of ConditionTypeEnum enum
@@ -108,4 +108,3 @@ func (v *NullableConditionTypeEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

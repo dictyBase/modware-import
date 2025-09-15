@@ -20,11 +20,11 @@ var _ MappedNullable = &PatchedUserAdminUpdate{}
 // PatchedUserAdminUpdate Serializes a request body for updating a given user. Do not use for returning user data as the password will be returned also.
 type PatchedUserAdminUpdate struct {
 	Username *string `json:"username,omitempty"`
-	Name *string `json:"name,omitempty"`
+	Name     *string `json:"name,omitempty"`
 	// Designates whether this user should be treated as active. Set this to false instead of deleting accounts.
 	IsActive *bool `json:"is_active,omitempty"`
-	// Designates whether this user is an admin and has access to all workspaces and Baserow's admin areas. 
-	IsStaff *bool `json:"is_staff,omitempty"`
+	// Designates whether this user is an admin and has access to all workspaces and Baserow's admin areas.
+	IsStaff  *bool   `json:"is_staff,omitempty"`
 	Password *string `json:"password,omitempty"`
 }
 
@@ -206,7 +206,7 @@ func (o *PatchedUserAdminUpdate) SetPassword(v string) {
 }
 
 func (o PatchedUserAdminUpdate) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -268,5 +268,3 @@ func (v *NullablePatchedUserAdminUpdate) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -21,11 +21,11 @@ type Events3eaEnum string
 // List of Events3eaEnum
 const (
 	ROWS_CREATED Events3eaEnum = "rows.created"
-	ROW_CREATED Events3eaEnum = "row.created"
+	ROW_CREATED  Events3eaEnum = "row.created"
 	ROWS_UPDATED Events3eaEnum = "rows.updated"
-	ROW_UPDATED Events3eaEnum = "row.updated"
+	ROW_UPDATED  Events3eaEnum = "row.updated"
 	ROWS_DELETED Events3eaEnum = "rows.deleted"
-	ROW_DELETED Events3eaEnum = "row.deleted"
+	ROW_DELETED  Events3eaEnum = "row.deleted"
 )
 
 // All allowed values of Events3eaEnum enum
@@ -116,4 +116,3 @@ func (v *NullableEvents3eaEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

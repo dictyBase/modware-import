@@ -21,10 +21,10 @@ var _ MappedNullable = &FacebookAuthProviderModelAuthProvider{}
 type FacebookAuthProviderModelAuthProvider struct {
 	Id int32 `json:"id"`
 	// The type of the related field.
-	Type string `json:"type"`
-	Domain NullableString `json:"domain,omitempty"`
-	Enabled *bool `json:"enabled,omitempty"`
-	Name string `json:"name"`
+	Type    string         `json:"type"`
+	Domain  NullableString `json:"domain,omitempty"`
+	Enabled *bool          `json:"enabled,omitempty"`
+	Name    string         `json:"name"`
 	// App ID, or consumer key
 	ClientId string `json:"client_id"`
 	// API secret, client secret, or consumer secret
@@ -133,6 +133,7 @@ func (o *FacebookAuthProviderModelAuthProvider) HasDomain() bool {
 func (o *FacebookAuthProviderModelAuthProvider) SetDomain(v string) {
 	o.Domain.Set(&v)
 }
+
 // SetDomainNil sets the value for Domain to be an explicit nil
 func (o *FacebookAuthProviderModelAuthProvider) SetDomainNil() {
 	o.Domain.Set(nil)
@@ -248,7 +249,7 @@ func (o *FacebookAuthProviderModelAuthProvider) SetSecret(v string) {
 }
 
 func (o FacebookAuthProviderModelAuthProvider) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -306,5 +307,3 @@ func (v *NullableFacebookAuthProviderModelAuthProvider) UnmarshalJSON(src []byte
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

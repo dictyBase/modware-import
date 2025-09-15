@@ -28,16 +28,16 @@ type AuditLogExportJobJob struct {
 	// Indicates the state of the import job.
 	State string `json:"state"`
 	// A human readable error message indicating what went wrong.
-	HumanReadableError *string `json:"human_readable_error,omitempty"`
+	HumanReadableError *string                 `json:"human_readable_error,omitempty"`
 	CsvColumnSeparator *CsvColumnSeparatorEnum `json:"csv_column_separator,omitempty"`
 	// Whether or not to generate a header row at the top of the csv file.
-	CsvFirstRowHeader *bool `json:"csv_first_row_header,omitempty"`
-	ExportCharset *ExportCharsetEnum `json:"export_charset,omitempty"`
+	CsvFirstRowHeader *bool              `json:"csv_first_row_header,omitempty"`
+	ExportCharset     *ExportCharsetEnum `json:"export_charset,omitempty"`
 	// Optional: The user to filter the audit log by.
 	FilterUserId *int32 `json:"filter_user_id,omitempty"`
 	// Optional: The workspace to filter the audit log by.
-	FilterWorkspaceId *int32 `json:"filter_workspace_id,omitempty"`
-	FilterActionType *FilterActionTypeEnum `json:"filter_action_type,omitempty"`
+	FilterWorkspaceId *int32                `json:"filter_workspace_id,omitempty"`
+	FilterActionType  *FilterActionTypeEnum `json:"filter_action_type,omitempty"`
 	// Optional: The start date to filter the audit log by.
 	FilterFromTimestamp *time.Time `json:"filter_from_timestamp,omitempty"`
 	// Optional: The end date to filter the audit log by.
@@ -46,7 +46,7 @@ type AuditLogExportJobJob struct {
 	CreatedOn time.Time `json:"created_on"`
 	// The CSV file containing the filtered audit log entries.
 	ExportedFileName NullableString `json:"exported_file_name,omitempty"`
-	Url string `json:"url"`
+	Url              string         `json:"url"`
 }
 
 // NewAuditLogExportJobJob instantiates a new AuditLogExportJobJob object
@@ -524,6 +524,7 @@ func (o *AuditLogExportJobJob) HasExportedFileName() bool {
 func (o *AuditLogExportJobJob) SetExportedFileName(v string) {
 	o.ExportedFileName.Set(&v)
 }
+
 // SetExportedFileNameNil sets the value for ExportedFileName to be an explicit nil
 func (o *AuditLogExportJobJob) SetExportedFileNameNil() {
 	o.ExportedFileName.Set(nil)
@@ -559,7 +560,7 @@ func (o *AuditLogExportJobJob) SetUrl(v string) {
 }
 
 func (o AuditLogExportJobJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -642,5 +643,3 @@ func (v *NullableAuditLogExportJobJob) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

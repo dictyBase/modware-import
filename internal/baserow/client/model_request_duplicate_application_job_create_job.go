@@ -92,7 +92,7 @@ func (o *RequestDuplicateApplicationJobCreateJob) SetApplicationId(v int32) {
 }
 
 func (o RequestDuplicateApplicationJobCreateJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -141,5 +141,3 @@ func (v *NullableRequestDuplicateApplicationJobCreateJob) UnmarshalJSON(src []by
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

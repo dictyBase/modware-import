@@ -20,16 +20,16 @@ var _ MappedNullable = &SingleAuditLogExportJobResponse{}
 
 // SingleAuditLogExportJobResponse When mixed in to a model serializer for an ExportJob this will add an url field with the actual usable url of the export job's file (if it has one).
 type SingleAuditLogExportJobResponse struct {
-	Url string `json:"url"`
-	ExportCharset *ExportCharsetEnum `json:"export_charset,omitempty"`
+	Url                string                  `json:"url"`
+	ExportCharset      *ExportCharsetEnum      `json:"export_charset,omitempty"`
 	CsvColumnSeparator *CsvColumnSeparatorEnum `json:"csv_column_separator,omitempty"`
 	// Whether or not to generate a header row at the top of the csv file.
 	CsvFirstRowHeader *bool `json:"csv_first_row_header,omitempty"`
 	// Optional: The user to filter the audit log by.
 	FilterUserId *int32 `json:"filter_user_id,omitempty"`
 	// Optional: The workspace to filter the audit log by.
-	FilterWorkspaceId *int32 `json:"filter_workspace_id,omitempty"`
-	FilterActionType *FilterActionTypeEnum `json:"filter_action_type,omitempty"`
+	FilterWorkspaceId *int32                `json:"filter_workspace_id,omitempty"`
+	FilterActionType  *FilterActionTypeEnum `json:"filter_action_type,omitempty"`
 	// Optional: The start date to filter the audit log by.
 	FilterFromTimestamp *time.Time `json:"filter_from_timestamp,omitempty"`
 	// Optional: The end date to filter the audit log by.
@@ -374,7 +374,7 @@ func (o *SingleAuditLogExportJobResponse) SetCreatedOn(v time.Time) {
 }
 
 func (o SingleAuditLogExportJobResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -447,5 +447,3 @@ func (v *NullableSingleAuditLogExportJobResponse) UnmarshalJSON(src []byte) erro
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

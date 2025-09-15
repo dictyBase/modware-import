@@ -18,13 +18,12 @@ import (
 	"net/url"
 )
 
-
 // UserApiService UserApi service
 type UserApiService service
 
 type ApiChangePasswordRequest struct {
-	ctx context.Context
-	ApiService *UserApiService
+	ctx                          context.Context
+	ApiService                   *UserApiService
 	changePasswordBodyValidation *ChangePasswordBodyValidation
 }
 
@@ -42,22 +41,22 @@ ChangePassword Method for ChangePassword
 
 Changes the password of an authenticated user, but only if the old password matches.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiChangePasswordRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiChangePasswordRequest
 */
 func (a *UserApiService) ChangePassword(ctx context.Context) ApiChangePasswordRequest {
 	return ApiChangePasswordRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *UserApiService) ChangePasswordExecute(r ApiChangePasswordRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.ChangePassword")
@@ -122,8 +121,8 @@ func (a *UserApiService) ChangePasswordExecute(r ApiChangePasswordRequest) (*htt
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -132,9 +131,9 @@ func (a *UserApiService) ChangePasswordExecute(r ApiChangePasswordRequest) (*htt
 }
 
 type ApiCreateUserRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *UserApiService
-	register *Register
+	register   *Register
 }
 
 func (r ApiCreateUserRequest) Register(register Register) ApiCreateUserRequest {
@@ -151,24 +150,25 @@ CreateUser Method for CreateUser
 
 Creates a new user based on the provided values. If desired an authentication JWT can be generated right away. After creating an account the initial workspace containing a database is created.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiCreateUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiCreateUserRequest
 */
 func (a *UserApiService) CreateUser(ctx context.Context) ApiCreateUserRequest {
 	return ApiCreateUserRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return CreateUser200Response
+//
+//	@return CreateUser200Response
 func (a *UserApiService) CreateUserExecute(r ApiCreateUserRequest) (*CreateUser200Response, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CreateUser200Response
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CreateUser200Response
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.CreateUser")
@@ -233,8 +233,8 @@ func (a *UserApiService) CreateUserExecute(r ApiCreateUserRequest) (*CreateUser2
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -244,8 +244,8 @@ func (a *UserApiService) CreateUserExecute(r ApiCreateUserRequest) (*CreateUser2
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -263,7 +263,7 @@ func (a *UserApiService) CreateUserExecute(r ApiCreateUserRequest) (*CreateUser2
 }
 
 type ApiDashboardRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *UserApiService
 }
 
@@ -276,24 +276,25 @@ Dashboard Method for Dashboard
 
 Lists all the relevant user information that for example could be shown on a dashboard. It will contain all the pending workspace invitations for that user.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiDashboardRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiDashboardRequest
 */
 func (a *UserApiService) Dashboard(ctx context.Context) ApiDashboardRequest {
 	return ApiDashboardRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Dashboard
+//
+//	@return Dashboard
 func (a *UserApiService) DashboardExecute(r ApiDashboardRequest) (*Dashboard, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Dashboard
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Dashboard
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.Dashboard")
@@ -362,9 +363,9 @@ func (a *UserApiService) DashboardExecute(r ApiDashboardRequest) (*Dashboard, *h
 }
 
 type ApiRedoRequest struct {
-	ctx context.Context
-	ApiService *UserApiService
-	clientSessionId *string
+	ctx                    context.Context
+	ApiService             *UserApiService
+	clientSessionId        *string
 	patchedUndoRedoRequest *PatchedUndoRedoRequest
 }
 
@@ -388,24 +389,25 @@ Redo Method for Redo
 
 Redoes the latest redoable action performed by the user making the request. a ClientSessionId header must be provided and only actions which were performed the same user with the same ClientSessionId value set on the api request that performed the action will be redone.Additionally the ClientSessionId header must be between 1 and 256 characters long and must only contain alphanumeric or the - characters.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiRedoRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiRedoRequest
 */
 func (a *UserApiService) Redo(ctx context.Context) ApiRedoRequest {
 	return ApiRedoRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return UndoRedoResponse
+//
+//	@return UndoRedoResponse
 func (a *UserApiService) RedoExecute(r ApiRedoRequest) (*UndoRedoResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *UndoRedoResponse
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UndoRedoResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.Redo")
@@ -480,8 +482,8 @@ func (a *UserApiService) RedoExecute(r ApiRedoRequest) (*UndoRedoResponse, *http
 }
 
 type ApiResetPasswordRequest struct {
-	ctx context.Context
-	ApiService *UserApiService
+	ctx                         context.Context
+	ApiService                  *UserApiService
 	resetPasswordBodyValidation *ResetPasswordBodyValidation
 }
 
@@ -499,22 +501,22 @@ ResetPassword Method for ResetPassword
 
 Changes the password of a user if the reset token is valid. The **send_password_reset_email** endpoint sends an email to the user containing the token. That token can be used to change the password here without providing the old password.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiResetPasswordRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiResetPasswordRequest
 */
 func (a *UserApiService) ResetPassword(ctx context.Context) ApiResetPasswordRequest {
 	return ApiResetPasswordRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *UserApiService) ResetPasswordExecute(r ApiResetPasswordRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.ResetPassword")
@@ -579,8 +581,8 @@ func (a *UserApiService) ResetPasswordExecute(r ApiResetPasswordRequest) (*http.
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -589,7 +591,7 @@ func (a *UserApiService) ResetPasswordExecute(r ApiResetPasswordRequest) (*http.
 }
 
 type ApiScheduleAccountDeletionRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *UserApiService
 }
 
@@ -602,22 +604,22 @@ ScheduleAccountDeletion Method for ScheduleAccountDeletion
 
 Schedules the account deletion of the authenticated user. The user will be permanently deleted after the grace delay defined by the instance administrator.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiScheduleAccountDeletionRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiScheduleAccountDeletionRequest
 */
 func (a *UserApiService) ScheduleAccountDeletion(ctx context.Context) ApiScheduleAccountDeletionRequest {
 	return ApiScheduleAccountDeletionRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *UserApiService) ScheduleAccountDeletionExecute(r ApiScheduleAccountDeletionRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.ScheduleAccountDeletion")
@@ -677,8 +679,8 @@ func (a *UserApiService) ScheduleAccountDeletionExecute(r ApiScheduleAccountDele
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -687,8 +689,8 @@ func (a *UserApiService) ScheduleAccountDeletionExecute(r ApiScheduleAccountDele
 }
 
 type ApiSendPasswordResetEmailRequest struct {
-	ctx context.Context
-	ApiService *UserApiService
+	ctx                                  context.Context
+	ApiService                           *UserApiService
 	sendResetPasswordEmailBodyValidation *SendResetPasswordEmailBodyValidation
 }
 
@@ -706,22 +708,22 @@ SendPasswordResetEmail Method for SendPasswordResetEmail
 
 Sends an email containing the password reset link to the email address of the user. This will only be done if a user is found with the given email address. The endpoint will not fail if the email address is not found. The link is going to the valid for 48 hours.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiSendPasswordResetEmailRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiSendPasswordResetEmailRequest
 */
 func (a *UserApiService) SendPasswordResetEmail(ctx context.Context) ApiSendPasswordResetEmailRequest {
 	return ApiSendPasswordResetEmailRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *UserApiService) SendPasswordResetEmailExecute(r ApiSendPasswordResetEmailRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.SendPasswordResetEmail")
@@ -786,8 +788,8 @@ func (a *UserApiService) SendPasswordResetEmailExecute(r ApiSendPasswordResetEma
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -796,8 +798,8 @@ func (a *UserApiService) SendPasswordResetEmailExecute(r ApiSendPasswordResetEma
 }
 
 type ApiTokenAuthRequest struct {
-	ctx context.Context
-	ApiService *UserApiService
+	ctx                     context.Context
+	ApiService              *UserApiService
 	tokenObtainPairWithUser *TokenObtainPairWithUser
 }
 
@@ -815,24 +817,25 @@ TokenAuth Method for TokenAuth
 
 Authenticates an existing user based on their email and their password. If successful, an access token and a refresh token will be returned.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiTokenAuthRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiTokenAuthRequest
 */
 func (a *UserApiService) TokenAuth(ctx context.Context) ApiTokenAuthRequest {
 	return ApiTokenAuthRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return CreateUser200Response
+//
+//	@return CreateUser200Response
 func (a *UserApiService) TokenAuthExecute(r ApiTokenAuthRequest) (*CreateUser200Response, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CreateUser200Response
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CreateUser200Response
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.TokenAuth")
@@ -897,8 +900,8 @@ func (a *UserApiService) TokenAuthExecute(r ApiTokenAuthRequest) (*CreateUser200
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -916,8 +919,8 @@ func (a *UserApiService) TokenAuthExecute(r ApiTokenAuthRequest) (*CreateUser200
 }
 
 type ApiTokenRefreshRequest struct {
-	ctx context.Context
-	ApiService *UserApiService
+	ctx                  context.Context
+	ApiService           *UserApiService
 	tokenRefreshWithUser *TokenRefreshWithUser
 }
 
@@ -935,24 +938,25 @@ TokenRefresh Method for TokenRefresh
 
 Generate a new access_token that can be used to continue operating on Baserow starting from a valid refresh token.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiTokenRefreshRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiTokenRefreshRequest
 */
 func (a *UserApiService) TokenRefresh(ctx context.Context) ApiTokenRefreshRequest {
 	return ApiTokenRefreshRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return AdminImpersonateUser200Response
+//
+//	@return AdminImpersonateUser200Response
 func (a *UserApiService) TokenRefreshExecute(r ApiTokenRefreshRequest) (*AdminImpersonateUser200Response, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *AdminImpersonateUser200Response
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *AdminImpersonateUser200Response
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.TokenRefresh")
@@ -1014,8 +1018,8 @@ func (a *UserApiService) TokenRefreshExecute(r ApiTokenRefreshRequest) (*AdminIm
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1033,8 +1037,8 @@ func (a *UserApiService) TokenRefreshExecute(r ApiTokenRefreshRequest) (*AdminIm
 }
 
 type ApiTokenVerifyRequest struct {
-	ctx context.Context
-	ApiService *UserApiService
+	ctx                 context.Context
+	ApiService          *UserApiService
 	tokenVerifyWithUser *TokenVerifyWithUser
 }
 
@@ -1052,24 +1056,25 @@ TokenVerify Method for TokenVerify
 
 Verifies if the refresh token is valid and can be used to generate a new access_token.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiTokenVerifyRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiTokenVerifyRequest
 */
 func (a *UserApiService) TokenVerify(ctx context.Context) ApiTokenVerifyRequest {
 	return ApiTokenVerifyRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return TokenVerify200Response
+//
+//	@return TokenVerify200Response
 func (a *UserApiService) TokenVerifyExecute(r ApiTokenVerifyRequest) (*TokenVerify200Response, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *TokenVerify200Response
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *TokenVerify200Response
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.TokenVerify")
@@ -1134,8 +1139,8 @@ func (a *UserApiService) TokenVerifyExecute(r ApiTokenVerifyRequest) (*TokenVeri
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1153,9 +1158,9 @@ func (a *UserApiService) TokenVerifyExecute(r ApiTokenVerifyRequest) (*TokenVeri
 }
 
 type ApiUndoRequest struct {
-	ctx context.Context
-	ApiService *UserApiService
-	clientSessionId *string
+	ctx                    context.Context
+	ApiService             *UserApiService
+	clientSessionId        *string
 	patchedUndoRedoRequest *PatchedUndoRedoRequest
 }
 
@@ -1179,24 +1184,25 @@ Undo Method for Undo
 
 undoes the latest undoable action performed by the user making the request. a ClientSessionId header must be provided and only actions which were performed the same user with the same ClientSessionId value set on the api request that performed the action will be undone.Additionally the ClientSessionId header must be between 1 and 256 characters long and must only contain alphanumeric or the - characters.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiUndoRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiUndoRequest
 */
 func (a *UserApiService) Undo(ctx context.Context) ApiUndoRequest {
 	return ApiUndoRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return UndoRedoResponse
+//
+//	@return UndoRedoResponse
 func (a *UserApiService) UndoExecute(r ApiUndoRequest) (*UndoRedoResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *UndoRedoResponse
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UndoRedoResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.Undo")
@@ -1271,8 +1277,8 @@ func (a *UserApiService) UndoExecute(r ApiUndoRequest) (*UndoRedoResponse, *http
 }
 
 type ApiUpdateAccountRequest struct {
-	ctx context.Context
-	ApiService *UserApiService
+	ctx            context.Context
+	ApiService     *UserApiService
 	patchedAccount *PatchedAccount
 }
 
@@ -1290,24 +1296,25 @@ UpdateAccount Method for UpdateAccount
 
 Updates the account information of the authenticated user.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiUpdateAccountRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiUpdateAccountRequest
 */
 func (a *UserApiService) UpdateAccount(ctx context.Context) ApiUpdateAccountRequest {
 	return ApiUpdateAccountRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Account
+//
+//	@return Account
 func (a *UserApiService) UpdateAccountExecute(r ApiUpdateAccountRequest) (*Account, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Account
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Account
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserApiService.UpdateAccount")
@@ -1369,8 +1376,8 @@ func (a *UserApiService) UpdateAccountExecute(r ApiUpdateAccountRequest) (*Accou
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

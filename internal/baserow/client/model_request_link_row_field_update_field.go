@@ -19,13 +19,13 @@ var _ MappedNullable = &RequestLinkRowFieldUpdateField{}
 
 // RequestLinkRowFieldUpdateField struct for RequestLinkRowFieldUpdateField
 type RequestLinkRowFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
+	Name *string      `json:"name,omitempty"`
 	Type *Type712Enum `json:"type,omitempty"`
 	// The id of the linked table.
 	LinkRowTableId NullableInt32 `json:"link_row_table_id,omitempty"`
 	// (Deprecated) The id of the linked table.
-	LinkRowTable NullableInt32 `json:"link_row_table,omitempty"`
-	HasRelatedField *bool `json:"has_related_field,omitempty"`
+	LinkRowTable    NullableInt32 `json:"link_row_table,omitempty"`
+	HasRelatedField *bool         `json:"has_related_field,omitempty"`
 }
 
 // NewRequestLinkRowFieldUpdateField instantiates a new RequestLinkRowFieldUpdateField object
@@ -141,6 +141,7 @@ func (o *RequestLinkRowFieldUpdateField) HasLinkRowTableId() bool {
 func (o *RequestLinkRowFieldUpdateField) SetLinkRowTableId(v int32) {
 	o.LinkRowTableId.Set(&v)
 }
+
 // SetLinkRowTableIdNil sets the value for LinkRowTableId to be an explicit nil
 func (o *RequestLinkRowFieldUpdateField) SetLinkRowTableIdNil() {
 	o.LinkRowTableId.Set(nil)
@@ -183,6 +184,7 @@ func (o *RequestLinkRowFieldUpdateField) HasLinkRowTable() bool {
 func (o *RequestLinkRowFieldUpdateField) SetLinkRowTable(v int32) {
 	o.LinkRowTable.Set(&v)
 }
+
 // SetLinkRowTableNil sets the value for LinkRowTable to be an explicit nil
 func (o *RequestLinkRowFieldUpdateField) SetLinkRowTableNil() {
 	o.LinkRowTable.Set(nil)
@@ -226,7 +228,7 @@ func (o *RequestLinkRowFieldUpdateField) SetHasRelatedField(v bool) {
 }
 
 func (o RequestLinkRowFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -288,5 +290,3 @@ func (v *NullableRequestLinkRowFieldUpdateField) UnmarshalJSON(src []byte) error
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

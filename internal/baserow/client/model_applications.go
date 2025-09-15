@@ -27,7 +27,6 @@ func DatabaseApplicationAsApplications(v *DatabaseApplication) Applications {
 	}
 }
 
-
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *Applications) UnmarshalJSON(data []byte) error {
 	var err error
@@ -67,7 +66,7 @@ func (src Applications) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *Applications) GetActualInstance() (interface{}) {
+func (obj *Applications) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -114,5 +113,3 @@ func (v *NullableApplications) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -17,7 +17,7 @@ import (
 
 // CountFieldCreateFieldNumberDecimalPlaces - The amount of digits allowed after the point.  * `0` - 1 * `1` - 1.0 * `2` - 1.00 * `3` - 1.000 * `4` - 1.0000 * `5` - 1.00000 * `6` - 1.000000 * `7` - 1.0000000 * `8` - 1.00000000 * `9` - 1.000000000 * `10` - 1.0000000000
 type CountFieldCreateFieldNumberDecimalPlaces struct {
-	NullEnum *NullEnum
+	NullEnum                *NullEnum
 	NumberDecimalPlacesEnum *NumberDecimalPlacesEnum
 }
 
@@ -34,7 +34,6 @@ func NumberDecimalPlacesEnumAsCountFieldCreateFieldNumberDecimalPlaces(v *Number
 		NumberDecimalPlacesEnum: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *CountFieldCreateFieldNumberDecimalPlaces) UnmarshalJSON(data []byte) error {
@@ -98,7 +97,7 @@ func (src CountFieldCreateFieldNumberDecimalPlaces) MarshalJSON() ([]byte, error
 }
 
 // Get the actual instance
-func (obj *CountFieldCreateFieldNumberDecimalPlaces) GetActualInstance() (interface{}) {
+func (obj *CountFieldCreateFieldNumberDecimalPlaces) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -149,5 +148,3 @@ func (v *NullableCountFieldCreateFieldNumberDecimalPlaces) UnmarshalJSON(src []b
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

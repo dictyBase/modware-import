@@ -23,7 +23,7 @@ type ViewSort struct {
 	// The view to which the sort applies. Each view can have his own sortings.
 	View int32 `json:"view"`
 	// The field that must be sorted on.
-	Field int32 `json:"field"`
+	Field int32      `json:"field"`
 	Order *OrderEnum `json:"order,omitempty"`
 }
 
@@ -152,7 +152,7 @@ func (o *ViewSort) SetOrder(v OrderEnum) {
 }
 
 func (o ViewSort) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -205,5 +205,3 @@ func (v *NullableViewSort) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -19,9 +19,9 @@ var _ MappedNullable = &RatingFieldFieldSerializerWithRelatedFields{}
 
 // RatingFieldFieldSerializerWithRelatedFields struct for RatingFieldFieldSerializerWithRelatedFields
 type RatingFieldFieldSerializerWithRelatedFields struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -35,7 +35,7 @@ type RatingFieldFieldSerializerWithRelatedFields struct {
 	// Maximum value the rating can take.
 	MaxValue *int32 `json:"max_value,omitempty"`
 	// Color of the symbols.
-	Color *string `json:"color,omitempty"`
+	Color *string    `json:"color,omitempty"`
 	Style *StyleEnum `json:"style,omitempty"`
 }
 
@@ -360,7 +360,7 @@ func (o *RatingFieldFieldSerializerWithRelatedFields) SetStyle(v StyleEnum) {
 }
 
 func (o RatingFieldFieldSerializerWithRelatedFields) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -426,5 +426,3 @@ func (v *NullableRatingFieldFieldSerializerWithRelatedFields) UnmarshalJSON(src 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -27,9 +27,9 @@ type DuplicateFieldJobJob struct {
 	// Indicates the state of the import job.
 	State string `json:"state"`
 	// A human readable error message indicating what went wrong.
-	HumanReadableError *string `json:"human_readable_error,omitempty"`
-	OriginalField Field `json:"original_field"`
-	DuplicatedField FieldSerializerWithRelatedFields `json:"duplicated_field"`
+	HumanReadableError *string                          `json:"human_readable_error,omitempty"`
+	OriginalField      Field                            `json:"original_field"`
+	DuplicatedField    FieldSerializerWithRelatedFields `json:"duplicated_field"`
 }
 
 // NewDuplicateFieldJobJob instantiates a new DuplicateFieldJobJob object
@@ -232,7 +232,7 @@ func (o *DuplicateFieldJobJob) SetDuplicatedField(v FieldSerializerWithRelatedFi
 }
 
 func (o DuplicateFieldJobJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -288,5 +288,3 @@ func (v *NullableDuplicateFieldJobJob) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -18,14 +18,14 @@ import (
 // PatchedTokenUpdatePermissionsCreateAnyOfInnerInner struct for PatchedTokenUpdatePermissionsCreateAnyOfInnerInner
 type PatchedTokenUpdatePermissionsCreateAnyOfInnerInner struct {
 	float32 *float32
-	string *string
+	string  *string
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
 func (dst *PatchedTokenUpdatePermissionsCreateAnyOfInnerInner) UnmarshalJSON(data []byte) error {
 	var err error
 	// try to unmarshal JSON data into float32
-	err = json.Unmarshal(data, &dst.float32);
+	err = json.Unmarshal(data, &dst.float32)
 	if err == nil {
 		jsonfloat32, _ := json.Marshal(dst.float32)
 		if string(jsonfloat32) == "{}" { // empty struct
@@ -38,7 +38,7 @@ func (dst *PatchedTokenUpdatePermissionsCreateAnyOfInnerInner) UnmarshalJSON(dat
 	}
 
 	// try to unmarshal JSON data into string
-	err = json.Unmarshal(data, &dst.string);
+	err = json.Unmarshal(data, &dst.string)
 	if err == nil {
 		jsonstring, _ := json.Marshal(dst.string)
 		if string(jsonstring) == "{}" { // empty struct
@@ -101,5 +101,3 @@ func (v *NullablePatchedTokenUpdatePermissionsCreateAnyOfInnerInner) UnmarshalJS
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

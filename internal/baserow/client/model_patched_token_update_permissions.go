@@ -20,7 +20,7 @@ var _ MappedNullable = &PatchedTokenUpdatePermissions{}
 // PatchedTokenUpdatePermissions Indicates per operation which permissions the database token has within the whole workspace. If the value of for example `create` is `true`, then the token can create rows in all tables related to the workspace. If a list is provided with for example `[[\"table\", 1]]` then the token only has create permissions for the table with id 1. Same goes for if a database references is provided. `[['database', 1]]` means create permissions for all tables in the database with id 1.  Example: ```json {   \"create\": true// Allows creating rows in all tables.   // Allows reading rows from database 1 and table 10.   \"read\": [[\"database\", 1], [\"table\", 10]],   \"update\": false  // Denies updating rows in all tables.   \"delete\": []  // Denies deleting rows in all tables.  } ```
 type PatchedTokenUpdatePermissions struct {
 	Create *PatchedTokenUpdatePermissionsCreate `json:"create,omitempty"`
-	Read *PatchedTokenUpdatePermissionsCreate `json:"read,omitempty"`
+	Read   *PatchedTokenUpdatePermissionsCreate `json:"read,omitempty"`
 	Update *PatchedTokenUpdatePermissionsCreate `json:"update,omitempty"`
 	Delete *PatchedTokenUpdatePermissionsCreate `json:"delete,omitempty"`
 }
@@ -171,7 +171,7 @@ func (o *PatchedTokenUpdatePermissions) SetDelete(v PatchedTokenUpdatePermission
 }
 
 func (o PatchedTokenUpdatePermissions) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -230,5 +230,3 @@ func (v *NullablePatchedTokenUpdatePermissions) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

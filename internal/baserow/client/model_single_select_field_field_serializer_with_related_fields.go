@@ -19,9 +19,9 @@ var _ MappedNullable = &SingleSelectFieldFieldSerializerWithRelatedFields{}
 
 // SingleSelectFieldFieldSerializerWithRelatedFields struct for SingleSelectFieldFieldSerializerWithRelatedFields
 type SingleSelectFieldFieldSerializerWithRelatedFields struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -31,7 +31,7 @@ type SingleSelectFieldFieldSerializerWithRelatedFields struct {
 	// Indicates whether the field is a read only field. If true, it's not possible to update the cell value.
 	ReadOnly bool `json:"read_only"`
 	// A list of related fields which also changed.
-	RelatedFields []Field `json:"related_fields"`
+	RelatedFields []Field        `json:"related_fields"`
 	SelectOptions []SelectOption `json:"select_options,omitempty"`
 }
 
@@ -292,7 +292,7 @@ func (o *SingleSelectFieldFieldSerializerWithRelatedFields) SetSelectOptions(v [
 }
 
 func (o SingleSelectFieldFieldSerializerWithRelatedFields) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -352,5 +352,3 @@ func (v *NullableSingleSelectFieldFieldSerializerWithRelatedFields) UnmarshalJSO
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

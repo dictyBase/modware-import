@@ -17,26 +17,26 @@ import (
 
 // PatchedFieldUpdateField - struct for PatchedFieldUpdateField
 type PatchedFieldUpdateField struct {
-	RequestBooleanFieldUpdateField *RequestBooleanFieldUpdateField
-	RequestCountFieldUpdateField *RequestCountFieldUpdateField
-	RequestCreatedOnFieldUpdateField *RequestCreatedOnFieldUpdateField
-	RequestDateFieldUpdateField *RequestDateFieldUpdateField
-	RequestEmailFieldUpdateField *RequestEmailFieldUpdateField
-	RequestFileFieldUpdateField *RequestFileFieldUpdateField
-	RequestFormulaFieldUpdateField *RequestFormulaFieldUpdateField
-	RequestLastModifiedFieldUpdateField *RequestLastModifiedFieldUpdateField
-	RequestLinkRowFieldUpdateField *RequestLinkRowFieldUpdateField
-	RequestLongTextFieldUpdateField *RequestLongTextFieldUpdateField
-	RequestLookupFieldUpdateField *RequestLookupFieldUpdateField
+	RequestBooleanFieldUpdateField               *RequestBooleanFieldUpdateField
+	RequestCountFieldUpdateField                 *RequestCountFieldUpdateField
+	RequestCreatedOnFieldUpdateField             *RequestCreatedOnFieldUpdateField
+	RequestDateFieldUpdateField                  *RequestDateFieldUpdateField
+	RequestEmailFieldUpdateField                 *RequestEmailFieldUpdateField
+	RequestFileFieldUpdateField                  *RequestFileFieldUpdateField
+	RequestFormulaFieldUpdateField               *RequestFormulaFieldUpdateField
+	RequestLastModifiedFieldUpdateField          *RequestLastModifiedFieldUpdateField
+	RequestLinkRowFieldUpdateField               *RequestLinkRowFieldUpdateField
+	RequestLongTextFieldUpdateField              *RequestLongTextFieldUpdateField
+	RequestLookupFieldUpdateField                *RequestLookupFieldUpdateField
 	RequestMultipleCollaboratorsFieldUpdateField *RequestMultipleCollaboratorsFieldUpdateField
-	RequestMultipleSelectFieldUpdateField *RequestMultipleSelectFieldUpdateField
-	RequestNumberFieldUpdateField *RequestNumberFieldUpdateField
-	RequestPhoneNumberFieldUpdateField *RequestPhoneNumberFieldUpdateField
-	RequestRatingFieldUpdateField *RequestRatingFieldUpdateField
-	RequestRollupFieldUpdateField *RequestRollupFieldUpdateField
-	RequestSingleSelectFieldUpdateField *RequestSingleSelectFieldUpdateField
-	RequestTextFieldUpdateField *RequestTextFieldUpdateField
-	RequestURLFieldUpdateField *RequestURLFieldUpdateField
+	RequestMultipleSelectFieldUpdateField        *RequestMultipleSelectFieldUpdateField
+	RequestNumberFieldUpdateField                *RequestNumberFieldUpdateField
+	RequestPhoneNumberFieldUpdateField           *RequestPhoneNumberFieldUpdateField
+	RequestRatingFieldUpdateField                *RequestRatingFieldUpdateField
+	RequestRollupFieldUpdateField                *RequestRollupFieldUpdateField
+	RequestSingleSelectFieldUpdateField          *RequestSingleSelectFieldUpdateField
+	RequestTextFieldUpdateField                  *RequestTextFieldUpdateField
+	RequestURLFieldUpdateField                   *RequestURLFieldUpdateField
 }
 
 // RequestBooleanFieldUpdateFieldAsPatchedFieldUpdateField is a convenience function that returns RequestBooleanFieldUpdateField wrapped in PatchedFieldUpdateField
@@ -178,7 +178,6 @@ func RequestURLFieldUpdateFieldAsPatchedFieldUpdateField(v *RequestURLFieldUpdat
 		RequestURLFieldUpdateField: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *PatchedFieldUpdateField) UnmarshalJSON(data []byte) error {
@@ -561,7 +560,7 @@ func (src PatchedFieldUpdateField) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *PatchedFieldUpdateField) GetActualInstance() (interface{}) {
+func (obj *PatchedFieldUpdateField) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -684,5 +683,3 @@ func (v *NullablePatchedFieldUpdateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

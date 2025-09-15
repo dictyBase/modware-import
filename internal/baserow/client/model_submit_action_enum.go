@@ -20,7 +20,7 @@ type SubmitActionEnum string
 
 // List of SubmitActionEnum
 const (
-	MESSAGE SubmitActionEnum = "MESSAGE"
+	MESSAGE  SubmitActionEnum = "MESSAGE"
 	REDIRECT SubmitActionEnum = "REDIRECT"
 )
 
@@ -108,4 +108,3 @@ func (v *NullableSubmitActionEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

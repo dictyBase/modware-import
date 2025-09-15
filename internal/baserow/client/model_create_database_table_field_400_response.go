@@ -20,7 +20,7 @@ var _ MappedNullable = &CreateDatabaseTableField400Response{}
 // CreateDatabaseTableField400Response struct for CreateDatabaseTableField400Response
 type CreateDatabaseTableField400Response struct {
 	// Machine readable error indicating what went wrong.
-	Error *string `json:"error,omitempty"`
+	Error  *string                          `json:"error,omitempty"`
 	Detail *AdminListUsers400ResponseDetail `json:"detail,omitempty"`
 }
 
@@ -106,7 +106,7 @@ func (o *CreateDatabaseTableField400Response) SetDetail(v AdminListUsers400Respo
 }
 
 func (o CreateDatabaseTableField400Response) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -159,5 +159,3 @@ func (v *NullableCreateDatabaseTableField400Response) UnmarshalJSON(src []byte) 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

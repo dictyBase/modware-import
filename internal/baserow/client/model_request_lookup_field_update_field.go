@@ -19,20 +19,20 @@ var _ MappedNullable = &RequestLookupFieldUpdateField{}
 
 // RequestLookupFieldUpdateField struct for RequestLookupFieldUpdateField
 type RequestLookupFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
+	Name *string      `json:"name,omitempty"`
 	Type *Type712Enum `json:"type,omitempty"`
 	// Indicates if the time zone should be shown.
-	DateShowTzinfo NullableBool `json:"date_show_tzinfo,omitempty"`
-	DateFormat NullableCountFieldCreateFieldDateFormat `json:"date_format,omitempty"`
+	DateShowTzinfo   NullableBool                                  `json:"date_show_tzinfo,omitempty"`
+	DateFormat       NullableCountFieldCreateFieldDateFormat       `json:"date_format,omitempty"`
 	ArrayFormulaType NullableCountFieldCreateFieldArrayFormulaType `json:"array_formula_type,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
 	DateForceTimezone NullableString `json:"date_force_timezone,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime NullableBool `json:"date_include_time,omitempty"`
-	Nullable bool `json:"nullable"`
-	DateTimeFormat NullableCountFieldCreateFieldDateTimeFormat `json:"date_time_format,omitempty"`
+	DateIncludeTime     NullableBool                                     `json:"date_include_time,omitempty"`
+	Nullable            bool                                             `json:"nullable"`
+	DateTimeFormat      NullableCountFieldCreateFieldDateTimeFormat      `json:"date_time_format,omitempty"`
 	NumberDecimalPlaces NullableCountFieldCreateFieldNumberDecimalPlaces `json:"number_decimal_places,omitempty"`
-	Error NullableString `json:"error,omitempty"`
+	Error               NullableString                                   `json:"error,omitempty"`
 	// The id of the link row field to lookup values for. Will override the `through_field_name` parameter if both are provided, however only one is required.
 	ThroughFieldId NullableInt32 `json:"through_field_id,omitempty"`
 	// The name of the link row field to lookup values for.
@@ -40,8 +40,8 @@ type RequestLookupFieldUpdateField struct {
 	// The id of the field in the table linked to by the through_field to lookup. Will override the `target_field_id` parameter if both are provided, however only one is required.
 	TargetFieldId NullableInt32 `json:"target_field_id,omitempty"`
 	// The name of the field in the table linked to by the through_field to lookup.
-	TargetFieldName NullableString `json:"target_field_name,omitempty"`
-	FormulaType *FormulaTypeEnum `json:"formula_type,omitempty"`
+	TargetFieldName NullableString   `json:"target_field_name,omitempty"`
+	FormulaType     *FormulaTypeEnum `json:"formula_type,omitempty"`
 }
 
 // NewRequestLookupFieldUpdateField instantiates a new RequestLookupFieldUpdateField object
@@ -158,6 +158,7 @@ func (o *RequestLookupFieldUpdateField) HasDateShowTzinfo() bool {
 func (o *RequestLookupFieldUpdateField) SetDateShowTzinfo(v bool) {
 	o.DateShowTzinfo.Set(&v)
 }
+
 // SetDateShowTzinfoNil sets the value for DateShowTzinfo to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetDateShowTzinfoNil() {
 	o.DateShowTzinfo.Set(nil)
@@ -200,6 +201,7 @@ func (o *RequestLookupFieldUpdateField) HasDateFormat() bool {
 func (o *RequestLookupFieldUpdateField) SetDateFormat(v CountFieldCreateFieldDateFormat) {
 	o.DateFormat.Set(&v)
 }
+
 // SetDateFormatNil sets the value for DateFormat to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetDateFormatNil() {
 	o.DateFormat.Set(nil)
@@ -242,6 +244,7 @@ func (o *RequestLookupFieldUpdateField) HasArrayFormulaType() bool {
 func (o *RequestLookupFieldUpdateField) SetArrayFormulaType(v CountFieldCreateFieldArrayFormulaType) {
 	o.ArrayFormulaType.Set(&v)
 }
+
 // SetArrayFormulaTypeNil sets the value for ArrayFormulaType to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetArrayFormulaTypeNil() {
 	o.ArrayFormulaType.Set(nil)
@@ -284,6 +287,7 @@ func (o *RequestLookupFieldUpdateField) HasDateForceTimezone() bool {
 func (o *RequestLookupFieldUpdateField) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -326,6 +330,7 @@ func (o *RequestLookupFieldUpdateField) HasDateIncludeTime() bool {
 func (o *RequestLookupFieldUpdateField) SetDateIncludeTime(v bool) {
 	o.DateIncludeTime.Set(&v)
 }
+
 // SetDateIncludeTimeNil sets the value for DateIncludeTime to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetDateIncludeTimeNil() {
 	o.DateIncludeTime.Set(nil)
@@ -392,6 +397,7 @@ func (o *RequestLookupFieldUpdateField) HasDateTimeFormat() bool {
 func (o *RequestLookupFieldUpdateField) SetDateTimeFormat(v CountFieldCreateFieldDateTimeFormat) {
 	o.DateTimeFormat.Set(&v)
 }
+
 // SetDateTimeFormatNil sets the value for DateTimeFormat to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetDateTimeFormatNil() {
 	o.DateTimeFormat.Set(nil)
@@ -434,6 +440,7 @@ func (o *RequestLookupFieldUpdateField) HasNumberDecimalPlaces() bool {
 func (o *RequestLookupFieldUpdateField) SetNumberDecimalPlaces(v CountFieldCreateFieldNumberDecimalPlaces) {
 	o.NumberDecimalPlaces.Set(&v)
 }
+
 // SetNumberDecimalPlacesNil sets the value for NumberDecimalPlaces to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetNumberDecimalPlacesNil() {
 	o.NumberDecimalPlaces.Set(nil)
@@ -476,6 +483,7 @@ func (o *RequestLookupFieldUpdateField) HasError() bool {
 func (o *RequestLookupFieldUpdateField) SetError(v string) {
 	o.Error.Set(&v)
 }
+
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetErrorNil() {
 	o.Error.Set(nil)
@@ -518,6 +526,7 @@ func (o *RequestLookupFieldUpdateField) HasThroughFieldId() bool {
 func (o *RequestLookupFieldUpdateField) SetThroughFieldId(v int32) {
 	o.ThroughFieldId.Set(&v)
 }
+
 // SetThroughFieldIdNil sets the value for ThroughFieldId to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetThroughFieldIdNil() {
 	o.ThroughFieldId.Set(nil)
@@ -560,6 +569,7 @@ func (o *RequestLookupFieldUpdateField) HasThroughFieldName() bool {
 func (o *RequestLookupFieldUpdateField) SetThroughFieldName(v string) {
 	o.ThroughFieldName.Set(&v)
 }
+
 // SetThroughFieldNameNil sets the value for ThroughFieldName to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetThroughFieldNameNil() {
 	o.ThroughFieldName.Set(nil)
@@ -602,6 +612,7 @@ func (o *RequestLookupFieldUpdateField) HasTargetFieldId() bool {
 func (o *RequestLookupFieldUpdateField) SetTargetFieldId(v int32) {
 	o.TargetFieldId.Set(&v)
 }
+
 // SetTargetFieldIdNil sets the value for TargetFieldId to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetTargetFieldIdNil() {
 	o.TargetFieldId.Set(nil)
@@ -644,6 +655,7 @@ func (o *RequestLookupFieldUpdateField) HasTargetFieldName() bool {
 func (o *RequestLookupFieldUpdateField) SetTargetFieldName(v string) {
 	o.TargetFieldName.Set(&v)
 }
+
 // SetTargetFieldNameNil sets the value for TargetFieldName to be an explicit nil
 func (o *RequestLookupFieldUpdateField) SetTargetFieldNameNil() {
 	o.TargetFieldName.Set(nil)
@@ -687,7 +699,7 @@ func (o *RequestLookupFieldUpdateField) SetFormulaType(v FormulaTypeEnum) {
 }
 
 func (o RequestLookupFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -780,5 +792,3 @@ func (v *NullableRequestLookupFieldUpdateField) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -19,7 +19,7 @@ var _ MappedNullable = &ExampleRowResponseField13{}
 
 // ExampleRowResponseField13 This field represents the `single_select` field. The number in field_13 is in a normal request or response the id of the field.This field accepts an `integer` representing the chosen select option id related to the field. Available ids can be found when getting or listing the field. The response represents chosen field, but also the value and color is exposed.
 type ExampleRowResponseField13 struct {
-	Id *int32 `json:"id,omitempty"`
+	Id    *int32 `json:"id,omitempty"`
 	Value string `json:"value"`
 	Color string `json:"color"`
 }
@@ -124,7 +124,7 @@ func (o *ExampleRowResponseField13) SetColor(v string) {
 }
 
 func (o ExampleRowResponseField13) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -176,5 +176,3 @@ func (v *NullableExampleRowResponseField13) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

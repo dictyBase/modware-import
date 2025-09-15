@@ -24,7 +24,7 @@ type License struct {
 	// Unique identifier of the license.
 	LicenseId string `json:"license_id"`
 	// Indicates if the backend deems the license valid.
-	IsActive bool `json:"is_active"`
+	IsActive  bool         `json:"is_active"`
 	LastCheck NullableTime `json:"last_check,omitempty"`
 	// From which timestamp the license becomes active.
 	ValidFrom time.Time `json:"valid_from"`
@@ -179,6 +179,7 @@ func (o *License) HasLastCheck() bool {
 func (o *License) SetLastCheck(v time.Time) {
 	o.LastCheck.Set(&v)
 }
+
 // SetLastCheckNil sets the value for LastCheck to be an explicit nil
 func (o *License) SetLastCheckNil() {
 	o.LastCheck.Set(nil)
@@ -406,7 +407,7 @@ func (o *License) SetIssuedToName(v string) {
 }
 
 func (o License) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -468,5 +469,3 @@ func (v *NullableLicense) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

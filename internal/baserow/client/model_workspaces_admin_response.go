@@ -20,15 +20,15 @@ var _ MappedNullable = &WorkspacesAdminResponse{}
 
 // WorkspacesAdminResponse struct for WorkspacesAdminResponse
 type WorkspacesAdminResponse struct {
-	Id int32 `json:"id"`
-	Name string `json:"name"`
-	Users []WorkspaceAdminUsers `json:"users"`
-	ApplicationCount int32 `json:"application_count"`
-	RowCount int32 `json:"row_count"`
-	StorageUsage NullableInt32 `json:"storage_usage,omitempty"`
-	SeatsTaken int32 `json:"seats_taken"`
-	FreeUsers int32 `json:"free_users"`
-	CreatedOn time.Time `json:"created_on"`
+	Id               int32                 `json:"id"`
+	Name             string                `json:"name"`
+	Users            []WorkspaceAdminUsers `json:"users"`
+	ApplicationCount int32                 `json:"application_count"`
+	RowCount         int32                 `json:"row_count"`
+	StorageUsage     NullableInt32         `json:"storage_usage,omitempty"`
+	SeatsTaken       int32                 `json:"seats_taken"`
+	FreeUsers        int32                 `json:"free_users"`
+	CreatedOn        time.Time             `json:"created_on"`
 }
 
 // NewWorkspacesAdminResponse instantiates a new WorkspacesAdminResponse object
@@ -208,6 +208,7 @@ func (o *WorkspacesAdminResponse) HasStorageUsage() bool {
 func (o *WorkspacesAdminResponse) SetStorageUsage(v int32) {
 	o.StorageUsage.Set(&v)
 }
+
 // SetStorageUsageNil sets the value for StorageUsage to be an explicit nil
 func (o *WorkspacesAdminResponse) SetStorageUsageNil() {
 	o.StorageUsage.Set(nil)
@@ -291,7 +292,7 @@ func (o *WorkspacesAdminResponse) SetCreatedOn(v time.Time) {
 }
 
 func (o WorkspacesAdminResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -349,5 +350,3 @@ func (v *NullableWorkspacesAdminResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

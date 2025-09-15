@@ -20,16 +20,16 @@ var _ MappedNullable = &PublicFormViewLogoImage{}
 
 // PublicFormViewLogoImage The user file logo image that is displayed at the top of the form.
 type PublicFormViewLogoImage struct {
-	Size int32 `json:"size"`
-	MimeType *string `json:"mime_type,omitempty"`
-	IsImage *bool `json:"is_image,omitempty"`
-	ImageWidth NullableInt32 `json:"image_width,omitempty"`
-	ImageHeight NullableInt32 `json:"image_height,omitempty"`
-	UploadedAt time.Time `json:"uploaded_at"`
-	Url string `json:"url"`
-	Thumbnails map[string]interface{} `json:"thumbnails"`
-	Name string `json:"name"`
-	OriginalName string `json:"original_name"`
+	Size         int32                  `json:"size"`
+	MimeType     *string                `json:"mime_type,omitempty"`
+	IsImage      *bool                  `json:"is_image,omitempty"`
+	ImageWidth   NullableInt32          `json:"image_width,omitempty"`
+	ImageHeight  NullableInt32          `json:"image_height,omitempty"`
+	UploadedAt   time.Time              `json:"uploaded_at"`
+	Url          string                 `json:"url"`
+	Thumbnails   map[string]interface{} `json:"thumbnails"`
+	Name         string                 `json:"name"`
+	OriginalName string                 `json:"original_name"`
 }
 
 // NewPublicFormViewLogoImage instantiates a new PublicFormViewLogoImage object
@@ -175,6 +175,7 @@ func (o *PublicFormViewLogoImage) HasImageWidth() bool {
 func (o *PublicFormViewLogoImage) SetImageWidth(v int32) {
 	o.ImageWidth.Set(&v)
 }
+
 // SetImageWidthNil sets the value for ImageWidth to be an explicit nil
 func (o *PublicFormViewLogoImage) SetImageWidthNil() {
 	o.ImageWidth.Set(nil)
@@ -217,6 +218,7 @@ func (o *PublicFormViewLogoImage) HasImageHeight() bool {
 func (o *PublicFormViewLogoImage) SetImageHeight(v int32) {
 	o.ImageHeight.Set(&v)
 }
+
 // SetImageHeightNil sets the value for ImageHeight to be an explicit nil
 func (o *PublicFormViewLogoImage) SetImageHeightNil() {
 	o.ImageHeight.Set(nil)
@@ -348,7 +350,7 @@ func (o *PublicFormViewLogoImage) SetOriginalName(v string) {
 }
 
 func (o PublicFormViewLogoImage) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -413,5 +415,3 @@ func (v *NullablePublicFormViewLogoImage) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

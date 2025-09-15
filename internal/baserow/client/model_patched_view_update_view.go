@@ -18,17 +18,17 @@ import (
 // PatchedViewUpdateView struct for PatchedViewUpdateView
 type PatchedViewUpdateView struct {
 	CalendarViewUpdate *CalendarViewUpdate
-	FormViewUpdate *FormViewUpdate
-	GalleryViewUpdate *GalleryViewUpdate
-	GridViewUpdate *GridViewUpdate
-	KanbanViewUpdate *KanbanViewUpdate
+	FormViewUpdate     *FormViewUpdate
+	GalleryViewUpdate  *GalleryViewUpdate
+	GridViewUpdate     *GridViewUpdate
+	KanbanViewUpdate   *KanbanViewUpdate
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
 func (dst *PatchedViewUpdateView) UnmarshalJSON(data []byte) error {
 	var err error
 	// try to unmarshal JSON data into CalendarViewUpdate
-	err = json.Unmarshal(data, &dst.CalendarViewUpdate);
+	err = json.Unmarshal(data, &dst.CalendarViewUpdate)
 	if err == nil {
 		jsonCalendarViewUpdate, _ := json.Marshal(dst.CalendarViewUpdate)
 		if string(jsonCalendarViewUpdate) == "{}" { // empty struct
@@ -41,7 +41,7 @@ func (dst *PatchedViewUpdateView) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into FormViewUpdate
-	err = json.Unmarshal(data, &dst.FormViewUpdate);
+	err = json.Unmarshal(data, &dst.FormViewUpdate)
 	if err == nil {
 		jsonFormViewUpdate, _ := json.Marshal(dst.FormViewUpdate)
 		if string(jsonFormViewUpdate) == "{}" { // empty struct
@@ -54,7 +54,7 @@ func (dst *PatchedViewUpdateView) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into GalleryViewUpdate
-	err = json.Unmarshal(data, &dst.GalleryViewUpdate);
+	err = json.Unmarshal(data, &dst.GalleryViewUpdate)
 	if err == nil {
 		jsonGalleryViewUpdate, _ := json.Marshal(dst.GalleryViewUpdate)
 		if string(jsonGalleryViewUpdate) == "{}" { // empty struct
@@ -67,7 +67,7 @@ func (dst *PatchedViewUpdateView) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into GridViewUpdate
-	err = json.Unmarshal(data, &dst.GridViewUpdate);
+	err = json.Unmarshal(data, &dst.GridViewUpdate)
 	if err == nil {
 		jsonGridViewUpdate, _ := json.Marshal(dst.GridViewUpdate)
 		if string(jsonGridViewUpdate) == "{}" { // empty struct
@@ -80,7 +80,7 @@ func (dst *PatchedViewUpdateView) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into KanbanViewUpdate
-	err = json.Unmarshal(data, &dst.KanbanViewUpdate);
+	err = json.Unmarshal(data, &dst.KanbanViewUpdate)
 	if err == nil {
 		jsonKanbanViewUpdate, _ := json.Marshal(dst.KanbanViewUpdate)
 		if string(jsonKanbanViewUpdate) == "{}" { // empty struct
@@ -155,5 +155,3 @@ func (v *NullablePatchedViewUpdateView) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

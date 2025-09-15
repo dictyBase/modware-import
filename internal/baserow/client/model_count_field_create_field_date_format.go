@@ -18,7 +18,7 @@ import (
 // CountFieldCreateFieldDateFormat - EU (20/02/2020), US (02/20/2020) or ISO (2020-02-20)  * `EU` - European (D/M/Y) * `US` - US (M/D/Y) * `ISO` - ISO (Y-M-D)
 type CountFieldCreateFieldDateFormat struct {
 	DateFormatEnum *DateFormatEnum
-	NullEnum *NullEnum
+	NullEnum       *NullEnum
 }
 
 // DateFormatEnumAsCountFieldCreateFieldDateFormat is a convenience function that returns DateFormatEnum wrapped in CountFieldCreateFieldDateFormat
@@ -34,7 +34,6 @@ func NullEnumAsCountFieldCreateFieldDateFormat(v *NullEnum) CountFieldCreateFiel
 		NullEnum: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *CountFieldCreateFieldDateFormat) UnmarshalJSON(data []byte) error {
@@ -98,7 +97,7 @@ func (src CountFieldCreateFieldDateFormat) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *CountFieldCreateFieldDateFormat) GetActualInstance() (interface{}) {
+func (obj *CountFieldCreateFieldDateFormat) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -149,5 +148,3 @@ func (v *NullableCountFieldCreateFieldDateFormat) UnmarshalJSON(src []byte) erro
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

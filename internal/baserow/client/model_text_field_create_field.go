@@ -19,7 +19,7 @@ var _ MappedNullable = &TextFieldCreateField{}
 
 // TextFieldCreateField struct for TextFieldCreateField
 type TextFieldCreateField struct {
-	Name string `json:"name"`
+	Name string      `json:"name"`
 	Type Type712Enum `json:"type"`
 	// If set, this value is going to be added every time a new row created.
 	TextDefault *string `json:"text_default,omitempty"`
@@ -125,7 +125,7 @@ func (o *TextFieldCreateField) SetTextDefault(v string) {
 }
 
 func (o TextFieldCreateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -177,5 +177,3 @@ func (v *NullableTextFieldCreateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

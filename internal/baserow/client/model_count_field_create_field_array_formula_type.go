@@ -18,7 +18,7 @@ import (
 // CountFieldCreateFieldArrayFormulaType - struct for CountFieldCreateFieldArrayFormulaType
 type CountFieldCreateFieldArrayFormulaType struct {
 	ArrayFormulaTypeEnum *ArrayFormulaTypeEnum
-	NullEnum *NullEnum
+	NullEnum             *NullEnum
 }
 
 // ArrayFormulaTypeEnumAsCountFieldCreateFieldArrayFormulaType is a convenience function that returns ArrayFormulaTypeEnum wrapped in CountFieldCreateFieldArrayFormulaType
@@ -34,7 +34,6 @@ func NullEnumAsCountFieldCreateFieldArrayFormulaType(v *NullEnum) CountFieldCrea
 		NullEnum: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *CountFieldCreateFieldArrayFormulaType) UnmarshalJSON(data []byte) error {
@@ -98,7 +97,7 @@ func (src CountFieldCreateFieldArrayFormulaType) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *CountFieldCreateFieldArrayFormulaType) GetActualInstance() (interface{}) {
+func (obj *CountFieldCreateFieldArrayFormulaType) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -149,5 +148,3 @@ func (v *NullableCountFieldCreateFieldArrayFormulaType) UnmarshalJSON(src []byte
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -22,14 +22,14 @@ type PublicFormView struct {
 	// The title that is displayed at the beginning of the form.
 	Title *string `json:"title,omitempty"`
 	// The description that is displayed at the beginning of the form.
-	Description *string `json:"description,omitempty"`
-	Mode *ModeEnum `json:"mode,omitempty"`
-	CoverImage NullablePublicFormViewCoverImage `json:"cover_image,omitempty"`
-	LogoImage NullablePublicFormViewLogoImage `json:"logo_image,omitempty"`
+	Description *string                          `json:"description,omitempty"`
+	Mode        *ModeEnum                        `json:"mode,omitempty"`
+	CoverImage  NullablePublicFormViewCoverImage `json:"cover_image,omitempty"`
+	LogoImage   NullablePublicFormViewLogoImage  `json:"logo_image,omitempty"`
 	// The text displayed on the submit button.
-	SubmitText *string `json:"submit_text,omitempty"`
-	Fields []PublicFormViewFieldOptions `json:"fields"`
-	ShowLogo *bool `json:"show_logo,omitempty"`
+	SubmitText *string                      `json:"submit_text,omitempty"`
+	Fields     []PublicFormViewFieldOptions `json:"fields"`
+	ShowLogo   *bool                        `json:"show_logo,omitempty"`
 }
 
 // NewPublicFormView instantiates a new PublicFormView object
@@ -178,6 +178,7 @@ func (o *PublicFormView) HasCoverImage() bool {
 func (o *PublicFormView) SetCoverImage(v PublicFormViewCoverImage) {
 	o.CoverImage.Set(&v)
 }
+
 // SetCoverImageNil sets the value for CoverImage to be an explicit nil
 func (o *PublicFormView) SetCoverImageNil() {
 	o.CoverImage.Set(nil)
@@ -220,6 +221,7 @@ func (o *PublicFormView) HasLogoImage() bool {
 func (o *PublicFormView) SetLogoImage(v PublicFormViewLogoImage) {
 	o.LogoImage.Set(&v)
 }
+
 // SetLogoImageNil sets the value for LogoImage to be an explicit nil
 func (o *PublicFormView) SetLogoImageNil() {
 	o.LogoImage.Set(nil)
@@ -319,7 +321,7 @@ func (o *PublicFormView) SetShowLogo(v bool) {
 }
 
 func (o PublicFormView) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -388,5 +390,3 @@ func (v *NullablePublicFormView) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

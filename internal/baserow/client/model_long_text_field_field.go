@@ -19,9 +19,9 @@ var _ MappedNullable = &LongTextFieldField{}
 
 // LongTextFieldField struct for LongTextFieldField
 type LongTextFieldField struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -232,7 +232,7 @@ func (o *LongTextFieldField) SetReadOnly(v bool) {
 }
 
 func (o LongTextFieldField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -288,5 +288,3 @@ func (v *NullableLongTextFieldField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

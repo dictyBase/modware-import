@@ -18,14 +18,14 @@ import (
 // PatchedTokenUpdatePermissionsCreate struct for PatchedTokenUpdatePermissionsCreate
 type PatchedTokenUpdatePermissionsCreate struct {
 	PatchedTokenUpdatePermissionsCreateAnyOfInnerInner *[][]PatchedTokenUpdatePermissionsCreateAnyOfInnerInner
-	bool *bool
+	bool                                               *bool
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
 func (dst *PatchedTokenUpdatePermissionsCreate) UnmarshalJSON(data []byte) error {
 	var err error
 	// try to unmarshal JSON data into [][]PatchedTokenUpdatePermissionsCreateAnyOfInnerInner
-	err = json.Unmarshal(data, &dst.PatchedTokenUpdatePermissionsCreateAnyOfInnerInner);
+	err = json.Unmarshal(data, &dst.PatchedTokenUpdatePermissionsCreateAnyOfInnerInner)
 	if err == nil {
 		PatchedTokenUpdatePermissionsCreateAnyOfInnerInner, _ := json.Marshal(dst.PatchedTokenUpdatePermissionsCreateAnyOfInnerInner)
 		if string(PatchedTokenUpdatePermissionsCreateAnyOfInnerInner) == "{}" { // empty struct
@@ -38,7 +38,7 @@ func (dst *PatchedTokenUpdatePermissionsCreate) UnmarshalJSON(data []byte) error
 	}
 
 	// try to unmarshal JSON data into bool
-	err = json.Unmarshal(data, &dst.bool);
+	err = json.Unmarshal(data, &dst.bool)
 	if err == nil {
 		jsonbool, _ := json.Marshal(dst.bool)
 		if string(jsonbool) == "{}" { // empty struct
@@ -101,5 +101,3 @@ func (v *NullablePatchedTokenUpdatePermissionsCreate) UnmarshalJSON(src []byte) 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

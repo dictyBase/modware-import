@@ -20,15 +20,15 @@ var _ MappedNullable = &AuditLog{}
 
 // AuditLog struct for AuditLog
 type AuditLog struct {
-	Id int32 `json:"id"`
-	ActionType string `json:"action_type"`
-	User string `json:"user"`
-	Group string `json:"group"`
-	Workspace string `json:"workspace"`
-	Type string `json:"type"`
-	Description string `json:"description"`
-	Timestamp time.Time `json:"timestamp"`
-	IpAddress NullableString `json:"ip_address"`
+	Id          int32          `json:"id"`
+	ActionType  string         `json:"action_type"`
+	User        string         `json:"user"`
+	Group       string         `json:"group"`
+	Workspace   string         `json:"workspace"`
+	Type        string         `json:"type"`
+	Description string         `json:"description"`
+	Timestamp   time.Time      `json:"timestamp"`
+	IpAddress   NullableString `json:"ip_address"`
 }
 
 // NewAuditLog instantiates a new AuditLog object
@@ -276,7 +276,7 @@ func (o *AuditLog) SetIpAddress(v string) {
 }
 
 func (o AuditLog) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -332,5 +332,3 @@ func (v *NullableAuditLog) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

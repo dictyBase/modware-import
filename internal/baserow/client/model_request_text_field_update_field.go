@@ -19,7 +19,7 @@ var _ MappedNullable = &RequestTextFieldUpdateField{}
 
 // RequestTextFieldUpdateField struct for RequestTextFieldUpdateField
 type RequestTextFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
+	Name *string      `json:"name,omitempty"`
 	Type *Type712Enum `json:"type,omitempty"`
 	// If set, this value is going to be added every time a new row created.
 	TextDefault *string `json:"text_default,omitempty"`
@@ -139,7 +139,7 @@ func (o *RequestTextFieldUpdateField) SetTextDefault(v string) {
 }
 
 func (o RequestTextFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -195,5 +195,3 @@ func (v *NullableRequestTextFieldUpdateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

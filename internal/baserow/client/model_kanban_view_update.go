@@ -19,13 +19,13 @@ var _ MappedNullable = &KanbanViewUpdate{}
 
 // KanbanViewUpdate struct for KanbanViewUpdate
 type KanbanViewUpdate struct {
-	Name *string `json:"name,omitempty"`
+	Name       *string            `json:"name,omitempty"`
 	FilterType *ConditionTypeEnum `json:"filter_type,omitempty"`
 	// Allows users to see results unfiltered while still keeping the filters saved for the view.
 	FiltersDisabled *bool `json:"filters_disabled,omitempty"`
 	// The password required to access the public view URL.
-	PublicViewPassword *string `json:"public_view_password,omitempty"`
-	SingleSelectField NullableInt32 `json:"single_select_field,omitempty"`
+	PublicViewPassword *string       `json:"public_view_password,omitempty"`
+	SingleSelectField  NullableInt32 `json:"single_select_field,omitempty"`
 	// References a file field of which the first image must be shown as card cover image.
 	CardCoverImageField NullableInt32 `json:"card_cover_image_field,omitempty"`
 	// Indicates whether the view is publicly accessible to visitors.
@@ -212,6 +212,7 @@ func (o *KanbanViewUpdate) HasSingleSelectField() bool {
 func (o *KanbanViewUpdate) SetSingleSelectField(v int32) {
 	o.SingleSelectField.Set(&v)
 }
+
 // SetSingleSelectFieldNil sets the value for SingleSelectField to be an explicit nil
 func (o *KanbanViewUpdate) SetSingleSelectFieldNil() {
 	o.SingleSelectField.Set(nil)
@@ -254,6 +255,7 @@ func (o *KanbanViewUpdate) HasCardCoverImageField() bool {
 func (o *KanbanViewUpdate) SetCardCoverImageField(v int32) {
 	o.CardCoverImageField.Set(&v)
 }
+
 // SetCardCoverImageFieldNil sets the value for CardCoverImageField to be an explicit nil
 func (o *KanbanViewUpdate) SetCardCoverImageFieldNil() {
 	o.CardCoverImageField.Set(nil)
@@ -321,7 +323,7 @@ func (o *KanbanViewUpdate) SetSlug(v string) {
 }
 
 func (o KanbanViewUpdate) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -390,5 +392,3 @@ func (v *NullableKanbanViewUpdate) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

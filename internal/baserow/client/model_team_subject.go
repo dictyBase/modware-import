@@ -23,8 +23,8 @@ type TeamSubject struct {
 	// The subject's unique identifier.
 	SubjectId *int32 `json:"subject_id,omitempty"`
 	// The user subject's email address.
-	SubjectUserEmail *string `json:"subject_user_email,omitempty"`
-	SubjectType SubjectType3ffEnum `json:"subject_type"`
+	SubjectUserEmail *string            `json:"subject_user_email,omitempty"`
+	SubjectType      SubjectType3ffEnum `json:"subject_type"`
 }
 
 // NewTeamSubject instantiates a new TeamSubject object
@@ -159,7 +159,7 @@ func (o *TeamSubject) SetSubjectType(v SubjectType3ffEnum) {
 }
 
 func (o TeamSubject) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -214,5 +214,3 @@ func (v *NullableTeamSubject) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

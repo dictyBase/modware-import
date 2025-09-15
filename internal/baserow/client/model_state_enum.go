@@ -20,12 +20,12 @@ type StateEnum string
 
 // List of StateEnum
 const (
-	PENDING StateEnum = "pending"
+	PENDING   StateEnum = "pending"
 	EXPORTING StateEnum = "exporting"
 	CANCELLED StateEnum = "cancelled"
-	FINISHED StateEnum = "finished"
-	FAILED StateEnum = "failed"
-	EXPIRED StateEnum = "expired"
+	FINISHED  StateEnum = "finished"
+	FAILED    StateEnum = "failed"
+	EXPIRED   StateEnum = "expired"
 )
 
 // All allowed values of StateEnum enum
@@ -116,4 +116,3 @@ func (v *NullableStateEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

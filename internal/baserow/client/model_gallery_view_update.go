@@ -19,7 +19,7 @@ var _ MappedNullable = &GalleryViewUpdate{}
 
 // GalleryViewUpdate struct for GalleryViewUpdate
 type GalleryViewUpdate struct {
-	Name *string `json:"name,omitempty"`
+	Name       *string            `json:"name,omitempty"`
 	FilterType *ConditionTypeEnum `json:"filter_type,omitempty"`
 	// Allows users to see results unfiltered while still keeping the filters saved for the view.
 	FiltersDisabled *bool `json:"filters_disabled,omitempty"`
@@ -211,6 +211,7 @@ func (o *GalleryViewUpdate) HasCardCoverImageField() bool {
 func (o *GalleryViewUpdate) SetCardCoverImageField(v int32) {
 	o.CardCoverImageField.Set(&v)
 }
+
 // SetCardCoverImageFieldNil sets the value for CardCoverImageField to be an explicit nil
 func (o *GalleryViewUpdate) SetCardCoverImageFieldNil() {
 	o.CardCoverImageField.Set(nil)
@@ -278,7 +279,7 @@ func (o *GalleryViewUpdate) SetSlug(v string) {
 }
 
 func (o GalleryViewUpdate) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -344,5 +345,3 @@ func (v *NullableGalleryViewUpdate) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

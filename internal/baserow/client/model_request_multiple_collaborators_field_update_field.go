@@ -19,7 +19,7 @@ var _ MappedNullable = &RequestMultipleCollaboratorsFieldUpdateField{}
 
 // RequestMultipleCollaboratorsFieldUpdateField struct for RequestMultipleCollaboratorsFieldUpdateField
 type RequestMultipleCollaboratorsFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
+	Name *string      `json:"name,omitempty"`
 	Type *Type712Enum `json:"type,omitempty"`
 }
 
@@ -105,7 +105,7 @@ func (o *RequestMultipleCollaboratorsFieldUpdateField) SetType(v Type712Enum) {
 }
 
 func (o RequestMultipleCollaboratorsFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -158,5 +158,3 @@ func (v *NullableRequestMultipleCollaboratorsFieldUpdateField) UnmarshalJSON(src
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

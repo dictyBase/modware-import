@@ -19,17 +19,16 @@ import (
 	"strings"
 )
 
-
 // DatabaseTableFieldsApiService DatabaseTableFieldsApi service
 type DatabaseTableFieldsApiService service
 
 type ApiCreateDatabaseTableFieldRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableFieldsApiService
-	tableId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTableFieldsApiService
+	tableId                     int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
-	fieldCreateField *FieldCreateField
+	fieldCreateField            *FieldCreateField
 }
 
 // An optional header that marks the action performed by this request as having occurred in a particular client session. Then using the undo/redo endpoints with the same ClientSessionId header this action can be undone/redone.
@@ -58,26 +57,27 @@ CreateDatabaseTableField Method for CreateDatabaseTableField
 
 Creates a new field for the table related to the provided `table_id` parameter if the authorized user has access to the related database's workspace. Depending on the type, different properties can optionally be set.If creating the field causes other fields to change then the specificinstances of those fields will be included in the related fields response key.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Creates a new field for the provided table related to the value.
- @return ApiCreateDatabaseTableFieldRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Creates a new field for the provided table related to the value.
+	@return ApiCreateDatabaseTableFieldRequest
 */
 func (a *DatabaseTableFieldsApiService) CreateDatabaseTableField(ctx context.Context, tableId int32) ApiCreateDatabaseTableFieldRequest {
 	return ApiCreateDatabaseTableFieldRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return FieldFieldSerializerWithRelatedFields
+//
+//	@return FieldFieldSerializerWithRelatedFields
 func (a *DatabaseTableFieldsApiService) CreateDatabaseTableFieldExecute(r ApiCreateDatabaseTableFieldRequest) (*FieldFieldSerializerWithRelatedFields, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *FieldFieldSerializerWithRelatedFields
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *FieldFieldSerializerWithRelatedFields
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableFieldsApiService.CreateDatabaseTableField")
@@ -146,8 +146,8 @@ func (a *DatabaseTableFieldsApiService) CreateDatabaseTableFieldExecute(r ApiCre
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -157,8 +157,8 @@ func (a *DatabaseTableFieldsApiService) CreateDatabaseTableFieldExecute(r ApiCre
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -168,8 +168,8 @@ func (a *DatabaseTableFieldsApiService) CreateDatabaseTableFieldExecute(r ApiCre
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -187,10 +187,10 @@ func (a *DatabaseTableFieldsApiService) CreateDatabaseTableFieldExecute(r ApiCre
 }
 
 type ApiDeleteDatabaseTableFieldRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableFieldsApiService
-	fieldId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTableFieldsApiService
+	fieldId                     int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -215,26 +215,27 @@ DeleteDatabaseTableField Method for DeleteDatabaseTableField
 
 Deletes the existing field if the authorized user has access to the related database's workspace. Note that all the related data to that field is also deleted. Primary fields cannot be deleted because their value represents the row. If deleting the field causes other fields to change then the specificinstances of those fields will be included in the related fields response key.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param fieldId Deletes the field related to the provided value.
- @return ApiDeleteDatabaseTableFieldRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param fieldId Deletes the field related to the provided value.
+	@return ApiDeleteDatabaseTableFieldRequest
 */
 func (a *DatabaseTableFieldsApiService) DeleteDatabaseTableField(ctx context.Context, fieldId int32) ApiDeleteDatabaseTableFieldRequest {
 	return ApiDeleteDatabaseTableFieldRequest{
 		ApiService: a,
-		ctx: ctx,
-		fieldId: fieldId,
+		ctx:        ctx,
+		fieldId:    fieldId,
 	}
 }
 
 // Execute executes the request
-//  @return RelatedFields
+//
+//	@return RelatedFields
 func (a *DatabaseTableFieldsApiService) DeleteDatabaseTableFieldExecute(r ApiDeleteDatabaseTableFieldRequest) (*RelatedFields, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *RelatedFields
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *RelatedFields
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableFieldsApiService.DeleteDatabaseTableField")
@@ -301,8 +302,8 @@ func (a *DatabaseTableFieldsApiService) DeleteDatabaseTableFieldExecute(r ApiDel
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -312,8 +313,8 @@ func (a *DatabaseTableFieldsApiService) DeleteDatabaseTableFieldExecute(r ApiDel
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -331,10 +332,10 @@ func (a *DatabaseTableFieldsApiService) DeleteDatabaseTableFieldExecute(r ApiDel
 }
 
 type ApiDuplicateTableFieldRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableFieldsApiService
-	fieldId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTableFieldsApiService
+	fieldId                     int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -359,26 +360,27 @@ DuplicateTableField Method for DuplicateTableField
 
 Duplicates the table with the provided `table_id` parameter if the authorized user has access to the database's workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param fieldId The field to duplicate.
- @return ApiDuplicateTableFieldRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param fieldId The field to duplicate.
+	@return ApiDuplicateTableFieldRequest
 */
 func (a *DatabaseTableFieldsApiService) DuplicateTableField(ctx context.Context, fieldId int32) ApiDuplicateTableFieldRequest {
 	return ApiDuplicateTableFieldRequest{
 		ApiService: a,
-		ctx: ctx,
-		fieldId: fieldId,
+		ctx:        ctx,
+		fieldId:    fieldId,
 	}
 }
 
 // Execute executes the request
-//  @return SingleDuplicateFieldJobType
+//
+//	@return SingleDuplicateFieldJobType
 func (a *DatabaseTableFieldsApiService) DuplicateTableFieldExecute(r ApiDuplicateTableFieldRequest) (*SingleDuplicateFieldJobType, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SingleDuplicateFieldJobType
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *SingleDuplicateFieldJobType
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableFieldsApiService.DuplicateTableField")
@@ -445,8 +447,8 @@ func (a *DatabaseTableFieldsApiService) DuplicateTableFieldExecute(r ApiDuplicat
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -456,8 +458,8 @@ func (a *DatabaseTableFieldsApiService) DuplicateTableFieldExecute(r ApiDuplicat
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -475,10 +477,10 @@ func (a *DatabaseTableFieldsApiService) DuplicateTableFieldExecute(r ApiDuplicat
 }
 
 type ApiGetDatabaseFieldUniqueRowValuesRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableFieldsApiService
-	fieldId int32
-	limit *int32
+	ctx                 context.Context
+	ApiService          *DatabaseTableFieldsApiService
+	fieldId             int32
+	limit               *int32
 	splitCommaSeparated *bool
 }
 
@@ -503,26 +505,27 @@ GetDatabaseFieldUniqueRowValues Method for GetDatabaseFieldUniqueRowValues
 
 Returns a list of all the unique row values for an existing field, sorted in order of frequency.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param fieldId Returns the values related to the provided field.
- @return ApiGetDatabaseFieldUniqueRowValuesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param fieldId Returns the values related to the provided field.
+	@return ApiGetDatabaseFieldUniqueRowValuesRequest
 */
 func (a *DatabaseTableFieldsApiService) GetDatabaseFieldUniqueRowValues(ctx context.Context, fieldId int32) ApiGetDatabaseFieldUniqueRowValuesRequest {
 	return ApiGetDatabaseFieldUniqueRowValuesRequest{
 		ApiService: a,
-		ctx: ctx,
-		fieldId: fieldId,
+		ctx:        ctx,
+		fieldId:    fieldId,
 	}
 }
 
 // Execute executes the request
-//  @return UniqueRowValues
+//
+//	@return UniqueRowValues
 func (a *DatabaseTableFieldsApiService) GetDatabaseFieldUniqueRowValuesExecute(r ApiGetDatabaseFieldUniqueRowValuesRequest) (*UniqueRowValues, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *UniqueRowValues
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UniqueRowValues
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableFieldsApiService.GetDatabaseFieldUniqueRowValues")
@@ -589,8 +592,8 @@ func (a *DatabaseTableFieldsApiService) GetDatabaseFieldUniqueRowValuesExecute(r
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -600,8 +603,8 @@ func (a *DatabaseTableFieldsApiService) GetDatabaseFieldUniqueRowValuesExecute(r
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -619,9 +622,9 @@ func (a *DatabaseTableFieldsApiService) GetDatabaseFieldUniqueRowValuesExecute(r
 }
 
 type ApiGetDatabaseTableFieldRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTableFieldsApiService
-	fieldId int32
+	fieldId    int32
 }
 
 func (r ApiGetDatabaseTableFieldRequest) Execute() (*FieldField, *http.Response, error) {
@@ -633,26 +636,27 @@ GetDatabaseTableField Method for GetDatabaseTableField
 
 Returns the existing field if the authorized user has access to the related database's workspace. Depending on the type different properties could be returned.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param fieldId Returns the field related to the provided value.
- @return ApiGetDatabaseTableFieldRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param fieldId Returns the field related to the provided value.
+	@return ApiGetDatabaseTableFieldRequest
 */
 func (a *DatabaseTableFieldsApiService) GetDatabaseTableField(ctx context.Context, fieldId int32) ApiGetDatabaseTableFieldRequest {
 	return ApiGetDatabaseTableFieldRequest{
 		ApiService: a,
-		ctx: ctx,
-		fieldId: fieldId,
+		ctx:        ctx,
+		fieldId:    fieldId,
 	}
 }
 
 // Execute executes the request
-//  @return FieldField
+//
+//	@return FieldField
 func (a *DatabaseTableFieldsApiService) GetDatabaseTableFieldExecute(r ApiGetDatabaseTableFieldRequest) (*FieldField, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *FieldField
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *FieldField
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableFieldsApiService.GetDatabaseTableField")
@@ -713,8 +717,8 @@ func (a *DatabaseTableFieldsApiService) GetDatabaseTableFieldExecute(r ApiGetDat
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -724,8 +728,8 @@ func (a *DatabaseTableFieldsApiService) GetDatabaseTableFieldExecute(r ApiGetDat
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -743,9 +747,9 @@ func (a *DatabaseTableFieldsApiService) GetDatabaseTableFieldExecute(r ApiGetDat
 }
 
 type ApiListDatabaseTableFieldsRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTableFieldsApiService
-	tableId int32
+	tableId    int32
 }
 
 func (r ApiListDatabaseTableFieldsRequest) Execute() ([]FieldField, *http.Response, error) {
@@ -757,26 +761,27 @@ ListDatabaseTableFields Method for ListDatabaseTableFields
 
 Lists all the fields of the table related to the provided parameter if the user has access to the related database's workspace. If the workspace is related to a template, then this endpoint will be publicly accessible. A table consists of fields and each field can have a different type. Each type can have different properties. A field is comparable with a regular table's column.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Returns only the fields of the table related to the provided value.
- @return ApiListDatabaseTableFieldsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Returns only the fields of the table related to the provided value.
+	@return ApiListDatabaseTableFieldsRequest
 */
 func (a *DatabaseTableFieldsApiService) ListDatabaseTableFields(ctx context.Context, tableId int32) ApiListDatabaseTableFieldsRequest {
 	return ApiListDatabaseTableFieldsRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return []FieldField
+//
+//	@return []FieldField
 func (a *DatabaseTableFieldsApiService) ListDatabaseTableFieldsExecute(r ApiListDatabaseTableFieldsRequest) ([]FieldField, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []FieldField
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []FieldField
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableFieldsApiService.ListDatabaseTableFields")
@@ -837,8 +842,8 @@ func (a *DatabaseTableFieldsApiService) ListDatabaseTableFieldsExecute(r ApiList
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -848,8 +853,8 @@ func (a *DatabaseTableFieldsApiService) ListDatabaseTableFieldsExecute(r ApiList
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -859,8 +864,8 @@ func (a *DatabaseTableFieldsApiService) ListDatabaseTableFieldsExecute(r ApiList
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -878,9 +883,9 @@ func (a *DatabaseTableFieldsApiService) ListDatabaseTableFieldsExecute(r ApiList
 }
 
 type ApiTypeFormulaFieldRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableFieldsApiService
-	tableId int32
+	ctx                context.Context
+	ApiService         *DatabaseTableFieldsApiService
+	tableId            int32
 	typeFormulaRequest *TypeFormulaRequest
 }
 
@@ -898,26 +903,27 @@ TypeFormulaField Method for TypeFormulaField
 
 Calculates and returns the type of the specified formula value. Does not change the state of the field in any way.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId The table id of the formula field to type.
- @return ApiTypeFormulaFieldRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId The table id of the formula field to type.
+	@return ApiTypeFormulaFieldRequest
 */
 func (a *DatabaseTableFieldsApiService) TypeFormulaField(ctx context.Context, tableId int32) ApiTypeFormulaFieldRequest {
 	return ApiTypeFormulaFieldRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return TypeFormulaResult
+//
+//	@return TypeFormulaResult
 func (a *DatabaseTableFieldsApiService) TypeFormulaFieldExecute(r ApiTypeFormulaFieldRequest) (*TypeFormulaResult, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *TypeFormulaResult
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *TypeFormulaResult
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableFieldsApiService.TypeFormulaField")
@@ -983,8 +989,8 @@ func (a *DatabaseTableFieldsApiService) TypeFormulaFieldExecute(r ApiTypeFormula
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -994,8 +1000,8 @@ func (a *DatabaseTableFieldsApiService) TypeFormulaFieldExecute(r ApiTypeFormula
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1013,12 +1019,12 @@ func (a *DatabaseTableFieldsApiService) TypeFormulaFieldExecute(r ApiTypeFormula
 }
 
 type ApiUpdateDatabaseTableFieldRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableFieldsApiService
-	fieldId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTableFieldsApiService
+	fieldId                     int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
-	patchedFieldUpdateField *PatchedFieldUpdateField
+	patchedFieldUpdateField     *PatchedFieldUpdateField
 }
 
 // An optional header that marks the action performed by this request as having occurred in a particular client session. Then using the undo/redo endpoints with the same ClientSessionId header this action can be undone/redone.
@@ -1047,26 +1053,27 @@ UpdateDatabaseTableField Method for UpdateDatabaseTableField
 
 Updates the existing field if the authorized user has access to the related database's workspace. The type can also be changed and depending on that type, different additional properties can optionally be set. If you change the field type it could happen that the data conversion fails, in that case the `ERROR_CANNOT_CHANGE_FIELD_TYPE` is returned, but this rarely happens. If a data value cannot be converted it is set to `null` so data might go lost.If updated the field causes other fields to change then the specificinstances of those fields will be included in the related fields response key.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param fieldId Updates the field related to the provided value.
- @return ApiUpdateDatabaseTableFieldRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param fieldId Updates the field related to the provided value.
+	@return ApiUpdateDatabaseTableFieldRequest
 */
 func (a *DatabaseTableFieldsApiService) UpdateDatabaseTableField(ctx context.Context, fieldId int32) ApiUpdateDatabaseTableFieldRequest {
 	return ApiUpdateDatabaseTableFieldRequest{
 		ApiService: a,
-		ctx: ctx,
-		fieldId: fieldId,
+		ctx:        ctx,
+		fieldId:    fieldId,
 	}
 }
 
 // Execute executes the request
-//  @return FieldFieldSerializerWithRelatedFields
+//
+//	@return FieldFieldSerializerWithRelatedFields
 func (a *DatabaseTableFieldsApiService) UpdateDatabaseTableFieldExecute(r ApiUpdateDatabaseTableFieldRequest) (*FieldFieldSerializerWithRelatedFields, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *FieldFieldSerializerWithRelatedFields
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *FieldFieldSerializerWithRelatedFields
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableFieldsApiService.UpdateDatabaseTableField")
@@ -1135,8 +1142,8 @@ func (a *DatabaseTableFieldsApiService) UpdateDatabaseTableFieldExecute(r ApiUpd
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1146,8 +1153,8 @@ func (a *DatabaseTableFieldsApiService) UpdateDatabaseTableFieldExecute(r ApiUpd
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

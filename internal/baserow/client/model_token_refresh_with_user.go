@@ -19,7 +19,7 @@ var _ MappedNullable = &TokenRefreshWithUser{}
 
 // TokenRefreshWithUser struct for TokenRefreshWithUser
 type TokenRefreshWithUser struct {
-	Access string `json:"access"`
+	Access       string  `json:"access"`
 	RefreshToken *string `json:"refresh_token,omitempty"`
 	// Deprecated. Use `refresh_token` instead.
 	// Deprecated
@@ -136,7 +136,7 @@ func (o *TokenRefreshWithUser) SetToken(v string) {
 }
 
 func (o TokenRefreshWithUser) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -190,5 +190,3 @@ func (v *NullableTokenRefreshWithUser) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

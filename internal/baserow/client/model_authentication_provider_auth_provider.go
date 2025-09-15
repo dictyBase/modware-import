@@ -17,13 +17,13 @@ import (
 
 // AuthenticationProviderAuthProvider - struct for AuthenticationProviderAuthProvider
 type AuthenticationProviderAuthProvider struct {
-	FacebookAuthProviderModelAuthProvider *FacebookAuthProviderModelAuthProvider
-	GitHubAuthProviderModelAuthProvider *GitHubAuthProviderModelAuthProvider
-	GitLabAuthProviderModelAuthProvider *GitLabAuthProviderModelAuthProvider
-	GoogleAuthProviderModelAuthProvider *GoogleAuthProviderModelAuthProvider
+	FacebookAuthProviderModelAuthProvider      *FacebookAuthProviderModelAuthProvider
+	GitHubAuthProviderModelAuthProvider        *GitHubAuthProviderModelAuthProvider
+	GitLabAuthProviderModelAuthProvider        *GitLabAuthProviderModelAuthProvider
+	GoogleAuthProviderModelAuthProvider        *GoogleAuthProviderModelAuthProvider
 	OpenIdConnectAuthProviderModelAuthProvider *OpenIdConnectAuthProviderModelAuthProvider
-	PasswordAuthProviderModelAuthProvider *PasswordAuthProviderModelAuthProvider
-	SamlAuthProviderModelAuthProvider *SamlAuthProviderModelAuthProvider
+	PasswordAuthProviderModelAuthProvider      *PasswordAuthProviderModelAuthProvider
+	SamlAuthProviderModelAuthProvider          *SamlAuthProviderModelAuthProvider
 }
 
 // FacebookAuthProviderModelAuthProviderAsAuthenticationProviderAuthProvider is a convenience function that returns FacebookAuthProviderModelAuthProvider wrapped in AuthenticationProviderAuthProvider
@@ -74,7 +74,6 @@ func SamlAuthProviderModelAuthProviderAsAuthenticationProviderAuthProvider(v *Sa
 		SamlAuthProviderModelAuthProvider: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *AuthenticationProviderAuthProvider) UnmarshalJSON(data []byte) error {
@@ -223,7 +222,7 @@ func (src AuthenticationProviderAuthProvider) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *AuthenticationProviderAuthProvider) GetActualInstance() (interface{}) {
+func (obj *AuthenticationProviderAuthProvider) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -294,5 +293,3 @@ func (v *NullableAuthenticationProviderAuthProvider) UnmarshalJSON(src []byte) e
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

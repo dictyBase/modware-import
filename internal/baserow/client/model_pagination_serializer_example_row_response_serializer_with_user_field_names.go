@@ -24,8 +24,8 @@ type PaginationSerializerExampleRowResponseSerializerWithUserFieldNames struct {
 	// URL to the next page.
 	Next NullableString `json:"next"`
 	// URL to the previous page.
-	Previous NullableString `json:"previous"`
-	Results []ExampleRowResponseSerializerWithUserFieldNames `json:"results"`
+	Previous NullableString                                   `json:"previous"`
+	Results  []ExampleRowResponseSerializerWithUserFieldNames `json:"results"`
 }
 
 // NewPaginationSerializerExampleRowResponseSerializerWithUserFieldNames instantiates a new PaginationSerializerExampleRowResponseSerializerWithUserFieldNames object
@@ -150,7 +150,7 @@ func (o *PaginationSerializerExampleRowResponseSerializerWithUserFieldNames) Set
 }
 
 func (o PaginationSerializerExampleRowResponseSerializerWithUserFieldNames) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -201,5 +201,3 @@ func (v *NullablePaginationSerializerExampleRowResponseSerializerWithUserFieldNa
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

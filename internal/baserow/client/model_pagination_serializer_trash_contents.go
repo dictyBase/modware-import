@@ -24,8 +24,8 @@ type PaginationSerializerTrashContents struct {
 	// URL to the next page.
 	Next NullableString `json:"next"`
 	// URL to the previous page.
-	Previous NullableString `json:"previous"`
-	Results []TrashContents `json:"results"`
+	Previous NullableString  `json:"previous"`
+	Results  []TrashContents `json:"results"`
 }
 
 // NewPaginationSerializerTrashContents instantiates a new PaginationSerializerTrashContents object
@@ -150,7 +150,7 @@ func (o *PaginationSerializerTrashContents) SetResults(v []TrashContents) {
 }
 
 func (o PaginationSerializerTrashContents) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -201,5 +201,3 @@ func (v *NullablePaginationSerializerTrashContents) UnmarshalJSON(src []byte) er
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

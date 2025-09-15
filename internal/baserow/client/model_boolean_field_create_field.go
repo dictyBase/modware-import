@@ -19,7 +19,7 @@ var _ MappedNullable = &BooleanFieldCreateField{}
 
 // BooleanFieldCreateField struct for BooleanFieldCreateField
 type BooleanFieldCreateField struct {
-	Name string `json:"name"`
+	Name string      `json:"name"`
 	Type Type712Enum `json:"type"`
 }
 
@@ -91,7 +91,7 @@ func (o *BooleanFieldCreateField) SetType(v Type712Enum) {
 }
 
 func (o BooleanFieldCreateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableBooleanFieldCreateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-
