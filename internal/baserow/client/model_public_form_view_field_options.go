@@ -26,12 +26,12 @@ type PublicFormViewFieldOptions struct {
 	// Indicates whether the field is required for the visitor to fill out.
 	Required *bool `json:"required,omitempty"`
 	// The order that the field has in the form. Lower value is first.
-	Order *int32 `json:"order,omitempty"`
+	Order *int32                          `json:"order,omitempty"`
 	Field PublicFormViewFieldOptionsField `json:"field"`
 	// Indicates whether this field is visible when the conditions are met.
-	ShowWhenMatchingConditions *bool `json:"show_when_matching_conditions,omitempty"`
-	ConditionType *ConditionTypeEnum `json:"condition_type,omitempty"`
-	Conditions []FormViewFieldOptionsCondition `json:"conditions,omitempty"`
+	ShowWhenMatchingConditions *bool                           `json:"show_when_matching_conditions,omitempty"`
+	ConditionType              *ConditionTypeEnum              `json:"condition_type,omitempty"`
+	Conditions                 []FormViewFieldOptionsCondition `json:"conditions,omitempty"`
 }
 
 // NewPublicFormViewFieldOptions instantiates a new PublicFormViewFieldOptions object
@@ -294,7 +294,7 @@ func (o *PublicFormViewFieldOptions) SetConditions(v []FormViewFieldOptionsCondi
 }
 
 func (o PublicFormViewFieldOptions) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -361,5 +361,3 @@ func (v *NullablePublicFormViewFieldOptions) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

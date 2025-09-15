@@ -28,8 +28,8 @@ type DuplicateTableJobJob struct {
 	State string `json:"state"`
 	// A human readable error message indicating what went wrong.
 	HumanReadableError *string `json:"human_readable_error,omitempty"`
-	OriginalTable Table `json:"original_table"`
-	DuplicatedTable Table `json:"duplicated_table"`
+	OriginalTable      Table   `json:"original_table"`
+	DuplicatedTable    Table   `json:"duplicated_table"`
 }
 
 // NewDuplicateTableJobJob instantiates a new DuplicateTableJobJob object
@@ -232,7 +232,7 @@ func (o *DuplicateTableJobJob) SetDuplicatedTable(v Table) {
 }
 
 func (o DuplicateTableJobJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -288,5 +288,3 @@ func (v *NullableDuplicateTableJobJob) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

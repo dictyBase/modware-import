@@ -17,15 +17,15 @@ import (
 
 // JobTypeCreateJob - struct for JobTypeCreateJob
 type JobTypeCreateJob struct {
-	RequestAirtableImportJobCreateJob *RequestAirtableImportJobCreateJob
-	RequestAuditLogExportJobCreateJob *RequestAuditLogExportJobCreateJob
-	RequestCreateSnapshotJobCreateJob *RequestCreateSnapshotJobCreateJob
+	RequestAirtableImportJobCreateJob       *RequestAirtableImportJobCreateJob
+	RequestAuditLogExportJobCreateJob       *RequestAuditLogExportJobCreateJob
+	RequestCreateSnapshotJobCreateJob       *RequestCreateSnapshotJobCreateJob
 	RequestDuplicateApplicationJobCreateJob *RequestDuplicateApplicationJobCreateJob
-	RequestDuplicateFieldJobCreateJob *RequestDuplicateFieldJobCreateJob
-	RequestDuplicateTableJobCreateJob *RequestDuplicateTableJobCreateJob
-	RequestFileImportJobCreateJob *RequestFileImportJobCreateJob
-	RequestInstallTemplateJobCreateJob *RequestInstallTemplateJobCreateJob
-	RequestRestoreSnapshotJobCreateJob *RequestRestoreSnapshotJobCreateJob
+	RequestDuplicateFieldJobCreateJob       *RequestDuplicateFieldJobCreateJob
+	RequestDuplicateTableJobCreateJob       *RequestDuplicateTableJobCreateJob
+	RequestFileImportJobCreateJob           *RequestFileImportJobCreateJob
+	RequestInstallTemplateJobCreateJob      *RequestInstallTemplateJobCreateJob
+	RequestRestoreSnapshotJobCreateJob      *RequestRestoreSnapshotJobCreateJob
 }
 
 // RequestAirtableImportJobCreateJobAsJobTypeCreateJob is a convenience function that returns RequestAirtableImportJobCreateJob wrapped in JobTypeCreateJob
@@ -90,7 +90,6 @@ func RequestRestoreSnapshotJobCreateJobAsJobTypeCreateJob(v *RequestRestoreSnaps
 		RequestRestoreSnapshotJobCreateJob: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *JobTypeCreateJob) UnmarshalJSON(data []byte) error {
@@ -275,7 +274,7 @@ func (src JobTypeCreateJob) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *JobTypeCreateJob) GetActualInstance() (interface{}) {
+func (obj *JobTypeCreateJob) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -354,5 +353,3 @@ func (v *NullableJobTypeCreateJob) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -19,12 +19,12 @@ var _ MappedNullable = &DateFieldCreateField{}
 
 // DateFieldCreateField struct for DateFieldCreateField
 type DateFieldCreateField struct {
-	Name *string `json:"name,omitempty"`
-	Type Type712Enum `json:"type"`
+	Name       *string         `json:"name,omitempty"`
+	Type       Type712Enum     `json:"type"`
 	DateFormat *DateFormatEnum `json:"date_format,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime *bool `json:"date_include_time,omitempty"`
-	DateTimeFormat *DateTimeFormatEnum `json:"date_time_format,omitempty"`
+	DateIncludeTime *bool               `json:"date_include_time,omitempty"`
+	DateTimeFormat  *DateTimeFormatEnum `json:"date_time_format,omitempty"`
 	// Indicates if the timezone should be shown.
 	DateShowTzinfo *bool `json:"date_show_tzinfo,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
@@ -265,6 +265,7 @@ func (o *DateFieldCreateField) HasDateForceTimezone() bool {
 func (o *DateFieldCreateField) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *DateFieldCreateField) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -276,7 +277,7 @@ func (o *DateFieldCreateField) UnsetDateForceTimezone() {
 }
 
 func (o DateFieldCreateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -342,5 +343,3 @@ func (v *NullableDateFieldCreateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

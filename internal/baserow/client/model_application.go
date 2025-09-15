@@ -19,11 +19,11 @@ var _ MappedNullable = &Application{}
 
 // Application struct for Application
 type Application struct {
-	Id int32 `json:"id"`
-	Name string `json:"name"`
-	Order int32 `json:"order"`
-	Type string `json:"type"`
-	Group ApplicationGroup `json:"group"`
+	Id        int32                `json:"id"`
+	Name      string               `json:"name"`
+	Order     int32                `json:"order"`
+	Type      string               `json:"type"`
+	Group     ApplicationGroup     `json:"group"`
 	Workspace ApplicationWorkspace `json:"workspace"`
 }
 
@@ -195,7 +195,7 @@ func (o *Application) SetWorkspace(v ApplicationWorkspace) {
 }
 
 func (o Application) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -248,5 +248,3 @@ func (v *NullableApplication) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

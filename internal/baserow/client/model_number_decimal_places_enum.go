@@ -20,16 +20,16 @@ type NumberDecimalPlacesEnum int32
 
 // List of NumberDecimalPlacesEnum
 const (
-	_0 NumberDecimalPlacesEnum = 0
-	_1 NumberDecimalPlacesEnum = 1
-	_2 NumberDecimalPlacesEnum = 2
-	_3 NumberDecimalPlacesEnum = 3
-	_4 NumberDecimalPlacesEnum = 4
-	_5 NumberDecimalPlacesEnum = 5
-	_6 NumberDecimalPlacesEnum = 6
-	_7 NumberDecimalPlacesEnum = 7
-	_8 NumberDecimalPlacesEnum = 8
-	_9 NumberDecimalPlacesEnum = 9
+	_0  NumberDecimalPlacesEnum = 0
+	_1  NumberDecimalPlacesEnum = 1
+	_2  NumberDecimalPlacesEnum = 2
+	_3  NumberDecimalPlacesEnum = 3
+	_4  NumberDecimalPlacesEnum = 4
+	_5  NumberDecimalPlacesEnum = 5
+	_6  NumberDecimalPlacesEnum = 6
+	_7  NumberDecimalPlacesEnum = 7
+	_8  NumberDecimalPlacesEnum = 8
+	_9  NumberDecimalPlacesEnum = 9
 	_10 NumberDecimalPlacesEnum = 10
 )
 
@@ -126,4 +126,3 @@ func (v *NullableNumberDecimalPlacesEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

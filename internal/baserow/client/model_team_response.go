@@ -26,7 +26,7 @@ type TeamResponse struct {
 	// DEPRECATED: Please use the functionally identical `workspace` instead as this field is being removed in the future.
 	Group int32 `json:"group"`
 	// The workspace that this team belongs to.
-	Workspace int32 `json:"workspace"`
+	Workspace int32     `json:"workspace"`
 	CreatedOn time.Time `json:"created_on"`
 	UpdatedOn time.Time `json:"updated_on"`
 	// The uid of the role this team has in its workspace.
@@ -294,7 +294,7 @@ func (o *TeamResponse) SetSubjectSample(v []TeamSampleSubject) {
 }
 
 func (o TeamResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -354,5 +354,3 @@ func (v *NullableTeamResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

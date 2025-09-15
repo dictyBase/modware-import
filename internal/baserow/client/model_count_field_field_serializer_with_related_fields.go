@@ -19,9 +19,9 @@ var _ MappedNullable = &CountFieldFieldSerializerWithRelatedFields{}
 
 // CountFieldFieldSerializerWithRelatedFields struct for CountFieldFieldSerializerWithRelatedFields
 type CountFieldFieldSerializerWithRelatedFields struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -33,20 +33,20 @@ type CountFieldFieldSerializerWithRelatedFields struct {
 	// A list of related fields which also changed.
 	RelatedFields []Field `json:"related_fields"`
 	// Indicates if the time zone should be shown.
-	DateShowTzinfo NullableBool `json:"date_show_tzinfo,omitempty"`
-	DateFormat NullableCountFieldCreateFieldDateFormat `json:"date_format,omitempty"`
+	DateShowTzinfo   NullableBool                                  `json:"date_show_tzinfo,omitempty"`
+	DateFormat       NullableCountFieldCreateFieldDateFormat       `json:"date_format,omitempty"`
 	ArrayFormulaType NullableCountFieldCreateFieldArrayFormulaType `json:"array_formula_type,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
 	DateForceTimezone NullableString `json:"date_force_timezone,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime NullableBool `json:"date_include_time,omitempty"`
-	Nullable bool `json:"nullable"`
-	DateTimeFormat NullableCountFieldCreateFieldDateTimeFormat `json:"date_time_format,omitempty"`
+	DateIncludeTime     NullableBool                                     `json:"date_include_time,omitempty"`
+	Nullable            bool                                             `json:"nullable"`
+	DateTimeFormat      NullableCountFieldCreateFieldDateTimeFormat      `json:"date_time_format,omitempty"`
 	NumberDecimalPlaces NullableCountFieldCreateFieldNumberDecimalPlaces `json:"number_decimal_places,omitempty"`
-	Error NullableString `json:"error,omitempty"`
+	Error               NullableString                                   `json:"error,omitempty"`
 	// The id of the link row field to count values for.
-	ThroughFieldId NullableInt32 `json:"through_field_id,omitempty"`
-	FormulaType *FormulaTypeEnum `json:"formula_type,omitempty"`
+	ThroughFieldId NullableInt32    `json:"through_field_id,omitempty"`
+	FormulaType    *FormulaTypeEnum `json:"formula_type,omitempty"`
 }
 
 // NewCountFieldFieldSerializerWithRelatedFields instantiates a new CountFieldFieldSerializerWithRelatedFields object
@@ -306,6 +306,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) HasDateShowTzinfo() bool {
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateShowTzinfo(v bool) {
 	o.DateShowTzinfo.Set(&v)
 }
+
 // SetDateShowTzinfoNil sets the value for DateShowTzinfo to be an explicit nil
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateShowTzinfoNil() {
 	o.DateShowTzinfo.Set(nil)
@@ -348,6 +349,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) HasDateFormat() bool {
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateFormat(v CountFieldCreateFieldDateFormat) {
 	o.DateFormat.Set(&v)
 }
+
 // SetDateFormatNil sets the value for DateFormat to be an explicit nil
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateFormatNil() {
 	o.DateFormat.Set(nil)
@@ -390,6 +392,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) HasArrayFormulaType() bool 
 func (o *CountFieldFieldSerializerWithRelatedFields) SetArrayFormulaType(v CountFieldCreateFieldArrayFormulaType) {
 	o.ArrayFormulaType.Set(&v)
 }
+
 // SetArrayFormulaTypeNil sets the value for ArrayFormulaType to be an explicit nil
 func (o *CountFieldFieldSerializerWithRelatedFields) SetArrayFormulaTypeNil() {
 	o.ArrayFormulaType.Set(nil)
@@ -432,6 +435,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) HasDateForceTimezone() bool
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -474,6 +478,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) HasDateIncludeTime() bool {
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateIncludeTime(v bool) {
 	o.DateIncludeTime.Set(&v)
 }
+
 // SetDateIncludeTimeNil sets the value for DateIncludeTime to be an explicit nil
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateIncludeTimeNil() {
 	o.DateIncludeTime.Set(nil)
@@ -540,6 +545,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) HasDateTimeFormat() bool {
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateTimeFormat(v CountFieldCreateFieldDateTimeFormat) {
 	o.DateTimeFormat.Set(&v)
 }
+
 // SetDateTimeFormatNil sets the value for DateTimeFormat to be an explicit nil
 func (o *CountFieldFieldSerializerWithRelatedFields) SetDateTimeFormatNil() {
 	o.DateTimeFormat.Set(nil)
@@ -582,6 +588,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) HasNumberDecimalPlaces() bo
 func (o *CountFieldFieldSerializerWithRelatedFields) SetNumberDecimalPlaces(v CountFieldCreateFieldNumberDecimalPlaces) {
 	o.NumberDecimalPlaces.Set(&v)
 }
+
 // SetNumberDecimalPlacesNil sets the value for NumberDecimalPlaces to be an explicit nil
 func (o *CountFieldFieldSerializerWithRelatedFields) SetNumberDecimalPlacesNil() {
 	o.NumberDecimalPlaces.Set(nil)
@@ -624,6 +631,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) HasError() bool {
 func (o *CountFieldFieldSerializerWithRelatedFields) SetError(v string) {
 	o.Error.Set(&v)
 }
+
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *CountFieldFieldSerializerWithRelatedFields) SetErrorNil() {
 	o.Error.Set(nil)
@@ -666,6 +674,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) HasThroughFieldId() bool {
 func (o *CountFieldFieldSerializerWithRelatedFields) SetThroughFieldId(v int32) {
 	o.ThroughFieldId.Set(&v)
 }
+
 // SetThroughFieldIdNil sets the value for ThroughFieldId to be an explicit nil
 func (o *CountFieldFieldSerializerWithRelatedFields) SetThroughFieldIdNil() {
 	o.ThroughFieldId.Set(nil)
@@ -709,7 +718,7 @@ func (o *CountFieldFieldSerializerWithRelatedFields) SetFormulaType(v FormulaTyp
 }
 
 func (o CountFieldFieldSerializerWithRelatedFields) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -797,5 +806,3 @@ func (v *NullableCountFieldFieldSerializerWithRelatedFields) UnmarshalJSON(src [
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

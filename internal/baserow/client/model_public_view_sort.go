@@ -19,10 +19,10 @@ var _ MappedNullable = &PublicViewSort{}
 
 // PublicViewSort struct for PublicViewSort
 type PublicViewSort struct {
-	Id int32 `json:"id"`
+	Id   int32  `json:"id"`
 	View string `json:"view"`
 	// The field that must be sorted on.
-	Field int32 `json:"field"`
+	Field int32      `json:"field"`
 	Order *OrderEnum `json:"order,omitempty"`
 }
 
@@ -151,7 +151,7 @@ func (o *PublicViewSort) SetOrder(v OrderEnum) {
 }
 
 func (o PublicViewSort) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -204,5 +204,3 @@ func (v *NullablePublicViewSort) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

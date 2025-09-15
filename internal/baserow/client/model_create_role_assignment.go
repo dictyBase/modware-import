@@ -20,12 +20,12 @@ var _ MappedNullable = &CreateRoleAssignment{}
 // CreateRoleAssignment The create role assignment serializer.
 type CreateRoleAssignment struct {
 	// The subject ID. A subject is an actor that can do operations.
-	SubjectId int32 `json:"subject_id"`
+	SubjectId   int32              `json:"subject_id"`
 	SubjectType SubjectType6dcEnum `json:"subject_type"`
 	// The uid of the role you want to assign to the user or team in the given workspace. You can omit this property if you want to remove the role.
 	Role NullableString `json:"role"`
 	// The ID of the scope object. The scope object limit the role assignment to this scope and all its descendants.
-	ScopeId int32 `json:"scope_id"`
+	ScopeId   int32         `json:"scope_id"`
 	ScopeType ScopeTypeEnum `json:"scope_type"`
 }
 
@@ -174,7 +174,7 @@ func (o *CreateRoleAssignment) SetScopeType(v ScopeTypeEnum) {
 }
 
 func (o CreateRoleAssignment) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -226,5 +226,3 @@ func (v *NullableCreateRoleAssignment) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

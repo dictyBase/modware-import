@@ -20,7 +20,7 @@ var _ MappedNullable = &GetDatabaseTableWebhook404Response{}
 // GetDatabaseTableWebhook404Response struct for GetDatabaseTableWebhook404Response
 type GetDatabaseTableWebhook404Response struct {
 	// Machine readable error indicating what went wrong.
-	Error *string `json:"error,omitempty"`
+	Error  *string                          `json:"error,omitempty"`
 	Detail *AdminListUsers400ResponseDetail `json:"detail,omitempty"`
 }
 
@@ -106,7 +106,7 @@ func (o *GetDatabaseTableWebhook404Response) SetDetail(v AdminListUsers400Respon
 }
 
 func (o GetDatabaseTableWebhook404Response) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -159,5 +159,3 @@ func (v *NullableGetDatabaseTableWebhook404Response) UnmarshalJSON(src []byte) e
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

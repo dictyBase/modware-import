@@ -19,9 +19,9 @@ var _ MappedNullable = &LicenseUser{}
 
 // LicenseUser struct for LicenseUser
 type LicenseUser struct {
-	Id int32 `json:"id"`
+	Id        int32   `json:"id"`
 	FirstName *string `json:"first_name,omitempty"`
-	Email *string `json:"email,omitempty"`
+	Email     *string `json:"email,omitempty"`
 }
 
 // NewLicenseUser instantiates a new LicenseUser object
@@ -131,7 +131,7 @@ func (o *LicenseUser) SetEmail(v string) {
 }
 
 func (o LicenseUser) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -185,5 +185,3 @@ func (v *NullableLicenseUser) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

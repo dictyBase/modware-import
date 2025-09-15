@@ -19,13 +19,13 @@ var _ MappedNullable = &CalendarViewUpdate{}
 
 // CalendarViewUpdate struct for CalendarViewUpdate
 type CalendarViewUpdate struct {
-	Name *string `json:"name,omitempty"`
+	Name       *string            `json:"name,omitempty"`
 	FilterType *ConditionTypeEnum `json:"filter_type,omitempty"`
 	// Allows users to see results unfiltered while still keeping the filters saved for the view.
 	FiltersDisabled *bool `json:"filters_disabled,omitempty"`
 	// The password required to access the public view URL.
-	PublicViewPassword *string `json:"public_view_password,omitempty"`
-	DateField NullableInt32 `json:"date_field,omitempty"`
+	PublicViewPassword *string       `json:"public_view_password,omitempty"`
+	DateField          NullableInt32 `json:"date_field,omitempty"`
 	// Indicates whether the view is publicly accessible to visitors.
 	Public *bool `json:"public,omitempty"`
 	// The unique slug that can be used to construct a public URL.
@@ -210,6 +210,7 @@ func (o *CalendarViewUpdate) HasDateField() bool {
 func (o *CalendarViewUpdate) SetDateField(v int32) {
 	o.DateField.Set(&v)
 }
+
 // SetDateFieldNil sets the value for DateField to be an explicit nil
 func (o *CalendarViewUpdate) SetDateFieldNil() {
 	o.DateField.Set(nil)
@@ -277,7 +278,7 @@ func (o *CalendarViewUpdate) SetSlug(v string) {
 }
 
 func (o CalendarViewUpdate) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -343,5 +344,3 @@ func (v *NullableCalendarViewUpdate) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

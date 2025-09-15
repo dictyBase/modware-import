@@ -19,9 +19,9 @@ var _ MappedNullable = &ApplicationCreate{}
 
 // ApplicationCreate struct for ApplicationCreate
 type ApplicationCreate struct {
-	Name string `json:"name"`
-	Type ApplicationCreateTypeEnum `json:"type"`
-	InitWithData *bool `json:"init_with_data,omitempty"`
+	Name         string                    `json:"name"`
+	Type         ApplicationCreateTypeEnum `json:"type"`
+	InitWithData *bool                     `json:"init_with_data,omitempty"`
 }
 
 // NewApplicationCreate instantiates a new ApplicationCreate object
@@ -128,7 +128,7 @@ func (o *ApplicationCreate) SetInitWithData(v bool) {
 }
 
 func (o ApplicationCreate) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -180,5 +180,3 @@ func (v *NullableApplicationCreate) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

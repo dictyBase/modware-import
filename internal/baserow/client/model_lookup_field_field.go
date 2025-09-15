@@ -19,9 +19,9 @@ var _ MappedNullable = &LookupFieldField{}
 
 // LookupFieldField struct for LookupFieldField
 type LookupFieldField struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -31,17 +31,17 @@ type LookupFieldField struct {
 	// Indicates whether the field is a read only field. If true, it's not possible to update the cell value.
 	ReadOnly bool `json:"read_only"`
 	// Indicates if the time zone should be shown.
-	DateShowTzinfo NullableBool `json:"date_show_tzinfo,omitempty"`
-	DateFormat NullableCountFieldCreateFieldDateFormat `json:"date_format,omitempty"`
+	DateShowTzinfo   NullableBool                                  `json:"date_show_tzinfo,omitempty"`
+	DateFormat       NullableCountFieldCreateFieldDateFormat       `json:"date_format,omitempty"`
 	ArrayFormulaType NullableCountFieldCreateFieldArrayFormulaType `json:"array_formula_type,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
 	DateForceTimezone NullableString `json:"date_force_timezone,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime NullableBool `json:"date_include_time,omitempty"`
-	Nullable bool `json:"nullable"`
-	DateTimeFormat NullableCountFieldCreateFieldDateTimeFormat `json:"date_time_format,omitempty"`
+	DateIncludeTime     NullableBool                                     `json:"date_include_time,omitempty"`
+	Nullable            bool                                             `json:"nullable"`
+	DateTimeFormat      NullableCountFieldCreateFieldDateTimeFormat      `json:"date_time_format,omitempty"`
 	NumberDecimalPlaces NullableCountFieldCreateFieldNumberDecimalPlaces `json:"number_decimal_places,omitempty"`
-	Error NullableString `json:"error,omitempty"`
+	Error               NullableString                                   `json:"error,omitempty"`
 	// The id of the link row field to lookup values for. Will override the `through_field_name` parameter if both are provided, however only one is required.
 	ThroughFieldId NullableInt32 `json:"through_field_id,omitempty"`
 	// The name of the link row field to lookup values for.
@@ -49,8 +49,8 @@ type LookupFieldField struct {
 	// The id of the field in the table linked to by the through_field to lookup. Will override the `target_field_id` parameter if both are provided, however only one is required.
 	TargetFieldId NullableInt32 `json:"target_field_id,omitempty"`
 	// The name of the field in the table linked to by the through_field to lookup.
-	TargetFieldName NullableString `json:"target_field_name,omitempty"`
-	FormulaType *FormulaTypeEnum `json:"formula_type,omitempty"`
+	TargetFieldName NullableString   `json:"target_field_name,omitempty"`
+	FormulaType     *FormulaTypeEnum `json:"formula_type,omitempty"`
 }
 
 // NewLookupFieldField instantiates a new LookupFieldField object
@@ -285,6 +285,7 @@ func (o *LookupFieldField) HasDateShowTzinfo() bool {
 func (o *LookupFieldField) SetDateShowTzinfo(v bool) {
 	o.DateShowTzinfo.Set(&v)
 }
+
 // SetDateShowTzinfoNil sets the value for DateShowTzinfo to be an explicit nil
 func (o *LookupFieldField) SetDateShowTzinfoNil() {
 	o.DateShowTzinfo.Set(nil)
@@ -327,6 +328,7 @@ func (o *LookupFieldField) HasDateFormat() bool {
 func (o *LookupFieldField) SetDateFormat(v CountFieldCreateFieldDateFormat) {
 	o.DateFormat.Set(&v)
 }
+
 // SetDateFormatNil sets the value for DateFormat to be an explicit nil
 func (o *LookupFieldField) SetDateFormatNil() {
 	o.DateFormat.Set(nil)
@@ -369,6 +371,7 @@ func (o *LookupFieldField) HasArrayFormulaType() bool {
 func (o *LookupFieldField) SetArrayFormulaType(v CountFieldCreateFieldArrayFormulaType) {
 	o.ArrayFormulaType.Set(&v)
 }
+
 // SetArrayFormulaTypeNil sets the value for ArrayFormulaType to be an explicit nil
 func (o *LookupFieldField) SetArrayFormulaTypeNil() {
 	o.ArrayFormulaType.Set(nil)
@@ -411,6 +414,7 @@ func (o *LookupFieldField) HasDateForceTimezone() bool {
 func (o *LookupFieldField) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *LookupFieldField) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -453,6 +457,7 @@ func (o *LookupFieldField) HasDateIncludeTime() bool {
 func (o *LookupFieldField) SetDateIncludeTime(v bool) {
 	o.DateIncludeTime.Set(&v)
 }
+
 // SetDateIncludeTimeNil sets the value for DateIncludeTime to be an explicit nil
 func (o *LookupFieldField) SetDateIncludeTimeNil() {
 	o.DateIncludeTime.Set(nil)
@@ -519,6 +524,7 @@ func (o *LookupFieldField) HasDateTimeFormat() bool {
 func (o *LookupFieldField) SetDateTimeFormat(v CountFieldCreateFieldDateTimeFormat) {
 	o.DateTimeFormat.Set(&v)
 }
+
 // SetDateTimeFormatNil sets the value for DateTimeFormat to be an explicit nil
 func (o *LookupFieldField) SetDateTimeFormatNil() {
 	o.DateTimeFormat.Set(nil)
@@ -561,6 +567,7 @@ func (o *LookupFieldField) HasNumberDecimalPlaces() bool {
 func (o *LookupFieldField) SetNumberDecimalPlaces(v CountFieldCreateFieldNumberDecimalPlaces) {
 	o.NumberDecimalPlaces.Set(&v)
 }
+
 // SetNumberDecimalPlacesNil sets the value for NumberDecimalPlaces to be an explicit nil
 func (o *LookupFieldField) SetNumberDecimalPlacesNil() {
 	o.NumberDecimalPlaces.Set(nil)
@@ -603,6 +610,7 @@ func (o *LookupFieldField) HasError() bool {
 func (o *LookupFieldField) SetError(v string) {
 	o.Error.Set(&v)
 }
+
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *LookupFieldField) SetErrorNil() {
 	o.Error.Set(nil)
@@ -645,6 +653,7 @@ func (o *LookupFieldField) HasThroughFieldId() bool {
 func (o *LookupFieldField) SetThroughFieldId(v int32) {
 	o.ThroughFieldId.Set(&v)
 }
+
 // SetThroughFieldIdNil sets the value for ThroughFieldId to be an explicit nil
 func (o *LookupFieldField) SetThroughFieldIdNil() {
 	o.ThroughFieldId.Set(nil)
@@ -687,6 +696,7 @@ func (o *LookupFieldField) HasThroughFieldName() bool {
 func (o *LookupFieldField) SetThroughFieldName(v string) {
 	o.ThroughFieldName.Set(&v)
 }
+
 // SetThroughFieldNameNil sets the value for ThroughFieldName to be an explicit nil
 func (o *LookupFieldField) SetThroughFieldNameNil() {
 	o.ThroughFieldName.Set(nil)
@@ -729,6 +739,7 @@ func (o *LookupFieldField) HasTargetFieldId() bool {
 func (o *LookupFieldField) SetTargetFieldId(v int32) {
 	o.TargetFieldId.Set(&v)
 }
+
 // SetTargetFieldIdNil sets the value for TargetFieldId to be an explicit nil
 func (o *LookupFieldField) SetTargetFieldIdNil() {
 	o.TargetFieldId.Set(nil)
@@ -771,6 +782,7 @@ func (o *LookupFieldField) HasTargetFieldName() bool {
 func (o *LookupFieldField) SetTargetFieldName(v string) {
 	o.TargetFieldName.Set(&v)
 }
+
 // SetTargetFieldNameNil sets the value for TargetFieldName to be an explicit nil
 func (o *LookupFieldField) SetTargetFieldNameNil() {
 	o.TargetFieldName.Set(nil)
@@ -814,7 +826,7 @@ func (o *LookupFieldField) SetFormulaType(v FormulaTypeEnum) {
 }
 
 func (o LookupFieldField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -910,5 +922,3 @@ func (v *NullableLookupFieldField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

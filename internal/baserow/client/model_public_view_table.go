@@ -19,7 +19,7 @@ var _ MappedNullable = &PublicViewTable{}
 
 // PublicViewTable struct for PublicViewTable
 type PublicViewTable struct {
-	Id int32 `json:"id"`
+	Id         int32 `json:"id"`
 	DatabaseId int32 `json:"database_id"`
 }
 
@@ -91,7 +91,7 @@ func (o *PublicViewTable) SetDatabaseId(v int32) {
 }
 
 func (o PublicViewTable) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullablePublicViewTable) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

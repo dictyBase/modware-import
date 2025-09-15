@@ -17,26 +17,26 @@ import (
 
 // FieldFieldSerializerWithRelatedFields - struct for FieldFieldSerializerWithRelatedFields
 type FieldFieldSerializerWithRelatedFields struct {
-	BooleanFieldFieldSerializerWithRelatedFields *BooleanFieldFieldSerializerWithRelatedFields
-	CountFieldFieldSerializerWithRelatedFields *CountFieldFieldSerializerWithRelatedFields
-	CreatedOnFieldFieldSerializerWithRelatedFields *CreatedOnFieldFieldSerializerWithRelatedFields
-	DateFieldFieldSerializerWithRelatedFields *DateFieldFieldSerializerWithRelatedFields
-	EmailFieldFieldSerializerWithRelatedFields *EmailFieldFieldSerializerWithRelatedFields
-	FileFieldFieldSerializerWithRelatedFields *FileFieldFieldSerializerWithRelatedFields
-	FormulaFieldFieldSerializerWithRelatedFields *FormulaFieldFieldSerializerWithRelatedFields
-	LastModifiedFieldFieldSerializerWithRelatedFields *LastModifiedFieldFieldSerializerWithRelatedFields
-	LinkRowFieldFieldSerializerWithRelatedFields *LinkRowFieldFieldSerializerWithRelatedFields
-	LongTextFieldFieldSerializerWithRelatedFields *LongTextFieldFieldSerializerWithRelatedFields
-	LookupFieldFieldSerializerWithRelatedFields *LookupFieldFieldSerializerWithRelatedFields
+	BooleanFieldFieldSerializerWithRelatedFields               *BooleanFieldFieldSerializerWithRelatedFields
+	CountFieldFieldSerializerWithRelatedFields                 *CountFieldFieldSerializerWithRelatedFields
+	CreatedOnFieldFieldSerializerWithRelatedFields             *CreatedOnFieldFieldSerializerWithRelatedFields
+	DateFieldFieldSerializerWithRelatedFields                  *DateFieldFieldSerializerWithRelatedFields
+	EmailFieldFieldSerializerWithRelatedFields                 *EmailFieldFieldSerializerWithRelatedFields
+	FileFieldFieldSerializerWithRelatedFields                  *FileFieldFieldSerializerWithRelatedFields
+	FormulaFieldFieldSerializerWithRelatedFields               *FormulaFieldFieldSerializerWithRelatedFields
+	LastModifiedFieldFieldSerializerWithRelatedFields          *LastModifiedFieldFieldSerializerWithRelatedFields
+	LinkRowFieldFieldSerializerWithRelatedFields               *LinkRowFieldFieldSerializerWithRelatedFields
+	LongTextFieldFieldSerializerWithRelatedFields              *LongTextFieldFieldSerializerWithRelatedFields
+	LookupFieldFieldSerializerWithRelatedFields                *LookupFieldFieldSerializerWithRelatedFields
 	MultipleCollaboratorsFieldFieldSerializerWithRelatedFields *MultipleCollaboratorsFieldFieldSerializerWithRelatedFields
-	MultipleSelectFieldFieldSerializerWithRelatedFields *MultipleSelectFieldFieldSerializerWithRelatedFields
-	NumberFieldFieldSerializerWithRelatedFields *NumberFieldFieldSerializerWithRelatedFields
-	PhoneNumberFieldFieldSerializerWithRelatedFields *PhoneNumberFieldFieldSerializerWithRelatedFields
-	RatingFieldFieldSerializerWithRelatedFields *RatingFieldFieldSerializerWithRelatedFields
-	RollupFieldFieldSerializerWithRelatedFields *RollupFieldFieldSerializerWithRelatedFields
-	SingleSelectFieldFieldSerializerWithRelatedFields *SingleSelectFieldFieldSerializerWithRelatedFields
-	TextFieldFieldSerializerWithRelatedFields *TextFieldFieldSerializerWithRelatedFields
-	URLFieldFieldSerializerWithRelatedFields *URLFieldFieldSerializerWithRelatedFields
+	MultipleSelectFieldFieldSerializerWithRelatedFields        *MultipleSelectFieldFieldSerializerWithRelatedFields
+	NumberFieldFieldSerializerWithRelatedFields                *NumberFieldFieldSerializerWithRelatedFields
+	PhoneNumberFieldFieldSerializerWithRelatedFields           *PhoneNumberFieldFieldSerializerWithRelatedFields
+	RatingFieldFieldSerializerWithRelatedFields                *RatingFieldFieldSerializerWithRelatedFields
+	RollupFieldFieldSerializerWithRelatedFields                *RollupFieldFieldSerializerWithRelatedFields
+	SingleSelectFieldFieldSerializerWithRelatedFields          *SingleSelectFieldFieldSerializerWithRelatedFields
+	TextFieldFieldSerializerWithRelatedFields                  *TextFieldFieldSerializerWithRelatedFields
+	URLFieldFieldSerializerWithRelatedFields                   *URLFieldFieldSerializerWithRelatedFields
 }
 
 // BooleanFieldFieldSerializerWithRelatedFieldsAsFieldFieldSerializerWithRelatedFields is a convenience function that returns BooleanFieldFieldSerializerWithRelatedFields wrapped in FieldFieldSerializerWithRelatedFields
@@ -178,7 +178,6 @@ func URLFieldFieldSerializerWithRelatedFieldsAsFieldFieldSerializerWithRelatedFi
 		URLFieldFieldSerializerWithRelatedFields: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *FieldFieldSerializerWithRelatedFields) UnmarshalJSON(data []byte) error {
@@ -561,7 +560,7 @@ func (src FieldFieldSerializerWithRelatedFields) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *FieldFieldSerializerWithRelatedFields) GetActualInstance() (interface{}) {
+func (obj *FieldFieldSerializerWithRelatedFields) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -684,5 +683,3 @@ func (v *NullableFieldFieldSerializerWithRelatedFields) UnmarshalJSON(src []byte
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

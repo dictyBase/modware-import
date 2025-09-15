@@ -20,11 +20,11 @@ type FormulaTypeEnum string
 
 // List of FormulaTypeEnum
 const (
-	INVALID FormulaTypeEnum = "invalid"
-	CHAR FormulaTypeEnum = "char"
-	LINK FormulaTypeEnum = "link"
+	INVALID       FormulaTypeEnum = "invalid"
+	CHAR          FormulaTypeEnum = "char"
+	LINK          FormulaTypeEnum = "link"
 	DATE_INTERVAL FormulaTypeEnum = "date_interval"
-	ARRAY FormulaTypeEnum = "array"
+	ARRAY         FormulaTypeEnum = "array"
 )
 
 // All allowed values of FormulaTypeEnum enum
@@ -119,4 +119,3 @@ func (v *NullableFormulaTypeEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

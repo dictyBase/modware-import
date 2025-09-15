@@ -20,7 +20,7 @@ var _ MappedNullable = &PublicViewInfo{}
 // PublicViewInfo struct for PublicViewInfo
 type PublicViewInfo struct {
 	Fields []PublicField `json:"fields"`
-	View PublicView `json:"view"`
+	View   PublicView    `json:"view"`
 }
 
 // NewPublicViewInfo instantiates a new PublicViewInfo object
@@ -91,7 +91,7 @@ func (o *PublicViewInfo) SetView(v PublicView) {
 }
 
 func (o PublicViewInfo) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullablePublicViewInfo) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -18,17 +18,17 @@ import (
 // PatchedViewFieldOptions struct for PatchedViewFieldOptions
 type PatchedViewFieldOptions struct {
 	CalendarViewFieldOptions *CalendarViewFieldOptions
-	FormViewFieldOptions *FormViewFieldOptions
-	GalleryViewFieldOptions *GalleryViewFieldOptions
-	GridViewFieldOptions *GridViewFieldOptions
-	KanbanViewFieldOptions *KanbanViewFieldOptions
+	FormViewFieldOptions     *FormViewFieldOptions
+	GalleryViewFieldOptions  *GalleryViewFieldOptions
+	GridViewFieldOptions     *GridViewFieldOptions
+	KanbanViewFieldOptions   *KanbanViewFieldOptions
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
 func (dst *PatchedViewFieldOptions) UnmarshalJSON(data []byte) error {
 	var err error
 	// try to unmarshal JSON data into CalendarViewFieldOptions
-	err = json.Unmarshal(data, &dst.CalendarViewFieldOptions);
+	err = json.Unmarshal(data, &dst.CalendarViewFieldOptions)
 	if err == nil {
 		jsonCalendarViewFieldOptions, _ := json.Marshal(dst.CalendarViewFieldOptions)
 		if string(jsonCalendarViewFieldOptions) == "{}" { // empty struct
@@ -41,7 +41,7 @@ func (dst *PatchedViewFieldOptions) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into FormViewFieldOptions
-	err = json.Unmarshal(data, &dst.FormViewFieldOptions);
+	err = json.Unmarshal(data, &dst.FormViewFieldOptions)
 	if err == nil {
 		jsonFormViewFieldOptions, _ := json.Marshal(dst.FormViewFieldOptions)
 		if string(jsonFormViewFieldOptions) == "{}" { // empty struct
@@ -54,7 +54,7 @@ func (dst *PatchedViewFieldOptions) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into GalleryViewFieldOptions
-	err = json.Unmarshal(data, &dst.GalleryViewFieldOptions);
+	err = json.Unmarshal(data, &dst.GalleryViewFieldOptions)
 	if err == nil {
 		jsonGalleryViewFieldOptions, _ := json.Marshal(dst.GalleryViewFieldOptions)
 		if string(jsonGalleryViewFieldOptions) == "{}" { // empty struct
@@ -67,7 +67,7 @@ func (dst *PatchedViewFieldOptions) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into GridViewFieldOptions
-	err = json.Unmarshal(data, &dst.GridViewFieldOptions);
+	err = json.Unmarshal(data, &dst.GridViewFieldOptions)
 	if err == nil {
 		jsonGridViewFieldOptions, _ := json.Marshal(dst.GridViewFieldOptions)
 		if string(jsonGridViewFieldOptions) == "{}" { // empty struct
@@ -80,7 +80,7 @@ func (dst *PatchedViewFieldOptions) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into KanbanViewFieldOptions
-	err = json.Unmarshal(data, &dst.KanbanViewFieldOptions);
+	err = json.Unmarshal(data, &dst.KanbanViewFieldOptions)
 	if err == nil {
 		jsonKanbanViewFieldOptions, _ := json.Marshal(dst.KanbanViewFieldOptions)
 		if string(jsonKanbanViewFieldOptions) == "{}" { // empty struct
@@ -155,5 +155,3 @@ func (v *NullablePatchedViewFieldOptions) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

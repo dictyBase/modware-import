@@ -19,8 +19,8 @@ var _ MappedNullable = &RequestNumberFieldUpdateField{}
 
 // RequestNumberFieldUpdateField struct for RequestNumberFieldUpdateField
 type RequestNumberFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
-	Type *Type712Enum `json:"type,omitempty"`
+	Name                *string                  `json:"name,omitempty"`
+	Type                *Type712Enum             `json:"type,omitempty"`
 	NumberDecimalPlaces *NumberDecimalPlacesEnum `json:"number_decimal_places,omitempty"`
 	// Indicates if negative values are allowed.
 	NumberNegative *bool `json:"number_negative,omitempty"`
@@ -172,7 +172,7 @@ func (o *RequestNumberFieldUpdateField) SetNumberNegative(v bool) {
 }
 
 func (o RequestNumberFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -231,5 +231,3 @@ func (v *NullableRequestNumberFieldUpdateField) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

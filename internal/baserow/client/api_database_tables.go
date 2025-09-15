@@ -19,16 +19,15 @@ import (
 	"strings"
 )
 
-
 // DatabaseTablesApiService DatabaseTablesApi service
 type DatabaseTablesApiService service
 
 type ApiCreateDatabaseTableRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTablesApiService
-	databaseId int32
-	tableCreate *TableCreate
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTablesApiService
+	databaseId                  int32
+	tableCreate                 *TableCreate
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -60,26 +59,27 @@ Creates synchronously a new table for the database related to the provided `data
 
 As an alternative you can use the `create_async_database_table` for better performances and importing bigger files.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param databaseId Creates a table for the database related to the provided value.
- @return ApiCreateDatabaseTableRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param databaseId Creates a table for the database related to the provided value.
+	@return ApiCreateDatabaseTableRequest
 */
 func (a *DatabaseTablesApiService) CreateDatabaseTable(ctx context.Context, databaseId int32) ApiCreateDatabaseTableRequest {
 	return ApiCreateDatabaseTableRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 		databaseId: databaseId,
 	}
 }
 
 // Execute executes the request
-//  @return Table
+//
+//	@return Table
 func (a *DatabaseTablesApiService) CreateDatabaseTableExecute(r ApiCreateDatabaseTableRequest) (*Table, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Table
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Table
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTablesApiService.CreateDatabaseTable")
@@ -151,8 +151,8 @@ func (a *DatabaseTablesApiService) CreateDatabaseTableExecute(r ApiCreateDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -162,8 +162,8 @@ func (a *DatabaseTablesApiService) CreateDatabaseTableExecute(r ApiCreateDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -181,10 +181,10 @@ func (a *DatabaseTablesApiService) CreateDatabaseTableExecute(r ApiCreateDatabas
 }
 
 type ApiCreateDatabaseTableAsyncRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTablesApiService
-	databaseId int32
-	tableCreate *TableCreate
+	ctx             context.Context
+	ApiService      *DatabaseTablesApiService
+	databaseId      int32
+	tableCreate     *TableCreate
 	clientSessionId *string
 }
 
@@ -208,26 +208,27 @@ CreateDatabaseTableAsync Method for CreateDatabaseTableAsync
 
 Creates a job that creates a new table for the database related to the provided `database_id` parameter if the authorized user has access to the database's workspace. This endpoint is asynchronous and return the created job to track the progress of the task.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param databaseId Creates a table for the database related to the provided value.
- @return ApiCreateDatabaseTableAsyncRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param databaseId Creates a table for the database related to the provided value.
+	@return ApiCreateDatabaseTableAsyncRequest
 */
 func (a *DatabaseTablesApiService) CreateDatabaseTableAsync(ctx context.Context, databaseId int32) ApiCreateDatabaseTableAsyncRequest {
 	return ApiCreateDatabaseTableAsyncRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 		databaseId: databaseId,
 	}
 }
 
 // Execute executes the request
-//  @return SingleFileImportJobSerializerClass
+//
+//	@return SingleFileImportJobSerializerClass
 func (a *DatabaseTablesApiService) CreateDatabaseTableAsyncExecute(r ApiCreateDatabaseTableAsyncRequest) (*SingleFileImportJobSerializerClass, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SingleFileImportJobSerializerClass
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *SingleFileImportJobSerializerClass
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTablesApiService.CreateDatabaseTableAsync")
@@ -296,8 +297,8 @@ func (a *DatabaseTablesApiService) CreateDatabaseTableAsyncExecute(r ApiCreateDa
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -307,8 +308,8 @@ func (a *DatabaseTablesApiService) CreateDatabaseTableAsyncExecute(r ApiCreateDa
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -326,10 +327,10 @@ func (a *DatabaseTablesApiService) CreateDatabaseTableAsyncExecute(r ApiCreateDa
 }
 
 type ApiDeleteDatabaseTableRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTablesApiService
-	tableId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTablesApiService
+	tableId                     int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -354,24 +355,24 @@ DeleteDatabaseTable Method for DeleteDatabaseTable
 
 Deletes the existing table if the authorized user has access to the related database's workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Deletes the table related to the provided value.
- @return ApiDeleteDatabaseTableRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Deletes the table related to the provided value.
+	@return ApiDeleteDatabaseTableRequest
 */
 func (a *DatabaseTablesApiService) DeleteDatabaseTable(ctx context.Context, tableId int32) ApiDeleteDatabaseTableRequest {
 	return ApiDeleteDatabaseTableRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
 func (a *DatabaseTablesApiService) DeleteDatabaseTableExecute(r ApiDeleteDatabaseTableRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTablesApiService.DeleteDatabaseTable")
@@ -438,8 +439,8 @@ func (a *DatabaseTablesApiService) DeleteDatabaseTableExecute(r ApiDeleteDatabas
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -449,8 +450,8 @@ func (a *DatabaseTablesApiService) DeleteDatabaseTableExecute(r ApiDeleteDatabas
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -459,10 +460,10 @@ func (a *DatabaseTablesApiService) DeleteDatabaseTableExecute(r ApiDeleteDatabas
 }
 
 type ApiDuplicateDatabaseTableAsyncRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTablesApiService
-	tableId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTablesApiService
+	tableId                     int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -487,26 +488,27 @@ DuplicateDatabaseTableAsync Method for DuplicateDatabaseTableAsync
 
 Start a job to duplicate the table with the provided `table_id` parameter if the authorized user has access to the database's workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId The table to duplicate.
- @return ApiDuplicateDatabaseTableAsyncRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId The table to duplicate.
+	@return ApiDuplicateDatabaseTableAsyncRequest
 */
 func (a *DatabaseTablesApiService) DuplicateDatabaseTableAsync(ctx context.Context, tableId int32) ApiDuplicateDatabaseTableAsyncRequest {
 	return ApiDuplicateDatabaseTableAsyncRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return SingleDuplicateTableJobType
+//
+//	@return SingleDuplicateTableJobType
 func (a *DatabaseTablesApiService) DuplicateDatabaseTableAsyncExecute(r ApiDuplicateDatabaseTableAsyncRequest) (*SingleDuplicateTableJobType, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SingleDuplicateTableJobType
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *SingleDuplicateTableJobType
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTablesApiService.DuplicateDatabaseTableAsync")
@@ -573,8 +575,8 @@ func (a *DatabaseTablesApiService) DuplicateDatabaseTableAsyncExecute(r ApiDupli
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -584,8 +586,8 @@ func (a *DatabaseTablesApiService) DuplicateDatabaseTableAsyncExecute(r ApiDupli
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -603,9 +605,9 @@ func (a *DatabaseTablesApiService) DuplicateDatabaseTableAsyncExecute(r ApiDupli
 }
 
 type ApiGetDatabaseTableRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTablesApiService
-	tableId int32
+	tableId    int32
 }
 
 func (r ApiGetDatabaseTableRequest) Execute() (*Table, *http.Response, error) {
@@ -617,26 +619,27 @@ GetDatabaseTable Method for GetDatabaseTable
 
 Returns the requested table if the authorized user has access to the related database's workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Returns the table related to the provided value.
- @return ApiGetDatabaseTableRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Returns the table related to the provided value.
+	@return ApiGetDatabaseTableRequest
 */
 func (a *DatabaseTablesApiService) GetDatabaseTable(ctx context.Context, tableId int32) ApiGetDatabaseTableRequest {
 	return ApiGetDatabaseTableRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return Table
+//
+//	@return Table
 func (a *DatabaseTablesApiService) GetDatabaseTableExecute(r ApiGetDatabaseTableRequest) (*Table, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Table
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Table
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTablesApiService.GetDatabaseTable")
@@ -697,8 +700,8 @@ func (a *DatabaseTablesApiService) GetDatabaseTableExecute(r ApiGetDatabaseTable
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -708,8 +711,8 @@ func (a *DatabaseTablesApiService) GetDatabaseTableExecute(r ApiGetDatabaseTable
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -727,9 +730,9 @@ func (a *DatabaseTablesApiService) GetDatabaseTableExecute(r ApiGetDatabaseTable
 }
 
 type ApiImportDataDatabaseTableAsyncRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTablesApiService
-	tableId int32
+	ctx         context.Context
+	ApiService  *DatabaseTablesApiService
+	tableId     int32
 	tableImport *TableImport
 }
 
@@ -747,26 +750,27 @@ ImportDataDatabaseTableAsync Method for ImportDataDatabaseTableAsync
 
 Import data in the specified table if the authorized user has access to the related database's workspace. This endpoint is asynchronous and return the created job to track the progress of the task.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Import data into the table related to the provided value.
- @return ApiImportDataDatabaseTableAsyncRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Import data into the table related to the provided value.
+	@return ApiImportDataDatabaseTableAsyncRequest
 */
 func (a *DatabaseTablesApiService) ImportDataDatabaseTableAsync(ctx context.Context, tableId int32) ApiImportDataDatabaseTableAsyncRequest {
 	return ApiImportDataDatabaseTableAsyncRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return SingleFileImportJobSerializerClass
+//
+//	@return SingleFileImportJobSerializerClass
 func (a *DatabaseTablesApiService) ImportDataDatabaseTableAsyncExecute(r ApiImportDataDatabaseTableAsyncRequest) (*SingleFileImportJobSerializerClass, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SingleFileImportJobSerializerClass
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *SingleFileImportJobSerializerClass
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTablesApiService.ImportDataDatabaseTableAsync")
@@ -832,8 +836,8 @@ func (a *DatabaseTablesApiService) ImportDataDatabaseTableAsyncExecute(r ApiImpo
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -843,8 +847,8 @@ func (a *DatabaseTablesApiService) ImportDataDatabaseTableAsyncExecute(r ApiImpo
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -862,7 +866,7 @@ func (a *DatabaseTablesApiService) ImportDataDatabaseTableAsyncExecute(r ApiImpo
 }
 
 type ApiListDatabaseTablesRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTablesApiService
 	databaseId int32
 }
@@ -876,26 +880,27 @@ ListDatabaseTables Method for ListDatabaseTables
 
 Lists all the tables that are in the database related to the `database_id` parameter if the user has access to the database's workspace. A table is exactly as the name suggests. It can hold multiple fields, each having their own type and multiple rows. They can be added via the **create_database_table_field** and **create_database_table_row** endpoints.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param databaseId Returns only tables that are related to the provided value.
- @return ApiListDatabaseTablesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param databaseId Returns only tables that are related to the provided value.
+	@return ApiListDatabaseTablesRequest
 */
 func (a *DatabaseTablesApiService) ListDatabaseTables(ctx context.Context, databaseId int32) ApiListDatabaseTablesRequest {
 	return ApiListDatabaseTablesRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 		databaseId: databaseId,
 	}
 }
 
 // Execute executes the request
-//  @return []Table
+//
+//	@return []Table
 func (a *DatabaseTablesApiService) ListDatabaseTablesExecute(r ApiListDatabaseTablesRequest) ([]Table, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []Table
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []Table
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTablesApiService.ListDatabaseTables")
@@ -956,8 +961,8 @@ func (a *DatabaseTablesApiService) ListDatabaseTablesExecute(r ApiListDatabaseTa
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -967,8 +972,8 @@ func (a *DatabaseTablesApiService) ListDatabaseTablesExecute(r ApiListDatabaseTa
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -986,11 +991,11 @@ func (a *DatabaseTablesApiService) ListDatabaseTablesExecute(r ApiListDatabaseTa
 }
 
 type ApiOrderDatabaseTablesRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTablesApiService
-	databaseId int32
-	orderTables *OrderTables
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTablesApiService
+	databaseId                  int32
+	orderTables                 *OrderTables
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -1020,14 +1025,14 @@ OrderDatabaseTables Method for OrderDatabaseTables
 
 Changes the order of the provided table ids to the matching position that the id has in the list. If the authorized user does not belong to the workspace it will be ignored. The order of the not provided tables will be set to `0`.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param databaseId Updates the order of the tables in the database related to the provided value.
- @return ApiOrderDatabaseTablesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param databaseId Updates the order of the tables in the database related to the provided value.
+	@return ApiOrderDatabaseTablesRequest
 */
 func (a *DatabaseTablesApiService) OrderDatabaseTables(ctx context.Context, databaseId int32) ApiOrderDatabaseTablesRequest {
 	return ApiOrderDatabaseTablesRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 		databaseId: databaseId,
 	}
 }
@@ -1035,9 +1040,9 @@ func (a *DatabaseTablesApiService) OrderDatabaseTables(ctx context.Context, data
 // Execute executes the request
 func (a *DatabaseTablesApiService) OrderDatabaseTablesExecute(r ApiOrderDatabaseTablesRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTablesApiService.OrderDatabaseTables")
@@ -1109,8 +1114,8 @@ func (a *DatabaseTablesApiService) OrderDatabaseTablesExecute(r ApiOrderDatabase
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1120,8 +1125,8 @@ func (a *DatabaseTablesApiService) OrderDatabaseTablesExecute(r ApiOrderDatabase
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -1130,12 +1135,12 @@ func (a *DatabaseTablesApiService) OrderDatabaseTablesExecute(r ApiOrderDatabase
 }
 
 type ApiUpdateDatabaseTableRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTablesApiService
-	tableId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *DatabaseTablesApiService
+	tableId                     int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
-	patchedTableUpdate *PatchedTableUpdate
+	patchedTableUpdate          *PatchedTableUpdate
 }
 
 // An optional header that marks the action performed by this request as having occurred in a particular client session. Then using the undo/redo endpoints with the same ClientSessionId header this action can be undone/redone.
@@ -1164,26 +1169,27 @@ UpdateDatabaseTable Method for UpdateDatabaseTable
 
 Updates the existing table if the authorized user has access to the related database's workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Updates the table related to the provided value.
- @return ApiUpdateDatabaseTableRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Updates the table related to the provided value.
+	@return ApiUpdateDatabaseTableRequest
 */
 func (a *DatabaseTablesApiService) UpdateDatabaseTable(ctx context.Context, tableId int32) ApiUpdateDatabaseTableRequest {
 	return ApiUpdateDatabaseTableRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return Table
+//
+//	@return Table
 func (a *DatabaseTablesApiService) UpdateDatabaseTableExecute(r ApiUpdateDatabaseTableRequest) (*Table, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Table
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Table
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTablesApiService.UpdateDatabaseTable")
@@ -1252,8 +1258,8 @@ func (a *DatabaseTablesApiService) UpdateDatabaseTableExecute(r ApiUpdateDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1263,8 +1269,8 @@ func (a *DatabaseTablesApiService) UpdateDatabaseTableExecute(r ApiUpdateDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

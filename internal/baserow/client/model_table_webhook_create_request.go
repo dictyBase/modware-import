@@ -24,7 +24,7 @@ type TableWebhookCreateRequest struct {
 	// Indicates whether this webhook should listen to all events.
 	IncludeAllEvents *bool `json:"include_all_events,omitempty"`
 	// A list containing the events that will trigger this webhook.
-	Events []Events3eaEnum `json:"events,omitempty"`
+	Events        []Events3eaEnum    `json:"events,omitempty"`
 	RequestMethod *RequestMethodEnum `json:"request_method,omitempty"`
 	// The additional headers as an object where the key is the name and the value the value.
 	Headers map[string]interface{} `json:"headers,omitempty"`
@@ -262,7 +262,7 @@ func (o *TableWebhookCreateRequest) SetUseUserFieldNames(v bool) {
 }
 
 func (o TableWebhookCreateRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -326,5 +326,3 @@ func (v *NullableTableWebhookCreateRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

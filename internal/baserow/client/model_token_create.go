@@ -20,7 +20,7 @@ var _ MappedNullable = &TokenCreate{}
 // TokenCreate A mixin that allows us to rename the `group` field to `workspace` when serializing.
 type TokenCreate struct {
 	// The human readable name of the database token for the user.
-	Name string `json:"name"`
+	Name  string `json:"name"`
 	Group string `json:"group"`
 	// Only the tables of the workspace can be accessed.
 	Workspace int32 `json:"workspace"`
@@ -119,7 +119,7 @@ func (o *TokenCreate) SetWorkspace(v int32) {
 }
 
 func (o TokenCreate) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -169,5 +169,3 @@ func (v *NullableTokenCreate) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

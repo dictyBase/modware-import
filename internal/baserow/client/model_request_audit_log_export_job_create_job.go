@@ -20,16 +20,16 @@ var _ MappedNullable = &RequestAuditLogExportJobCreateJob{}
 
 // RequestAuditLogExportJobCreateJob struct for RequestAuditLogExportJobCreateJob
 type RequestAuditLogExportJobCreateJob struct {
-	Type Type4afEnum `json:"type"`
-	ExportCharset *ExportCharsetEnum `json:"export_charset,omitempty"`
+	Type               Type4afEnum             `json:"type"`
+	ExportCharset      *ExportCharsetEnum      `json:"export_charset,omitempty"`
 	CsvColumnSeparator *CsvColumnSeparatorEnum `json:"csv_column_separator,omitempty"`
 	// Whether or not to generate a header row at the top of the csv file.
 	CsvFirstRowHeader *bool `json:"csv_first_row_header,omitempty"`
 	// Optional: The user to filter the audit log by.
 	FilterUserId *int32 `json:"filter_user_id,omitempty"`
 	// Optional: The workspace to filter the audit log by.
-	FilterWorkspaceId *int32 `json:"filter_workspace_id,omitempty"`
-	FilterActionType *FilterActionTypeEnum `json:"filter_action_type,omitempty"`
+	FilterWorkspaceId *int32                `json:"filter_workspace_id,omitempty"`
+	FilterActionType  *FilterActionTypeEnum `json:"filter_action_type,omitempty"`
 	// Optional: The start date to filter the audit log by.
 	FilterFromTimestamp *time.Time `json:"filter_from_timestamp,omitempty"`
 	// Optional: The end date to filter the audit log by.
@@ -374,7 +374,7 @@ func (o *RequestAuditLogExportJobCreateJob) SetCreatedOn(v time.Time) {
 }
 
 func (o RequestAuditLogExportJobCreateJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -447,5 +447,3 @@ func (v *NullableRequestAuditLogExportJobCreateJob) UnmarshalJSON(src []byte) er
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

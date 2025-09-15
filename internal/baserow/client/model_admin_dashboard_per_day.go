@@ -19,8 +19,8 @@ var _ MappedNullable = &AdminDashboardPerDay{}
 
 // AdminDashboardPerDay struct for AdminDashboardPerDay
 type AdminDashboardPerDay struct {
-	Date string `json:"date"`
-	Count int32 `json:"count"`
+	Date  string `json:"date"`
+	Count int32  `json:"count"`
 }
 
 // NewAdminDashboardPerDay instantiates a new AdminDashboardPerDay object
@@ -91,7 +91,7 @@ func (o *AdminDashboardPerDay) SetCount(v int32) {
 }
 
 func (o AdminDashboardPerDay) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableAdminDashboardPerDay) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

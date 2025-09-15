@@ -19,9 +19,9 @@ var _ MappedNullable = &MultipleCollaboratorsFieldField{}
 
 // MultipleCollaboratorsFieldField struct for MultipleCollaboratorsFieldField
 type MultipleCollaboratorsFieldField struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -232,7 +232,7 @@ func (o *MultipleCollaboratorsFieldField) SetReadOnly(v bool) {
 }
 
 func (o MultipleCollaboratorsFieldField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -288,5 +288,3 @@ func (v *NullableMultipleCollaboratorsFieldField) UnmarshalJSON(src []byte) erro
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

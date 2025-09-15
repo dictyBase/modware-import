@@ -18,12 +18,11 @@ import (
 	"net/url"
 )
 
-
 // UserFilesApiService UserFilesApi service
 type UserFilesApiService service
 
 type ApiUploadFileRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *UserFilesApiService
 }
 
@@ -36,24 +35,25 @@ UploadFile Method for UploadFile
 
 Uploads a file to Baserow by uploading the file contents directly. A `file` multipart is expected containing the file contents.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiUploadFileRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiUploadFileRequest
 */
 func (a *UserFilesApiService) UploadFile(ctx context.Context) ApiUploadFileRequest {
 	return ApiUploadFileRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return UserFile
+//
+//	@return UserFile
 func (a *UserFilesApiService) UploadFileExecute(r ApiUploadFileRequest) (*UserFile, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *UserFile
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UserFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserFilesApiService.UploadFile")
@@ -113,8 +113,8 @@ func (a *UserFilesApiService) UploadFileExecute(r ApiUploadFileRequest) (*UserFi
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -132,8 +132,8 @@ func (a *UserFilesApiService) UploadFileExecute(r ApiUploadFileRequest) (*UserFi
 }
 
 type ApiUploadViaUrlRequest struct {
-	ctx context.Context
-	ApiService *UserFilesApiService
+	ctx                         context.Context
+	ApiService                  *UserFilesApiService
 	userFileUploadViaURLRequest *UserFileUploadViaURLRequest
 }
 
@@ -151,24 +151,25 @@ UploadViaUrl Method for UploadViaUrl
 
 Uploads a file to Baserow by downloading it from the provided URL.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiUploadViaUrlRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiUploadViaUrlRequest
 */
 func (a *UserFilesApiService) UploadViaUrl(ctx context.Context) ApiUploadViaUrlRequest {
 	return ApiUploadViaUrlRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return UserFile
+//
+//	@return UserFile
 func (a *UserFilesApiService) UploadViaUrlExecute(r ApiUploadViaUrlRequest) (*UserFile, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *UserFile
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UserFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserFilesApiService.UploadViaUrl")
@@ -233,8 +234,8 @@ func (a *UserFilesApiService) UploadViaUrlExecute(r ApiUploadViaUrlRequest) (*Us
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

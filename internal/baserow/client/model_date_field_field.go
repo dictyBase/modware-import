@@ -19,9 +19,9 @@ var _ MappedNullable = &DateFieldField{}
 
 // DateFieldField struct for DateFieldField
 type DateFieldField struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name *string `json:"name,omitempty"`
+	Id      int32   `json:"id"`
+	TableId int32   `json:"table_id"`
+	Name    *string `json:"name,omitempty"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -29,11 +29,11 @@ type DateFieldField struct {
 	// Indicates if the field is a primary field. If `true` the field cannot be deleted and the value should represent the whole row.
 	Primary *bool `json:"primary,omitempty"`
 	// Indicates whether the field is a read only field. If true, it's not possible to update the cell value.
-	ReadOnly bool `json:"read_only"`
+	ReadOnly   bool            `json:"read_only"`
 	DateFormat *DateFormatEnum `json:"date_format,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime *bool `json:"date_include_time,omitempty"`
-	DateTimeFormat *DateTimeFormatEnum `json:"date_time_format,omitempty"`
+	DateIncludeTime *bool               `json:"date_include_time,omitempty"`
+	DateTimeFormat  *DateTimeFormatEnum `json:"date_time_format,omitempty"`
 	// Indicates if the timezone should be shown.
 	DateShowTzinfo *bool `json:"date_show_tzinfo,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
@@ -406,6 +406,7 @@ func (o *DateFieldField) HasDateForceTimezone() bool {
 func (o *DateFieldField) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *DateFieldField) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -417,7 +418,7 @@ func (o *DateFieldField) UnsetDateForceTimezone() {
 }
 
 func (o DateFieldField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -490,5 +491,3 @@ func (v *NullableDateFieldField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

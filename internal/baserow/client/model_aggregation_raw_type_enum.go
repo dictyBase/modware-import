@@ -20,17 +20,17 @@ type AggregationRawTypeEnum string
 
 // List of AggregationRawTypeEnum
 const (
-	EMPTY_COUNT AggregationRawTypeEnum = "empty_count"
+	EMPTY_COUNT     AggregationRawTypeEnum = "empty_count"
 	NOT_EMPTY_COUNT AggregationRawTypeEnum = "not_empty_count"
-	UNIQUE_COUNT AggregationRawTypeEnum = "unique_count"
-	MIN AggregationRawTypeEnum = "min"
-	MAX AggregationRawTypeEnum = "max"
-	SUM AggregationRawTypeEnum = "sum"
-	AVERAGE AggregationRawTypeEnum = "average"
-	MEDIAN AggregationRawTypeEnum = "median"
-	DECILE AggregationRawTypeEnum = "decile"
-	VARIANCE AggregationRawTypeEnum = "variance"
-	STD_DEV AggregationRawTypeEnum = "std_dev"
+	UNIQUE_COUNT    AggregationRawTypeEnum = "unique_count"
+	MIN             AggregationRawTypeEnum = "min"
+	MAX             AggregationRawTypeEnum = "max"
+	SUM             AggregationRawTypeEnum = "sum"
+	AVERAGE         AggregationRawTypeEnum = "average"
+	MEDIAN          AggregationRawTypeEnum = "median"
+	DECILE          AggregationRawTypeEnum = "decile"
+	VARIANCE        AggregationRawTypeEnum = "variance"
+	STD_DEV         AggregationRawTypeEnum = "std_dev"
 )
 
 // All allowed values of AggregationRawTypeEnum enum
@@ -126,4 +126,3 @@ func (v *NullableAggregationRawTypeEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

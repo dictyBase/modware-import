@@ -25,7 +25,7 @@ type PaginationSerializerLinkRowValue struct {
 	Next NullableString `json:"next"`
 	// URL to the previous page.
 	Previous NullableString `json:"previous"`
-	Results []LinkRowValue `json:"results"`
+	Results  []LinkRowValue `json:"results"`
 }
 
 // NewPaginationSerializerLinkRowValue instantiates a new PaginationSerializerLinkRowValue object
@@ -150,7 +150,7 @@ func (o *PaginationSerializerLinkRowValue) SetResults(v []LinkRowValue) {
 }
 
 func (o PaginationSerializerLinkRowValue) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -201,5 +201,3 @@ func (v *NullablePaginationSerializerLinkRowValue) UnmarshalJSON(src []byte) err
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

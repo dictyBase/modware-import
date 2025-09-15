@@ -20,7 +20,7 @@ var _ MappedNullable = &PatchedUpdateViewSort{}
 // PatchedUpdateViewSort struct for PatchedUpdateViewSort
 type PatchedUpdateViewSort struct {
 	// The field that must be sorted on.
-	Field *int32 `json:"field,omitempty"`
+	Field *int32     `json:"field,omitempty"`
 	Order *OrderEnum `json:"order,omitempty"`
 }
 
@@ -106,7 +106,7 @@ func (o *PatchedUpdateViewSort) SetOrder(v OrderEnum) {
 }
 
 func (o PatchedUpdateViewSort) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -159,5 +159,3 @@ func (v *NullablePatchedUpdateViewSort) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

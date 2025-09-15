@@ -26,8 +26,8 @@ type PublicPaginationSerializerWithGridViewFieldOptionsExampleRowResponse struct
 	// URL to the next page.
 	Next NullableString `json:"next"`
 	// URL to the previous page.
-	Previous NullableString `json:"previous"`
-	Results []ExampleRowResponse `json:"results"`
+	Previous NullableString       `json:"previous"`
+	Results  []ExampleRowResponse `json:"results"`
 }
 
 // NewPublicPaginationSerializerWithGridViewFieldOptionsExampleRowResponse instantiates a new PublicPaginationSerializerWithGridViewFieldOptionsExampleRowResponse object
@@ -184,7 +184,7 @@ func (o *PublicPaginationSerializerWithGridViewFieldOptionsExampleRowResponse) S
 }
 
 func (o PublicPaginationSerializerWithGridViewFieldOptionsExampleRowResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -238,5 +238,3 @@ func (v *NullablePublicPaginationSerializerWithGridViewFieldOptionsExampleRowRes
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

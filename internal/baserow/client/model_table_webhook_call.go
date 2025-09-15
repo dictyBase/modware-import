@@ -22,10 +22,10 @@ var _ MappedNullable = &TableWebhookCall{}
 type TableWebhookCall struct {
 	Id int32 `json:"id"`
 	// Event ID where the call originated from.
-	EventId string `json:"event_id"`
-	EventType string `json:"event_type"`
+	EventId    string       `json:"event_id"`
+	EventType  string       `json:"event_type"`
 	CalledTime NullableTime `json:"called_time,omitempty"`
-	CalledUrl string `json:"called_url"`
+	CalledUrl  string       `json:"called_url"`
 	// A text copy of the request headers and body.
 	Request NullableString `json:"request,omitempty"`
 	// A text copy of the response headers and body.
@@ -161,6 +161,7 @@ func (o *TableWebhookCall) HasCalledTime() bool {
 func (o *TableWebhookCall) SetCalledTime(v time.Time) {
 	o.CalledTime.Set(&v)
 }
+
 // SetCalledTimeNil sets the value for CalledTime to be an explicit nil
 func (o *TableWebhookCall) SetCalledTimeNil() {
 	o.CalledTime.Set(nil)
@@ -227,6 +228,7 @@ func (o *TableWebhookCall) HasRequest() bool {
 func (o *TableWebhookCall) SetRequest(v string) {
 	o.Request.Set(&v)
 }
+
 // SetRequestNil sets the value for Request to be an explicit nil
 func (o *TableWebhookCall) SetRequestNil() {
 	o.Request.Set(nil)
@@ -269,6 +271,7 @@ func (o *TableWebhookCall) HasResponse() bool {
 func (o *TableWebhookCall) SetResponse(v string) {
 	o.Response.Set(&v)
 }
+
 // SetResponseNil sets the value for Response to be an explicit nil
 func (o *TableWebhookCall) SetResponseNil() {
 	o.Response.Set(nil)
@@ -311,6 +314,7 @@ func (o *TableWebhookCall) HasResponseStatus() bool {
 func (o *TableWebhookCall) SetResponseStatus(v int32) {
 	o.ResponseStatus.Set(&v)
 }
+
 // SetResponseStatusNil sets the value for ResponseStatus to be an explicit nil
 func (o *TableWebhookCall) SetResponseStatusNil() {
 	o.ResponseStatus.Set(nil)
@@ -353,6 +357,7 @@ func (o *TableWebhookCall) HasError() bool {
 func (o *TableWebhookCall) SetError(v string) {
 	o.Error.Set(&v)
 }
+
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *TableWebhookCall) SetErrorNil() {
 	o.Error.Set(nil)
@@ -364,7 +369,7 @@ func (o *TableWebhookCall) UnsetError() {
 }
 
 func (o TableWebhookCall) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -430,5 +435,3 @@ func (v *NullableTableWebhookCall) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

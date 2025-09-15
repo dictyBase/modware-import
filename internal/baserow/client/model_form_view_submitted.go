@@ -24,7 +24,7 @@ type FormViewSubmitted struct {
 	SubmitActionMessage *string `json:"submit_action_message,omitempty"`
 	// If the `submit_action` is REDIRECT,then the visitors will be redirected to the this URL after submitting the form.
 	SubmitActionRedirectUrl *string `json:"submit_action_redirect_url,omitempty"`
-	RowId int32 `json:"row_id"`
+	RowId                   int32   `json:"row_id"`
 }
 
 // NewFormViewSubmitted instantiates a new FormViewSubmitted object
@@ -166,7 +166,7 @@ func (o *FormViewSubmitted) SetRowId(v int32) {
 }
 
 func (o FormViewSubmitted) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -223,5 +223,3 @@ func (v *NullableFormViewSubmitted) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

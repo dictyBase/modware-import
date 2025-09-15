@@ -20,16 +20,16 @@ var _ MappedNullable = &UserFile{}
 
 // UserFile struct for UserFile
 type UserFile struct {
-	Size int32 `json:"size"`
-	MimeType *string `json:"mime_type,omitempty"`
-	IsImage *bool `json:"is_image,omitempty"`
-	ImageWidth NullableInt32 `json:"image_width,omitempty"`
-	ImageHeight NullableInt32 `json:"image_height,omitempty"`
-	UploadedAt time.Time `json:"uploaded_at"`
-	Url string `json:"url"`
-	Thumbnails map[string]interface{} `json:"thumbnails"`
-	Name string `json:"name"`
-	OriginalName string `json:"original_name"`
+	Size         int32                  `json:"size"`
+	MimeType     *string                `json:"mime_type,omitempty"`
+	IsImage      *bool                  `json:"is_image,omitempty"`
+	ImageWidth   NullableInt32          `json:"image_width,omitempty"`
+	ImageHeight  NullableInt32          `json:"image_height,omitempty"`
+	UploadedAt   time.Time              `json:"uploaded_at"`
+	Url          string                 `json:"url"`
+	Thumbnails   map[string]interface{} `json:"thumbnails"`
+	Name         string                 `json:"name"`
+	OriginalName string                 `json:"original_name"`
 }
 
 // NewUserFile instantiates a new UserFile object
@@ -175,6 +175,7 @@ func (o *UserFile) HasImageWidth() bool {
 func (o *UserFile) SetImageWidth(v int32) {
 	o.ImageWidth.Set(&v)
 }
+
 // SetImageWidthNil sets the value for ImageWidth to be an explicit nil
 func (o *UserFile) SetImageWidthNil() {
 	o.ImageWidth.Set(nil)
@@ -217,6 +218,7 @@ func (o *UserFile) HasImageHeight() bool {
 func (o *UserFile) SetImageHeight(v int32) {
 	o.ImageHeight.Set(&v)
 }
+
 // SetImageHeightNil sets the value for ImageHeight to be an explicit nil
 func (o *UserFile) SetImageHeightNil() {
 	o.ImageHeight.Set(nil)
@@ -348,7 +350,7 @@ func (o *UserFile) SetOriginalName(v string) {
 }
 
 func (o UserFile) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -413,5 +415,3 @@ func (v *NullableUserFile) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

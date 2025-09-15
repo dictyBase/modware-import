@@ -17,26 +17,26 @@ import (
 
 // FieldCreateField - struct for FieldCreateField
 type FieldCreateField struct {
-	BooleanFieldCreateField *BooleanFieldCreateField
-	CountFieldCreateField *CountFieldCreateField
-	CreatedOnFieldCreateField *CreatedOnFieldCreateField
-	DateFieldCreateField *DateFieldCreateField
-	EmailFieldCreateField *EmailFieldCreateField
-	FileFieldCreateField *FileFieldCreateField
-	FormulaFieldCreateField *FormulaFieldCreateField
-	LastModifiedFieldCreateField *LastModifiedFieldCreateField
-	LinkRowFieldCreateField *LinkRowFieldCreateField
-	LongTextFieldCreateField *LongTextFieldCreateField
-	LookupFieldCreateField *LookupFieldCreateField
+	BooleanFieldCreateField               *BooleanFieldCreateField
+	CountFieldCreateField                 *CountFieldCreateField
+	CreatedOnFieldCreateField             *CreatedOnFieldCreateField
+	DateFieldCreateField                  *DateFieldCreateField
+	EmailFieldCreateField                 *EmailFieldCreateField
+	FileFieldCreateField                  *FileFieldCreateField
+	FormulaFieldCreateField               *FormulaFieldCreateField
+	LastModifiedFieldCreateField          *LastModifiedFieldCreateField
+	LinkRowFieldCreateField               *LinkRowFieldCreateField
+	LongTextFieldCreateField              *LongTextFieldCreateField
+	LookupFieldCreateField                *LookupFieldCreateField
 	MultipleCollaboratorsFieldCreateField *MultipleCollaboratorsFieldCreateField
-	MultipleSelectFieldCreateField *MultipleSelectFieldCreateField
-	NumberFieldCreateField *NumberFieldCreateField
-	PhoneNumberFieldCreateField *PhoneNumberFieldCreateField
-	RatingFieldCreateField *RatingFieldCreateField
-	RollupFieldCreateField *RollupFieldCreateField
-	SingleSelectFieldCreateField *SingleSelectFieldCreateField
-	TextFieldCreateField *TextFieldCreateField
-	URLFieldCreateField *URLFieldCreateField
+	MultipleSelectFieldCreateField        *MultipleSelectFieldCreateField
+	NumberFieldCreateField                *NumberFieldCreateField
+	PhoneNumberFieldCreateField           *PhoneNumberFieldCreateField
+	RatingFieldCreateField                *RatingFieldCreateField
+	RollupFieldCreateField                *RollupFieldCreateField
+	SingleSelectFieldCreateField          *SingleSelectFieldCreateField
+	TextFieldCreateField                  *TextFieldCreateField
+	URLFieldCreateField                   *URLFieldCreateField
 }
 
 // BooleanFieldCreateFieldAsFieldCreateField is a convenience function that returns BooleanFieldCreateField wrapped in FieldCreateField
@@ -178,7 +178,6 @@ func URLFieldCreateFieldAsFieldCreateField(v *URLFieldCreateField) FieldCreateFi
 		URLFieldCreateField: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *FieldCreateField) UnmarshalJSON(data []byte) error {
@@ -561,7 +560,7 @@ func (src FieldCreateField) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *FieldCreateField) GetActualInstance() (interface{}) {
+func (obj *FieldCreateField) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -684,5 +683,3 @@ func (v *NullableFieldCreateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

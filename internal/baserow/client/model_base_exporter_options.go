@@ -20,8 +20,8 @@ var _ MappedNullable = &BaseExporterOptions{}
 // BaseExporterOptions struct for BaseExporterOptions
 type BaseExporterOptions struct {
 	// Optional: The view for this table to export using its filters, sorts and other view specific settings.
-	ViewId NullableInt32 `json:"view_id,omitempty"`
-	ExporterType ExporterTypeEnum `json:"exporter_type"`
+	ViewId        NullableInt32      `json:"view_id,omitempty"`
+	ExporterType  ExporterTypeEnum   `json:"exporter_type"`
 	ExportCharset *ExportCharsetEnum `json:"export_charset,omitempty"`
 }
 
@@ -79,6 +79,7 @@ func (o *BaseExporterOptions) HasViewId() bool {
 func (o *BaseExporterOptions) SetViewId(v int32) {
 	o.ViewId.Set(&v)
 }
+
 // SetViewIdNil sets the value for ViewId to be an explicit nil
 func (o *BaseExporterOptions) SetViewIdNil() {
 	o.ViewId.Set(nil)
@@ -146,7 +147,7 @@ func (o *BaseExporterOptions) SetExportCharset(v ExportCharsetEnum) {
 }
 
 func (o BaseExporterOptions) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -200,5 +201,3 @@ func (v *NullableBaseExporterOptions) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

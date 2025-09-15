@@ -21,7 +21,7 @@ var _ MappedNullable = &Register{}
 type Register struct {
 	Name string `json:"name"`
 	// The email address is also going to be the username.
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 	// An ISO 639 language code (with optional variant) selected by the user. Ex: en-GB.
 	Language *string `json:"language,omitempty"`
@@ -296,7 +296,7 @@ func (o *Register) SetTemplateId(v int32) {
 }
 
 func (o Register) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -361,5 +361,3 @@ func (v *NullableRegister) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -19,9 +19,9 @@ var _ MappedNullable = &RollupFieldFieldSerializerWithRelatedFields{}
 
 // RollupFieldFieldSerializerWithRelatedFields struct for RollupFieldFieldSerializerWithRelatedFields
 type RollupFieldFieldSerializerWithRelatedFields struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -33,24 +33,24 @@ type RollupFieldFieldSerializerWithRelatedFields struct {
 	// A list of related fields which also changed.
 	RelatedFields []Field `json:"related_fields"`
 	// Indicates if the time zone should be shown.
-	DateShowTzinfo NullableBool `json:"date_show_tzinfo,omitempty"`
-	DateFormat NullableCountFieldCreateFieldDateFormat `json:"date_format,omitempty"`
+	DateShowTzinfo   NullableBool                                  `json:"date_show_tzinfo,omitempty"`
+	DateFormat       NullableCountFieldCreateFieldDateFormat       `json:"date_format,omitempty"`
 	ArrayFormulaType NullableCountFieldCreateFieldArrayFormulaType `json:"array_formula_type,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
 	DateForceTimezone NullableString `json:"date_force_timezone,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime NullableBool `json:"date_include_time,omitempty"`
-	Nullable bool `json:"nullable"`
-	DateTimeFormat NullableCountFieldCreateFieldDateTimeFormat `json:"date_time_format,omitempty"`
+	DateIncludeTime     NullableBool                                     `json:"date_include_time,omitempty"`
+	Nullable            bool                                             `json:"nullable"`
+	DateTimeFormat      NullableCountFieldCreateFieldDateTimeFormat      `json:"date_time_format,omitempty"`
 	NumberDecimalPlaces NullableCountFieldCreateFieldNumberDecimalPlaces `json:"number_decimal_places,omitempty"`
-	Error NullableString `json:"error,omitempty"`
+	Error               NullableString                                   `json:"error,omitempty"`
 	// The id of the link row field to rollup values for.
 	ThroughFieldId NullableInt32 `json:"through_field_id,omitempty"`
 	// The id of the field in the table linked to by the through_field to rollup.
 	TargetFieldId NullableInt32 `json:"target_field_id,omitempty"`
 	// The rollup formula function that must be applied.
-	RollupFunction *string `json:"rollup_function,omitempty"`
-	FormulaType *FormulaTypeEnum `json:"formula_type,omitempty"`
+	RollupFunction *string          `json:"rollup_function,omitempty"`
+	FormulaType    *FormulaTypeEnum `json:"formula_type,omitempty"`
 }
 
 // NewRollupFieldFieldSerializerWithRelatedFields instantiates a new RollupFieldFieldSerializerWithRelatedFields object
@@ -310,6 +310,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasDateShowTzinfo() bool {
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateShowTzinfo(v bool) {
 	o.DateShowTzinfo.Set(&v)
 }
+
 // SetDateShowTzinfoNil sets the value for DateShowTzinfo to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateShowTzinfoNil() {
 	o.DateShowTzinfo.Set(nil)
@@ -352,6 +353,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasDateFormat() bool {
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateFormat(v CountFieldCreateFieldDateFormat) {
 	o.DateFormat.Set(&v)
 }
+
 // SetDateFormatNil sets the value for DateFormat to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateFormatNil() {
 	o.DateFormat.Set(nil)
@@ -394,6 +396,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasArrayFormulaType() bool
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetArrayFormulaType(v CountFieldCreateFieldArrayFormulaType) {
 	o.ArrayFormulaType.Set(&v)
 }
+
 // SetArrayFormulaTypeNil sets the value for ArrayFormulaType to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetArrayFormulaTypeNil() {
 	o.ArrayFormulaType.Set(nil)
@@ -436,6 +439,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasDateForceTimezone() boo
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -478,6 +482,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasDateIncludeTime() bool 
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateIncludeTime(v bool) {
 	o.DateIncludeTime.Set(&v)
 }
+
 // SetDateIncludeTimeNil sets the value for DateIncludeTime to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateIncludeTimeNil() {
 	o.DateIncludeTime.Set(nil)
@@ -544,6 +549,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasDateTimeFormat() bool {
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateTimeFormat(v CountFieldCreateFieldDateTimeFormat) {
 	o.DateTimeFormat.Set(&v)
 }
+
 // SetDateTimeFormatNil sets the value for DateTimeFormat to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetDateTimeFormatNil() {
 	o.DateTimeFormat.Set(nil)
@@ -586,6 +592,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasNumberDecimalPlaces() b
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetNumberDecimalPlaces(v CountFieldCreateFieldNumberDecimalPlaces) {
 	o.NumberDecimalPlaces.Set(&v)
 }
+
 // SetNumberDecimalPlacesNil sets the value for NumberDecimalPlaces to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetNumberDecimalPlacesNil() {
 	o.NumberDecimalPlaces.Set(nil)
@@ -628,6 +635,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasError() bool {
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetError(v string) {
 	o.Error.Set(&v)
 }
+
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetErrorNil() {
 	o.Error.Set(nil)
@@ -670,6 +678,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasThroughFieldId() bool {
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetThroughFieldId(v int32) {
 	o.ThroughFieldId.Set(&v)
 }
+
 // SetThroughFieldIdNil sets the value for ThroughFieldId to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetThroughFieldIdNil() {
 	o.ThroughFieldId.Set(nil)
@@ -712,6 +721,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) HasTargetFieldId() bool {
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetTargetFieldId(v int32) {
 	o.TargetFieldId.Set(&v)
 }
+
 // SetTargetFieldIdNil sets the value for TargetFieldId to be an explicit nil
 func (o *RollupFieldFieldSerializerWithRelatedFields) SetTargetFieldIdNil() {
 	o.TargetFieldId.Set(nil)
@@ -787,7 +797,7 @@ func (o *RollupFieldFieldSerializerWithRelatedFields) SetFormulaType(v FormulaTy
 }
 
 func (o RollupFieldFieldSerializerWithRelatedFields) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -881,5 +891,3 @@ func (v *NullableRollupFieldFieldSerializerWithRelatedFields) UnmarshalJSON(src 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

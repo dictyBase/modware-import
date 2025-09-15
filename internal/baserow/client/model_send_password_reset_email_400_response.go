@@ -20,7 +20,7 @@ var _ MappedNullable = &SendPasswordResetEmail400Response{}
 // SendPasswordResetEmail400Response struct for SendPasswordResetEmail400Response
 type SendPasswordResetEmail400Response struct {
 	// Machine readable error indicating what went wrong.
-	Error *string `json:"error,omitempty"`
+	Error  *string                          `json:"error,omitempty"`
 	Detail *AdminListUsers400ResponseDetail `json:"detail,omitempty"`
 }
 
@@ -106,7 +106,7 @@ func (o *SendPasswordResetEmail400Response) SetDetail(v AdminListUsers400Respons
 }
 
 func (o SendPasswordResetEmail400Response) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -159,5 +159,3 @@ func (v *NullableSendPasswordResetEmail400Response) UnmarshalJSON(src []byte) er
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

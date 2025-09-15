@@ -19,7 +19,7 @@ var _ MappedNullable = &EmailFieldCreateField{}
 
 // EmailFieldCreateField struct for EmailFieldCreateField
 type EmailFieldCreateField struct {
-	Name string `json:"name"`
+	Name string      `json:"name"`
 	Type Type712Enum `json:"type"`
 }
 
@@ -91,7 +91,7 @@ func (o *EmailFieldCreateField) SetType(v Type712Enum) {
 }
 
 func (o EmailFieldCreateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableEmailFieldCreateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -20,8 +20,8 @@ var _ MappedNullable = &TableWebhookTestCallRequest{}
 // TableWebhookTestCallRequest struct for TableWebhookTestCallRequest
 type TableWebhookTestCallRequest struct {
 	// The URL that must be called when the webhook is triggered.
-	Url string `json:"url"`
-	EventType EventTypeEnum `json:"event_type"`
+	Url           string             `json:"url"`
+	EventType     EventTypeEnum      `json:"event_type"`
 	RequestMethod *RequestMethodEnum `json:"request_method,omitempty"`
 	// The additional headers as an object where the key is the name and the value the value.
 	Headers map[string]interface{} `json:"headers,omitempty"`
@@ -193,7 +193,7 @@ func (o *TableWebhookTestCallRequest) SetUseUserFieldNames(v bool) {
 }
 
 func (o TableWebhookTestCallRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -251,5 +251,3 @@ func (v *NullableTableWebhookTestCallRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

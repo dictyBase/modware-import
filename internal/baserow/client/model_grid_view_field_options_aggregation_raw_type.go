@@ -18,7 +18,7 @@ import (
 // GridViewFieldOptionsAggregationRawType - Indicates how to compute the raw aggregation value from database. This type must be registered in the backend prior to use it.  * `empty_count` - empty_count * `not_empty_count` - not_empty_count * `unique_count` - unique_count * `min` - min * `max` - max * `sum` - sum * `average` - average * `median` - median * `decile` - decile * `variance` - variance * `std_dev` - std_dev
 type GridViewFieldOptionsAggregationRawType struct {
 	AggregationRawTypeEnum *AggregationRawTypeEnum
-	BlankEnum *BlankEnum
+	BlankEnum              *BlankEnum
 }
 
 // AggregationRawTypeEnumAsGridViewFieldOptionsAggregationRawType is a convenience function that returns AggregationRawTypeEnum wrapped in GridViewFieldOptionsAggregationRawType
@@ -34,7 +34,6 @@ func BlankEnumAsGridViewFieldOptionsAggregationRawType(v *BlankEnum) GridViewFie
 		BlankEnum: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *GridViewFieldOptionsAggregationRawType) UnmarshalJSON(data []byte) error {
@@ -93,7 +92,7 @@ func (src GridViewFieldOptionsAggregationRawType) MarshalJSON() ([]byte, error) 
 }
 
 // Get the actual instance
-func (obj *GridViewFieldOptionsAggregationRawType) GetActualInstance() (interface{}) {
+func (obj *GridViewFieldOptionsAggregationRawType) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -144,5 +143,3 @@ func (v *NullableGridViewFieldOptionsAggregationRawType) UnmarshalJSON(src []byt
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

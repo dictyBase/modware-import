@@ -20,7 +20,7 @@ var _ MappedNullable = &BatchDeleteDatabaseTableRows400Response{}
 // BatchDeleteDatabaseTableRows400Response struct for BatchDeleteDatabaseTableRows400Response
 type BatchDeleteDatabaseTableRows400Response struct {
 	// Machine readable error indicating what went wrong.
-	Error *string `json:"error,omitempty"`
+	Error  *string                          `json:"error,omitempty"`
 	Detail *AdminListUsers400ResponseDetail `json:"detail,omitempty"`
 }
 
@@ -106,7 +106,7 @@ func (o *BatchDeleteDatabaseTableRows400Response) SetDetail(v AdminListUsers400R
 }
 
 func (o BatchDeleteDatabaseTableRows400Response) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -159,5 +159,3 @@ func (v *NullableBatchDeleteDatabaseTableRows400Response) UnmarshalJSON(src []by
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

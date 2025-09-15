@@ -20,7 +20,7 @@ var _ MappedNullable = &PatchedTokenUpdate{}
 // PatchedTokenUpdate struct for PatchedTokenUpdate
 type PatchedTokenUpdate struct {
 	// The human readable name of the database token for the user.
-	Name *string `json:"name,omitempty"`
+	Name        *string                        `json:"name,omitempty"`
 	Permissions *PatchedTokenUpdatePermissions `json:"permissions,omitempty"`
 	// Indicates if a new key must be generated.
 	RotateKey *bool `json:"rotate_key,omitempty"`
@@ -144,7 +144,7 @@ func (o *PatchedTokenUpdate) SetRotateKey(v bool) {
 }
 
 func (o PatchedTokenUpdate) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -200,5 +200,3 @@ func (v *NullablePatchedTokenUpdate) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

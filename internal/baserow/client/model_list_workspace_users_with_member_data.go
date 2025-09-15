@@ -30,8 +30,8 @@ type ListWorkspaceUsersWithMemberData struct {
 	// The workspace that the user has access to.
 	Workspace int32 `json:"workspace"`
 	// The permissions that the user has within the workspace.
-	Permissions *string `json:"permissions,omitempty"`
-	CreatedOn time.Time `json:"created_on"`
+	Permissions *string   `json:"permissions,omitempty"`
+	CreatedOn   time.Time `json:"created_on"`
 	// The user that has access to the workspace.
 	UserId int32 `json:"user_id"`
 	// True if user account is pending deletion.
@@ -357,6 +357,7 @@ func (o *ListWorkspaceUsersWithMemberData) HasRoleUid() bool {
 func (o *ListWorkspaceUsersWithMemberData) SetRoleUid(v string) {
 	o.RoleUid.Set(&v)
 }
+
 // SetRoleUidNil sets the value for RoleUid to be an explicit nil
 func (o *ListWorkspaceUsersWithMemberData) SetRoleUidNil() {
 	o.RoleUid.Set(nil)
@@ -399,6 +400,7 @@ func (o *ListWorkspaceUsersWithMemberData) HasHighestRoleUid() bool {
 func (o *ListWorkspaceUsersWithMemberData) SetHighestRoleUid(v string) {
 	o.HighestRoleUid.Set(&v)
 }
+
 // SetHighestRoleUidNil sets the value for HighestRoleUid to be an explicit nil
 func (o *ListWorkspaceUsersWithMemberData) SetHighestRoleUidNil() {
 	o.HighestRoleUid.Set(nil)
@@ -410,7 +412,7 @@ func (o *ListWorkspaceUsersWithMemberData) UnsetHighestRoleUid() {
 }
 
 func (o ListWorkspaceUsersWithMemberData) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -477,5 +479,3 @@ func (v *NullableListWorkspaceUsersWithMemberData) UnmarshalJSON(src []byte) err
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

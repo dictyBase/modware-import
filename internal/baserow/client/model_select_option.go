@@ -19,7 +19,7 @@ var _ MappedNullable = &SelectOption{}
 
 // SelectOption struct for SelectOption
 type SelectOption struct {
-	Id *int32 `json:"id,omitempty"`
+	Id    *int32 `json:"id,omitempty"`
 	Value string `json:"value"`
 	Color string `json:"color"`
 }
@@ -124,7 +124,7 @@ func (o *SelectOption) SetColor(v string) {
 }
 
 func (o SelectOption) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -176,5 +176,3 @@ func (v *NullableSelectOption) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -19,7 +19,7 @@ var _ MappedNullable = &RequestURLFieldUpdateField{}
 
 // RequestURLFieldUpdateField struct for RequestURLFieldUpdateField
 type RequestURLFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
+	Name *string      `json:"name,omitempty"`
 	Type *Type712Enum `json:"type,omitempty"`
 }
 
@@ -105,7 +105,7 @@ func (o *RequestURLFieldUpdateField) SetType(v Type712Enum) {
 }
 
 func (o RequestURLFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -158,5 +158,3 @@ func (v *NullableRequestURLFieldUpdateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

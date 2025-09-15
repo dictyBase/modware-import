@@ -20,7 +20,7 @@ var _ MappedNullable = &GetAdjacentDatabaseTableRow404Response{}
 // GetAdjacentDatabaseTableRow404Response struct for GetAdjacentDatabaseTableRow404Response
 type GetAdjacentDatabaseTableRow404Response struct {
 	// Machine readable error indicating what went wrong.
-	Error *string `json:"error,omitempty"`
+	Error  *string                          `json:"error,omitempty"`
 	Detail *AdminListUsers400ResponseDetail `json:"detail,omitempty"`
 }
 
@@ -106,7 +106,7 @@ func (o *GetAdjacentDatabaseTableRow404Response) SetDetail(v AdminListUsers400Re
 }
 
 func (o GetAdjacentDatabaseTableRow404Response) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -159,5 +159,3 @@ func (v *NullableGetAdjacentDatabaseTableRow404Response) UnmarshalJSON(src []byt
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

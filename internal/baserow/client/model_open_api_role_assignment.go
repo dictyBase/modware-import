@@ -21,14 +21,14 @@ var _ MappedNullable = &OpenApiRoleAssignment{}
 type OpenApiRoleAssignment struct {
 	Id int32 `json:"id"`
 	// The uid of the role assigned to the user or team in the given workspace.
-	Role string `json:"role"`
+	Role    string                       `json:"role"`
 	Subject OpenApiRoleAssignmentSubject `json:"subject"`
 	// The subject ID.
 	SubjectId int32 `json:"subject_id"`
 	// The unique scope ID.
-	ScopeId int32 `json:"scope_id"`
+	ScopeId     int32              `json:"scope_id"`
 	SubjectType SubjectType6dcEnum `json:"subject_type"`
-	ScopeType ScopeTypeEnum `json:"scope_type"`
+	ScopeType   ScopeTypeEnum      `json:"scope_type"`
 }
 
 // NewOpenApiRoleAssignment instantiates a new OpenApiRoleAssignment object
@@ -224,7 +224,7 @@ func (o *OpenApiRoleAssignment) SetScopeType(v ScopeTypeEnum) {
 }
 
 func (o OpenApiRoleAssignment) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -278,5 +278,3 @@ func (v *NullableOpenApiRoleAssignment) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

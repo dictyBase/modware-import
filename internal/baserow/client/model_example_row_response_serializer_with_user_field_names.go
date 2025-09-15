@@ -47,7 +47,7 @@ type ExampleRowResponseSerializerWithUserFieldNames struct {
 	// This field represents the `link_row` field. The number in field_11 is in a normal request or response the id of the field. If the GET parameter `user_field_names` is provided then the key will instead be the actual name of the field.This field accepts an `array` containing the ids or the names of the related rows. In case of names, if the name is not found, this name is ignored. A name is the value of the primary key of the related row.The response contains a list of objects containing the `id` and the primary field's `value` as a string for display purposes.
 	Field11 []LinkRowValue `json:"field_11,omitempty"`
 	// This field represents the `file` field. The number in field_12 is in a normal request or response the id of the field. If the GET parameter `user_field_names` is provided then the key will instead be the actual name of the field.This field accepts an `array` containing objects with the name of the file. The response contains an `array` of more detailed objects related to the files.
-	Field12 []FileFieldResponse `json:"field_12,omitempty"`
+	Field12 []FileFieldResponse                                           `json:"field_12,omitempty"`
 	Field13 NullableExampleRowResponseSerializerWithUserFieldNamesField13 `json:"field_13,omitempty"`
 	// This field represents the `multiple_select` field. The number in field_14 is in a normal request or response the id of the field. If the GET parameter `user_field_names` is provided then the key will instead be the actual name of the field.This field accepts a list of `integer` each of which representing the chosen select option id related to the field. Available ids can be foundwhen getting or listing the field. The response represents chosen field, but also the value and color is exposed.
 	Field14 []SelectOption `json:"field_14,omitempty"`
@@ -179,6 +179,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField1() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField1(v string) {
 	o.Field1.Set(&v)
 }
+
 // SetField1Nil sets the value for Field1 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField1Nil() {
 	o.Field1.Set(nil)
@@ -221,6 +222,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField2() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField2(v string) {
 	o.Field2.Set(&v)
 }
+
 // SetField2Nil sets the value for Field2 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField2Nil() {
 	o.Field2.Set(nil)
@@ -263,6 +265,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField3() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField3(v string) {
 	o.Field3.Set(&v)
 }
+
 // SetField3Nil sets the value for Field3 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField3Nil() {
 	o.Field3.Set(nil)
@@ -305,6 +308,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField4() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField4(v string) {
 	o.Field4.Set(&v)
 }
+
 // SetField4Nil sets the value for Field4 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField4Nil() {
 	o.Field4.Set(nil)
@@ -347,6 +351,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField5() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField5(v float64) {
 	o.Field5.Set(&v)
 }
+
 // SetField5Nil sets the value for Field5 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField5Nil() {
 	o.Field5.Set(nil)
@@ -453,6 +458,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField8() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField8(v string) {
 	o.Field8.Set(&v)
 }
+
 // SetField8Nil sets the value for Field8 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField8Nil() {
 	o.Field8.Set(nil)
@@ -623,6 +629,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField13() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField13(v ExampleRowResponseSerializerWithUserFieldNamesField13) {
 	o.Field13.Set(&v)
 }
+
 // SetField13Nil sets the value for Field13 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField13Nil() {
 	o.Field13.Set(nil)
@@ -698,6 +705,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField15() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField15(v string) {
 	o.Field15.Set(&v)
 }
+
 // SetField15Nil sets the value for Field15 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField15Nil() {
 	o.Field15.Set(nil)
@@ -740,6 +748,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField16() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField16(v string) {
 	o.Field16.Set(&v)
 }
+
 // SetField16Nil sets the value for Field16 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField16Nil() {
 	o.Field16.Set(nil)
@@ -782,6 +791,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField17() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField17(v string) {
 	o.Field17.Set(&v)
 }
+
 // SetField17Nil sets the value for Field17 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField17Nil() {
 	o.Field17.Set(nil)
@@ -824,6 +834,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField18() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField18(v string) {
 	o.Field18.Set(&v)
 }
+
 // SetField18Nil sets the value for Field18 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField18Nil() {
 	o.Field18.Set(nil)
@@ -866,6 +877,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) HasField19() bool {
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField19(v string) {
 	o.Field19.Set(&v)
 }
+
 // SetField19Nil sets the value for Field19 to be an explicit nil
 func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField19Nil() {
 	o.Field19.Set(nil)
@@ -909,7 +921,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNames) SetField20(v []Collabor
 }
 
 func (o ExampleRowResponseSerializerWithUserFieldNames) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -1020,5 +1032,3 @@ func (v *NullableExampleRowResponseSerializerWithUserFieldNames) UnmarshalJSON(s
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

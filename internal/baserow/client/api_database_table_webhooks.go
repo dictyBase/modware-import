@@ -19,14 +19,13 @@ import (
 	"strings"
 )
 
-
 // DatabaseTableWebhooksApiService DatabaseTableWebhooksApi service
 type DatabaseTableWebhooksApiService service
 
 type ApiCreateDatabaseTableWebhookRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableWebhooksApiService
-	tableId int32
+	ctx                       context.Context
+	ApiService                *DatabaseTableWebhooksApiService
+	tableId                   int32
 	tableWebhookCreateRequest *TableWebhookCreateRequest
 }
 
@@ -44,26 +43,27 @@ CreateDatabaseTableWebhook Method for CreateDatabaseTableWebhook
 
 Creates a new webhook for the table related to the provided `table_id` parameter if the authorized user has access to the related database workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Creates a webhook for the table related to the provided value.
- @return ApiCreateDatabaseTableWebhookRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Creates a webhook for the table related to the provided value.
+	@return ApiCreateDatabaseTableWebhookRequest
 */
 func (a *DatabaseTableWebhooksApiService) CreateDatabaseTableWebhook(ctx context.Context, tableId int32) ApiCreateDatabaseTableWebhookRequest {
 	return ApiCreateDatabaseTableWebhookRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return TableWebhook
+//
+//	@return TableWebhook
 func (a *DatabaseTableWebhooksApiService) CreateDatabaseTableWebhookExecute(r ApiCreateDatabaseTableWebhookRequest) (*TableWebhook, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *TableWebhook
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *TableWebhook
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableWebhooksApiService.CreateDatabaseTableWebhook")
@@ -129,8 +129,8 @@ func (a *DatabaseTableWebhooksApiService) CreateDatabaseTableWebhookExecute(r Ap
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -140,8 +140,8 @@ func (a *DatabaseTableWebhooksApiService) CreateDatabaseTableWebhookExecute(r Ap
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -159,9 +159,9 @@ func (a *DatabaseTableWebhooksApiService) CreateDatabaseTableWebhookExecute(r Ap
 }
 
 type ApiDeleteDatabaseTableWebhookRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTableWebhooksApiService
-	webhookId int32
+	webhookId  int32
 }
 
 func (r ApiDeleteDatabaseTableWebhookRequest) Execute() (*http.Response, error) {
@@ -173,24 +173,24 @@ DeleteDatabaseTableWebhook Method for DeleteDatabaseTableWebhook
 
 Deletes the existing webhook if the authorized user has access to the related database's workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param webhookId Deletes the webhook related to the provided value.
- @return ApiDeleteDatabaseTableWebhookRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param webhookId Deletes the webhook related to the provided value.
+	@return ApiDeleteDatabaseTableWebhookRequest
 */
 func (a *DatabaseTableWebhooksApiService) DeleteDatabaseTableWebhook(ctx context.Context, webhookId int32) ApiDeleteDatabaseTableWebhookRequest {
 	return ApiDeleteDatabaseTableWebhookRequest{
 		ApiService: a,
-		ctx: ctx,
-		webhookId: webhookId,
+		ctx:        ctx,
+		webhookId:  webhookId,
 	}
 }
 
 // Execute executes the request
 func (a *DatabaseTableWebhooksApiService) DeleteDatabaseTableWebhookExecute(r ApiDeleteDatabaseTableWebhookRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableWebhooksApiService.DeleteDatabaseTableWebhook")
@@ -251,8 +251,8 @@ func (a *DatabaseTableWebhooksApiService) DeleteDatabaseTableWebhookExecute(r Ap
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -262,8 +262,8 @@ func (a *DatabaseTableWebhooksApiService) DeleteDatabaseTableWebhookExecute(r Ap
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -272,9 +272,9 @@ func (a *DatabaseTableWebhooksApiService) DeleteDatabaseTableWebhookExecute(r Ap
 }
 
 type ApiGetDatabaseTableWebhookRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTableWebhooksApiService
-	webhookId int32
+	webhookId  int32
 }
 
 func (r ApiGetDatabaseTableWebhookRequest) Execute() (*TableWebhook, *http.Response, error) {
@@ -286,26 +286,27 @@ GetDatabaseTableWebhook Method for GetDatabaseTableWebhook
 
 Returns the existing webhook if the authorized user has access to the related database workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param webhookId Returns the webhook related to the provided value.
- @return ApiGetDatabaseTableWebhookRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param webhookId Returns the webhook related to the provided value.
+	@return ApiGetDatabaseTableWebhookRequest
 */
 func (a *DatabaseTableWebhooksApiService) GetDatabaseTableWebhook(ctx context.Context, webhookId int32) ApiGetDatabaseTableWebhookRequest {
 	return ApiGetDatabaseTableWebhookRequest{
 		ApiService: a,
-		ctx: ctx,
-		webhookId: webhookId,
+		ctx:        ctx,
+		webhookId:  webhookId,
 	}
 }
 
 // Execute executes the request
-//  @return TableWebhook
+//
+//	@return TableWebhook
 func (a *DatabaseTableWebhooksApiService) GetDatabaseTableWebhookExecute(r ApiGetDatabaseTableWebhookRequest) (*TableWebhook, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *TableWebhook
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *TableWebhook
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableWebhooksApiService.GetDatabaseTableWebhook")
@@ -366,8 +367,8 @@ func (a *DatabaseTableWebhooksApiService) GetDatabaseTableWebhookExecute(r ApiGe
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -377,8 +378,8 @@ func (a *DatabaseTableWebhooksApiService) GetDatabaseTableWebhookExecute(r ApiGe
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -396,9 +397,9 @@ func (a *DatabaseTableWebhooksApiService) GetDatabaseTableWebhookExecute(r ApiGe
 }
 
 type ApiListDatabaseTableWebhooksRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTableWebhooksApiService
-	tableId int32
+	tableId    int32
 }
 
 func (r ApiListDatabaseTableWebhooksRequest) Execute() ([]TableWebhook, *http.Response, error) {
@@ -410,26 +411,27 @@ ListDatabaseTableWebhooks Method for ListDatabaseTableWebhooks
 
 Lists all webhooks of the table related to the provided `table_id` if the user has access to the related database workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId Returns only webhooks of the table related to this value.
- @return ApiListDatabaseTableWebhooksRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId Returns only webhooks of the table related to this value.
+	@return ApiListDatabaseTableWebhooksRequest
 */
 func (a *DatabaseTableWebhooksApiService) ListDatabaseTableWebhooks(ctx context.Context, tableId int32) ApiListDatabaseTableWebhooksRequest {
 	return ApiListDatabaseTableWebhooksRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return []TableWebhook
+//
+//	@return []TableWebhook
 func (a *DatabaseTableWebhooksApiService) ListDatabaseTableWebhooksExecute(r ApiListDatabaseTableWebhooksRequest) ([]TableWebhook, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []TableWebhook
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []TableWebhook
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableWebhooksApiService.ListDatabaseTableWebhooks")
@@ -490,8 +492,8 @@ func (a *DatabaseTableWebhooksApiService) ListDatabaseTableWebhooksExecute(r Api
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -501,8 +503,8 @@ func (a *DatabaseTableWebhooksApiService) ListDatabaseTableWebhooksExecute(r Api
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -520,9 +522,9 @@ func (a *DatabaseTableWebhooksApiService) ListDatabaseTableWebhooksExecute(r Api
 }
 
 type ApiTestCallDatabaseTableWebhookRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableWebhooksApiService
-	tableId int32
+	ctx                         context.Context
+	ApiService                  *DatabaseTableWebhooksApiService
+	tableId                     int32
 	tableWebhookTestCallRequest *TableWebhookTestCallRequest
 }
 
@@ -540,26 +542,27 @@ TestCallDatabaseTableWebhook Method for TestCallDatabaseTableWebhook
 
 This endpoint triggers a test call based on the provided data if the user has access to the workspace related to the table. The test call will be made immediately and a copy of the request, response and status will be included in the response.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tableId The id of the table that must be tested.
- @return ApiTestCallDatabaseTableWebhookRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tableId The id of the table that must be tested.
+	@return ApiTestCallDatabaseTableWebhookRequest
 */
 func (a *DatabaseTableWebhooksApiService) TestCallDatabaseTableWebhook(ctx context.Context, tableId int32) ApiTestCallDatabaseTableWebhookRequest {
 	return ApiTestCallDatabaseTableWebhookRequest{
 		ApiService: a,
-		ctx: ctx,
-		tableId: tableId,
+		ctx:        ctx,
+		tableId:    tableId,
 	}
 }
 
 // Execute executes the request
-//  @return TableWebhookTestCallResponse
+//
+//	@return TableWebhookTestCallResponse
 func (a *DatabaseTableWebhooksApiService) TestCallDatabaseTableWebhookExecute(r ApiTestCallDatabaseTableWebhookRequest) (*TableWebhookTestCallResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *TableWebhookTestCallResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *TableWebhookTestCallResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableWebhooksApiService.TestCallDatabaseTableWebhook")
@@ -625,8 +628,8 @@ func (a *DatabaseTableWebhooksApiService) TestCallDatabaseTableWebhookExecute(r 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -636,8 +639,8 @@ func (a *DatabaseTableWebhooksApiService) TestCallDatabaseTableWebhookExecute(r 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -655,9 +658,9 @@ func (a *DatabaseTableWebhooksApiService) TestCallDatabaseTableWebhookExecute(r 
 }
 
 type ApiUpdateDatabaseTableWebhookRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTableWebhooksApiService
-	webhookId int32
+	ctx                              context.Context
+	ApiService                       *DatabaseTableWebhooksApiService
+	webhookId                        int32
 	patchedTableWebhookUpdateRequest *PatchedTableWebhookUpdateRequest
 }
 
@@ -675,26 +678,27 @@ UpdateDatabaseTableWebhook Method for UpdateDatabaseTableWebhook
 
 Updates the existing view if the authorized user has access to the related database workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param webhookId Updates the webhook related to the provided value.
- @return ApiUpdateDatabaseTableWebhookRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param webhookId Updates the webhook related to the provided value.
+	@return ApiUpdateDatabaseTableWebhookRequest
 */
 func (a *DatabaseTableWebhooksApiService) UpdateDatabaseTableWebhook(ctx context.Context, webhookId int32) ApiUpdateDatabaseTableWebhookRequest {
 	return ApiUpdateDatabaseTableWebhookRequest{
 		ApiService: a,
-		ctx: ctx,
-		webhookId: webhookId,
+		ctx:        ctx,
+		webhookId:  webhookId,
 	}
 }
 
 // Execute executes the request
-//  @return TableWebhook
+//
+//	@return TableWebhook
 func (a *DatabaseTableWebhooksApiService) UpdateDatabaseTableWebhookExecute(r ApiUpdateDatabaseTableWebhookRequest) (*TableWebhook, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *TableWebhook
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *TableWebhook
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTableWebhooksApiService.UpdateDatabaseTableWebhook")
@@ -757,8 +761,8 @@ func (a *DatabaseTableWebhooksApiService) UpdateDatabaseTableWebhookExecute(r Ap
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -768,8 +772,8 @@ func (a *DatabaseTableWebhooksApiService) UpdateDatabaseTableWebhookExecute(r Ap
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

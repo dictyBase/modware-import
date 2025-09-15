@@ -19,13 +19,12 @@ import (
 	"strings"
 )
 
-
 // WorkspaceInvitationsApiService WorkspaceInvitationsApi service
 type WorkspaceInvitationsApiService service
 
 type ApiAcceptWorkspaceInvitationRequest struct {
-	ctx context.Context
-	ApiService *WorkspaceInvitationsApiService
+	ctx                   context.Context
+	ApiService            *WorkspaceInvitationsApiService
 	workspaceInvitationId int32
 }
 
@@ -38,26 +37,27 @@ AcceptWorkspaceInvitation Method for AcceptWorkspaceInvitation
 
 Accepts a workspace invitation with the given id if the email address of the user matches that of the invitation.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceInvitationId Accepts the workspace invitation related to the provided value.
- @return ApiAcceptWorkspaceInvitationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceInvitationId Accepts the workspace invitation related to the provided value.
+	@return ApiAcceptWorkspaceInvitationRequest
 */
 func (a *WorkspaceInvitationsApiService) AcceptWorkspaceInvitation(ctx context.Context, workspaceInvitationId int32) ApiAcceptWorkspaceInvitationRequest {
 	return ApiAcceptWorkspaceInvitationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:            a,
+		ctx:                   ctx,
 		workspaceInvitationId: workspaceInvitationId,
 	}
 }
 
 // Execute executes the request
-//  @return WorkspaceUserWorkspace
+//
+//	@return WorkspaceUserWorkspace
 func (a *WorkspaceInvitationsApiService) AcceptWorkspaceInvitationExecute(r ApiAcceptWorkspaceInvitationRequest) (*WorkspaceUserWorkspace, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *WorkspaceUserWorkspace
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *WorkspaceUserWorkspace
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspaceInvitationsApiService.AcceptWorkspaceInvitation")
@@ -118,8 +118,8 @@ func (a *WorkspaceInvitationsApiService) AcceptWorkspaceInvitationExecute(r ApiA
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -129,8 +129,8 @@ func (a *WorkspaceInvitationsApiService) AcceptWorkspaceInvitationExecute(r ApiA
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -148,9 +148,9 @@ func (a *WorkspaceInvitationsApiService) AcceptWorkspaceInvitationExecute(r ApiA
 }
 
 type ApiCreateWorkspaceInvitationRequest struct {
-	ctx context.Context
-	ApiService *WorkspaceInvitationsApiService
-	workspaceId int32
+	ctx                       context.Context
+	ApiService                *WorkspaceInvitationsApiService
+	workspaceId               int32
 	createWorkspaceInvitation *CreateWorkspaceInvitation
 }
 
@@ -168,26 +168,27 @@ CreateWorkspaceInvitation Method for CreateWorkspaceInvitation
 
 Creates a new workspace invitations for an email address if the authorized user has admin rights to the related workspace. An email containing a sign up link will be send to the user.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceId Creates a workspace invitation to the workspace related to the provided value.
- @return ApiCreateWorkspaceInvitationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceId Creates a workspace invitation to the workspace related to the provided value.
+	@return ApiCreateWorkspaceInvitationRequest
 */
 func (a *WorkspaceInvitationsApiService) CreateWorkspaceInvitation(ctx context.Context, workspaceId int32) ApiCreateWorkspaceInvitationRequest {
 	return ApiCreateWorkspaceInvitationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:  a,
+		ctx:         ctx,
 		workspaceId: workspaceId,
 	}
 }
 
 // Execute executes the request
-//  @return WorkspaceInvitation
+//
+//	@return WorkspaceInvitation
 func (a *WorkspaceInvitationsApiService) CreateWorkspaceInvitationExecute(r ApiCreateWorkspaceInvitationRequest) (*WorkspaceInvitation, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *WorkspaceInvitation
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *WorkspaceInvitation
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspaceInvitationsApiService.CreateWorkspaceInvitation")
@@ -253,8 +254,8 @@ func (a *WorkspaceInvitationsApiService) CreateWorkspaceInvitationExecute(r ApiC
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -264,8 +265,8 @@ func (a *WorkspaceInvitationsApiService) CreateWorkspaceInvitationExecute(r ApiC
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -283,8 +284,8 @@ func (a *WorkspaceInvitationsApiService) CreateWorkspaceInvitationExecute(r ApiC
 }
 
 type ApiDeleteWorkspaceInvitationRequest struct {
-	ctx context.Context
-	ApiService *WorkspaceInvitationsApiService
+	ctx                   context.Context
+	ApiService            *WorkspaceInvitationsApiService
 	workspaceInvitationId int32
 }
 
@@ -297,14 +298,14 @@ DeleteWorkspaceInvitation Method for DeleteWorkspaceInvitation
 
 Deletes a workspace invitation if the authorized user has admin rights to the related workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceInvitationId Deletes the workspace invitation related to the provided value.
- @return ApiDeleteWorkspaceInvitationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceInvitationId Deletes the workspace invitation related to the provided value.
+	@return ApiDeleteWorkspaceInvitationRequest
 */
 func (a *WorkspaceInvitationsApiService) DeleteWorkspaceInvitation(ctx context.Context, workspaceInvitationId int32) ApiDeleteWorkspaceInvitationRequest {
 	return ApiDeleteWorkspaceInvitationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:            a,
+		ctx:                   ctx,
 		workspaceInvitationId: workspaceInvitationId,
 	}
 }
@@ -312,9 +313,9 @@ func (a *WorkspaceInvitationsApiService) DeleteWorkspaceInvitation(ctx context.C
 // Execute executes the request
 func (a *WorkspaceInvitationsApiService) DeleteWorkspaceInvitationExecute(r ApiDeleteWorkspaceInvitationRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspaceInvitationsApiService.DeleteWorkspaceInvitation")
@@ -375,8 +376,8 @@ func (a *WorkspaceInvitationsApiService) DeleteWorkspaceInvitationExecute(r ApiD
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -386,8 +387,8 @@ func (a *WorkspaceInvitationsApiService) DeleteWorkspaceInvitationExecute(r ApiD
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -396,8 +397,8 @@ func (a *WorkspaceInvitationsApiService) DeleteWorkspaceInvitationExecute(r ApiD
 }
 
 type ApiGetWorkspaceInvitationRequest struct {
-	ctx context.Context
-	ApiService *WorkspaceInvitationsApiService
+	ctx                   context.Context
+	ApiService            *WorkspaceInvitationsApiService
 	workspaceInvitationId int32
 }
 
@@ -410,26 +411,27 @@ GetWorkspaceInvitation Method for GetWorkspaceInvitation
 
 Returns the requested workspace invitation if the authorized user has admin right to the related workspace
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceInvitationId Returns the workspace invitation related to the provided value.
- @return ApiGetWorkspaceInvitationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceInvitationId Returns the workspace invitation related to the provided value.
+	@return ApiGetWorkspaceInvitationRequest
 */
 func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitation(ctx context.Context, workspaceInvitationId int32) ApiGetWorkspaceInvitationRequest {
 	return ApiGetWorkspaceInvitationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:            a,
+		ctx:                   ctx,
 		workspaceInvitationId: workspaceInvitationId,
 	}
 }
 
 // Execute executes the request
-//  @return WorkspaceInvitation
+//
+//	@return WorkspaceInvitation
 func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitationExecute(r ApiGetWorkspaceInvitationRequest) (*WorkspaceInvitation, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *WorkspaceInvitation
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *WorkspaceInvitation
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspaceInvitationsApiService.GetWorkspaceInvitation")
@@ -490,8 +492,8 @@ func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitationExecute(r ApiGetW
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -501,8 +503,8 @@ func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitationExecute(r ApiGetW
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -520,9 +522,9 @@ func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitationExecute(r ApiGetW
 }
 
 type ApiGetWorkspaceInvitationByTokenRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *WorkspaceInvitationsApiService
-	token string
+	token      string
 }
 
 func (r ApiGetWorkspaceInvitationByTokenRequest) Execute() (*UserWorkspaceInvitation, *http.Response, error) {
@@ -534,26 +536,27 @@ GetWorkspaceInvitationByToken Method for GetWorkspaceInvitationByToken
 
 Responds with the serialized workspace invitation if an invitation with the provided token is found.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param token Returns the workspace invitation related to the provided token.
- @return ApiGetWorkspaceInvitationByTokenRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param token Returns the workspace invitation related to the provided token.
+	@return ApiGetWorkspaceInvitationByTokenRequest
 */
 func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitationByToken(ctx context.Context, token string) ApiGetWorkspaceInvitationByTokenRequest {
 	return ApiGetWorkspaceInvitationByTokenRequest{
 		ApiService: a,
-		ctx: ctx,
-		token: token,
+		ctx:        ctx,
+		token:      token,
 	}
 }
 
 // Execute executes the request
-//  @return UserWorkspaceInvitation
+//
+//	@return UserWorkspaceInvitation
 func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitationByTokenExecute(r ApiGetWorkspaceInvitationByTokenRequest) (*UserWorkspaceInvitation, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *UserWorkspaceInvitation
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *UserWorkspaceInvitation
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspaceInvitationsApiService.GetWorkspaceInvitationByToken")
@@ -614,8 +617,8 @@ func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitationByTokenExecute(r 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -625,8 +628,8 @@ func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitationByTokenExecute(r 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -644,8 +647,8 @@ func (a *WorkspaceInvitationsApiService) GetWorkspaceInvitationByTokenExecute(r 
 }
 
 type ApiListWorkspaceInvitationsRequest struct {
-	ctx context.Context
-	ApiService *WorkspaceInvitationsApiService
+	ctx         context.Context
+	ApiService  *WorkspaceInvitationsApiService
 	workspaceId int32
 }
 
@@ -658,26 +661,27 @@ ListWorkspaceInvitations Method for ListWorkspaceInvitations
 
 Lists all the workspace invitations of the workspace related to the provided `workspace_id` parameter if the authorized user has admin rights to that workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceId Returns only invitations that are in the workspace related to the provided value.
- @return ApiListWorkspaceInvitationsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceId Returns only invitations that are in the workspace related to the provided value.
+	@return ApiListWorkspaceInvitationsRequest
 */
 func (a *WorkspaceInvitationsApiService) ListWorkspaceInvitations(ctx context.Context, workspaceId int32) ApiListWorkspaceInvitationsRequest {
 	return ApiListWorkspaceInvitationsRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:  a,
+		ctx:         ctx,
 		workspaceId: workspaceId,
 	}
 }
 
 // Execute executes the request
-//  @return []WorkspaceInvitation
+//
+//	@return []WorkspaceInvitation
 func (a *WorkspaceInvitationsApiService) ListWorkspaceInvitationsExecute(r ApiListWorkspaceInvitationsRequest) ([]WorkspaceInvitation, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []WorkspaceInvitation
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []WorkspaceInvitation
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspaceInvitationsApiService.ListWorkspaceInvitations")
@@ -738,8 +742,8 @@ func (a *WorkspaceInvitationsApiService) ListWorkspaceInvitationsExecute(r ApiLi
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -749,8 +753,8 @@ func (a *WorkspaceInvitationsApiService) ListWorkspaceInvitationsExecute(r ApiLi
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -768,8 +772,8 @@ func (a *WorkspaceInvitationsApiService) ListWorkspaceInvitationsExecute(r ApiLi
 }
 
 type ApiRejectWorkspaceInvitationRequest struct {
-	ctx context.Context
-	ApiService *WorkspaceInvitationsApiService
+	ctx                   context.Context
+	ApiService            *WorkspaceInvitationsApiService
 	workspaceInvitationId int32
 }
 
@@ -782,14 +786,14 @@ RejectWorkspaceInvitation Method for RejectWorkspaceInvitation
 
 Rejects a workspace invitation with the given id if the email address of the user matches that of the invitation.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceInvitationId Rejects the workspace invitation related to the provided value.
- @return ApiRejectWorkspaceInvitationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceInvitationId Rejects the workspace invitation related to the provided value.
+	@return ApiRejectWorkspaceInvitationRequest
 */
 func (a *WorkspaceInvitationsApiService) RejectWorkspaceInvitation(ctx context.Context, workspaceInvitationId int32) ApiRejectWorkspaceInvitationRequest {
 	return ApiRejectWorkspaceInvitationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:            a,
+		ctx:                   ctx,
 		workspaceInvitationId: workspaceInvitationId,
 	}
 }
@@ -797,9 +801,9 @@ func (a *WorkspaceInvitationsApiService) RejectWorkspaceInvitation(ctx context.C
 // Execute executes the request
 func (a *WorkspaceInvitationsApiService) RejectWorkspaceInvitationExecute(r ApiRejectWorkspaceInvitationRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspaceInvitationsApiService.RejectWorkspaceInvitation")
@@ -860,8 +864,8 @@ func (a *WorkspaceInvitationsApiService) RejectWorkspaceInvitationExecute(r ApiR
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -871,8 +875,8 @@ func (a *WorkspaceInvitationsApiService) RejectWorkspaceInvitationExecute(r ApiR
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -881,9 +885,9 @@ func (a *WorkspaceInvitationsApiService) RejectWorkspaceInvitationExecute(r ApiR
 }
 
 type ApiUpdateWorkspaceInvitationRequest struct {
-	ctx context.Context
-	ApiService *WorkspaceInvitationsApiService
-	workspaceInvitationId int32
+	ctx                              context.Context
+	ApiService                       *WorkspaceInvitationsApiService
+	workspaceInvitationId            int32
 	patchedUpdateWorkspaceInvitation *PatchedUpdateWorkspaceInvitation
 }
 
@@ -901,26 +905,27 @@ UpdateWorkspaceInvitation Method for UpdateWorkspaceInvitation
 
 Updates the existing workspace invitation related to the provided `workspace_invitation_id` param if the authorized user has admin rights to the related workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceInvitationId Updates the workspace invitation related to the provided value.
- @return ApiUpdateWorkspaceInvitationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceInvitationId Updates the workspace invitation related to the provided value.
+	@return ApiUpdateWorkspaceInvitationRequest
 */
 func (a *WorkspaceInvitationsApiService) UpdateWorkspaceInvitation(ctx context.Context, workspaceInvitationId int32) ApiUpdateWorkspaceInvitationRequest {
 	return ApiUpdateWorkspaceInvitationRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:            a,
+		ctx:                   ctx,
 		workspaceInvitationId: workspaceInvitationId,
 	}
 }
 
 // Execute executes the request
-//  @return WorkspaceInvitation
+//
+//	@return WorkspaceInvitation
 func (a *WorkspaceInvitationsApiService) UpdateWorkspaceInvitationExecute(r ApiUpdateWorkspaceInvitationRequest) (*WorkspaceInvitation, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *WorkspaceInvitation
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *WorkspaceInvitation
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspaceInvitationsApiService.UpdateWorkspaceInvitation")
@@ -983,8 +988,8 @@ func (a *WorkspaceInvitationsApiService) UpdateWorkspaceInvitationExecute(r ApiU
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -994,8 +999,8 @@ func (a *WorkspaceInvitationsApiService) UpdateWorkspaceInvitationExecute(r ApiU
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

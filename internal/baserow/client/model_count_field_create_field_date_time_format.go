@@ -18,7 +18,7 @@ import (
 // CountFieldCreateFieldDateTimeFormat - 24 (14:30) or 12 (02:30 PM)  * `24` - 24 hour * `12` - 12 hour
 type CountFieldCreateFieldDateTimeFormat struct {
 	DateTimeFormatEnum *DateTimeFormatEnum
-	NullEnum *NullEnum
+	NullEnum           *NullEnum
 }
 
 // DateTimeFormatEnumAsCountFieldCreateFieldDateTimeFormat is a convenience function that returns DateTimeFormatEnum wrapped in CountFieldCreateFieldDateTimeFormat
@@ -34,7 +34,6 @@ func NullEnumAsCountFieldCreateFieldDateTimeFormat(v *NullEnum) CountFieldCreate
 		NullEnum: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *CountFieldCreateFieldDateTimeFormat) UnmarshalJSON(data []byte) error {
@@ -98,7 +97,7 @@ func (src CountFieldCreateFieldDateTimeFormat) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *CountFieldCreateFieldDateTimeFormat) GetActualInstance() (interface{}) {
+func (obj *CountFieldCreateFieldDateTimeFormat) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -149,5 +148,3 @@ func (v *NullableCountFieldCreateFieldDateTimeFormat) UnmarshalJSON(src []byte) 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

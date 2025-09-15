@@ -17,26 +17,26 @@ import (
 
 // FieldField - struct for FieldField
 type FieldField struct {
-	BooleanFieldField *BooleanFieldField
-	CountFieldField *CountFieldField
-	CreatedOnFieldField *CreatedOnFieldField
-	DateFieldField *DateFieldField
-	EmailFieldField *EmailFieldField
-	FileFieldField *FileFieldField
-	FormulaFieldField *FormulaFieldField
-	LastModifiedFieldField *LastModifiedFieldField
-	LinkRowFieldField *LinkRowFieldField
-	LongTextFieldField *LongTextFieldField
-	LookupFieldField *LookupFieldField
+	BooleanFieldField               *BooleanFieldField
+	CountFieldField                 *CountFieldField
+	CreatedOnFieldField             *CreatedOnFieldField
+	DateFieldField                  *DateFieldField
+	EmailFieldField                 *EmailFieldField
+	FileFieldField                  *FileFieldField
+	FormulaFieldField               *FormulaFieldField
+	LastModifiedFieldField          *LastModifiedFieldField
+	LinkRowFieldField               *LinkRowFieldField
+	LongTextFieldField              *LongTextFieldField
+	LookupFieldField                *LookupFieldField
 	MultipleCollaboratorsFieldField *MultipleCollaboratorsFieldField
-	MultipleSelectFieldField *MultipleSelectFieldField
-	NumberFieldField *NumberFieldField
-	PhoneNumberFieldField *PhoneNumberFieldField
-	RatingFieldField *RatingFieldField
-	RollupFieldField *RollupFieldField
-	SingleSelectFieldField *SingleSelectFieldField
-	TextFieldField *TextFieldField
-	URLFieldField *URLFieldField
+	MultipleSelectFieldField        *MultipleSelectFieldField
+	NumberFieldField                *NumberFieldField
+	PhoneNumberFieldField           *PhoneNumberFieldField
+	RatingFieldField                *RatingFieldField
+	RollupFieldField                *RollupFieldField
+	SingleSelectFieldField          *SingleSelectFieldField
+	TextFieldField                  *TextFieldField
+	URLFieldField                   *URLFieldField
 }
 
 // BooleanFieldFieldAsFieldField is a convenience function that returns BooleanFieldField wrapped in FieldField
@@ -178,7 +178,6 @@ func URLFieldFieldAsFieldField(v *URLFieldField) FieldField {
 		URLFieldField: v,
 	}
 }
-
 
 // Unmarshal JSON data into one of the pointers in the struct
 func (dst *FieldField) UnmarshalJSON(data []byte) error {
@@ -561,7 +560,7 @@ func (src FieldField) MarshalJSON() ([]byte, error) {
 }
 
 // Get the actual instance
-func (obj *FieldField) GetActualInstance() (interface{}) {
+func (obj *FieldField) GetActualInstance() interface{} {
 	if obj == nil {
 		return nil
 	}
@@ -684,5 +683,3 @@ func (v *NullableFieldField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

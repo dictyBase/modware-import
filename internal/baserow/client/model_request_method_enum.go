@@ -20,10 +20,10 @@ type RequestMethodEnum string
 
 // List of RequestMethodEnum
 const (
-	POST RequestMethodEnum = "POST"
-	GET RequestMethodEnum = "GET"
-	PUT RequestMethodEnum = "PUT"
-	PATCH RequestMethodEnum = "PATCH"
+	POST   RequestMethodEnum = "POST"
+	GET    RequestMethodEnum = "GET"
+	PUT    RequestMethodEnum = "PUT"
+	PATCH  RequestMethodEnum = "PATCH"
 	DELETE RequestMethodEnum = "DELETE"
 )
 
@@ -114,4 +114,3 @@ func (v *NullableRequestMethodEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

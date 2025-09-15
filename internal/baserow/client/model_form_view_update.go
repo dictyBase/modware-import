@@ -19,7 +19,7 @@ var _ MappedNullable = &FormViewUpdate{}
 
 // FormViewUpdate struct for FormViewUpdate
 type FormViewUpdate struct {
-	Name *string `json:"name,omitempty"`
+	Name       *string            `json:"name,omitempty"`
 	FilterType *ConditionTypeEnum `json:"filter_type,omitempty"`
 	// Allows users to see results unfiltered while still keeping the filters saved for the view.
 	FiltersDisabled *bool `json:"filters_disabled,omitempty"`
@@ -28,12 +28,12 @@ type FormViewUpdate struct {
 	// The title that is displayed at the beginning of the form.
 	Title *string `json:"title,omitempty"`
 	// The description that is displayed at the beginning of the form.
-	Description *string `json:"description,omitempty"`
-	Mode *ModeEnum `json:"mode,omitempty"`
-	CoverImage NullableFormViewCreateViewCoverImage `json:"cover_image,omitempty"`
-	LogoImage NullableFormViewCreateViewLogoImage `json:"logo_image,omitempty"`
+	Description *string                              `json:"description,omitempty"`
+	Mode        *ModeEnum                            `json:"mode,omitempty"`
+	CoverImage  NullableFormViewCreateViewCoverImage `json:"cover_image,omitempty"`
+	LogoImage   NullableFormViewCreateViewLogoImage  `json:"logo_image,omitempty"`
 	// The text displayed on the submit button.
-	SubmitText *string `json:"submit_text,omitempty"`
+	SubmitText   *string           `json:"submit_text,omitempty"`
 	SubmitAction *SubmitActionEnum `json:"submit_action,omitempty"`
 	// If the `submit_action` is MESSAGE, then this message will be shown to the visitor after submitting the form.
 	SubmitActionMessage *string `json:"submit_action_message,omitempty"`
@@ -319,6 +319,7 @@ func (o *FormViewUpdate) HasCoverImage() bool {
 func (o *FormViewUpdate) SetCoverImage(v FormViewCreateViewCoverImage) {
 	o.CoverImage.Set(&v)
 }
+
 // SetCoverImageNil sets the value for CoverImage to be an explicit nil
 func (o *FormViewUpdate) SetCoverImageNil() {
 	o.CoverImage.Set(nil)
@@ -361,6 +362,7 @@ func (o *FormViewUpdate) HasLogoImage() bool {
 func (o *FormViewUpdate) SetLogoImage(v FormViewCreateViewLogoImage) {
 	o.LogoImage.Set(&v)
 }
+
 // SetLogoImageNil sets the value for LogoImage to be an explicit nil
 func (o *FormViewUpdate) SetLogoImageNil() {
 	o.LogoImage.Set(nil)
@@ -556,7 +558,7 @@ func (o *FormViewUpdate) SetSlug(v string) {
 }
 
 func (o FormViewUpdate) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -646,5 +648,3 @@ func (v *NullableFormViewUpdate) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -21,12 +21,12 @@ var _ MappedNullable = &Token{}
 type Token struct {
 	Id int32 `json:"id"`
 	// The human readable name of the database token for the user.
-	Name string `json:"name"`
-	Group int32 `json:"group"`
+	Name  string `json:"name"`
+	Group int32  `json:"group"`
 	// Only the tables of the workspace can be accessed.
 	Workspace int32 `json:"workspace"`
 	// The unique token key that can be used to authorize for the table row endpoints.
-	Key string `json:"key"`
+	Key         string                        `json:"key"`
 	Permissions PatchedTokenUpdatePermissions `json:"permissions"`
 }
 
@@ -198,7 +198,7 @@ func (o *Token) SetPermissions(v PatchedTokenUpdatePermissions) {
 }
 
 func (o Token) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -251,5 +251,3 @@ func (v *NullableToken) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

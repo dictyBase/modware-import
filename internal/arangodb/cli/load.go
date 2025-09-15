@@ -70,7 +70,7 @@ func runArangoImport(cmd *exec.Cmd) error {
 }
 
 func createOutputDirectory(outputDir string) error {
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		return fmt.Errorf("error creating output directory: %w", err)
 	}
 	return nil

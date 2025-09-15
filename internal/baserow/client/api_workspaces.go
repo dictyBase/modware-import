@@ -19,14 +19,13 @@ import (
 	"strings"
 )
 
-
 // WorkspacesApiService WorkspacesApi service
 type WorkspacesApiService service
 
 type ApiCreateWorkspaceRequest struct {
-	ctx context.Context
-	ApiService *WorkspacesApiService
-	workspace *Workspace
+	ctx             context.Context
+	ApiService      *WorkspacesApiService
+	workspace       *Workspace
 	clientSessionId *string
 }
 
@@ -50,24 +49,25 @@ CreateWorkspace Method for CreateWorkspace
 
 Creates a new workspace where only the authorized user has access to. No initial data like database applications are added, they have to be created via other endpoints.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiCreateWorkspaceRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiCreateWorkspaceRequest
 */
 func (a *WorkspacesApiService) CreateWorkspace(ctx context.Context) ApiCreateWorkspaceRequest {
 	return ApiCreateWorkspaceRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return WorkspaceUserWorkspace
+//
+//	@return WorkspaceUserWorkspace
 func (a *WorkspacesApiService) CreateWorkspaceExecute(r ApiCreateWorkspaceRequest) (*WorkspaceUserWorkspace, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *WorkspaceUserWorkspace
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *WorkspaceUserWorkspace
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.CreateWorkspace")
@@ -144,10 +144,10 @@ func (a *WorkspacesApiService) CreateWorkspaceExecute(r ApiCreateWorkspaceReques
 }
 
 type ApiDeleteWorkspaceRequest struct {
-	ctx context.Context
-	ApiService *WorkspacesApiService
-	workspaceId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *WorkspacesApiService
+	workspaceId                 int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -172,14 +172,14 @@ DeleteWorkspace Method for DeleteWorkspace
 
 Deletes an existing workspace if the authorized user belongs to the workspace. All the applications, databases, tables etc that were in the workspace are going to be deleted also.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceId Deletes the workspace related to the provided value.
- @return ApiDeleteWorkspaceRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceId Deletes the workspace related to the provided value.
+	@return ApiDeleteWorkspaceRequest
 */
 func (a *WorkspacesApiService) DeleteWorkspace(ctx context.Context, workspaceId int32) ApiDeleteWorkspaceRequest {
 	return ApiDeleteWorkspaceRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:  a,
+		ctx:         ctx,
 		workspaceId: workspaceId,
 	}
 }
@@ -187,9 +187,9 @@ func (a *WorkspacesApiService) DeleteWorkspace(ctx context.Context, workspaceId 
 // Execute executes the request
 func (a *WorkspacesApiService) DeleteWorkspaceExecute(r ApiDeleteWorkspaceRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.DeleteWorkspace")
@@ -256,8 +256,8 @@ func (a *WorkspacesApiService) DeleteWorkspaceExecute(r ApiDeleteWorkspaceReques
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -267,8 +267,8 @@ func (a *WorkspacesApiService) DeleteWorkspaceExecute(r ApiDeleteWorkspaceReques
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -277,8 +277,8 @@ func (a *WorkspacesApiService) DeleteWorkspaceExecute(r ApiDeleteWorkspaceReques
 }
 
 type ApiDeleteWorkspaceUserRequest struct {
-	ctx context.Context
-	ApiService *WorkspacesApiService
+	ctx             context.Context
+	ApiService      *WorkspacesApiService
 	workspaceUserId int32
 }
 
@@ -291,14 +291,14 @@ DeleteWorkspaceUser Method for DeleteWorkspaceUser
 
 Deletes a workspace user if the authorized user has admin rights to the related workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceUserId Deletes the workspace user related to the provided value.
- @return ApiDeleteWorkspaceUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceUserId Deletes the workspace user related to the provided value.
+	@return ApiDeleteWorkspaceUserRequest
 */
 func (a *WorkspacesApiService) DeleteWorkspaceUser(ctx context.Context, workspaceUserId int32) ApiDeleteWorkspaceUserRequest {
 	return ApiDeleteWorkspaceUserRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:      a,
+		ctx:             ctx,
 		workspaceUserId: workspaceUserId,
 	}
 }
@@ -306,9 +306,9 @@ func (a *WorkspacesApiService) DeleteWorkspaceUser(ctx context.Context, workspac
 // Execute executes the request
 func (a *WorkspacesApiService) DeleteWorkspaceUserExecute(r ApiDeleteWorkspaceUserRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.DeleteWorkspaceUser")
@@ -369,8 +369,8 @@ func (a *WorkspacesApiService) DeleteWorkspaceUserExecute(r ApiDeleteWorkspaceUs
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -380,8 +380,8 @@ func (a *WorkspacesApiService) DeleteWorkspaceUserExecute(r ApiDeleteWorkspaceUs
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -390,8 +390,8 @@ func (a *WorkspacesApiService) DeleteWorkspaceUserExecute(r ApiDeleteWorkspaceUs
 }
 
 type ApiLeaveWorkspaceRequest struct {
-	ctx context.Context
-	ApiService *WorkspacesApiService
+	ctx         context.Context
+	ApiService  *WorkspacesApiService
 	workspaceId int32
 }
 
@@ -404,14 +404,14 @@ LeaveWorkspace Method for LeaveWorkspace
 
 Makes the authenticated user leave the workspace related to the provided `workspace_id` if the user is in that workspace. If the user is the last admin in the workspace, he will not be able to leave it. There must always be one admin in the workspace, otherwise it will be left without control. If that is the case, he must either delete the workspace or give another member admin permissions first.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceId Leaves the workspace related to the value.
- @return ApiLeaveWorkspaceRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceId Leaves the workspace related to the value.
+	@return ApiLeaveWorkspaceRequest
 */
 func (a *WorkspacesApiService) LeaveWorkspace(ctx context.Context, workspaceId int32) ApiLeaveWorkspaceRequest {
 	return ApiLeaveWorkspaceRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:  a,
+		ctx:         ctx,
 		workspaceId: workspaceId,
 	}
 }
@@ -419,9 +419,9 @@ func (a *WorkspacesApiService) LeaveWorkspace(ctx context.Context, workspaceId i
 // Execute executes the request
 func (a *WorkspacesApiService) LeaveWorkspaceExecute(r ApiLeaveWorkspaceRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.LeaveWorkspace")
@@ -482,8 +482,8 @@ func (a *WorkspacesApiService) LeaveWorkspaceExecute(r ApiLeaveWorkspaceRequest)
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -493,8 +493,8 @@ func (a *WorkspacesApiService) LeaveWorkspaceExecute(r ApiLeaveWorkspaceRequest)
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -503,11 +503,11 @@ func (a *WorkspacesApiService) LeaveWorkspaceExecute(r ApiLeaveWorkspaceRequest)
 }
 
 type ApiListWorkspaceUsersRequest struct {
-	ctx context.Context
-	ApiService *WorkspacesApiService
+	ctx         context.Context
+	ApiService  *WorkspacesApiService
 	workspaceId int32
-	search *string
-	sorts *string
+	search      *string
+	sorts       *string
 }
 
 // Search for workspace users by username, or email.
@@ -531,26 +531,27 @@ ListWorkspaceUsers Method for ListWorkspaceUsers
 
 Lists all the users that are in a workspace if the authorized user has admin permissions to the related workspace. To add a user to a workspace an invitation must be sent first.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceId Lists workspace users related to the provided workspace value.
- @return ApiListWorkspaceUsersRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceId Lists workspace users related to the provided workspace value.
+	@return ApiListWorkspaceUsersRequest
 */
 func (a *WorkspacesApiService) ListWorkspaceUsers(ctx context.Context, workspaceId int32) ApiListWorkspaceUsersRequest {
 	return ApiListWorkspaceUsersRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:  a,
+		ctx:         ctx,
 		workspaceId: workspaceId,
 	}
 }
 
 // Execute executes the request
-//  @return []ListWorkspaceUsersWithMemberData
+//
+//	@return []ListWorkspaceUsersWithMemberData
 func (a *WorkspacesApiService) ListWorkspaceUsersExecute(r ApiListWorkspaceUsersRequest) ([]ListWorkspaceUsersWithMemberData, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []ListWorkspaceUsersWithMemberData
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []ListWorkspaceUsersWithMemberData
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.ListWorkspaceUsers")
@@ -617,8 +618,8 @@ func (a *WorkspacesApiService) ListWorkspaceUsersExecute(r ApiListWorkspaceUsers
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -628,8 +629,8 @@ func (a *WorkspacesApiService) ListWorkspaceUsersExecute(r ApiListWorkspaceUsers
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -647,7 +648,7 @@ func (a *WorkspacesApiService) ListWorkspaceUsersExecute(r ApiListWorkspaceUsers
 }
 
 type ApiListWorkspacesRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *WorkspacesApiService
 }
 
@@ -660,24 +661,25 @@ ListWorkspaces Method for ListWorkspaces
 
 Lists all the workspaces of the authorized user. A workspace can contain multiple applications like a database. Multiple users can have access to a workspace. For example each company could have their own workspace containing databases related to that company. The order of the workspaces are custom for each user. The order is configurable via the **order_workspaces** endpoint.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListWorkspacesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListWorkspacesRequest
 */
 func (a *WorkspacesApiService) ListWorkspaces(ctx context.Context) ApiListWorkspacesRequest {
 	return ApiListWorkspacesRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []WorkspaceUserWorkspace
+//
+//	@return []WorkspaceUserWorkspace
 func (a *WorkspacesApiService) ListWorkspacesExecute(r ApiListWorkspacesRequest) ([]WorkspaceUserWorkspace, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []WorkspaceUserWorkspace
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []WorkspaceUserWorkspace
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.ListWorkspaces")
@@ -746,10 +748,10 @@ func (a *WorkspacesApiService) ListWorkspacesExecute(r ApiListWorkspacesRequest)
 }
 
 type ApiOrderWorkspacesRequest struct {
-	ctx context.Context
-	ApiService *WorkspacesApiService
-	orderWorkspaces *OrderWorkspaces
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *WorkspacesApiService
+	orderWorkspaces             *OrderWorkspaces
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
 }
 
@@ -779,22 +781,22 @@ OrderWorkspaces Method for OrderWorkspaces
 
 Changes the order of the provided workspace ids to the matching position that the id has in the list. If the authorized user does not belong to the workspace it will be ignored. The order will be custom for each user.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiOrderWorkspacesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiOrderWorkspacesRequest
 */
 func (a *WorkspacesApiService) OrderWorkspaces(ctx context.Context) ApiOrderWorkspacesRequest {
 	return ApiOrderWorkspacesRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *WorkspacesApiService) OrderWorkspacesExecute(r ApiOrderWorkspacesRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.OrderWorkspaces")
@@ -865,12 +867,12 @@ func (a *WorkspacesApiService) OrderWorkspacesExecute(r ApiOrderWorkspacesReques
 }
 
 type ApiUpdateWorkspaceRequest struct {
-	ctx context.Context
-	ApiService *WorkspacesApiService
-	workspaceId int32
-	clientSessionId *string
+	ctx                         context.Context
+	ApiService                  *WorkspacesApiService
+	workspaceId                 int32
+	clientSessionId             *string
 	clientUndoRedoActionGroupId *string
-	patchedWorkspace *PatchedWorkspace
+	patchedWorkspace            *PatchedWorkspace
 }
 
 // An optional header that marks the action performed by this request as having occurred in a particular client session. Then using the undo/redo endpoints with the same ClientSessionId header this action can be undone/redone.
@@ -899,26 +901,27 @@ UpdateWorkspace Method for UpdateWorkspace
 
 Updates the existing workspace related to the provided `workspace_id` parameter if the authorized user belongs to the workspace. It is not yet possible to add additional users to a workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceId Updates the workspace related to the provided value.
- @return ApiUpdateWorkspaceRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceId Updates the workspace related to the provided value.
+	@return ApiUpdateWorkspaceRequest
 */
 func (a *WorkspacesApiService) UpdateWorkspace(ctx context.Context, workspaceId int32) ApiUpdateWorkspaceRequest {
 	return ApiUpdateWorkspaceRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:  a,
+		ctx:         ctx,
 		workspaceId: workspaceId,
 	}
 }
 
 // Execute executes the request
-//  @return Workspace
+//
+//	@return Workspace
 func (a *WorkspacesApiService) UpdateWorkspaceExecute(r ApiUpdateWorkspaceRequest) (*Workspace, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Workspace
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Workspace
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.UpdateWorkspace")
@@ -987,8 +990,8 @@ func (a *WorkspacesApiService) UpdateWorkspaceExecute(r ApiUpdateWorkspaceReques
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -998,8 +1001,8 @@ func (a *WorkspacesApiService) UpdateWorkspaceExecute(r ApiUpdateWorkspaceReques
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1017,9 +1020,9 @@ func (a *WorkspacesApiService) UpdateWorkspaceExecute(r ApiUpdateWorkspaceReques
 }
 
 type ApiUpdateWorkspaceUserRequest struct {
-	ctx context.Context
-	ApiService *WorkspacesApiService
-	workspaceUserId int32
+	ctx                        context.Context
+	ApiService                 *WorkspacesApiService
+	workspaceUserId            int32
 	patchedUpdateWorkspaceUser *PatchedUpdateWorkspaceUser
 }
 
@@ -1037,26 +1040,27 @@ UpdateWorkspaceUser Method for UpdateWorkspaceUser
 
 Updates the existing workspace user related to the provided `workspace_user_id` param if the authorized user has admin rights to the related workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceUserId Updates the workspace user related to the provided value.
- @return ApiUpdateWorkspaceUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceUserId Updates the workspace user related to the provided value.
+	@return ApiUpdateWorkspaceUserRequest
 */
 func (a *WorkspacesApiService) UpdateWorkspaceUser(ctx context.Context, workspaceUserId int32) ApiUpdateWorkspaceUserRequest {
 	return ApiUpdateWorkspaceUserRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:      a,
+		ctx:             ctx,
 		workspaceUserId: workspaceUserId,
 	}
 }
 
 // Execute executes the request
-//  @return WorkspaceUser
+//
+//	@return WorkspaceUser
 func (a *WorkspacesApiService) UpdateWorkspaceUserExecute(r ApiUpdateWorkspaceUserRequest) (*WorkspaceUser, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *WorkspaceUser
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *WorkspaceUser
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.UpdateWorkspaceUser")
@@ -1119,8 +1123,8 @@ func (a *WorkspacesApiService) UpdateWorkspaceUserExecute(r ApiUpdateWorkspaceUs
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -1130,8 +1134,8 @@ func (a *WorkspacesApiService) UpdateWorkspaceUserExecute(r ApiUpdateWorkspaceUs
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1149,8 +1153,8 @@ func (a *WorkspacesApiService) UpdateWorkspaceUserExecute(r ApiUpdateWorkspaceUs
 }
 
 type ApiWorkspacePermissionsRequest struct {
-	ctx context.Context
-	ApiService *WorkspacesApiService
+	ctx         context.Context
+	ApiService  *WorkspacesApiService
 	workspaceId int32
 }
 
@@ -1161,29 +1165,30 @@ func (r ApiWorkspacePermissionsRequest) Execute() ([]PermissionObject, *http.Res
 /*
 WorkspacePermissions Method for WorkspacePermissions
 
-Returns a the permission data necessary to determine the permissions of a specific user over a specific workspace. 
+Returns a the permission data necessary to determine the permissions of a specific user over a specific workspace.
 See `core.handler.CoreHandler.get_permissions()` for more details.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param workspaceId The workspace id we want the permission object for.
- @return ApiWorkspacePermissionsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param workspaceId The workspace id we want the permission object for.
+	@return ApiWorkspacePermissionsRequest
 */
 func (a *WorkspacesApiService) WorkspacePermissions(ctx context.Context, workspaceId int32) ApiWorkspacePermissionsRequest {
 	return ApiWorkspacePermissionsRequest{
-		ApiService: a,
-		ctx: ctx,
+		ApiService:  a,
+		ctx:         ctx,
 		workspaceId: workspaceId,
 	}
 }
 
 // Execute executes the request
-//  @return []PermissionObject
+//
+//	@return []PermissionObject
 func (a *WorkspacesApiService) WorkspacePermissionsExecute(r ApiWorkspacePermissionsRequest) ([]PermissionObject, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []PermissionObject
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []PermissionObject
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkspacesApiService.WorkspacePermissions")
@@ -1244,8 +1249,8 @@ func (a *WorkspacesApiService) WorkspacePermissionsExecute(r ApiWorkspacePermiss
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

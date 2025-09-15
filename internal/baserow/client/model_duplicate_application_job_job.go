@@ -27,8 +27,8 @@ type DuplicateApplicationJobJob struct {
 	// Indicates the state of the import job.
 	State string `json:"state"`
 	// A human readable error message indicating what went wrong.
-	HumanReadableError *string `json:"human_readable_error,omitempty"`
-	OriginalApplication SpecificApplication `json:"original_application"`
+	HumanReadableError    *string             `json:"human_readable_error,omitempty"`
+	OriginalApplication   SpecificApplication `json:"original_application"`
 	DuplicatedApplication SpecificApplication `json:"duplicated_application"`
 }
 
@@ -232,7 +232,7 @@ func (o *DuplicateApplicationJobJob) SetDuplicatedApplication(v SpecificApplicat
 }
 
 func (o DuplicateApplicationJobJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -288,5 +288,3 @@ func (v *NullableDuplicateApplicationJobJob) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

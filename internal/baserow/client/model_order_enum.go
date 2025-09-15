@@ -20,7 +20,7 @@ type OrderEnum string
 
 // List of OrderEnum
 const (
-	ASC OrderEnum = "ASC"
+	ASC  OrderEnum = "ASC"
 	DESC OrderEnum = "DESC"
 )
 
@@ -108,4 +108,3 @@ func (v *NullableOrderEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

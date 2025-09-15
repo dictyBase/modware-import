@@ -19,9 +19,9 @@ var _ MappedNullable = &NumberFieldField{}
 
 // NumberFieldField struct for NumberFieldField
 type NumberFieldField struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -29,7 +29,7 @@ type NumberFieldField struct {
 	// Indicates if the field is a primary field. If `true` the field cannot be deleted and the value should represent the whole row.
 	Primary *bool `json:"primary,omitempty"`
 	// Indicates whether the field is a read only field. If true, it's not possible to update the cell value.
-	ReadOnly bool `json:"read_only"`
+	ReadOnly            bool                     `json:"read_only"`
 	NumberDecimalPlaces *NumberDecimalPlacesEnum `json:"number_decimal_places,omitempty"`
 	// Indicates if negative values are allowed.
 	NumberNegative *bool `json:"number_negative,omitempty"`
@@ -299,7 +299,7 @@ func (o *NumberFieldField) SetNumberNegative(v bool) {
 }
 
 func (o NumberFieldField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -361,5 +361,3 @@ func (v *NullableNumberFieldField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

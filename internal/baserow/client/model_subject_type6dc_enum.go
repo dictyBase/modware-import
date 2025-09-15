@@ -20,8 +20,8 @@ type SubjectType6dcEnum string
 
 // List of SubjectType6dcEnum
 const (
-	ANONYMOUS SubjectType6dcEnum = "anonymous"
-	CORE_TOKEN SubjectType6dcEnum = "core.Token"
+	ANONYMOUS               SubjectType6dcEnum = "anonymous"
+	CORE_TOKEN              SubjectType6dcEnum = "core.Token"
 	BASEROW_ENTERPRISE_TEAM SubjectType6dcEnum = "baserow_enterprise.Team"
 )
 
@@ -111,4 +111,3 @@ func (v *NullableSubjectType6dcEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

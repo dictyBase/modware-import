@@ -20,19 +20,19 @@ type ScopeTypeEnum string
 
 // List of ScopeTypeEnum
 const (
-	CORE ScopeTypeEnum = "core"
-	WORKSPACE_INVITATION ScopeTypeEnum = "workspace_invitation"
-	SNAPSHOT ScopeTypeEnum = "snapshot"
-	WORKSPACE_USER ScopeTypeEnum = "workspace_user"
-	DATABASE_TABLE ScopeTypeEnum = "database_table"
-	DATABASE_FIELD ScopeTypeEnum = "database_field"
-	DATABASE_VIEW ScopeTypeEnum = "database_view"
+	CORE                     ScopeTypeEnum = "core"
+	WORKSPACE_INVITATION     ScopeTypeEnum = "workspace_invitation"
+	SNAPSHOT                 ScopeTypeEnum = "snapshot"
+	WORKSPACE_USER           ScopeTypeEnum = "workspace_user"
+	DATABASE_TABLE           ScopeTypeEnum = "database_table"
+	DATABASE_FIELD           ScopeTypeEnum = "database_field"
+	DATABASE_VIEW            ScopeTypeEnum = "database_view"
 	DATABASE_VIEW_DECORATION ScopeTypeEnum = "database_view_decoration"
-	DATABASE_VIEW_SORT ScopeTypeEnum = "database_view_sort"
-	DATABASE_VIEW_FILTER ScopeTypeEnum = "database_view_filter"
-	TOKEN ScopeTypeEnum = "token"
-	TEAM_SUBJECT ScopeTypeEnum = "team_subject"
-	LICENSE ScopeTypeEnum = "license"
+	DATABASE_VIEW_SORT       ScopeTypeEnum = "database_view_sort"
+	DATABASE_VIEW_FILTER     ScopeTypeEnum = "database_view_filter"
+	TOKEN                    ScopeTypeEnum = "token"
+	TEAM_SUBJECT             ScopeTypeEnum = "team_subject"
+	LICENSE                  ScopeTypeEnum = "license"
 )
 
 // All allowed values of ScopeTypeEnum enum
@@ -134,4 +134,3 @@ func (v *NullableScopeTypeEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

@@ -20,8 +20,8 @@ type DateFormatEnum string
 
 // List of DateFormatEnum
 const (
-	EU DateFormatEnum = "EU"
-	US DateFormatEnum = "US"
+	EU  DateFormatEnum = "EU"
+	US  DateFormatEnum = "US"
 	ISO DateFormatEnum = "ISO"
 )
 
@@ -110,4 +110,3 @@ func (v *NullableDateFormatEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

@@ -20,15 +20,15 @@ type TrashItemTypeEnum string
 
 // List of TrashItemTypeEnum
 const (
-	WORKSPACE TrashItemTypeEnum = "workspace"
+	WORKSPACE   TrashItemTypeEnum = "workspace"
 	APPLICATION TrashItemTypeEnum = "application"
-	GROUP TrashItemTypeEnum = "group"
-	TABLE TrashItemTypeEnum = "table"
-	FIELD TrashItemTypeEnum = "field"
-	ROW TrashItemTypeEnum = "row"
-	ROWS TrashItemTypeEnum = "rows"
-	VIEW TrashItemTypeEnum = "view"
-	TEAM TrashItemTypeEnum = "team"
+	GROUP       TrashItemTypeEnum = "group"
+	TABLE       TrashItemTypeEnum = "table"
+	FIELD       TrashItemTypeEnum = "field"
+	ROW         TrashItemTypeEnum = "row"
+	ROWS        TrashItemTypeEnum = "rows"
+	VIEW        TrashItemTypeEnum = "view"
+	TEAM        TrashItemTypeEnum = "team"
 )
 
 // All allowed values of TrashItemTypeEnum enum
@@ -122,4 +122,3 @@ func (v *NullableTrashItemTypeEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

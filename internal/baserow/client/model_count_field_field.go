@@ -19,9 +19,9 @@ var _ MappedNullable = &CountFieldField{}
 
 // CountFieldField struct for CountFieldField
 type CountFieldField struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
+	Id      int32  `json:"id"`
+	TableId int32  `json:"table_id"`
+	Name    string `json:"name"`
 	// Lowest first.
 	Order int32 `json:"order"`
 	// The type of the related field.
@@ -31,20 +31,20 @@ type CountFieldField struct {
 	// Indicates whether the field is a read only field. If true, it's not possible to update the cell value.
 	ReadOnly bool `json:"read_only"`
 	// Indicates if the time zone should be shown.
-	DateShowTzinfo NullableBool `json:"date_show_tzinfo,omitempty"`
-	DateFormat NullableCountFieldCreateFieldDateFormat `json:"date_format,omitempty"`
+	DateShowTzinfo   NullableBool                                  `json:"date_show_tzinfo,omitempty"`
+	DateFormat       NullableCountFieldCreateFieldDateFormat       `json:"date_format,omitempty"`
 	ArrayFormulaType NullableCountFieldCreateFieldArrayFormulaType `json:"array_formula_type,omitempty"`
 	// Force a timezone for the field overriding user profile settings.
 	DateForceTimezone NullableString `json:"date_force_timezone,omitempty"`
 	// Indicates if the field also includes a time.
-	DateIncludeTime NullableBool `json:"date_include_time,omitempty"`
-	Nullable bool `json:"nullable"`
-	DateTimeFormat NullableCountFieldCreateFieldDateTimeFormat `json:"date_time_format,omitempty"`
+	DateIncludeTime     NullableBool                                     `json:"date_include_time,omitempty"`
+	Nullable            bool                                             `json:"nullable"`
+	DateTimeFormat      NullableCountFieldCreateFieldDateTimeFormat      `json:"date_time_format,omitempty"`
 	NumberDecimalPlaces NullableCountFieldCreateFieldNumberDecimalPlaces `json:"number_decimal_places,omitempty"`
-	Error NullableString `json:"error,omitempty"`
+	Error               NullableString                                   `json:"error,omitempty"`
 	// The id of the link row field to count values for.
-	ThroughFieldId NullableInt32 `json:"through_field_id,omitempty"`
-	FormulaType *FormulaTypeEnum `json:"formula_type,omitempty"`
+	ThroughFieldId NullableInt32    `json:"through_field_id,omitempty"`
+	FormulaType    *FormulaTypeEnum `json:"formula_type,omitempty"`
 }
 
 // NewCountFieldField instantiates a new CountFieldField object
@@ -279,6 +279,7 @@ func (o *CountFieldField) HasDateShowTzinfo() bool {
 func (o *CountFieldField) SetDateShowTzinfo(v bool) {
 	o.DateShowTzinfo.Set(&v)
 }
+
 // SetDateShowTzinfoNil sets the value for DateShowTzinfo to be an explicit nil
 func (o *CountFieldField) SetDateShowTzinfoNil() {
 	o.DateShowTzinfo.Set(nil)
@@ -321,6 +322,7 @@ func (o *CountFieldField) HasDateFormat() bool {
 func (o *CountFieldField) SetDateFormat(v CountFieldCreateFieldDateFormat) {
 	o.DateFormat.Set(&v)
 }
+
 // SetDateFormatNil sets the value for DateFormat to be an explicit nil
 func (o *CountFieldField) SetDateFormatNil() {
 	o.DateFormat.Set(nil)
@@ -363,6 +365,7 @@ func (o *CountFieldField) HasArrayFormulaType() bool {
 func (o *CountFieldField) SetArrayFormulaType(v CountFieldCreateFieldArrayFormulaType) {
 	o.ArrayFormulaType.Set(&v)
 }
+
 // SetArrayFormulaTypeNil sets the value for ArrayFormulaType to be an explicit nil
 func (o *CountFieldField) SetArrayFormulaTypeNil() {
 	o.ArrayFormulaType.Set(nil)
@@ -405,6 +408,7 @@ func (o *CountFieldField) HasDateForceTimezone() bool {
 func (o *CountFieldField) SetDateForceTimezone(v string) {
 	o.DateForceTimezone.Set(&v)
 }
+
 // SetDateForceTimezoneNil sets the value for DateForceTimezone to be an explicit nil
 func (o *CountFieldField) SetDateForceTimezoneNil() {
 	o.DateForceTimezone.Set(nil)
@@ -447,6 +451,7 @@ func (o *CountFieldField) HasDateIncludeTime() bool {
 func (o *CountFieldField) SetDateIncludeTime(v bool) {
 	o.DateIncludeTime.Set(&v)
 }
+
 // SetDateIncludeTimeNil sets the value for DateIncludeTime to be an explicit nil
 func (o *CountFieldField) SetDateIncludeTimeNil() {
 	o.DateIncludeTime.Set(nil)
@@ -513,6 +518,7 @@ func (o *CountFieldField) HasDateTimeFormat() bool {
 func (o *CountFieldField) SetDateTimeFormat(v CountFieldCreateFieldDateTimeFormat) {
 	o.DateTimeFormat.Set(&v)
 }
+
 // SetDateTimeFormatNil sets the value for DateTimeFormat to be an explicit nil
 func (o *CountFieldField) SetDateTimeFormatNil() {
 	o.DateTimeFormat.Set(nil)
@@ -555,6 +561,7 @@ func (o *CountFieldField) HasNumberDecimalPlaces() bool {
 func (o *CountFieldField) SetNumberDecimalPlaces(v CountFieldCreateFieldNumberDecimalPlaces) {
 	o.NumberDecimalPlaces.Set(&v)
 }
+
 // SetNumberDecimalPlacesNil sets the value for NumberDecimalPlaces to be an explicit nil
 func (o *CountFieldField) SetNumberDecimalPlacesNil() {
 	o.NumberDecimalPlaces.Set(nil)
@@ -597,6 +604,7 @@ func (o *CountFieldField) HasError() bool {
 func (o *CountFieldField) SetError(v string) {
 	o.Error.Set(&v)
 }
+
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *CountFieldField) SetErrorNil() {
 	o.Error.Set(nil)
@@ -639,6 +647,7 @@ func (o *CountFieldField) HasThroughFieldId() bool {
 func (o *CountFieldField) SetThroughFieldId(v int32) {
 	o.ThroughFieldId.Set(&v)
 }
+
 // SetThroughFieldIdNil sets the value for ThroughFieldId to be an explicit nil
 func (o *CountFieldField) SetThroughFieldIdNil() {
 	o.ThroughFieldId.Set(nil)
@@ -682,7 +691,7 @@ func (o *CountFieldField) SetFormulaType(v FormulaTypeEnum) {
 }
 
 func (o CountFieldField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -769,5 +778,3 @@ func (v *NullableCountFieldField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

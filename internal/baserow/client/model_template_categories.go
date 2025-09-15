@@ -19,8 +19,8 @@ var _ MappedNullable = &TemplateCategories{}
 
 // TemplateCategories struct for TemplateCategories
 type TemplateCategories struct {
-	Id int32 `json:"id"`
-	Name string `json:"name"`
+	Id        int32      `json:"id"`
+	Name      string     `json:"name"`
 	Templates []Template `json:"templates"`
 }
 
@@ -117,7 +117,7 @@ func (o *TemplateCategories) SetTemplates(v []Template) {
 }
 
 func (o TemplateCategories) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -167,5 +167,3 @@ func (v *NullableTemplateCategories) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

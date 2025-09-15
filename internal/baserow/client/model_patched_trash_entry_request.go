@@ -19,9 +19,9 @@ var _ MappedNullable = &PatchedTrashEntryRequest{}
 
 // PatchedTrashEntryRequest Mixin to a DRF serializer class to raise an exception if data with unknown fields is provided to the serializer.
 type PatchedTrashEntryRequest struct {
-	TrashItemId *int32 `json:"trash_item_id,omitempty"`
-	ParentTrashItemId NullableInt32 `json:"parent_trash_item_id,omitempty"`
-	TrashItemType *TrashItemTypeEnum `json:"trash_item_type,omitempty"`
+	TrashItemId       *int32             `json:"trash_item_id,omitempty"`
+	ParentTrashItemId NullableInt32      `json:"parent_trash_item_id,omitempty"`
+	TrashItemType     *TrashItemTypeEnum `json:"trash_item_type,omitempty"`
 }
 
 // NewPatchedTrashEntryRequest instantiates a new PatchedTrashEntryRequest object
@@ -105,6 +105,7 @@ func (o *PatchedTrashEntryRequest) HasParentTrashItemId() bool {
 func (o *PatchedTrashEntryRequest) SetParentTrashItemId(v int32) {
 	o.ParentTrashItemId.Set(&v)
 }
+
 // SetParentTrashItemIdNil sets the value for ParentTrashItemId to be an explicit nil
 func (o *PatchedTrashEntryRequest) SetParentTrashItemIdNil() {
 	o.ParentTrashItemId.Set(nil)
@@ -148,7 +149,7 @@ func (o *PatchedTrashEntryRequest) SetTrashItemType(v TrashItemTypeEnum) {
 }
 
 func (o PatchedTrashEntryRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -204,5 +205,3 @@ func (v *NullablePatchedTrashEntryRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

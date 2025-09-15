@@ -19,7 +19,7 @@ var _ MappedNullable = &ApplicationGroup{}
 
 // ApplicationGroup DEPRECATED: Please use the functionally identical `workspace` instead as this field is being removed in the future.
 type ApplicationGroup struct {
-	Id int32 `json:"id"`
+	Id   int32  `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -91,7 +91,7 @@ func (o *ApplicationGroup) SetName(v string) {
 }
 
 func (o ApplicationGroup) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableApplicationGroup) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

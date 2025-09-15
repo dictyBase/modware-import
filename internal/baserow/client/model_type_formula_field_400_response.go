@@ -20,7 +20,7 @@ var _ MappedNullable = &TypeFormulaField400Response{}
 // TypeFormulaField400Response struct for TypeFormulaField400Response
 type TypeFormulaField400Response struct {
 	// Machine readable error indicating what went wrong.
-	Error *string `json:"error,omitempty"`
+	Error  *string                          `json:"error,omitempty"`
 	Detail *AdminListUsers400ResponseDetail `json:"detail,omitempty"`
 }
 
@@ -106,7 +106,7 @@ func (o *TypeFormulaField400Response) SetDetail(v AdminListUsers400ResponseDetai
 }
 
 func (o TypeFormulaField400Response) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -159,5 +159,3 @@ func (v *NullableTypeFormulaField400Response) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

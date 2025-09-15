@@ -20,16 +20,16 @@ var _ MappedNullable = &FileFieldResponse{}
 
 // FileFieldResponse struct for FileFieldResponse
 type FileFieldResponse struct {
-	Url string `json:"url"`
-	Thumbnails map[string]interface{} `json:"thumbnails"`
-	VisibleName string `json:"visible_name"`
-	Name string `json:"name"`
-	Size int32 `json:"size"`
-	MimeType string `json:"mime_type"`
-	IsImage bool `json:"is_image"`
-	ImageWidth int32 `json:"image_width"`
-	ImageHeight int32 `json:"image_height"`
-	UploadedAt time.Time `json:"uploaded_at"`
+	Url         string                 `json:"url"`
+	Thumbnails  map[string]interface{} `json:"thumbnails"`
+	VisibleName string                 `json:"visible_name"`
+	Name        string                 `json:"name"`
+	Size        int32                  `json:"size"`
+	MimeType    string                 `json:"mime_type"`
+	IsImage     bool                   `json:"is_image"`
+	ImageWidth  int32                  `json:"image_width"`
+	ImageHeight int32                  `json:"image_height"`
+	UploadedAt  time.Time              `json:"uploaded_at"`
 }
 
 // NewFileFieldResponse instantiates a new FileFieldResponse object
@@ -300,7 +300,7 @@ func (o *FileFieldResponse) SetUploadedAt(v time.Time) {
 }
 
 func (o FileFieldResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -357,5 +357,3 @@ func (v *NullableFileFieldResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

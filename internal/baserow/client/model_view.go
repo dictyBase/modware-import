@@ -19,22 +19,22 @@ var _ MappedNullable = &View{}
 
 // View struct for View
 type View struct {
-	Id int32 `json:"id"`
-	TableId int32 `json:"table_id"`
-	Name string `json:"name"`
-	Order int32 `json:"order"`
-	Type string `json:"type"`
-	Table Table `json:"table"`
-	FilterType *ConditionTypeEnum `json:"filter_type,omitempty"`
-	Filters []ViewFilter `json:"filters,omitempty"`
-	Sortings []ViewSort `json:"sortings,omitempty"`
-	Decorations []ViewDecoration `json:"decorations,omitempty"`
+	Id          int32              `json:"id"`
+	TableId     int32              `json:"table_id"`
+	Name        string             `json:"name"`
+	Order       int32              `json:"order"`
+	Type        string             `json:"type"`
+	Table       Table              `json:"table"`
+	FilterType  *ConditionTypeEnum `json:"filter_type,omitempty"`
+	Filters     []ViewFilter       `json:"filters,omitempty"`
+	Sortings    []ViewSort         `json:"sortings,omitempty"`
+	Decorations []ViewDecoration   `json:"decorations,omitempty"`
 	// Allows users to see results unfiltered while still keeping the filters saved for the view.
 	FiltersDisabled *bool `json:"filters_disabled,omitempty"`
 	// Indicates whether the public view is password protected or not.  :return: True if the public view is password protected, False otherwise.
-	PublicViewHasPassword bool `json:"public_view_has_password"`
-	ShowLogo *bool `json:"show_logo,omitempty"`
-	OwnershipType string `json:"ownership_type"`
+	PublicViewHasPassword bool   `json:"public_view_has_password"`
+	ShowLogo              *bool  `json:"show_logo,omitempty"`
+	OwnershipType         string `json:"ownership_type"`
 }
 
 // NewView instantiates a new View object
@@ -447,7 +447,7 @@ func (o *View) SetOwnershipType(v string) {
 }
 
 func (o View) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -520,5 +520,3 @@ func (v *NullableView) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

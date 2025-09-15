@@ -19,12 +19,12 @@ var _ MappedNullable = &KanbanViewCreateView{}
 
 // KanbanViewCreateView struct for KanbanViewCreateView
 type KanbanViewCreateView struct {
-	Name string `json:"name"`
-	Type ViewTypesEnum `json:"type"`
+	Name          string             `json:"name"`
+	Type          ViewTypesEnum      `json:"type"`
 	OwnershipType *OwnershipTypeEnum `json:"ownership_type,omitempty"`
-	FilterType *ConditionTypeEnum `json:"filter_type,omitempty"`
+	FilterType    *ConditionTypeEnum `json:"filter_type,omitempty"`
 	// Allows users to see results unfiltered while still keeping the filters saved for the view.
-	FiltersDisabled *bool `json:"filters_disabled,omitempty"`
+	FiltersDisabled   *bool         `json:"filters_disabled,omitempty"`
 	SingleSelectField NullableInt32 `json:"single_select_field,omitempty"`
 	// References a file field of which the first image must be shown as card cover image.
 	CardCoverImageField NullableInt32 `json:"card_cover_image_field,omitempty"`
@@ -234,6 +234,7 @@ func (o *KanbanViewCreateView) HasSingleSelectField() bool {
 func (o *KanbanViewCreateView) SetSingleSelectField(v int32) {
 	o.SingleSelectField.Set(&v)
 }
+
 // SetSingleSelectFieldNil sets the value for SingleSelectField to be an explicit nil
 func (o *KanbanViewCreateView) SetSingleSelectFieldNil() {
 	o.SingleSelectField.Set(nil)
@@ -276,6 +277,7 @@ func (o *KanbanViewCreateView) HasCardCoverImageField() bool {
 func (o *KanbanViewCreateView) SetCardCoverImageField(v int32) {
 	o.CardCoverImageField.Set(&v)
 }
+
 // SetCardCoverImageFieldNil sets the value for CardCoverImageField to be an explicit nil
 func (o *KanbanViewCreateView) SetCardCoverImageFieldNil() {
 	o.CardCoverImageField.Set(nil)
@@ -343,7 +345,7 @@ func (o *KanbanViewCreateView) SetSlug(v string) {
 }
 
 func (o KanbanViewCreateView) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -411,5 +413,3 @@ func (v *NullableKanbanViewCreateView) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

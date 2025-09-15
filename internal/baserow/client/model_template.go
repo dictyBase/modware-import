@@ -19,13 +19,13 @@ var _ MappedNullable = &Template{}
 
 // Template struct for Template
 type Template struct {
-	Id int32 `json:"id"`
+	Id   int32  `json:"id"`
 	Name string `json:"name"`
 	// The font awesome class name that can be used for displaying purposes.
 	Icon string `json:"icon"`
 	// Keywords related to the template that can be used for search.
 	Keywords *string `json:"keywords,omitempty"`
-	GroupId string `json:"group_id"`
+	GroupId  string  `json:"group_id"`
 	// The group containing the applications related to the template. The read endpoints related to that group are publicly accessible for preview purposes.
 	WorkspaceId NullableInt32 `json:"workspace_id"`
 	// Indicates if the template must be selected by default. The web-frontend automatically selects the first `is_default` template that it can find.
@@ -234,7 +234,7 @@ func (o *Template) SetIsDefault(v string) {
 }
 
 func (o Template) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -290,5 +290,3 @@ func (v *NullableTemplate) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

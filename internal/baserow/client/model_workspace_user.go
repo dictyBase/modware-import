@@ -30,8 +30,8 @@ type WorkspaceUser struct {
 	// The workspace that the user has access to.
 	Workspace int32 `json:"workspace"`
 	// The permissions that the user has within the workspace.
-	Permissions *string `json:"permissions,omitempty"`
-	CreatedOn time.Time `json:"created_on"`
+	Permissions *string   `json:"permissions,omitempty"`
+	CreatedOn   time.Time `json:"created_on"`
 	// The user that has access to the workspace.
 	UserId int32 `json:"user_id"`
 	// True if user account is pending deletion.
@@ -288,7 +288,7 @@ func (o *WorkspaceUser) SetToBeDeleted(v bool) {
 }
 
 func (o WorkspaceUser) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -346,5 +346,3 @@ func (v *NullableWorkspaceUser) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

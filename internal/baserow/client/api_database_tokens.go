@@ -19,12 +19,11 @@ import (
 	"strings"
 )
 
-
 // DatabaseTokensApiService DatabaseTokensApi service
 type DatabaseTokensApiService service
 
 type ApiCheckDatabaseTokenRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTokensApiService
 }
 
@@ -37,22 +36,22 @@ CheckDatabaseToken Method for CheckDatabaseToken
 
 This endpoint check be used to check if the provided personal API token is valid. If returns a `200` response if so and a `403` is not. This can be used by integrations like Zapier or n8n to test if a token is valid.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiCheckDatabaseTokenRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiCheckDatabaseTokenRequest
 */
 func (a *DatabaseTokensApiService) CheckDatabaseToken(ctx context.Context) ApiCheckDatabaseTokenRequest {
 	return ApiCheckDatabaseTokenRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
 func (a *DatabaseTokensApiService) CheckDatabaseTokenExecute(r ApiCheckDatabaseTokenRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodGet
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTokensApiService.CheckDatabaseToken")
@@ -112,8 +111,8 @@ func (a *DatabaseTokensApiService) CheckDatabaseTokenExecute(r ApiCheckDatabaseT
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -122,8 +121,8 @@ func (a *DatabaseTokensApiService) CheckDatabaseTokenExecute(r ApiCheckDatabaseT
 }
 
 type ApiCreateDatabaseTokenRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTokensApiService
+	ctx         context.Context
+	ApiService  *DatabaseTokensApiService
 	tokenCreate *TokenCreate
 }
 
@@ -141,24 +140,25 @@ CreateDatabaseToken Method for CreateDatabaseToken
 
 Creates a new database token for a given workspace and for the authorized user.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiCreateDatabaseTokenRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiCreateDatabaseTokenRequest
 */
 func (a *DatabaseTokensApiService) CreateDatabaseToken(ctx context.Context) ApiCreateDatabaseTokenRequest {
 	return ApiCreateDatabaseTokenRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return Token
+//
+//	@return Token
 func (a *DatabaseTokensApiService) CreateDatabaseTokenExecute(r ApiCreateDatabaseTokenRequest) (*Token, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Token
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Token
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTokensApiService.CreateDatabaseToken")
@@ -223,8 +223,8 @@ func (a *DatabaseTokensApiService) CreateDatabaseTokenExecute(r ApiCreateDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -242,9 +242,9 @@ func (a *DatabaseTokensApiService) CreateDatabaseTokenExecute(r ApiCreateDatabas
 }
 
 type ApiDeleteDatabaseTokenRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTokensApiService
-	tokenId int32
+	tokenId    int32
 }
 
 func (r ApiDeleteDatabaseTokenRequest) Execute() (*http.Response, error) {
@@ -256,24 +256,24 @@ DeleteDatabaseToken Method for DeleteDatabaseToken
 
 Deletes the existing database token if it is owned by the authorized user and ifthe user has access to the related workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tokenId Deletes the database token related to the provided value.
- @return ApiDeleteDatabaseTokenRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tokenId Deletes the database token related to the provided value.
+	@return ApiDeleteDatabaseTokenRequest
 */
 func (a *DatabaseTokensApiService) DeleteDatabaseToken(ctx context.Context, tokenId int32) ApiDeleteDatabaseTokenRequest {
 	return ApiDeleteDatabaseTokenRequest{
 		ApiService: a,
-		ctx: ctx,
-		tokenId: tokenId,
+		ctx:        ctx,
+		tokenId:    tokenId,
 	}
 }
 
 // Execute executes the request
 func (a *DatabaseTokensApiService) DeleteDatabaseTokenExecute(r ApiDeleteDatabaseTokenRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
+		localVarHTTPMethod = http.MethodDelete
+		localVarPostBody   interface{}
+		formFiles          []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTokensApiService.DeleteDatabaseToken")
@@ -334,8 +334,8 @@ func (a *DatabaseTokensApiService) DeleteDatabaseTokenExecute(r ApiDeleteDatabas
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -345,8 +345,8 @@ func (a *DatabaseTokensApiService) DeleteDatabaseTokenExecute(r ApiDeleteDatabas
 				newErr.error = err.Error()
 				return localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarHTTPResponse, newErr
 	}
@@ -355,9 +355,9 @@ func (a *DatabaseTokensApiService) DeleteDatabaseTokenExecute(r ApiDeleteDatabas
 }
 
 type ApiGetDatabaseTokenRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTokensApiService
-	tokenId int32
+	tokenId    int32
 }
 
 func (r ApiGetDatabaseTokenRequest) Execute() (*Token, *http.Response, error) {
@@ -369,26 +369,27 @@ GetDatabaseToken Method for GetDatabaseToken
 
 Returns the requested database token if it is owned by the authorized user andif the user has access to the related workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tokenId Returns the database token related to the provided value.
- @return ApiGetDatabaseTokenRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tokenId Returns the database token related to the provided value.
+	@return ApiGetDatabaseTokenRequest
 */
 func (a *DatabaseTokensApiService) GetDatabaseToken(ctx context.Context, tokenId int32) ApiGetDatabaseTokenRequest {
 	return ApiGetDatabaseTokenRequest{
 		ApiService: a,
-		ctx: ctx,
-		tokenId: tokenId,
+		ctx:        ctx,
+		tokenId:    tokenId,
 	}
 }
 
 // Execute executes the request
-//  @return Token
+//
+//	@return Token
 func (a *DatabaseTokensApiService) GetDatabaseTokenExecute(r ApiGetDatabaseTokenRequest) (*Token, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Token
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Token
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTokensApiService.GetDatabaseToken")
@@ -449,8 +450,8 @@ func (a *DatabaseTokensApiService) GetDatabaseTokenExecute(r ApiGetDatabaseToken
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -460,8 +461,8 @@ func (a *DatabaseTokensApiService) GetDatabaseTokenExecute(r ApiGetDatabaseToken
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -479,7 +480,7 @@ func (a *DatabaseTokensApiService) GetDatabaseTokenExecute(r ApiGetDatabaseToken
 }
 
 type ApiListDatabaseTokensRequest struct {
-	ctx context.Context
+	ctx        context.Context
 	ApiService *DatabaseTokensApiService
 }
 
@@ -492,24 +493,25 @@ ListDatabaseTokens Method for ListDatabaseTokens
 
 Lists all the database tokens that belong to the authorized user. A token can be used to create, read, update and delete rows in the tables of the token's workspace. It only works on the tables if the token has the correct permissions. The **Database table rows** endpoints can be used for these operations.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListDatabaseTokensRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListDatabaseTokensRequest
 */
 func (a *DatabaseTokensApiService) ListDatabaseTokens(ctx context.Context) ApiListDatabaseTokensRequest {
 	return ApiListDatabaseTokensRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return []Token
+//
+//	@return []Token
 func (a *DatabaseTokensApiService) ListDatabaseTokensExecute(r ApiListDatabaseTokensRequest) ([]Token, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []Token
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []Token
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTokensApiService.ListDatabaseTokens")
@@ -578,9 +580,9 @@ func (a *DatabaseTokensApiService) ListDatabaseTokensExecute(r ApiListDatabaseTo
 }
 
 type ApiUpdateDatabaseTokenRequest struct {
-	ctx context.Context
-	ApiService *DatabaseTokensApiService
-	tokenId int32
+	ctx                context.Context
+	ApiService         *DatabaseTokensApiService
+	tokenId            int32
 	patchedTokenUpdate *PatchedTokenUpdate
 }
 
@@ -598,26 +600,27 @@ UpdateDatabaseToken Method for UpdateDatabaseToken
 
 Updates the existing database token if it is owned by the authorized user and ifthe user has access to the related workspace.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param tokenId Updates the database token related to the provided value.
- @return ApiUpdateDatabaseTokenRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tokenId Updates the database token related to the provided value.
+	@return ApiUpdateDatabaseTokenRequest
 */
 func (a *DatabaseTokensApiService) UpdateDatabaseToken(ctx context.Context, tokenId int32) ApiUpdateDatabaseTokenRequest {
 	return ApiUpdateDatabaseTokenRequest{
 		ApiService: a,
-		ctx: ctx,
-		tokenId: tokenId,
+		ctx:        ctx,
+		tokenId:    tokenId,
 	}
 }
 
 // Execute executes the request
-//  @return Token
+//
+//	@return Token
 func (a *DatabaseTokensApiService) UpdateDatabaseTokenExecute(r ApiUpdateDatabaseTokenRequest) (*Token, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *Token
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *Token
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DatabaseTokensApiService.UpdateDatabaseToken")
@@ -680,8 +683,8 @@ func (a *DatabaseTokensApiService) UpdateDatabaseTokenExecute(r ApiUpdateDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
@@ -691,8 +694,8 @@ func (a *DatabaseTokensApiService) UpdateDatabaseTokenExecute(r ApiUpdateDatabas
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

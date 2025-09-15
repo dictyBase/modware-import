@@ -20,11 +20,11 @@ var _ MappedNullable = &Snapshot{}
 
 // Snapshot struct for Snapshot
 type Snapshot struct {
-	Id int32 `json:"id"`
-	Name string `json:"name"`
-	SnapshotFromApplication int32 `json:"snapshot_from_application"`
-	CreatedBy User `json:"created_by"`
-	CreatedAt time.Time `json:"created_at"`
+	Id                      int32     `json:"id"`
+	Name                    string    `json:"name"`
+	SnapshotFromApplication int32     `json:"snapshot_from_application"`
+	CreatedBy               User      `json:"created_by"`
+	CreatedAt               time.Time `json:"created_at"`
 }
 
 // NewSnapshot instantiates a new Snapshot object
@@ -170,7 +170,7 @@ func (o *Snapshot) SetCreatedAt(v time.Time) {
 }
 
 func (o Snapshot) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -222,5 +222,3 @@ func (v *NullableSnapshot) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

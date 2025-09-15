@@ -19,7 +19,7 @@ var _ MappedNullable = &RequestPhoneNumberFieldUpdateField{}
 
 // RequestPhoneNumberFieldUpdateField struct for RequestPhoneNumberFieldUpdateField
 type RequestPhoneNumberFieldUpdateField struct {
-	Name *string `json:"name,omitempty"`
+	Name *string      `json:"name,omitempty"`
 	Type *Type712Enum `json:"type,omitempty"`
 }
 
@@ -105,7 +105,7 @@ func (o *RequestPhoneNumberFieldUpdateField) SetType(v Type712Enum) {
 }
 
 func (o RequestPhoneNumberFieldUpdateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -158,5 +158,3 @@ func (v *NullableRequestPhoneNumberFieldUpdateField) UnmarshalJSON(src []byte) e
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -20,8 +20,8 @@ type Type4afEnum string
 
 // List of Type4afEnum
 const (
-	AIRTABLE Type4afEnum = "airtable"
-	FILE_IMPORT Type4afEnum = "file_import"
+	AIRTABLE         Type4afEnum = "airtable"
+	FILE_IMPORT      Type4afEnum = "file_import"
 	AUDIT_LOG_EXPORT Type4afEnum = "audit_log_export"
 )
 
@@ -116,4 +116,3 @@ func (v *NullableType4afEnum) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

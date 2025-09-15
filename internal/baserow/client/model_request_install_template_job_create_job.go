@@ -160,7 +160,7 @@ func (o *RequestInstallTemplateJobCreateJob) SetTemplateId(v int32) {
 }
 
 func (o RequestInstallTemplateJobCreateJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -215,5 +215,3 @@ func (v *NullableRequestInstallTemplateJobCreateJob) UnmarshalJSON(src []byte) e
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

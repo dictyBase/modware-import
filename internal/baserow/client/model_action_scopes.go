@@ -84,6 +84,7 @@ func (o *ActionScopes) HasRoot() bool {
 func (o *ActionScopes) SetRoot(v bool) {
 	o.Root.Set(&v)
 }
+
 // SetRootNil sets the value for Root to be an explicit nil
 func (o *ActionScopes) SetRootNil() {
 	o.Root.Set(nil)
@@ -126,6 +127,7 @@ func (o *ActionScopes) HasWorkspace() bool {
 func (o *ActionScopes) SetWorkspace(v int32) {
 	o.Workspace.Set(&v)
 }
+
 // SetWorkspaceNil sets the value for Workspace to be an explicit nil
 func (o *ActionScopes) SetWorkspaceNil() {
 	o.Workspace.Set(nil)
@@ -168,6 +170,7 @@ func (o *ActionScopes) HasGroup() bool {
 func (o *ActionScopes) SetGroup(v int32) {
 	o.Group.Set(&v)
 }
+
 // SetGroupNil sets the value for Group to be an explicit nil
 func (o *ActionScopes) SetGroupNil() {
 	o.Group.Set(nil)
@@ -210,6 +213,7 @@ func (o *ActionScopes) HasApplication() bool {
 func (o *ActionScopes) SetApplication(v int32) {
 	o.Application.Set(&v)
 }
+
 // SetApplicationNil sets the value for Application to be an explicit nil
 func (o *ActionScopes) SetApplicationNil() {
 	o.Application.Set(nil)
@@ -252,6 +256,7 @@ func (o *ActionScopes) HasTable() bool {
 func (o *ActionScopes) SetTable(v int32) {
 	o.Table.Set(&v)
 }
+
 // SetTableNil sets the value for Table to be an explicit nil
 func (o *ActionScopes) SetTableNil() {
 	o.Table.Set(nil)
@@ -294,6 +299,7 @@ func (o *ActionScopes) HasView() bool {
 func (o *ActionScopes) SetView(v int32) {
 	o.View.Set(&v)
 }
+
 // SetViewNil sets the value for View to be an explicit nil
 func (o *ActionScopes) SetViewNil() {
 	o.View.Set(nil)
@@ -336,6 +342,7 @@ func (o *ActionScopes) HasTeamsInWorkspace() bool {
 func (o *ActionScopes) SetTeamsInWorkspace(v int32) {
 	o.TeamsInWorkspace.Set(&v)
 }
+
 // SetTeamsInWorkspaceNil sets the value for TeamsInWorkspace to be an explicit nil
 func (o *ActionScopes) SetTeamsInWorkspaceNil() {
 	o.TeamsInWorkspace.Set(nil)
@@ -347,7 +354,7 @@ func (o *ActionScopes) UnsetTeamsInWorkspace() {
 }
 
 func (o ActionScopes) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -415,5 +422,3 @@ func (v *NullableActionScopes) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

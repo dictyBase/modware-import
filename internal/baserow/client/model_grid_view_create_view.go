@@ -19,12 +19,12 @@ var _ MappedNullable = &GridViewCreateView{}
 
 // GridViewCreateView struct for GridViewCreateView
 type GridViewCreateView struct {
-	Name string `json:"name"`
-	Type ViewTypesEnum `json:"type"`
+	Name          string             `json:"name"`
+	Type          ViewTypesEnum      `json:"type"`
 	OwnershipType *OwnershipTypeEnum `json:"ownership_type,omitempty"`
-	FilterType *ConditionTypeEnum `json:"filter_type,omitempty"`
+	FilterType    *ConditionTypeEnum `json:"filter_type,omitempty"`
 	// Allows users to see results unfiltered while still keeping the filters saved for the view.
-	FiltersDisabled *bool `json:"filters_disabled,omitempty"`
+	FiltersDisabled   *bool                  `json:"filters_disabled,omitempty"`
 	RowIdentifierType *RowIdentifierTypeEnum `json:"row_identifier_type,omitempty"`
 	// Indicates whether the view is publicly accessible to visitors.
 	Public *bool `json:"public,omitempty"`
@@ -289,7 +289,7 @@ func (o *GridViewCreateView) SetSlug(v string) {
 }
 
 func (o GridViewCreateView) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -354,5 +354,3 @@ func (v *NullableGridViewCreateView) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

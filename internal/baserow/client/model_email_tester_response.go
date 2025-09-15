@@ -103,6 +103,7 @@ func (o *EmailTesterResponse) HasErrorStack() bool {
 func (o *EmailTesterResponse) SetErrorStack(v string) {
 	o.ErrorStack.Set(&v)
 }
+
 // SetErrorStackNil sets the value for ErrorStack to be an explicit nil
 func (o *EmailTesterResponse) SetErrorStackNil() {
 	o.ErrorStack.Set(nil)
@@ -145,6 +146,7 @@ func (o *EmailTesterResponse) HasErrorType() bool {
 func (o *EmailTesterResponse) SetErrorType(v string) {
 	o.ErrorType.Set(&v)
 }
+
 // SetErrorTypeNil sets the value for ErrorType to be an explicit nil
 func (o *EmailTesterResponse) SetErrorTypeNil() {
 	o.ErrorType.Set(nil)
@@ -187,6 +189,7 @@ func (o *EmailTesterResponse) HasError() bool {
 func (o *EmailTesterResponse) SetError(v string) {
 	o.Error.Set(&v)
 }
+
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *EmailTesterResponse) SetErrorNil() {
 	o.Error.Set(nil)
@@ -198,7 +201,7 @@ func (o *EmailTesterResponse) UnsetError() {
 }
 
 func (o EmailTesterResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -255,5 +258,3 @@ func (v *NullableEmailTesterResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

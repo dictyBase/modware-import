@@ -19,8 +19,8 @@ var _ MappedNullable = &NumberFieldCreateField{}
 
 // NumberFieldCreateField struct for NumberFieldCreateField
 type NumberFieldCreateField struct {
-	Name string `json:"name"`
-	Type Type712Enum `json:"type"`
+	Name                string                   `json:"name"`
+	Type                Type712Enum              `json:"type"`
 	NumberDecimalPlaces *NumberDecimalPlacesEnum `json:"number_decimal_places,omitempty"`
 	// Indicates if negative values are allowed.
 	NumberNegative *bool `json:"number_negative,omitempty"`
@@ -158,7 +158,7 @@ func (o *NumberFieldCreateField) SetNumberNegative(v bool) {
 }
 
 func (o NumberFieldCreateField) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -213,5 +213,3 @@ func (v *NullableNumberFieldCreateField) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

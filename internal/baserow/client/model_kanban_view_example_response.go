@@ -19,8 +19,8 @@ var _ MappedNullable = &KanbanViewExampleResponse{}
 
 // KanbanViewExampleResponse struct for KanbanViewExampleResponse
 type KanbanViewExampleResponse struct {
-	OPTION_ID KanbanViewExampleResponseOPTIONID `json:"OPTION_ID"`
-	FieldOptions []KanbanViewFieldOptions `json:"field_options"`
+	OPTION_ID    KanbanViewExampleResponseOPTIONID `json:"OPTION_ID"`
+	FieldOptions []KanbanViewFieldOptions          `json:"field_options"`
 }
 
 // NewKanbanViewExampleResponse instantiates a new KanbanViewExampleResponse object
@@ -91,7 +91,7 @@ func (o *KanbanViewExampleResponse) SetFieldOptions(v []KanbanViewFieldOptions) 
 }
 
 func (o KanbanViewExampleResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableKanbanViewExampleResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

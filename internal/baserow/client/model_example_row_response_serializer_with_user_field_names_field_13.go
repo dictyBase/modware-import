@@ -19,7 +19,7 @@ var _ MappedNullable = &ExampleRowResponseSerializerWithUserFieldNamesField13{}
 
 // ExampleRowResponseSerializerWithUserFieldNamesField13 This field represents the `single_select` field. The number in field_13 is in a normal request or response the id of the field. If the GET parameter `user_field_names` is provided then the key will instead be the actual name of the field.This field accepts an `integer` representing the chosen select option id related to the field. Available ids can be found when getting or listing the field. The response represents chosen field, but also the value and color is exposed.
 type ExampleRowResponseSerializerWithUserFieldNamesField13 struct {
-	Id *int32 `json:"id,omitempty"`
+	Id    *int32 `json:"id,omitempty"`
 	Value string `json:"value"`
 	Color string `json:"color"`
 }
@@ -124,7 +124,7 @@ func (o *ExampleRowResponseSerializerWithUserFieldNamesField13) SetColor(v strin
 }
 
 func (o ExampleRowResponseSerializerWithUserFieldNamesField13) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -176,5 +176,3 @@ func (v *NullableExampleRowResponseSerializerWithUserFieldNamesField13) Unmarsha
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

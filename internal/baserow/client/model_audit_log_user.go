@@ -19,7 +19,7 @@ var _ MappedNullable = &AuditLogUser{}
 
 // AuditLogUser struct for AuditLogUser
 type AuditLogUser struct {
-	Id int32 `json:"id"`
+	Id    int32  `json:"id"`
 	Value string `json:"value"`
 }
 
@@ -91,7 +91,7 @@ func (o *AuditLogUser) SetValue(v string) {
 }
 
 func (o AuditLogUser) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -140,5 +140,3 @@ func (v *NullableAuditLogUser) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

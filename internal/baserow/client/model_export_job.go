@@ -20,17 +20,17 @@ var _ MappedNullable = &ExportJob{}
 
 // ExportJob When mixed in to a model serializer for an ExportJob this will add an url field with the actual usable url of the export job's file (if it has one).
 type ExportJob struct {
-	Id int32 `json:"id"`
-	Table NullableInt32 `json:"table,omitempty"`
-	View NullableInt32 `json:"view,omitempty"`
-	ExporterType string `json:"exporter_type"`
-	State StateEnum `json:"state"`
+	Id           int32         `json:"id"`
+	Table        NullableInt32 `json:"table,omitempty"`
+	View         NullableInt32 `json:"view,omitempty"`
+	ExporterType string        `json:"exporter_type"`
+	State        StateEnum     `json:"state"`
 	// DEPRECATED: Use state instead
-	Status string `json:"status"`
-	ExportedFileName NullableString `json:"exported_file_name,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
-	ProgressPercentage *float64 `json:"progress_percentage,omitempty"`
-	Url string `json:"url"`
+	Status             string         `json:"status"`
+	ExportedFileName   NullableString `json:"exported_file_name,omitempty"`
+	CreatedAt          time.Time      `json:"created_at"`
+	ProgressPercentage *float64       `json:"progress_percentage,omitempty"`
+	Url                string         `json:"url"`
 }
 
 // NewExportJob instantiates a new ExportJob object
@@ -112,6 +112,7 @@ func (o *ExportJob) HasTable() bool {
 func (o *ExportJob) SetTable(v int32) {
 	o.Table.Set(&v)
 }
+
 // SetTableNil sets the value for Table to be an explicit nil
 func (o *ExportJob) SetTableNil() {
 	o.Table.Set(nil)
@@ -154,6 +155,7 @@ func (o *ExportJob) HasView() bool {
 func (o *ExportJob) SetView(v int32) {
 	o.View.Set(&v)
 }
+
 // SetViewNil sets the value for View to be an explicit nil
 func (o *ExportJob) SetViewNil() {
 	o.View.Set(nil)
@@ -268,6 +270,7 @@ func (o *ExportJob) HasExportedFileName() bool {
 func (o *ExportJob) SetExportedFileName(v string) {
 	o.ExportedFileName.Set(&v)
 }
+
 // SetExportedFileNameNil sets the value for ExportedFileName to be an explicit nil
 func (o *ExportJob) SetExportedFileNameNil() {
 	o.ExportedFileName.Set(nil)
@@ -359,7 +362,7 @@ func (o *ExportJob) SetUrl(v string) {
 }
 
 func (o ExportJob) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -424,5 +427,3 @@ func (v *NullableExportJob) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

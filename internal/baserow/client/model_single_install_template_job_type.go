@@ -27,11 +27,11 @@ type SingleInstallTemplateJobType struct {
 	// Indicates the state of the import job.
 	State string `json:"state"`
 	// A human readable error message indicating what went wrong.
-	HumanReadableError *string `json:"human_readable_error,omitempty"`
-	Workspace Workspace `json:"workspace"`
-	Template Template `json:"template"`
+	HumanReadableError    *string                `json:"human_readable_error,omitempty"`
+	Workspace             Workspace              `json:"workspace"`
+	Template              Template               `json:"template"`
 	InstalledApplications map[string]interface{} `json:"installed_applications"`
-	Group Workspace `json:"group"`
+	Group                 Workspace              `json:"group"`
 }
 
 // NewSingleInstallTemplateJobType instantiates a new SingleInstallTemplateJobType object
@@ -284,7 +284,7 @@ func (o *SingleInstallTemplateJobType) SetGroup(v Workspace) {
 }
 
 func (o SingleInstallTemplateJobType) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -342,5 +342,3 @@ func (v *NullableSingleInstallTemplateJobType) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-
