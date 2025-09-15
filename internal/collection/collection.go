@@ -100,3 +100,28 @@ func CurriedFilter[T any](predicate func(T) bool) func([]T) []T {
 		return Filter(slice, predicate)
 	}
 }
+
+// Find returns a pointer to the first element that satisfies the predicate,
+// along with a boolean indicating whether such an element was found.
+func Find[T any](slice []T, predicate func(T) bool) (*T, bool) {
+	for i := range slice {
+		if predicate(slice[i]) {
+			return &slice[i], true
+		}
+	}
+	return nil, false
+}
+
+// MapWithError applies a function that may return an error to each element in the slice.
+// If any function call returns an error, the entire operation stops and returns that error.
+func MapWithError[T, U any](ts []T, f func(T) (U, error)) ([]U, error) {
+	us := make([]U, len(ts))
+	for i, t := range ts {
+		u, err := f(t)
+		if err != nil {
+			return nil, err
+		}
+		us[i] = u
+	}
+	return us, nil
+}
