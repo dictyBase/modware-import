@@ -22,9 +22,9 @@ type GeneDataRecord struct {
 
 // ParseUnknowmeDataParams contains all parameters for the ParseUnknowmeData function
 type ParseUnknowmeDataParams struct {
-	InputFiles            []string `validate:"required,min=1,dive,min=1" json:"input_files"`
-	GeneProductOutput     string   `validate:"required,min=1" json:"gene_product_output"`
-	GeneDescriptionOutput string   `validate:"required,min=1" json:"gene_description_output"`
+	InputFiles            []string `validate:"required,min=1,dive,file" json:"input_files"`
+	GeneProductOutput     string   `validate:"required,min=1"           json:"gene_product_output"`
+	GeneDescriptionOutput string   `validate:"required,min=1"           json:"gene_description_output"`
 }
 
 // ParsingConfig holds configuration for parsing operations
@@ -97,11 +97,6 @@ func ParseUnknowmeData(cliCtx *cli.Context) error {
 
 // processUnknowmeDataWithParams performs the actual processing with validated parameters
 func processUnknowmeDataWithParams(params ParseUnknowmeDataParams) error {
-	// Validate all input files exist
-	if err := validateInputFilesExist(params.InputFiles); err != nil {
-		return fmt.Errorf("input file validation failed: %w", err)
-	}
-
 	// Create parsing configuration with default options
 	parsingConfig := NewParsingConfig()
 
@@ -114,20 +109,20 @@ func processUnknowmeDataWithParams(params ParseUnknowmeDataParams) error {
 		return fmt.Errorf("failed to create gene data iterator: %w", err)
 	}
 
-	// Create CSV writers using functional approach
-	csvWriterParams := CSVWriterCreationParams{
+	writers, err := createCSVWriters(CSVWriterCreationParams{
 		GeneProductOutputFile:     params.GeneProductOutput,
 		GeneDescriptionOutputFile: params.GeneDescriptionOutput,
-	}
-
-	writers, err := createCSVWriters(csvWriterParams)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create CSV writers: %w", err)
 	}
 	defer closeAllWriters(writers)
 
 	// Process records with unique gene ID collection and count for reporting
-	processingResult, err := processUniqueGeneDataRecords(geneDataIterator, writers)
+	processingResult, err := processUniqueGeneDataRecords(
+		geneDataIterator,
+		writers,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to process gene data records: %w", err)
 	}
@@ -156,24 +151,6 @@ type ProcessingResult struct {
 	DescriptionRecordsWritten int
 }
 
-// validateInputFileExists checks if the input file exists and is readable
-func validateInputFileExists(inputFile string) error {
-	if _, err := os.Stat(inputFile); os.IsNotExist(err) {
-		return fmt.Errorf("input file does not exist: %s", inputFile)
-	}
-	return nil
-}
-
-// validateInputFilesExist checks if all input files exist and are readable
-func validateInputFilesExist(inputFiles []string) error {
-	for _, inputFile := range inputFiles {
-		if err := validateInputFileExists(inputFile); err != nil {
-			return fmt.Errorf("validation failed for file %s: %w", inputFile, err)
-		}
-	}
-	return nil
-}
-
 // createMultiFileGeneDataIterator creates an iterator that processes gene data from multiple HTML files
 func createMultiFileGeneDataIterator(
 	filenames []string,
@@ -184,7 +161,11 @@ func createMultiFileGeneDataIterator(
 	for _, filename := range filenames {
 		htmlDocument, err := loadHTMLDocument(filename)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load HTML document %s: %w", filename, err)
+			return nil, fmt.Errorf(
+				"failed to load HTML document %s: %w",
+				filename,
+				err,
+			)
 		}
 		htmlDocuments = append(htmlDocuments, htmlDocument)
 	}
@@ -254,7 +235,8 @@ func closeAllWriters(writers []CSVRecordWriter) {
 	}
 }
 
-// processUniqueGeneDataRecords processes gene data records with unique gene ID collection
+// processUniqueGeneDataRecords processes gene data records with unique gene ID
+// collection
 func processUniqueGeneDataRecords(
 	geneDataIterator iter.Seq[GeneDataRecord],
 	writers []CSVRecordWriter,
@@ -305,12 +287,14 @@ func mergeGeneDataRecords(existing, newRecord GeneDataRecord) GeneDataRecord {
 	merged := existing
 
 	// Prefer non-empty gene product
-	if strings.TrimSpace(newRecord.GeneProduct) != "" && strings.TrimSpace(existing.GeneProduct) == "" {
+	if strings.TrimSpace(newRecord.GeneProduct) != "" &&
+		strings.TrimSpace(existing.GeneProduct) == "" {
 		merged.GeneProduct = newRecord.GeneProduct
 	}
 
 	// Prefer non-empty description
-	if strings.TrimSpace(newRecord.Description) != "" && strings.TrimSpace(existing.Description) == "" {
+	if strings.TrimSpace(newRecord.Description) != "" &&
+		strings.TrimSpace(existing.Description) == "" {
 		merged.Description = newRecord.Description
 	}
 
