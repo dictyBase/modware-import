@@ -22,9 +22,9 @@ type GeneDataRecord struct {
 
 // ParseUnknowmeDataParams contains all parameters for the ParseUnknowmeData function
 type ParseUnknowmeDataParams struct {
-	InputFile             string `validate:"required,min=1" json:"input_file"`
-	GeneProductOutput     string `validate:"required,min=1" json:"gene_product_output"`
-	GeneDescriptionOutput string `validate:"required,min=1" json:"gene_description_output"`
+	InputFiles            []string `validate:"required,min=1,dive,min=1" json:"input_files"`
+	GeneProductOutput     string   `validate:"required,min=1" json:"gene_product_output"`
+	GeneDescriptionOutput string   `validate:"required,min=1" json:"gene_description_output"`
 }
 
 // ParsingConfig holds configuration for parsing operations
@@ -78,11 +78,11 @@ func NewParsingConfig(opts ...ParsingOption) *ParsingConfig {
 	return config
 }
 
-// ParseUnknowmeData processes an HTML file containing gene data table and extracts
+// ParseUnknowmeData processes HTML files containing gene data tables and extracts
 // DDB_G entries with their corresponding gene product and description information
 func ParseUnknowmeData(cliCtx *cli.Context) error {
 	params := ParseUnknowmeDataParams{
-		InputFile:             cliCtx.String("input"),
+		InputFiles:            cliCtx.StringSlice("input"),
 		GeneProductOutput:     cliCtx.String("gene-product-output"),
 		GeneDescriptionOutput: cliCtx.String("gene-description-output"),
 	}
@@ -97,17 +97,17 @@ func ParseUnknowmeData(cliCtx *cli.Context) error {
 
 // processUnknowmeDataWithParams performs the actual processing with validated parameters
 func processUnknowmeDataWithParams(params ParseUnknowmeDataParams) error {
-	// Validate input file exists
-	if err := validateInputFileExists(params.InputFile); err != nil {
+	// Validate all input files exist
+	if err := validateInputFilesExist(params.InputFiles); err != nil {
 		return fmt.Errorf("input file validation failed: %w", err)
 	}
 
 	// Create parsing configuration with default options
 	parsingConfig := NewParsingConfig()
 
-	// Create iterator for processing gene data
-	geneDataIterator, err := createGeneDataIterator(
-		params.InputFile,
+	// Create consolidated iterator for processing gene data from multiple files
+	geneDataIterator, err := createMultiFileGeneDataIterator(
+		params.InputFiles,
 		parsingConfig,
 	)
 	if err != nil {
@@ -126,8 +126,8 @@ func processUnknowmeDataWithParams(params ParseUnknowmeDataParams) error {
 	}
 	defer closeAllWriters(writers)
 
-	// Process records and count for reporting
-	processingResult, err := processGeneDataRecords(geneDataIterator, writers)
+	// Process records with unique gene ID collection and count for reporting
+	processingResult, err := processUniqueGeneDataRecords(geneDataIterator, writers)
 	if err != nil {
 		return fmt.Errorf("failed to process gene data records: %w", err)
 	}
@@ -164,17 +164,52 @@ func validateInputFileExists(inputFile string) error {
 	return nil
 }
 
-// createGeneDataIterator creates an iterator for processing gene data from HTML
-func createGeneDataIterator(
-	filename string,
+// validateInputFilesExist checks if all input files exist and are readable
+func validateInputFilesExist(inputFiles []string) error {
+	for _, inputFile := range inputFiles {
+		if err := validateInputFileExists(inputFile); err != nil {
+			return fmt.Errorf("validation failed for file %s: %w", inputFile, err)
+		}
+	}
+	return nil
+}
+
+// createMultiFileGeneDataIterator creates an iterator that processes gene data from multiple HTML files
+func createMultiFileGeneDataIterator(
+	filenames []string,
 	config *ParsingConfig,
 ) (iter.Seq[GeneDataRecord], error) {
-	htmlDocument, err := loadHTMLDocument(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load HTML document: %w", err)
+	// Load all HTML documents first to validate them
+	htmlDocuments := make([]*goquery.Document, 0, len(filenames))
+	for _, filename := range filenames {
+		htmlDocument, err := loadHTMLDocument(filename)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load HTML document %s: %w", filename, err)
+		}
+		htmlDocuments = append(htmlDocuments, htmlDocument)
 	}
 
-	return createIteratorFromDocument(htmlDocument, config), nil
+	return createIteratorFromMultipleDocuments(htmlDocuments, config), nil
+}
+
+// createIteratorFromMultipleDocuments creates an iterator from multiple parsed HTML documents
+func createIteratorFromMultipleDocuments(
+	htmlDocuments []*goquery.Document,
+	config *ParsingConfig,
+) iter.Seq[GeneDataRecord] {
+	return func(yield func(GeneDataRecord) bool) {
+		for _, htmlDocument := range htmlDocuments {
+			htmlDocument.Find("table tr").
+				Each(func(i int, row *goquery.Selection) {
+					record, shouldProcess := processTableRow(row, config)
+					if shouldProcess {
+						if !yield(record) {
+							return // Early termination requested by consumer
+						}
+					}
+				})
+		}
+	}
 }
 
 // createCSVWriters creates all required CSV writers
@@ -219,13 +254,15 @@ func closeAllWriters(writers []CSVRecordWriter) {
 	}
 }
 
-// processGeneDataRecords processes all gene data records using the provided writers
-func processGeneDataRecords(
+// processUniqueGeneDataRecords processes gene data records with unique gene ID collection
+func processUniqueGeneDataRecords(
 	geneDataIterator iter.Seq[GeneDataRecord],
 	writers []CSVRecordWriter,
 ) (*ProcessingResult, error) {
 	result := &ProcessingResult{}
+	uniqueGenes := make(map[string]GeneDataRecord)
 
+	// First pass: collect unique gene records
 	for record := range geneDataIterator {
 		result.TotalRecordsProcessed++
 
@@ -238,18 +275,46 @@ func processGeneDataRecords(
 			)
 		}
 
-		// Process record with each writer
-		err := processRecordWithWriters(record, writers, result)
+		// Store record if gene ID is not already present, or merge/update as needed
+		if existingRecord, exists := uniqueGenes[record.GeneID]; exists {
+			// Apply merging logic: prefer non-empty values
+			mergedRecord := mergeGeneDataRecords(existingRecord, record)
+			uniqueGenes[record.GeneID] = mergedRecord
+		} else {
+			uniqueGenes[record.GeneID] = record
+		}
+	}
+
+	// Second pass: process unique records with writers
+	for _, uniqueRecord := range uniqueGenes {
+		err := processRecordWithWriters(uniqueRecord, writers, result)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to process record %s: %w",
-				record.GeneID,
+				"failed to process unique record %s: %w",
+				uniqueRecord.GeneID,
 				err,
 			)
 		}
 	}
 
 	return result, nil
+}
+
+// mergeGeneDataRecords merges two gene data records, preferring non-empty values
+func mergeGeneDataRecords(existing, newRecord GeneDataRecord) GeneDataRecord {
+	merged := existing
+
+	// Prefer non-empty gene product
+	if strings.TrimSpace(newRecord.GeneProduct) != "" && strings.TrimSpace(existing.GeneProduct) == "" {
+		merged.GeneProduct = newRecord.GeneProduct
+	}
+
+	// Prefer non-empty description
+	if strings.TrimSpace(newRecord.Description) != "" && strings.TrimSpace(existing.Description) == "" {
+		merged.Description = newRecord.Description
+	}
+
+	return merged
 }
 
 // processRecordWithWriters processes a single record with all writers
@@ -294,34 +359,21 @@ func reportProcessingResults(
 	params ParseUnknowmeDataParams,
 ) {
 	fmt.Printf(
-		"Successfully processed %d gene records\n",
+		"Successfully processed %d gene records from %d input file(s)\n",
 		result.TotalRecordsProcessed,
+		len(params.InputFiles),
 	)
+	fmt.Printf("Input files processed:\n")
+	for i, inputFile := range params.InputFiles {
+		fmt.Printf("  %d. %s\n", i+1, inputFile)
+	}
 	fmt.Printf(
-		"Gene products written to: %s (%d records)\n",
+		"Gene products written to: %s (%d unique records)\n",
 		params.GeneProductOutput,
 		result.GeneProductRecordsWritten,
 	)
-	fmt.Printf("Gene descriptions written to: %s (%d records)\n",
+	fmt.Printf("Gene descriptions written to: %s (%d unique records)\n",
 		params.GeneDescriptionOutput, result.DescriptionRecordsWritten)
-}
-
-// createIteratorFromDocument creates an iterator from a parsed HTML document
-func createIteratorFromDocument(
-	htmlDocument *goquery.Document,
-	config *ParsingConfig,
-) iter.Seq[GeneDataRecord] {
-	return func(yield func(GeneDataRecord) bool) {
-		htmlDocument.Find("table tr").
-			Each(func(i int, row *goquery.Selection) {
-				record, shouldProcess := processTableRow(row, config)
-				if shouldProcess {
-					if !yield(record) {
-						return // Early termination requested by consumer
-					}
-				}
-			})
-	}
 }
 
 // processTableRow processes a single table row and returns a gene data record
