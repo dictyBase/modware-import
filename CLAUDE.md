@@ -449,6 +449,202 @@
       ```
     - Document all exported functions, types, and constants with proper Go doc comments
     - Test coverage should be comprehensive with both unit and integration tests
+    - Use `github.com/stretchr/testify/require` for all unit test assertions
+      ```go
+      import (
+          "testing"
+          "github.com/stretchr/testify/require"
+      )
+
+      // Basic assertions
+      func TestBasicAssertions(t *testing.T) {
+          value := "hello world"
+          number := 42
+          result := []string{"a", "b", "c"}
+
+          // String assertions
+          require.Equal(t, "hello world", value)
+          require.NotEqual(t, "goodbye", value)
+          require.Contains(t, value, "world")
+          require.NotEmpty(t, value)
+
+          // Numeric assertions
+          require.Equal(t, 42, number)
+          require.Greater(t, number, 40)
+          require.GreaterOrEqual(t, number, 42)
+          require.Less(t, number, 50)
+          require.LessOrEqual(t, number, 42)
+
+          // Collection assertions
+          require.Len(t, result, 3)
+          require.Contains(t, result, "b")
+          require.NotContains(t, result, "d")
+          require.ElementsMatch(t, []string{"c", "a", "b"}, result) // Order independent
+      }
+
+      // Error handling tests
+      func TestErrorHandling(t *testing.T) {
+          // Function that should return error
+          _, err := someFunction("invalid input")
+          require.Error(t, err)
+          require.ErrorContains(t, err, "invalid input")
+
+          // Function that should succeed
+          result, err := someFunction("valid input")
+          require.NoError(t, err)
+          require.NotNil(t, result)
+      }
+
+      // Nil/Not Nil assertions
+      func TestNilAssertions(t *testing.T) {
+          var ptr *string
+          value := "test"
+
+          require.Nil(t, ptr)
+          require.NotNil(t, &value)
+      }
+
+      // Boolean assertions
+      func TestBooleanAssertions(t *testing.T) {
+          active := true
+          disabled := false
+
+          require.True(t, active)
+          require.False(t, disabled)
+      }
+
+      // Type assertions
+      func TestTypeAssertions(t *testing.T) {
+          var value interface{} = "hello"
+
+          require.IsType(t, "", value)
+          require.Implements(t, (*io.Reader)(nil), &bytes.Buffer{})
+      }
+
+      // Testing with subtests
+      func TestUserValidation(t *testing.T) {
+          tests := []struct {
+              name     string
+              input    User
+              expected error
+          }{
+              {
+                  name:     "valid user",
+                  input:    User{Name: "John", Email: "john@example.com"},
+                  expected: nil,
+              },
+              {
+                  name:     "missing name",
+                  input:    User{Email: "john@example.com"},
+                  expected: ErrMissingName,
+              },
+              {
+                  name:     "invalid email",
+                  input:    User{Name: "John", Email: "invalid"},
+                  expected: ErrInvalidEmail,
+              },
+          }
+
+          for _, tt := range tests {
+              t.Run(tt.name, func(t *testing.T) {
+                  err := ValidateUser(tt.input)
+                  if tt.expected == nil {
+                      require.NoError(t, err)
+                  } else {
+                      require.ErrorIs(t, err, tt.expected)
+                  }
+              })
+          }
+      }
+
+      // Testing collections and maps
+      func TestCollections(t *testing.T) {
+          users := []User{
+              {ID: 1, Name: "Alice"},
+              {ID: 2, Name: "Bob"},
+          }
+          userMap := map[string]int{
+              "alice": 1,
+              "bob":   2,
+          }
+
+          // Slice assertions
+          require.Len(t, users, 2)
+          require.Equal(t, "Alice", users[0].Name)
+
+          // Map assertions
+          require.Len(t, userMap, 2)
+          require.Equal(t, 1, userMap["alice"])
+          require.Contains(t, userMap, "bob")
+          require.NotContains(t, userMap, "charlie")
+      }
+
+      // Testing with require.Eventually for async operations
+      func TestAsyncOperation(t *testing.T) {
+          service := NewAsyncService()
+          service.Start()
+
+          // Wait up to 5 seconds for condition to be true
+          require.Eventually(t, func() bool {
+              return service.IsReady()
+          }, 5*time.Second, 100*time.Millisecond)
+
+          require.True(t, service.IsReady())
+      }
+
+      // Testing with custom error messages
+      func TestWithCustomMessages(t *testing.T) {
+          result := calculateSum([]int{1, 2, 3})
+          require.Equal(t, 6, result, "Sum calculation should equal 6")
+
+          user := findUser("unknown")
+          require.Nil(t, user, "User should not be found for unknown ID")
+      }
+
+      // Testing HTTP handlers
+      func TestHTTPHandler(t *testing.T) {
+          req := httptest.NewRequest("GET", "/users/123", nil)
+          recorder := httptest.NewRecorder()
+
+          handler := NewUserHandler()
+          handler.ServeHTTP(recorder, req)
+
+          require.Equal(t, http.StatusOK, recorder.Code)
+          require.Equal(t, "application/json", recorder.Header().Get("Content-Type"))
+          require.Contains(t, recorder.Body.String(), "user_id")
+      }
+
+      // Setup and teardown patterns
+      func TestWithSetup(t *testing.T) {
+          // Setup
+          db := setupTestDatabase(t)
+          defer cleanupDatabase(db)
+
+          user := &User{Name: "Test User", Email: "test@example.com"}
+          err := db.CreateUser(user)
+          require.NoError(t, err)
+          require.NotZero(t, user.ID)
+
+          // Verify user was created
+          retrievedUser, err := db.GetUser(user.ID)
+          require.NoError(t, err)
+          require.Equal(t, user.Name, retrievedUser.Name)
+          require.Equal(t, user.Email, retrievedUser.Email)
+      }
+
+      // Helper function for test setup
+      func setupTestDatabase(t *testing.T) *Database {
+          db, err := NewDatabase("test_connection_string")
+          require.NoError(t, err, "Failed to create test database")
+          return db
+      }
+
+      func cleanupDatabase(db *Database) {
+          if db != nil {
+              db.Close()
+          }
+      }
+      ```
     - Use go-playground/validator for struct field and parameter validation
       ```go
       import (
