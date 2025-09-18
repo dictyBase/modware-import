@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"net/http"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
