@@ -12,9 +12,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 )
 
-var (
-	CreateHTTP = H.ReadJSON[CreateResp](H.MakeClient(http.DefaultClient))
-)
+var CreateHTTP = H.ReadJSON[CreateResp](H.MakeClient(http.DefaultClient))
 
 type CreateResp struct {
 	AnnoId string `json:"annotation_id"`

@@ -118,6 +118,270 @@
         pmids := []string{"12345", "67890", "11111"}
         articles, err := MapWithError(pmids, c.processArticleWithError)
         ```
+    - **Functional Programming with fp-go Library**
+      - Use `github.com/IBM/fp-go` for monadic patterns, pipes, and functional composition
+      - Import pattern: Use single-letter aliases for fp-go modules
+      ```go
+      import (
+          A "github.com/IBM/fp-go/array"
+          E "github.com/IBM/fp-go/either"
+          F "github.com/IBM/fp-go/function"
+          O "github.com/IBM/fp-go/option"
+          T "github.com/IBM/fp-go/tuple"
+          S "github.com/IBM/fp-go/string"
+          J "github.com/IBM/fp-go/json"
+          H "github.com/IBM/fp-go/context/readerioeither/http"
+      )
+      ```
+
+      - **Either Monad for Error Handling**
+        ```go
+        // Use Either for operations that can fail
+        func validateAndProcess(input string) E.Either[error, ProcessedData] {
+            if input == "" {
+                return E.Left[ProcessedData](fmt.Errorf("input cannot be empty"))
+            }
+
+            processed := ProcessedData{Value: strings.ToUpper(input)}
+            return E.Right[error](processed)
+        }
+
+        // Chain Either operations with Map and Bind
+        func processWorkflow(input string) E.Either[error, string] {
+            return F.Pipe3(
+                input,
+                validateAndProcess,
+                E.Map[error](func(data ProcessedData) ProcessedData {
+                    data.Timestamp = time.Now()
+                    return data
+                }),
+                E.Map[error](func(data ProcessedData) string {
+                    return fmt.Sprintf("%s at %v", data.Value, data.Timestamp)
+                }),
+            )
+        }
+
+        // Handle Either results with Fold
+        result := F.Pipe1(
+            processWorkflow("hello"),
+            E.Fold[error, string](
+                func(err error) string {
+                    return fmt.Sprintf("Error: %v", err)
+                },
+                func(success string) string {
+                    return success
+                },
+            ),
+        )
+        ```
+
+      - **Option Monad for Nullable Values**
+        ```go
+        // Use Option instead of pointers for optional values
+        func findUser(id string) O.Option[User] {
+            user, found := userDatabase[id]
+            if found {
+                return O.Some(user)
+            }
+            return O.None[User]()
+        }
+
+        // Chain Option operations
+        func getUserEmail(id string) O.Option[string] {
+            return F.Pipe1(
+                findUser(id),
+                O.Map(func(user User) string {
+                    return user.Email
+                }),
+            )
+        }
+
+        // Option with fallback using Alt
+        func getConfigValue(key string) O.Option[string] {
+            return F.Pipe2(
+                getFromEnv(key),
+                O.Alt(func() O.Option[string] {
+                    return getFromFile(key)
+                }),
+                O.Alt(func() O.Option[string] {
+                    return getDefaultValue(key)
+                }),
+            )
+        }
+
+        // Extract Option values safely
+        email := F.Pipe1(
+            getUserEmail("user123"),
+            O.GetOrElse(F.Constant("no-email@example.com")),
+        )
+        ```
+
+      - **Function Composition with Pipe and Flow**
+        ```go
+        // Use F.Pipe for sequential composition (left to right)
+        func processFileName(fileName string) string {
+            return F.Pipe7(
+                fileName,
+                filepath.Base,
+                strings.Split("."),
+                A.Head[string],
+                O.GetOrElse(F.Constant("")),
+                strings.Split("_"),
+                A.SliceRight[string](2),
+                S.Join(":"),
+            )
+        }
+
+        // Use F.Flow for creating reusable composed functions
+        var processUserData = F.Flow3(
+            validateInput,
+            normalizeData,
+            saveToDatabase,
+        )
+
+        // Complex pipeline with error handling
+        func processFiles(files []string) E.Either[error, []ProcessedFile] {
+            return F.Pipe2(
+                E.TryCatchError(readFiles(files)),
+                E.Map[error](func(fileContents []string) []ProcessedFile {
+                    return F.Pipe3(
+                        fileContents,
+                        A.Filter(isValidContent),
+                        A.Map(parseContent),
+                        A.FilterMap(validateParsedContent),
+                    )
+                }),
+                E.Fold[error, []ProcessedFile](
+                    func(err error) E.Either[error, []ProcessedFile] {
+                        return E.Left[[]ProcessedFile](err)
+                    },
+                    func(result []ProcessedFile) E.Either[error, []ProcessedFile] {
+                        return E.Right[error](result)
+                    },
+                ),
+            )
+        }
+        ```
+
+      - **Curried Functions for Reusability**
+        ```go
+        // Create curried functions for partial application
+        var HasField = F.Curry2(func(name string, field FieldType) bool {
+            return field.Name == name
+        })
+
+        var SearchUser = F.Curry2(func(email string, workspace WorkspaceResp) int {
+            return F.Pipe3(
+                workspace.Users,
+                A.FindFirst(HasUser(email)),
+                O.Map(func(user WorkspaceUserResp) int { return user.Id }),
+                O.GetOrElse(F.Constant(0)),
+            )
+        })
+
+        // Usage of curried functions
+        hasEmailField := HasField("email")
+        if hasEmailField(userField) {
+            // process email field
+        }
+
+        searchInWorkspace := SearchUser("user@example.com")
+        userID := searchInWorkspace(workspace)
+
+        // Curry custom functions
+        var assignedByIdHandler = F.Curry2(
+            func(aid int, loader *DataLoader) *DataLoader {
+                if aid != 0 {
+                    loader.Payload.AssignedBy = []AssignedBy{{Id: aid}}
+                }
+                return loader
+            })
+        ```
+
+      - **Array/Slice Operations**
+        ```go
+        // Use fp-go array functions for slice operations
+        func processUserList(users []User) []string {
+            return F.Pipe3(
+                users,
+                A.Filter(func(u User) bool { return u.Active }),
+                A.Map(func(u User) string { return u.Email }),
+                A.FilterMap(func(email string) O.Option[string] {
+                    if isValidEmail(email) {
+                        return O.Some(email)
+                    }
+                    return O.None[string]()
+                }),
+            )
+        }
+
+        // Find operations with Option return
+        func findFirstAdmin(users []User) O.Option[User] {
+            return F.Pipe1(
+                users,
+                A.FindFirst(func(u User) bool { return u.Role == "admin" }),
+            )
+        }
+
+        // Complex array transformations
+        func extractTextFromCells(cells []Cell, startCol, endCol int) string {
+            return F.Pipe3(
+                createCellRange(startCol, endCol, len(cells)),
+                A.FilterMap(extractTextFromCellAtIndex(cells)),
+                A.Head[string],
+                O.GetOrElse(F.Constant("")),
+            )
+        }
+        ```
+
+      - **Error Handling Patterns**
+        ```go
+        // Combine Either with TryCatchError for exception handling
+        func safeOperation(input string) E.Either[error, Result] {
+            return F.Pipe2(
+                E.TryCatchError(riskyOperation(input)),
+                E.Map[error](func(rawResult RawResult) Result {
+                    return processResult(rawResult)
+                }),
+                E.MapLeft[Result](func(err error) error {
+                    return fmt.Errorf("operation failed: %w", err)
+                }),
+            )
+        }
+
+        // Chain multiple Either operations
+        func processWorkflowWithValidation(input Input) E.Either[error, Output] {
+            return F.Pipe4(
+                E.Right[error](input),
+                E.Bind(validateInput),
+                E.Bind(processData),
+                E.Bind(formatOutput),
+                E.MapLeft[Output](func(err error) error {
+                    return fmt.Errorf("workflow failed: %w", err)
+                }),
+            )
+        }
+        ```
+
+      - **Tuple Operations**
+        ```go
+        // Use tuples for functions returning multiple values
+        func extractTextWithIndex(cells []Cell, index int) O.Option[T.Tuple2[string, int]] {
+            return F.Pipe1(
+                extractTextFromSingleCell(cells[index]),
+                O.Map(func(text string) T.Tuple2[string, int] {
+                    return T.MakeTuple2(text, index)
+                }),
+            )
+        }
+
+        // Extract tuple values
+        result := extractTextWithIndex(cells, 0)
+        text, index := F.Pipe1(
+            result,
+            O.GetOrElse(F.Constant(T.MakeTuple2("", -1))),
+        ).F1, result.F2
+        ```
     - Use options pattern for configurable components
       ```go
       // Option type for functional options

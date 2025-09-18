@@ -18,10 +18,8 @@ import (
 	F "github.com/IBM/fp-go/function"
 )
 
-var (
-	readRefreshTokenResp = H.ReadJSON[refreshTokenRes](
-		H.MakeClient(http.DefaultClient),
-	)
+var readRefreshTokenResp = H.ReadJSON[refreshTokenRes](
+	H.MakeClient(http.DefaultClient),
 )
 
 type tokenReqFeedback struct {
