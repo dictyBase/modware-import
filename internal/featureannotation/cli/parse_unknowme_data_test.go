@@ -4,9 +4,26 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseUnknowmeDataParams_Validation(t *testing.T) {
+	// Create temporary files for testing
+	tempDir, err := os.MkdirTemp("", "test_validation")
+	require.NoError(t, err, "failed to create temp directory")
+	defer os.RemoveAll(tempDir)
+
+	// Create test files
+	validFile1 := filepath.Join(tempDir, "file1.html")
+	validFile2 := filepath.Join(tempDir, "file2.html")
+
+	err = os.WriteFile(validFile1, []byte("<html></html>"), 0o600)
+	require.NoError(t, err, "failed to create test file 1")
+
+	err = os.WriteFile(validFile2, []byte("<html></html>"), 0o600)
+	require.NoError(t, err, "failed to create test file 2")
+
 	tests := []struct {
 		name        string
 		params      ParseUnknowmeDataParams
@@ -15,7 +32,7 @@ func TestParseUnknowmeDataParams_Validation(t *testing.T) {
 		{
 			name: "valid parameters with multiple files",
 			params: ParseUnknowmeDataParams{
-				InputFiles:            []string{"file1.html", "file2.html"},
+				InputFiles:            []string{validFile1, validFile2},
 				GeneProductOutput:     "products.csv",
 				GeneDescriptionOutput: "descriptions.csv",
 			},
@@ -44,11 +61,10 @@ func TestParseUnknowmeDataParams_Validation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateStruct(tt.params)
-			if tt.expectError && err == nil {
-				t.Errorf("expected validation error but got none")
-			}
-			if !tt.expectError && err != nil {
-				t.Errorf("unexpected validation error: %v", err)
+			if tt.expectError {
+				require.Error(t, err, "expected validation error but got none")
+			} else {
+				require.NoError(t, err, "unexpected validation error")
 			}
 		})
 	}
@@ -121,15 +137,9 @@ func TestMergeGeneDataRecords(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := mergeGeneDataRecords(tt.existing, tt.newRec)
 
-			if result.GeneID != tt.expected.GeneID {
-				t.Errorf("expected GeneID %s, got %s", tt.expected.GeneID, result.GeneID)
-			}
-			if result.GeneProduct != tt.expected.GeneProduct {
-				t.Errorf("expected GeneProduct %s, got %s", tt.expected.GeneProduct, result.GeneProduct)
-			}
-			if result.Description != tt.expected.Description {
-				t.Errorf("expected Description %s, got %s", tt.expected.Description, result.Description)
-			}
+			require.Equal(t, tt.expected.GeneID, result.GeneID, "GeneID should match expected value")
+			require.Equal(t, tt.expected.GeneProduct, result.GeneProduct, "GeneProduct should match expected value")
+			require.Equal(t, tt.expected.Description, result.Description, "Description should match expected value")
 		})
 	}
 }
@@ -137,52 +147,61 @@ func TestMergeGeneDataRecords(t *testing.T) {
 func TestValidateInputFilesExist(t *testing.T) {
 	// Create temporary files for testing
 	tempDir, err := os.MkdirTemp("", "test_parse_unknowme")
-	if err != nil {
-		t.Fatalf("failed to create temp directory: %v", err)
-	}
+	require.NoError(t, err, "failed to create temp directory")
 	defer os.RemoveAll(tempDir)
 
 	// Create test files
 	testFile1 := filepath.Join(tempDir, "test1.html")
 	testFile2 := filepath.Join(tempDir, "test2.html")
 
-	if err := os.WriteFile(testFile1, []byte("<html></html>"), 0o600); err != nil {
-		t.Fatalf("failed to create test file 1: %v", err)
-	}
-	if err := os.WriteFile(testFile2, []byte("<html></html>"), 0o600); err != nil {
-		t.Fatalf("failed to create test file 2: %v", err)
-	}
+	err = os.WriteFile(testFile1, []byte("<html></html>"), 0o600)
+	require.NoError(t, err, "failed to create test file 1")
+
+	err = os.WriteFile(testFile2, []byte("<html></html>"), 0o600)
+	require.NoError(t, err, "failed to create test file 2")
 
 	tests := []struct {
 		name        string
-		inputFiles  []string
+		params      ParseUnknowmeDataParams
 		expectError bool
 	}{
 		{
-			name:        "all files exist",
-			inputFiles:  []string{testFile1, testFile2},
+			name: "all files exist",
+			params: ParseUnknowmeDataParams{
+				InputFiles:            []string{testFile1, testFile2},
+				GeneProductOutput:     "products.csv",
+				GeneDescriptionOutput: "descriptions.csv",
+			},
 			expectError: false,
 		},
 		{
-			name:        "one file missing",
-			inputFiles:  []string{testFile1, "nonexistent.html"},
+			name: "one file missing",
+			params: ParseUnknowmeDataParams{
+				InputFiles:            []string{testFile1, "nonexistent.html"},
+				GeneProductOutput:     "products.csv",
+				GeneDescriptionOutput: "descriptions.csv",
+			},
 			expectError: true,
 		},
 		{
-			name:        "empty file list",
-			inputFiles:  []string{},
-			expectError: false, // validateInputFilesExist doesn't validate empty lists
+			name: "empty file list",
+			params: ParseUnknowmeDataParams{
+				InputFiles:            []string{},
+				GeneProductOutput:     "products.csv",
+				GeneDescriptionOutput: "descriptions.csv",
+			},
+			expectError: true, // empty file list should fail validation
 		},
+		// TODO(human): Add more test cases for file validation
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateInputFilesExist(tt.inputFiles)
-			if tt.expectError && err == nil {
-				t.Errorf("expected validation error but got none")
-			}
-			if !tt.expectError && err != nil {
-				t.Errorf("unexpected validation error: %v", err)
+			err := ValidateStruct(tt.params)
+			if tt.expectError {
+				require.Error(t, err, "expected validation error but got none")
+			} else {
+				require.NoError(t, err, "unexpected validation error")
 			}
 		})
 	}
