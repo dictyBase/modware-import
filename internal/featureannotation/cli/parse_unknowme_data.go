@@ -65,7 +65,7 @@ func WithSkipEmptyDescription(skip bool) ParsingOption {
 func NewParsingConfig(opts ...ParsingOption) *ParsingConfig {
 	config := &ParsingConfig{
 		ddbGeneRegex:           regexp.MustCompile(`^DDB_G\d+`),
-		geneProductStartColumn: 3,
+		geneProductStartColumn: 1,
 		geneProductEndColumn:   7,
 		skipEmptyProduct:       true,
 		skipEmptyDescription:   true,
