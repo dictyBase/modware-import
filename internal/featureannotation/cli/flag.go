@@ -280,10 +280,10 @@ func SynonymLoaderFlags() []cli.Flag {
 // Input validation is performed during command execution to ensure files exist.
 func ParseUnknowmeDataFlags() []cli.Flag {
 	return []cli.Flag{
-		&cli.StringFlag{
+		&cli.StringSliceFlag{
 			Name:     "input",
 			Aliases:  []string{"i"},
-			Usage:    "input HTML file to parse (must exist and be readable)",
+			Usage:    "one or more input HTML files to parse (must exist and be readable)",
 			Required: true,
 		},
 		&cli.StringFlag{
