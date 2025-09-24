@@ -22,7 +22,7 @@ import (
 
 const (
 	// descriptionTag is the tag name used for gene descriptions in the feature annotation system
-	descriptionTag = "gene_description"
+	descriptionTag = "description"
 )
 
 // GeneDescription represents a gene with its description for loading operations.
@@ -135,10 +135,17 @@ func streamGeneDescriptionsFromCSV(
 }
 
 // openCSVFileWithHeader opens a CSV file and validates the header
-func openCSVFileWithHeader(file string, logger *logrus.Entry) (*csv.Reader, func(), error) {
+func openCSVFileWithHeader(
+	file string,
+	logger *logrus.Entry,
+) (*csv.Reader, func(), error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error opening input file %s: %w", file, err)
+		return nil, nil, fmt.Errorf(
+			"error opening input file %s: %w",
+			file,
+			err,
+		)
 	}
 
 	reader := csv.NewReader(f)
@@ -171,7 +178,11 @@ func processGeneDescriptionRecords(
 			break
 		}
 		if err != nil {
-			logger.Errorf("error reading record from csv at line %d: %s", lineNumber, err)
+			logger.Errorf(
+				"error reading record from csv at line %d: %s",
+				lineNumber,
+				err,
+			)
 			lineNumber++
 			continue
 		}
@@ -205,7 +216,11 @@ func processRecord(
 
 	geneDesc := GeneDescription{GeneID: record[0], Description: record[1]}
 	if err := ValidateStruct(geneDesc); err != nil {
-		logger.Warnf("skipping invalid gene description at line %d: %s", lineNumber, err)
+		logger.Warnf(
+			"skipping invalid gene description at line %d: %s",
+			lineNumber,
+			err,
+		)
 		return false
 	}
 
@@ -217,16 +232,29 @@ func processRecord(
 // isValidRecord checks if the CSV record has the required format
 func isValidRecord(record []string, logger *logrus.Entry, lineNumber int) bool {
 	if len(record) < 2 {
-		logger.Warnf("skipping malformed record at line %d: %v", lineNumber, record)
+		logger.Warnf(
+			"skipping malformed record at line %d: %v",
+			lineNumber,
+			record,
+		)
 		return false
 	}
 	return true
 }
 
 // isDuplicateGene checks if the gene ID has already been processed
-func isDuplicateGene(geneID string, seen map[string]struct{}, logger *logrus.Entry, lineNumber int) bool {
+func isDuplicateGene(
+	geneID string,
+	seen map[string]struct{},
+	logger *logrus.Entry,
+	lineNumber int,
+) bool {
 	if _, exists := seen[geneID]; exists {
-		logger.Warnf("duplicate gene ID %s found at line %d, skipping", geneID, lineNumber)
+		logger.Warnf(
+			"duplicate gene ID %s found at line %d, skipping",
+			geneID,
+			lineNumber,
+		)
 		return true
 	}
 	return false
