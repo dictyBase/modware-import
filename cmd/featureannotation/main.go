@@ -66,15 +66,15 @@ func allCommands() []*cli.Command {
 			Action: facli.LoadCSVToArangodb,
 		},
 		{
-			Name:   "gene-updater",
-			Usage:  "Updates gene annotations by stripping HTML from properties and using a gRPC API",
+			Name:   "load-clean-gene-descriptions",
+			Usage:  "Load gene descriptions from ArangoDB, clean HTML formatting, and update feature annotation service",
 			Flags:  facli.GeneUpdaterFlags(),
 			Before: faclient.CliSetup,
 			Action: facli.RunGeneUpdater,
 		},
 		{
-			Name:   "gene-product-updater",
-			Usage:  "Update gene products from legacy database to feature annotation service",
+			Name:   "load-gene-products-from-legacy",
+			Usage:  "Load gene products from legacy database and update feature annotation service",
 			Flags:  facli.GeneProductUpdaterFlags(),
 			Before: faclient.GeneProductCliSetup, // Use the new setup function
 			Action: facli.RunGeneProductUpdater,
