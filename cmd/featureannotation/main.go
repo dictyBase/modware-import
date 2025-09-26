@@ -106,5 +106,11 @@ func allCommands() []*cli.Command {
 			Flags:  facli.ParseUnknowmeDataFlags(),
 			Action: facli.ParseUnknowmeData,
 		},
+		{
+			Name:   "validate-gene-data",
+			Usage:  "Validate gene descriptions from CSV file against GraphQL endpoint",
+			Flags:  facli.ValidateGeneDataFlags(),
+			Action: facli.ValidateGeneData,
+		},
 	}
 }
