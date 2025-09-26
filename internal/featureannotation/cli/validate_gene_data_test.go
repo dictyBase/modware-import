@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"net/http"
@@ -9,24 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hasura/go-graphql-client"
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateFileExists(t *testing.T) {
-	// Create a test file
-	tmpFile, err := os.CreateTemp("", "test_*.csv")
-	require.NoError(t, err)
-	defer os.Remove(tmpFile.Name())
-	tmpFile.Close()
-
-	// Test with existing file
-	fileInfo, err := os.Stat(tmpFile.Name())
-	require.NoError(t, err)
-	require.False(t, fileInfo.IsDir())
-
-	// Test with non-existent file
-	_, err = os.Stat("/non/existent/file.csv")
-	require.Error(t, err)
+// GraphQLRequest represents a GraphQL query request for test compatibility
+type GraphQLRequest struct {
+	Query     string         `json:"query"`
+	Variables map[string]any `json:"variables"`
 }
 
 func TestReadCSVFile(t *testing.T) {
@@ -73,8 +64,8 @@ func TestReadCSVFile(t *testing.T) {
 			require.NoError(t, err)
 			tmpFile.Close()
 
-			// Test readCSVFile
-			records, err := readCSVFile(tmpFile.Name())
+			// Test readCSVFileWithValidation
+			records, err := readCSVFileWithValidation(tmpFile.Name())
 
 			if tt.expectedError {
 				require.Error(t, err)
@@ -86,98 +77,18 @@ func TestReadCSVFile(t *testing.T) {
 	}
 }
 
-func TestQueryGraphQL(t *testing.T) {
-	tests := []struct {
-		name           string
-		geneID         string
-		serverResponse string
-		serverStatus   int
-		expectedError  bool
-		expectedDesc   string
-	}{
-		{
-			name:   "successful query",
-			geneID: "DDB_G0269114",
-			serverResponse: `{
-				"data": {
-					"geneGeneralInformation": {
-						"id": "DDB_G0269114",
-						"description": "test gene description"
-					}
-				}
-			}`,
-			serverStatus:  200,
-			expectedError: false,
-			expectedDesc:  "test gene description",
-		},
-		{
-			name:   "gene not found",
-			geneID: "INVALID_GENE",
-			serverResponse: `{
-				"data": {
-					"geneGeneralInformation": null
-				}
-			}`,
-			serverStatus:  200,
-			expectedError: true,
-			expectedDesc:  "",
-		},
-		{
-			name:   "GraphQL error",
-			geneID: "DDB_G0269114",
-			serverResponse: `{
-				"errors": [
-					{"message": "Gene not found"}
-				]
-			}`,
-			serverStatus:  200,
-			expectedError: true,
-			expectedDesc:  "",
-		},
-		{
-			name:          "server error",
-			geneID:        "DDB_G0269114",
-			serverStatus:  500,
-			expectedError: true,
-			expectedDesc:  "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create test server
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(tt.serverStatus)
-				if tt.serverStatus == 200 {
-					w.Write([]byte(tt.serverResponse))
-				}
-			}))
-			defer server.Close()
-
-			client := &http.Client{Timeout: 5 * time.Second}
-			description, err := queryGraphQLBackwardCompat(client, server.URL, tt.geneID)
-
-			if tt.expectedError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tt.expectedDesc, description)
-			}
-		})
-	}
-}
-
 // createMockGraphQLServer creates a test server that responds to GraphQL gene queries
 func createMockGraphQLServer() *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var request GraphQLRequest
-		json.NewDecoder(r.Body).Decode(&request)
+	return httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var request GraphQLRequest
+			json.NewDecoder(r.Body).Decode(&request)
 
-		geneID := request.Variables["gene"].(string)
+			geneID := request.Variables["gene"].(string)
 
-		var response string
-		if geneID == "DDB_G0269114" {
-			response = `{
+			var response string
+			if geneID == "DDB_G0269114" {
+				response = `{
 				"data": {
 					"geneGeneralInformation": {
 						"id": "DDB_G0269114",
@@ -185,17 +96,18 @@ func createMockGraphQLServer() *httptest.Server {
 					}
 				}
 			}`
-		} else {
-			response = `{
+			} else {
+				response = `{
 				"data": {
 					"geneGeneralInformation": null
 				}
 			}`
-		}
+			}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(response))
-	}))
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(response))
+		}),
+	)
 }
 
 // createValidationTestCases returns test cases for single gene validation
@@ -251,17 +163,21 @@ func createValidationTestCases() []struct {
 }
 
 // runSingleValidationTest executes a single validation test case
-func runSingleValidationTest(t *testing.T, client *http.Client, serverURL string, testCase struct {
-	name          string
-	record        []string
-	expectedMatch bool
-	expectedError bool
-},
+func runSingleValidationTest(
+	t *testing.T,
+	serverURL string,
+	testCase struct {
+		name          string
+		record        []string
+		expectedMatch bool
+		expectedError bool
+	},
 ) {
+	graphqlClient := graphql.NewClient(serverURL, nil)
 	params := SingleGeneValidationParams{
-		Client:     client,
-		GraphQLURL: serverURL,
-		Record:     testCase.record,
+		Client:  graphqlClient,
+		Record:  testCase.record,
+		Context: context.Background(),
 	}
 	result := validateSingleGene(params)
 
@@ -281,12 +197,9 @@ func TestValidateSingleGene(t *testing.T) {
 	server := createMockGraphQLServer()
 	defer server.Close()
 
-	client := &http.Client{Timeout: 5 * time.Second}
-	tests := createValidationTestCases()
-
-	for _, tt := range tests {
+	for _, tt := range createValidationTestCases() {
 		t.Run(tt.name, func(t *testing.T) {
-			runSingleValidationTest(t, client, server.URL, tt)
+			runSingleValidationTest(t, server.URL, tt)
 		})
 	}
 }
@@ -367,16 +280,17 @@ func createTestCSVFile(t *testing.T) string {
 
 // createIntegrationGraphQLServer creates a test server for integration tests
 func createIntegrationGraphQLServer() *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var request GraphQLRequest
-		json.NewDecoder(r.Body).Decode(&request)
+	return httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var request GraphQLRequest
+			json.NewDecoder(r.Body).Decode(&request)
 
-		geneID := request.Variables["gene"].(string)
+			geneID := request.Variables["gene"].(string)
 
-		var response string
-		switch geneID {
-		case "DDB_G0269114":
-			response = `{
+			var response string
+			switch geneID {
+			case "DDB_G0269114":
+				response = `{
 				"data": {
 					"geneGeneralInformation": {
 						"id": "DDB_G0269114",
@@ -384,8 +298,8 @@ func createIntegrationGraphQLServer() *httptest.Server {
 					}
 				}
 			}`
-		case "DDB_G0278243":
-			response = `{
+			case "DDB_G0278243":
+				response = `{
 				"data": {
 					"geneGeneralInformation": {
 						"id": "DDB_G0278243",
@@ -393,17 +307,18 @@ func createIntegrationGraphQLServer() *httptest.Server {
 					}
 				}
 			}`
-		default:
-			response = `{
+			default:
+				response = `{
 				"data": {
 					"geneGeneralInformation": null
 				}
 			}`
-		}
+			}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(response))
-	}))
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(response))
+		}),
+	)
 }
 
 // verifyValidationReport checks the generated validation report
@@ -458,7 +373,7 @@ func TestValidateGeneDataIntegration(t *testing.T) {
 	}
 
 	// Read CSV file
-	records, err := readCSVFile(csvPath)
+	records, err := readCSVFileWithValidation(csvPath)
 	require.NoError(t, err)
 
 	// Validate gene descriptions directly (bypassing CLI validation)
