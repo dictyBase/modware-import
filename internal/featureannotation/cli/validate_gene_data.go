@@ -9,13 +9,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
-	E "github.com/IBM/fp-go/either"
-	O "github.com/IBM/fp-go/option"
-	"github.com/dictyBase/modware-import/internal/collection"
 	"github.com/go-playground/validator/v10"
+	"github.com/hasura/go-graphql-client"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/sync/errgroup"
 )
@@ -50,9 +49,9 @@ type GeneValidationParams struct {
 
 // SingleGeneValidationParams contains parameters for validating a single gene
 type SingleGeneValidationParams struct {
-	Client     *http.Client
-	GraphQLURL string
-	Record     []string
+	Client  *graphql.Client
+	Record  []string
+	Context context.Context
 }
 
 // ConcurrentValidationParams contains parameters for concurrent validation
@@ -73,23 +72,48 @@ var csvConstraints = CSVFileConstraints{
 	MaxRecords:       100000,           // 100k records
 }
 
-// GraphQLResponse represents the response from the GraphQL endpoint
-type GraphQLResponse struct {
-	Data struct {
-		GeneGeneralInformation *struct {
-			ID          string `json:"id"`
-			Description string `json:"description"`
-		} `json:"geneGeneralInformation"`
-	} `json:"data"`
-	Errors []struct {
-		Message string `json:"message"`
-	} `json:"errors"`
+// GeneGeneralInformationQuery represents the GraphQL query structure for retrieving
+// gene information including ID and description fields.
+type GeneGeneralInformationQuery struct {
+	GeneGeneralInformation *struct {
+		ID          string `graphql:"id"`
+		Description string `graphql:"description"`
+	} `graphql:"geneGeneralInformation(gene: $gene)"`
 }
 
-// GraphQLRequest represents a GraphQL query request
-type GraphQLRequest struct {
-	Query     string         `json:"query"`
-	Variables map[string]any `json:"variables"`
+// GraphQLClientConfig holds configuration options for creating a GraphQL client,
+// including URL, HTTP client, and custom headers.
+type GraphQLClientConfig struct {
+	URL        string
+	HTTPClient *http.Client
+	Headers    map[string]string
+}
+
+// GraphQLClientOption is a functional option for configuring GraphQL client
+type GraphQLClientOption func(*GraphQLClientConfig)
+
+// WithHTTPClient sets the HTTP client for GraphQL operations
+func WithHTTPClient(client *http.Client) GraphQLClientOption {
+	return func(cfg *GraphQLClientConfig) {
+		cfg.HTTPClient = client
+	}
+}
+
+// WithHeaders sets custom headers for GraphQL requests
+func WithHeaders(headers map[string]string) GraphQLClientOption {
+	return func(cfg *GraphQLClientConfig) {
+		cfg.Headers = headers
+	}
+}
+
+// WithTimeout sets the timeout for HTTP requests
+func WithTimeout(timeout time.Duration) GraphQLClientOption {
+	return func(cfg *GraphQLClientConfig) {
+		if cfg.HTTPClient == nil {
+			cfg.HTTPClient = &http.Client{}
+		}
+		cfg.HTTPClient.Timeout = timeout
+	}
 }
 
 var geneValidator = validator.New()
@@ -168,13 +192,11 @@ func ValidateGeneData(c *cli.Context) error {
 		return fmt.Errorf("GraphQL URL security validation failed: %w", err)
 	}
 
-	// Read CSV file with security constraints
 	records, err := readCSVFileWithValidation(params.InputFile)
 	if err != nil {
 		return fmt.Errorf("validation process failed: %w", err)
 	}
 
-	// Validate gene descriptions with functional programming patterns
 	report, err := validateGeneDescriptionsWithFP(params, records)
 	if err != nil {
 		return fmt.Errorf("validation process failed: %w", err)
@@ -200,12 +222,8 @@ func validateGraphQLURLScheme(graphqlURL string) error {
 	return nil
 }
 
-// readCSVFile reads and parses the CSV file containing gene descriptions (legacy function)
-func readCSVFile(filePath string) ([][]string, error) {
-	return readCSVFileWithValidation(filePath)
-}
-
-// readCSVFileWithValidation reads CSV file with security constraints and validation
+// readCSVFileWithValidation reads CSV file with security constraints and
+// validation
 func readCSVFileWithValidation(filePath string) ([][]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -213,28 +231,6 @@ func readCSVFileWithValidation(filePath string) ([][]string, error) {
 	}
 	defer file.Close()
 
-	records, err := readAndValidateCSVRecordsTraditional(file)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"CSV validation failed for file %s: %w",
-			filePath,
-			err,
-		)
-	}
-
-	if len(records) == 0 {
-		return nil, fmt.Errorf("CSV file is empty")
-	}
-
-	if len(records) == 1 {
-		return nil, fmt.Errorf("CSV file contains only header row")
-	}
-
-	return records, nil
-}
-
-// readAndValidateCSVRecordsTraditional reads CSV records with size validation (traditional error handling)
-func readAndValidateCSVRecordsTraditional(file *os.File) ([][]string, error) {
 	reader := csv.NewReader(file)
 	reader.ReuseRecord = true // Memory optimization for large files
 
@@ -262,6 +258,14 @@ func readAndValidateCSVRecordsTraditional(file *os.File) ([][]string, error) {
 		}
 	}
 
+	if len(records) == 0 {
+		return nil, fmt.Errorf("CSV file is empty")
+	}
+
+	if len(records) == 1 {
+		return nil, fmt.Errorf("CSV file contains only header row")
+	}
+
 	return records, nil
 }
 
@@ -273,17 +277,19 @@ func validateGeneDescriptionsWithFP(
 	ValidationReport,
 	error,
 ) {
-	// Check if records is not empty
 	if len(records) == 0 {
 		return ValidationReport{}, fmt.Errorf("CSV file is empty")
 	}
 
-	// Skip header row using functional programming
-	dataRecords := collection.Filter(
+	// Skip header row and filter out empty records using slices.DeleteFunc
+	dataRecords := slices.DeleteFunc(
 		records[1:],
 		func(record []string) bool {
-			return len(record) > 0 // Remove empty records
-		})
+			return len(record) == 0 ||
+				(len(record) == 1 &&
+					strings.TrimSpace(record[0]) == "")
+		},
+	)
 
 	if len(dataRecords) == 0 {
 		return ValidationReport{}, fmt.Errorf(
@@ -292,7 +298,7 @@ func validateGeneDescriptionsWithFP(
 	}
 
 	// Process records concurrently with errgroup
-	results, err := processRecordsConcurrentlyTraditional(
+	results, err := processRecordsConcurrently(
 		context.Background(),
 		params,
 		dataRecords,
@@ -302,27 +308,20 @@ func validateGeneDescriptionsWithFP(
 	}
 
 	// Generate report using functional programming
-	report := generateReportWithFP(results)
+	report := generateReport(results)
 	return report, nil
 }
 
-// processRecordsConcurrentlyTraditional processes validation records using errgroup for safe concurrency
-func processRecordsConcurrentlyTraditional(
+func processRecordsConcurrently(
 	ctx context.Context,
 	params GeneValidationParams,
 	records [][]string,
 ) ([]ValidationResult, error) {
-	if len(records) == 0 {
-		return nil, fmt.Errorf(
-			"no data records to process after skipping header",
-		)
-	}
-
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(params.Workers)
 
 	results := make([]ValidationResult, len(records))
-	sharedClient := createSharedHTTPClient(params.Timeout)
+	sharedClient := graphql.NewClient(params.GraphQLURL, nil)
 
 	for i, record := range records {
 		i, record := i, record // Capture loop variables
@@ -331,12 +330,12 @@ func processRecordsConcurrentlyTraditional(
 			case <-gctx.Done():
 				return gctx.Err()
 			default:
-				validationParams := SingleGeneValidationParams{
-					Client:     sharedClient,
-					GraphQLURL: params.GraphQLURL,
-					Record:     record,
-				}
-				results[i] = validateSingleGene(validationParams)
+				results[i] = validateSingleGene(
+					SingleGeneValidationParams{
+						Client:  sharedClient,
+						Record:  record,
+						Context: gctx,
+					})
 				return nil
 			}
 		})
@@ -349,216 +348,123 @@ func processRecordsConcurrentlyTraditional(
 	return results, nil
 }
 
-// createSharedHTTPClient creates a reusable HTTP client with timeout and rate limiting
-func createSharedHTTPClient(timeoutSeconds int) *http.Client {
-	return &http.Client{
-		Timeout: time.Duration(timeoutSeconds) * time.Second,
-		Transport: &http.Transport{
-			MaxIdleConns:        10,
-			MaxIdleConnsPerHost: 10,
-			IdleConnTimeout:     30 * time.Second,
-		},
+// NewGraphQLClient creates a new GraphQL client with the given options
+func NewGraphQLClient(
+	graphqlURL string,
+	opts ...GraphQLClientOption,
+) *graphql.Client {
+	cfg := &GraphQLClientConfig{
+		URL:     graphqlURL,
+		Headers: make(map[string]string),
 	}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	// Set default HTTP client if none provided
+	if cfg.HTTPClient == nil {
+		cfg.HTTPClient = &http.Client{
+			Timeout: 30 * time.Second,
+			Transport: &http.Transport{
+				MaxIdleConns:        10,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     30 * time.Second,
+			},
+		}
+	}
+
+	client := graphql.NewClient(cfg.URL, cfg.HTTPClient)
+
+	// Add custom headers if provided
+	if len(cfg.Headers) > 0 {
+		client = client.WithRequestModifier(func(req *http.Request) {
+			for key, value := range cfg.Headers {
+				req.Header.Set(key, value)
+			}
+		})
+	}
+
+	return client
 }
 
-// validateSingleGene validates a single gene record against GraphQL endpoint (refactored to use parameter struct)
+// validateSingleGene validates a single gene record against GraphQL endpoint
 func validateSingleGene(params SingleGeneValidationParams) ValidationResult {
-	recordOpt := validateRecordStructure(params.Record)
-
-	return O.Fold(
-		func() ValidationResult {
-			return ValidationResult{
-				GeneID: safeGetGeneID(params.Record),
-				Error:  "CSV record validation failed",
-			}
-		},
-		func(geneData struct{ geneID, csvDesc string }) ValidationResult {
-			queryResult := queryGraphQL(
-				params.Client,
-				params.GraphQLURL,
-				geneData.geneID,
-			)
-			return E.Fold(
-				func(err error) ValidationResult {
-					return ValidationResult{
-						GeneID:         geneData.geneID,
-						CSVDescription: geneData.csvDesc,
-						Error:          err.Error(),
-					}
-				},
-				func(gqlDescription string) ValidationResult {
-					match := strings.EqualFold(
-						strings.TrimSpace(geneData.csvDesc),
-						strings.TrimSpace(gqlDescription),
-					)
-					return ValidationResult{
-						GeneID:         geneData.geneID,
-						CSVDescription: geneData.csvDesc,
-						GQLDescription: gqlDescription,
-						Match:          match,
-					}
-				},
-			)(queryResult)
-		},
-	)(recordOpt)
-}
-
-// validateRecordStructure validates CSV record structure and extracts gene data
-func validateRecordStructure(
-	record []string,
-) O.Option[struct{ geneID, csvDesc string }] {
-	if len(record) < 2 {
-		return O.None[struct{ geneID, csvDesc string }]()
+	if len(params.Record) < 2 {
+		geneID := ""
+		if len(params.Record) > 0 {
+			geneID = params.Record[0]
+		}
+		return ValidationResult{
+			GeneID: geneID,
+			Error:  "invalid record: insufficient columns (expected at least 2)",
+		}
 	}
 
-	geneID := strings.TrimSpace(record[0])
-	csvDescription := strings.TrimSpace(record[1])
+	geneID := params.Record[0]
+	csvDesc := params.Record[1]
 
-	if geneID == "" {
-		return O.None[struct{ geneID, csvDesc string }]()
-	}
-
-	return O.Some(struct{ geneID, csvDesc string }{
-		geneID:  geneID,
-		csvDesc: csvDescription,
-	})
-}
-
-// safeGetGeneID safely extracts gene ID from record
-func safeGetGeneID(record []string) string {
-	if len(record) > 0 {
-		return strings.TrimSpace(record[0])
-	}
-	return ""
-}
-
-// queryGraphQL queries the GraphQL endpoint for gene information using Either monad
-func queryGraphQL(
-	client *http.Client,
-	graphqlURL, geneID string,
-) E.Either[error, string] {
-	// Use a traditional approach to handle HTTP response properly
-	result, err := queryGraphQLTraditional(client, graphqlURL, geneID)
-	if err != nil {
-		return E.Left[string](
-			fmt.Errorf("GraphQL query failed for gene %s: %w", geneID, err),
-		)
-	}
-	return E.Right[error](result)
-}
-
-// queryGraphQLTraditional queries GraphQL using traditional error handling for proper resource management
-func queryGraphQLTraditional(
-	client *http.Client,
-	graphqlURL, geneID string,
-) (string, error) {
-	request := GraphQLRequest{
-		Query: `
-			query GeneGeneralInformationSummary($gene: String!) {
-				geneGeneralInformation(gene: $gene) {
-					id
-					description
-				}
-			}
-		`,
-		Variables: map[string]any{
-			"gene": geneID,
-		},
-	}
-
-	jsonData, err := json.Marshal(request)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal GraphQL request: %w", err)
-	}
-
-	resp, err := client.Post(
-		graphqlURL,
-		"application/json",
-		strings.NewReader(string(jsonData)),
+	// Query GraphQL for gene description
+	var query GeneGeneralInformationQuery
+	err := params.Client.Query(
+		params.Context,
+		&query,
+		map[string]any{"gene": geneID},
 	)
 	if err != nil {
-		return "", fmt.Errorf("failed to make GraphQL request: %w", err)
+		return ValidationResult{
+			GeneID:         geneID,
+			CSVDescription: csvDesc,
+			Error: fmt.Errorf("failed to execute GraphQL query: %w", err).
+				Error(),
+		}
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf(
-			"GraphQL request failed with status: %d",
-			resp.StatusCode,
-		)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var response GraphQLResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return "", fmt.Errorf("failed to parse GraphQL response: %w", err)
+	if query.GeneGeneralInformation == nil {
+		return ValidationResult{
+			GeneID:         geneID,
+			CSVDescription: csvDesc,
+			Error:          fmt.Sprintf("gene not found: %s", geneID),
+		}
 	}
 
-	if len(response.Errors) > 0 {
-		return "", fmt.Errorf("GraphQL errors: %s", response.Errors[0].Message)
-	}
-
-	if response.Data.GeneGeneralInformation == nil {
-		return "", fmt.Errorf("gene not found")
-	}
-
-	return response.Data.GeneGeneralInformation.Description, nil
-}
-
-// generateReportWithFP creates a validation report using functional programming patterns
-func generateReportWithFP(results []ValidationResult) ValidationReport {
-	return collection.Pipe2(
-		results,
-		calculateReportCountsWithFP,
-		func(counts ReportCounts) ValidationReport {
-			return ValidationReport{
-				TotalGenes:    len(results),
-				MatchCount:    counts.MatchCount,
-				MismatchCount: counts.MismatchCount,
-				ErrorCount:    counts.ErrorCount,
-				Results:       results,
-				GeneratedAt:   time.Now(),
-			}
-		},
+	gqlDescription := strings.TrimSpace(
+		query.GeneGeneralInformation.Description,
 	)
+
+	return ValidationResult{
+		GeneID:         geneID,
+		CSVDescription: csvDesc,
+		GQLDescription: gqlDescription,
+		Match: strings.EqualFold(
+			csvDesc,
+			gqlDescription,
+		),
+	}
 }
 
-// generateReport creates a validation report from the results using functional composition (backward compatibility)
+// generateReport creates a validation report from the results
 func generateReport(results []ValidationResult) ValidationReport {
-	return generateReportWithFP(results)
-}
+	var matchCount, mismatchCount, errorCount int
 
-// ReportCounts holds the count statistics for a validation report
-type ReportCounts struct {
-	MatchCount    int
-	MismatchCount int
-	ErrorCount    int
-}
+	for _, result := range results {
+		switch {
+		case result.Error != "":
+			errorCount++
+		case result.Match:
+			matchCount++
+		default:
+			mismatchCount++
+		}
+	}
 
-// calculateReportCountsWithFP calculates statistics using functional programming patterns
-func calculateReportCountsWithFP(results []ValidationResult) ReportCounts {
-	matchCount := len(collection.Filter(results, func(r ValidationResult) bool {
-		return r.Error == "" && r.Match
-	}))
-
-	errorCount := len(collection.Filter(results, func(r ValidationResult) bool {
-		return r.Error != ""
-	}))
-
-	mismatchCount := len(
-		collection.Filter(results, func(r ValidationResult) bool {
-			return r.Error == "" && !r.Match
-		}),
-	)
-
-	return ReportCounts{
+	return ValidationReport{
+		TotalGenes:    len(results),
 		MatchCount:    matchCount,
 		MismatchCount: mismatchCount,
 		ErrorCount:    errorCount,
+		Results:       results,
+		GeneratedAt:   time.Now(),
 	}
 }
 
@@ -611,22 +517,24 @@ func calculatePercentage(numerator, denominator int) float64 {
 	return float64(numerator) / float64(denominator) * 100
 }
 
-// printMismatchExamples prints the first few mismatches using functional programming
+// printMismatchExamples prints the first few mismatches
 func printMismatchExamples(results []ValidationResult) {
-	mismatchResults := collection.Filter(
-		results,
-		func(r ValidationResult) bool {
-			return !r.Match && r.Error == ""
-		},
-	)
+	var mismatches []ValidationResult
+	for _, result := range results {
+		if !result.Match && result.Error == "" {
+			mismatches = append(mismatches, result)
+		}
+	}
 
-	// Take first 3 mismatches
-	exampleCount := min(len(mismatchResults), 3)
+	maxExamples := min(len(mismatches), 3)
+	if maxExamples == 0 {
+		return
+	}
+	examples := mismatches[:maxExamples]
 
-	if exampleCount > 0 {
+	if len(examples) > 0 {
 		fmt.Printf("First few mismatches:\n")
-		for i := range exampleCount {
-			result := mismatchResults[i]
+		for _, result := range examples {
 			fmt.Printf("  Gene: %s\n", result.GeneID)
 			fmt.Printf(
 				"    CSV: %s\n",
@@ -646,69 +554,4 @@ func truncateString(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen-3] + "..."
-}
-
-// Backward compatibility functions for tests
-
-// queryGraphQLBackwardCompat provides backward compatibility for tests
-func queryGraphQLBackwardCompat(
-	client *http.Client,
-	graphqlURL, geneID string,
-) (string, error) {
-	// Use traditional approach for simplicity in tests
-	request := GraphQLRequest{
-		Query: `
-			query GeneGeneralInformationSummary($gene: String!) {
-				geneGeneralInformation(gene: $gene) {
-					id
-					description
-				}
-			}
-		`,
-		Variables: map[string]any{
-			"gene": geneID,
-		},
-	}
-
-	jsonData, err := json.Marshal(request)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal GraphQL request: %w", err)
-	}
-
-	resp, err := client.Post(
-		graphqlURL,
-		"application/json",
-		strings.NewReader(string(jsonData)),
-	)
-	if err != nil {
-		return "", fmt.Errorf("failed to make GraphQL request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf(
-			"GraphQL request failed with status: %d",
-			resp.StatusCode,
-		)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var response GraphQLResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return "", fmt.Errorf("failed to parse GraphQL response: %w", err)
-	}
-
-	if len(response.Errors) > 0 {
-		return "", fmt.Errorf("GraphQL errors: %s", response.Errors[0].Message)
-	}
-
-	if response.Data.GeneGeneralInformation == nil {
-		return "", fmt.Errorf("gene not found: %s", geneID)
-	}
-
-	return response.Data.GeneGeneralInformation.Description, nil
 }
