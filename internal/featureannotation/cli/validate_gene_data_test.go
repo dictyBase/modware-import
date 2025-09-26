@@ -3,16 +3,13 @@ package cli
 import (
 	"encoding/csv"
 	"encoding/json"
-	"flag"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/urfave/cli/v2"
 )
 
 func TestValidateFileExists(t *testing.T) {
@@ -259,7 +256,8 @@ func runSingleValidationTest(t *testing.T, client *http.Client, serverURL string
 	record        []string
 	expectedMatch bool
 	expectedError bool
-}) {
+},
+) {
 	params := SingleGeneValidationParams{
 		Client:     client,
 		GraphQLURL: serverURL,
@@ -406,27 +404,6 @@ func createIntegrationGraphQLServer() *httptest.Server {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(response))
 	}))
-}
-
-// setupCLIContext creates a CLI context for testing
-func setupCLIContext(csvPath, reportPath, serverURL string) *cli.Context {
-	flagSet := flag.NewFlagSet("test", flag.ContinueOnError)
-	flagSet.String("input", csvPath, "")
-	flagSet.String("output-report", reportPath, "")
-
-	// Use https URL for production test or allow http for test
-	if strings.HasPrefix(serverURL, "http://") {
-		// For tests, use a valid HTTPS URL but override validation in tests
-		flagSet.String("graphql-url", "https://graphql.dictybase.dev/graphql", "")
-	} else {
-		flagSet.String("graphql-url", serverURL, "")
-	}
-
-	flagSet.Int("timeout", 10, "")
-	flagSet.Int("workers", 2, "")
-
-	app := &cli.App{}
-	return cli.NewContext(app, flagSet, nil)
 }
 
 // verifyValidationReport checks the generated validation report
