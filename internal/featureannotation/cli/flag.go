@@ -300,3 +300,37 @@ func ParseUnknowmeDataFlags() []cli.Flag {
 		},
 	}
 }
+
+// ValidateGeneDataFlags returns flags for the gene data validation command.
+// Enhanced with security validations and constraints for file size and URL schemes.
+func ValidateGeneDataFlags() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:     "input",
+			Aliases:  []string{"i"},
+			Usage:    "input CSV file with gene descriptions (must exist, be readable, and under 50MB)",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:    "output-report",
+			Aliases: []string{"o"},
+			Usage:   "output JSON file for validation report (must end with .json)",
+			Value:   "gene_validation_report.json",
+		},
+		&cli.StringFlag{
+			Name:  "graphql-url",
+			Usage: "GraphQL endpoint URL (must use HTTPS for security)",
+			Value: "https://graphql.dictybase.dev/graphql",
+		},
+		&cli.IntFlag{
+			Name:  "timeout",
+			Usage: "timeout in seconds for GraphQL requests (10-300 seconds)",
+			Value: 30,
+		},
+		&cli.IntFlag{
+			Name:  "workers",
+			Usage: "number of concurrent workers for validation (1-20 workers)",
+			Value: 5,
+		},
+	}
+}
