@@ -54,6 +54,7 @@ require (
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
+	github.com/hasura/go-graphql-client v0.14.4
 	github.com/jedib0t/go-pretty/v6 v6.6.8
 	github.com/jellydator/ttlcache/v3 v3.4.0
 	github.com/pkg/errors v0.9.1
@@ -78,6 +79,7 @@ require (
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
+	github.com/coder/websocket v1.8.13 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
