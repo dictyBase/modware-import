@@ -130,7 +130,9 @@
           T "github.com/IBM/fp-go/tuple"
           S "github.com/IBM/fp-go/string"
           J "github.com/IBM/fp-go/json"
+          IOE "github.com/IBM/fp-go/ioeither"
           H "github.com/IBM/fp-go/context/readerioeither/http"
+          "github.com/IBM/fp-go/ioeither/file"
       )
       ```
 
@@ -359,6 +361,117 @@
                 E.MapLeft[Output](func(err error) error {
                     return fmt.Errorf("workflow failed: %w", err)
                 }),
+            )
+        }
+        ```
+
+      - **IOEither for I/O and Side Effects**
+        ```go
+        import (
+            IOE "github.com/IBM/fp-go/ioeither"
+            "github.com/IBM/fp-go/ioeither/file"
+        )
+
+        // IOEither represents a computation that performs I/O and may fail
+        // It's a function type: func() Either[error, T]
+        // Use IOEither for file I/O, network calls, and other side effects
+
+        // Convert Go functions returning (T, error) to IOEither using Eitherize
+        // Eitherize1 for functions with 1 parameter: func(A) (B, error)
+        // Eitherize2 for functions with 2 parameters: func(A, B) (C, error)
+
+        // Example: Converting csv.Reader.ReadAll to IOEither
+        func csvReadAll(f *os.File) ([][]string, error) {
+            defer f.Close()
+            r := csv.NewReader(f)
+            records, err := r.ReadAll()
+            if err != nil {
+                return nil, fmt.Errorf("failed to read CSV data: %w", err)
+            }
+            return records, nil
+        }
+
+        // Convert to IOEither using point-free style with Eitherize1
+        var readCsvRecords = IOE.Eitherize1(csvReadAll)
+
+        // Execute IOEither to get Either result
+        func ToEither[A any](ioe IOE.IOEither[error, A]) E.Either[error, A] {
+            return ioe()
+        }
+
+        // File I/O with IOEither and functional composition
+        func readCsvFile(filePath string) E.Either[error, [][]string] {
+            return F.Pipe2(
+                file.Open(filePath),           // IOEither[error, *os.File]
+                IOE.Chain(readCsvRecords),     // Chain another IOEither operation
+                ToEither,                       // Execute to get Either result
+            )
+        }
+
+        // Curried functions with IOEither for CLI handlers
+        var processFileAction = F.Curry2(
+            func(config *Config, fileName string) error {
+                return F.Pipe3(
+                    fileName,
+                    createParams(config),      // String -> Either[error, Params]
+                    E.Chain(readCsvFile),      // Either -> Either chaining
+                    E.Fold(                    // Handle Either result
+                        func(err error) error {
+                            return fmt.Errorf("processing failed: %w", err)
+                        },
+                        processRecords,        // Success handler
+                    ),
+                )
+            },
+        )
+
+        // Complex I/O pipeline with validation and processing
+        func processDataFile(params FileParams) E.Either[error, ProcessedData] {
+            return F.Pipe4(
+                E.Right[error](params),
+                validateParams,                          // Either[error, Params]
+                E.Chain(func(p FileParams) E.Either[error, [][]string] {
+                    return F.Pipe2(
+                        file.Open(p.FilePath),          // IOEither for file open
+                        IOE.Chain(readAndParseFile),    // Chain I/O operations
+                        ToEither,                        // Execute IOEither
+                    )
+                }),
+                E.Map[error](transformRecords),          // Transform data
+                E.Map[error](aggregateResults),          // Further processing
+            )
+        }
+
+        // Point-free composition with IOEither
+        var readConfigFile = F.Flow2(
+            file.Open,                                   // string -> IOEither[error, *os.File]
+            IOE.Chain(IOE.Eitherize1(parseConfig)),     // Chain parsing operation
+        )
+
+        // Multiple IOEither operations in sequence
+        func setupApplication() E.Either[error, App] {
+            return F.Pipe5(
+                file.Open("config.json"),
+                IOE.Chain(IOE.Eitherize1(readConfig)),
+                IOE.Chain(func(cfg Config) IOE.IOEither[error, Database] {
+                    return IOE.Eitherize1(connectDatabase)(cfg.DBUrl)
+                }),
+                IOE.Map[error](func(db Database) App {
+                    return App{DB: db}
+                }),
+                ToEither,
+            )
+        }
+
+        // Error handling with IOEither and MapLeft
+        func safeFileRead(path string) E.Either[error, string] {
+            return F.Pipe3(
+                file.Open(path),
+                IOE.Chain(IOE.Eitherize1(io.ReadAll)),
+                IOE.MapLeft[[]byte](func(err error) error {
+                    return fmt.Errorf("failed to read file %s: %w", path, err)
+                }),
+                ToEither,
             )
         }
         ```
