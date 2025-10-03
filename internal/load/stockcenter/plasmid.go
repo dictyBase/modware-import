@@ -99,9 +99,6 @@ func processNextPlasmid(
 
 	exists, err := plasmidExists(client, plasmid.Id)
 	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return createPlasmid(client, logger, plasmid)
-		}
 		return fmt.Errorf("error in finding plasmid %s %s", plasmid.Id, err)
 	}
 
@@ -109,7 +106,7 @@ func processNextPlasmid(
 		return updatePlasmid(client, logger, plasmid)
 	}
 
-	return nil
+	return createPlasmid(client, logger, plasmid)
 }
 
 func plasmidExists(client pb.StockServiceClient, id string) (bool, error) {
