@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	logLevel = "info"
+	logLevel = "debug"
 )
 
 // LoadPlasmid load all plasmid and related data
