@@ -334,3 +334,24 @@ func ValidateGeneDataFlags() []cli.Flag {
 		},
 	}
 }
+
+// LoadHypotheticalGeneProductsFlags returns flags for loading hypothetical gene products from a text file.
+// It combines input file flag, user flag, and gRPC connection flags.
+func LoadHypotheticalGeneProductsFlags() []cli.Flag {
+	return slices.Concat(
+		[]cli.Flag{
+			&cli.StringFlag{
+				Name:     "input",
+				Aliases:  []string{"i"},
+				Usage:    "input text file with gene IDs (one per line, must exist and be readable)",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "user",
+				Usage:    "email address of the user running the load",
+				Required: true,
+			},
+		},
+		featureAnnotationGrpcFlags(),
+	)
+}

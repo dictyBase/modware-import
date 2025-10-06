@@ -112,5 +112,12 @@ func allCommands() []*cli.Command {
 			Flags:  facli.ValidateGeneDataFlags(),
 			Action: facli.ValidateGeneData,
 		},
+		{
+			Name:   "load-hypothetical-gene-products",
+			Usage:  "Load hypothetical gene products from a text file containing gene IDs",
+			Flags:  facli.LoadHypotheticalGeneProductsFlags(),
+			Before: faclient.GeneProductCsvCliSetup,
+			Action: facli.LoadHypotheticalGeneProducts,
+		},
 	}
 }
