@@ -421,12 +421,11 @@ var handleProcessingSuccess = F.Curry2(
 // LoadHypotheticalGeneProducts is the main action handler for the command
 func LoadHypotheticalGeneProducts(c *cli.Context) error {
 	logger := registry.GetLogger()
-	client := registry.GetFeatureAnnotationAPIClient()
 	configProcessesor := createProcessingConfig(
 		&LoadHypotheticalGeneProductsParams{
+			Client: registry.GetFeatureAnnotationAPIClient(),
 			User:   c.String("user"),
 			Logger: logger,
-			Client: client,
 		},
 	)
 
