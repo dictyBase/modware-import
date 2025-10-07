@@ -1,12 +1,33 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
+	E "github.com/IBM/fp-go/either"
 	"github.com/stretchr/testify/require"
 )
+
+// eitherToTuple converts an Either to a (value, error) tuple
+// Test helper for asserting Either results
+func eitherToTuple[A any](either E.Either[error, A]) (A, error) {
+	var zero A
+	if E.IsLeft(either) {
+		// Extract error from Left side
+		leftEither := E.Swap(either)
+		err := E.GetOrElse(
+			func(A) error { return fmt.Errorf("unknown error") },
+		)(
+			leftEither,
+		)
+		return zero, err
+	}
+	// Extract value from Right side
+	value := E.GetOrElse(func(error) A { return zero })(either)
+	return value, nil
+}
 
 func TestReadGeneIDsFromFile(t *testing.T) {
 	tests := []struct {
@@ -45,20 +66,20 @@ DDB_G0276393`,
 		{
 			name:        "gene IDs with BOM and whitespace",
 			fileContent: "\ufeffDDB_G0288781\n  DDB_G0276393  \n\tDDB_G0274173\t",
-			expected:    []string{"\ufeffDDB_G0288781", "DDB_G0276393", "DDB_G0274173"},
+			expected:    []string{"DDB_G0288781", "DDB_G0276393", "DDB_G0274173"},
 			shouldError: false,
 		},
 		{
 			name:        "empty file",
 			fileContent: "",
-			expected:    nil,
-			shouldError: true,
+			expected:    []string{},
+			shouldError: false,
 		},
 		{
 			name:        "only comments and empty lines",
 			fileContent: "# Comment\n\n# Another comment\n",
-			expected:    nil,
-			shouldError: true,
+			expected:    []string{},
+			shouldError: false,
 		},
 	}
 
