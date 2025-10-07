@@ -84,11 +84,48 @@ type ProcessingConfig struct {
 	Client  feature.FeatureAnnotationServiceClient
 }
 
-// HypotheticalGeneProcessingResult represents the result of processing gene IDs
-type HypotheticalGeneProcessingResult struct {
-	Processed int
-	Skipped   int
-	Errors    int
+// GeneProcessingAction represents the action taken for a gene
+type GeneProcessingAction int
+
+const (
+	// GeneCreated indicates a new annotation was created
+	GeneCreated GeneProcessingAction = iota
+	// GeneUpdated indicates a product tag was added to existing annotation
+	GeneUpdated
+	// GeneSkipped indicates the annotation already had the product tag
+	GeneSkipped
+)
+
+// GeneProcessingResult represents successful processing of a single gene
+type GeneProcessingResult struct {
+	GeneID string
+	Action GeneProcessingAction
+}
+
+// ProcessingStats holds aggregate processing statistics
+type ProcessingStats struct {
+	Created int
+	Updated int
+	Skipped int
+	Total   int
+}
+
+// GeneProcessingContext holds initial processing context
+type GeneProcessingContext struct {
+	Config ProcessingConfig
+	GeneID string
+}
+
+// WithAnnotation holds context with fetched annotation
+type WithAnnotation struct {
+	GeneProcessingContext
+	Annotation O.Option[*pb.FeatureAnnotation]
+}
+
+// WithAction holds context with determined action
+type WithAction struct {
+	WithAnnotation
+	Action GeneProcessingAction
 }
 
 // readGeneIDsFromFile reads gene IDs from a text file using IOEither
@@ -122,273 +159,261 @@ var createProcessingConfig = F.Curry2(
 	},
 )
 
-// processGeneID processes a single gene ID using the feature annotation API
-// Uses F.Curry2 for proper currying and accepts ProcessingConfig
-var processGeneID = F.Curry2(
-	func(config ProcessingConfig, geneID string) E.Either[error, string] {
-		ctx := context.Background()
-
-		// Try to get existing annotation
-		existing, err := config.Client.GetFeatureAnnotation(
-			ctx,
-			&pb.FeatureAnnotationId{Id: geneID},
-		)
-		if err != nil {
-			return handleNewGeneProduct(config)(geneID)(err)
+// setAnnotation is a setter for Do notation that adds annotation to context
+var setAnnotation = F.Curry2(
+	func(ann O.Option[*pb.FeatureAnnotation], ctx GeneProcessingContext) WithAnnotation {
+		return WithAnnotation{
+			GeneProcessingContext: ctx,
+			Annotation:            ann,
 		}
-
-		return handleExistingGeneProduct(config)(geneID)(existing)
 	},
 )
 
-// hasHypotheticalProduct checks if a tag property is the hypothetical protein product
-var hasHypotheticalProduct = func(tag *pb.TagProperty) bool {
+// setAction is a setter for Do notation that adds action to context
+var setAction = F.Curry2(
+	func(action GeneProcessingAction, ctx WithAnnotation) WithAction {
+		return WithAction{
+			WithAnnotation: ctx,
+			Action:         action,
+		}
+	},
+)
+
+// isNotFoundError checks if error is gRPC NotFound
+var isNotFoundError = func(err error) bool {
+	return status.Code(err) == codes.NotFound
+}
+
+// isHypotheticalProductTag checks if a tag property is the hypothetical protein product
+var isHypotheticalProductTag = func(tag *pb.TagProperty) bool {
 	return tag.Tag == "product" && tag.Value == HypotheticalProteinProduct
 }
 
-// handleExistingGeneProduct handles the case where the gene annotation already exists
-// Uses F.Curry3 for proper currying and accepts ProcessingConfig
-var handleExistingGeneProduct = F.Curry3(
-	func(
-		config ProcessingConfig,
-		geneID string,
-		existing *pb.FeatureAnnotation,
-	) E.Either[error, string] {
-		// Check if the hypothetical protein product already exists using functional pattern
-		productExists := F.Pipe2(
-			existing.Attributes.Properties,
-			A.FindFirst(hasHypotheticalProduct),
-			O.IsSome[*pb.TagProperty],
-		)
+// convertGrpcResultToOption converts gRPC (result, error) tuple to (Option, error)
+// Handles three cases: success, NotFound, and other errors
+var convertGrpcResultToOption = func(
+	geneID string,
+	result *pb.FeatureAnnotation,
+	err error,
+) (O.Option[*pb.FeatureAnnotation], error) {
+	if err == nil {
+		return O.Some(result), nil
+	}
 
-		if productExists {
-			config.Logger.Debugf(
-				"gene product '%s' already exists for %s, skipping",
-				HypotheticalProteinProduct,
-				geneID,
+	if isNotFoundError(err) {
+		return O.None[*pb.FeatureAnnotation](), nil
+	}
+
+	return O.None[*pb.FeatureAnnotation](),
+		fmt.Errorf("failed to fetch annotation for %s: %w", geneID, err)
+}
+
+// fetchAnnotationIO fetches annotation using TryCatchError
+// Returns IOEither[error, Option[Annotation]]
+var fetchAnnotationIO = F.Curry2(
+	func(config ProcessingConfig, geneID string) IOE.IOEither[error, O.Option[*pb.FeatureAnnotation]] {
+		return IOE.TryCatchError(func() (O.Option[*pb.FeatureAnnotation], error) {
+			ctx := context.Background()
+			result, err := config.Client.GetFeatureAnnotation(
+				ctx, &pb.FeatureAnnotationId{Id: geneID},
 			)
-			return E.Right[error](fmt.Sprintf("skipped:%s", geneID))
-		}
-
-		// Add the hypothetical protein product tag
-		ctx := context.Background()
-		updated, err := config.Client.AddTag(ctx, &pb.AddTagRequest{
-			Id: geneID,
-			Tag: &pb.TagPropertyCreate{
-				Tag:       "product",
-				Value:     HypotheticalProteinProduct,
-				CreatedBy: config.User,
-				CreatedAt: timestamppb.Now(),
-			},
+			return convertGrpcResultToOption(geneID, result, err)
 		})
-		if err != nil {
-			return E.Left[string](
-				fmt.Errorf("failed to add tag for %s: %w", geneID, err),
-			)
-		}
-
-		config.Logger.Debugf(
-			"successfully added gene product for %s",
-			updated.Id,
-		)
-		return E.Right[error](fmt.Sprintf("updated:%s", geneID))
 	},
 )
 
-// handleNewGeneProduct handles the case where the gene annotation doesn't exist
-// Uses F.Curry3 for proper currying and accepts ProcessingConfig
-var handleNewGeneProduct = F.Curry3(
-	func(
-		config ProcessingConfig,
-		geneID string,
-		grpcErr error,
-	) E.Either[error, string] {
-		if status.Code(grpcErr) != codes.NotFound {
-			return E.Left[string](
-				fmt.Errorf(
-					"error finding feature annotation for %s: %w",
-					geneID,
-					grpcErr,
-				),
-			)
-		}
+// createAnnotationWithProductIO creates annotation with hypothetical product
+var createAnnotationWithProductIO = F.Curry2(
+	func(config ProcessingConfig, geneID string) IOE.IOEither[error, GeneProcessingAction] {
+		return IOE.TryCatchError(func() (GeneProcessingAction, error) {
+			ctx := context.Background()
+			nfa := &pb.NewFeatureAnnotation{
+				Id:        geneID,
+				CreatedBy: config.User,
+				CreatedAt: timestamppb.Now(),
+				Attributes: &pb.FeatureAnnotationAttributes{
+					Name: geneID,
+					Properties: []*pb.TagProperty{{
+						Tag:       "product",
+						Value:     HypotheticalProteinProduct,
+						CreatedBy: config.User,
+						CreatedAt: timestamppb.Now(),
+					}},
+				},
+			}
 
-		// Create new feature annotation with hypothetical protein product
-		nfa := &pb.NewFeatureAnnotation{
-			Id:        geneID,
-			CreatedBy: config.User,
-			CreatedAt: timestamppb.Now(),
-			Attributes: &pb.FeatureAnnotationAttributes{
-				Name: geneID,
-				Properties: []*pb.TagProperty{{
+			_, err := config.Client.CreateFeatureAnnotation(ctx, nfa)
+			if err != nil {
+				return 0,
+					fmt.Errorf("failed to create annotation for %s: %w", geneID, err)
+			}
+
+			return GeneCreated, nil
+		})
+	},
+)
+
+// addProductTagIO adds product tag to existing annotation
+var addProductTagIO = F.Curry2(
+	func(config ProcessingConfig, geneID string) IOE.IOEither[error, GeneProcessingAction] {
+		return IOE.TryCatchError(func() (GeneProcessingAction, error) {
+			ctx := context.Background()
+			_, err := config.Client.AddTag(ctx, &pb.AddTagRequest{
+				Id: geneID,
+				Tag: &pb.TagPropertyCreate{
 					Tag:       "product",
 					Value:     HypotheticalProteinProduct,
 					CreatedBy: config.User,
 					CreatedAt: timestamppb.Now(),
-				}},
-			},
-		}
+				},
+			})
+			if err != nil {
+				return 0,
+					fmt.Errorf("failed to add tag for %s: %w", geneID, err)
+			}
 
-		ctx := context.Background()
-		created, err := config.Client.CreateFeatureAnnotation(ctx, nfa)
-		if err != nil {
-			return E.Left[string](
-				fmt.Errorf(
-					"failed to create annotation for %s: %w",
-					geneID,
-					err,
+			return GeneUpdated, nil
+		})
+	},
+)
+
+// returnSkippedAction returns GeneSkipped action (used in Fold)
+var returnSkippedAction = func(*pb.TagProperty) IOE.IOEither[error, GeneProcessingAction] {
+	return IOE.Of[error](GeneSkipped)
+}
+
+// handleProductNotFound handles product not found case
+var handleProductNotFound = F.Curry2(
+	func(config ProcessingConfig, geneID string) func() IOE.IOEither[error, GeneProcessingAction] {
+		return func() IOE.IOEither[error, GeneProcessingAction] {
+			return addProductTagIO(config)(geneID)
+		}
+	},
+)
+
+// getActionForExistingAnnotation checks if annotation has hypothetical product and returns action
+var getActionForExistingAnnotation = F.Curry2(
+	func(config ProcessingConfig, geneID string) func(*pb.FeatureAnnotation) IOE.IOEither[error, GeneProcessingAction] {
+		return func(ann *pb.FeatureAnnotation) IOE.IOEither[error, GeneProcessingAction] {
+			return F.Pipe2(
+				ann.Attributes.Properties,
+				A.FindFirst(isHypotheticalProductTag),
+				O.Fold(
+					handleProductNotFound(config)(geneID),
+					returnSkippedAction,
 				),
 			)
 		}
-
-		config.Logger.Debugf("created new feature annotation %s", created.Id)
-		return E.Right[error](fmt.Sprintf("created:%s", geneID))
 	},
 )
 
-// ProcessingOutcome represents the outcome of processing a single gene
-type ProcessingOutcome struct {
-	GeneID    string
-	Status    string // "created", "updated", "skipped", or "error"
-	ErrorInfo O.Option[error]
-}
-
-// parseStatusFromMessage extracts the status from a result message
-var parseStatusFromMessage = func(msg string) string {
-	switch {
-	case strings.HasPrefix(msg, "skipped:"):
-		return "skipped"
-	case strings.HasPrefix(msg, "created:"):
-		return "created"
-	default:
-		return "updated"
-	}
-}
-
-// createSuccessOutcome creates a successful processing outcome from a message
-var createSuccessOutcome = F.Curry2(
-	func(geneID string, msg string) ProcessingOutcome {
-		return ProcessingOutcome{
-			GeneID:    geneID,
-			Status:    parseStatusFromMessage(msg),
-			ErrorInfo: O.None[error](),
+// handleAnnotationNotFound handles annotation not found case
+var handleAnnotationNotFound = F.Curry2(
+	func(config ProcessingConfig, geneID string) func() IOE.IOEither[error, GeneProcessingAction] {
+		return func() IOE.IOEither[error, GeneProcessingAction] {
+			return createAnnotationWithProductIO(config)(geneID)
 		}
 	},
 )
 
-// createErrorOutcome creates an error processing outcome
-var createErrorOutcome = F.Curry2(
-	func(geneID string, err error) ProcessingOutcome {
-		return ProcessingOutcome{
-			GeneID:    geneID,
-			Status:    "error",
-			ErrorInfo: O.Some(err),
-		}
-	},
-)
-
-// logGeneError logs an error for a specific gene ID
-var logGeneError = F.Curry3(
-	func(logger *logrus.Entry, geneID string, err error) error {
-		logger.WithFields(logrus.Fields{
-			"gene-id": geneID,
-			"error":   err,
-		}).Error("error processing gene ID")
-		return err
-	},
-)
-
-// processGeneWithResultIO processes a gene and returns the outcome
-// Uses F.Curry2 for currying and accepts ProcessingConfig
-var processGeneWithResultIO = F.Curry2(
-	func(config ProcessingConfig, geneID string) ProcessingOutcome {
-		processor := processGeneID(config)
-
-		onError := F.Flow2(
-			logGeneError(config.Logger)(geneID),
-			createErrorOutcome(geneID),
-		)
-
+// ensureHypotheticalProductIO ensures hypothetical product exists
+var ensureHypotheticalProductIO = F.Curry2(
+	func(config ProcessingConfig, ctx WithAnnotation) IOE.IOEither[error, GeneProcessingAction] {
 		return F.Pipe1(
-			processor(geneID),
-			E.Fold(
-				onError,
-				createSuccessOutcome(geneID),
+			ctx.Annotation,
+			O.Fold(
+				handleAnnotationNotFound(config)(ctx.GeneID),
+				getActionForExistingAnnotation(config)(ctx.GeneID),
 			),
 		)
 	},
 )
 
-// countByStatus counts outcomes by status type
-var countByStatus = F.Curry2(
-	func(status string, outcomes []ProcessingOutcome) int {
-		return F.Pipe2(
-			outcomes,
-			A.Filter(
-				func(o ProcessingOutcome) bool { return o.Status == status },
-			),
-			func(filtered []ProcessingOutcome) int { return len(filtered) },
-		)
-	},
-)
-
-// logProgress logs progress for a batch of outcomes
-// Uses F.Curry2 for currying and accepts ProcessingConfig
-var logProgress = F.Curry2(
-	func(
-		config ProcessingConfig,
-		total int,
-	) func(int, ProcessingOutcome) ProcessingOutcome {
-		return func(idx int, outcome ProcessingOutcome) ProcessingOutcome {
-			// Log progress every 50 genes
-			if (idx+1)%50 == 0 {
-				config.Logger.Infof(
-					"processed %d/%d gene IDs",
-					idx+1,
-					total,
-				)
-			}
-			return outcome
+// createInitialContext creates initial processing context
+var createInitialContext = F.Curry2(
+	func(config ProcessingConfig, geneID string) GeneProcessingContext {
+		return GeneProcessingContext{
+			Config: config,
+			GeneID: geneID,
 		}
 	},
 )
 
-// processGeneIDsIO processes all gene IDs and returns a processing result
-// Returns IOEither to make I/O effects explicit in the type system
-// Uses functional patterns: Map, Filter, and reduce operations
-func processGeneIDsIO(
-	config ProcessingConfig,
-) IOE.IOEither[error, HypotheticalGeneProcessingResult] {
-	return func() E.Either[error, HypotheticalGeneProcessingResult] {
-		config.Logger.Infof("found %d gene IDs to process", len(config.GeneIDs))
+// fetchAnnotationForContext fetches annotation for context
+var fetchAnnotationForContext = func(ctx GeneProcessingContext) IOE.IOEither[error, O.Option[*pb.FeatureAnnotation]] {
+	return fetchAnnotationIO(ctx.Config)(ctx.GeneID)
+}
 
-		// Process all gene IDs functionally
-		outcomes := F.Pipe2(
-			config.GeneIDs,
-			A.Map(processGeneWithResultIO(config)),
-			A.MapWithIndex(logProgress(config)(len(config.GeneIDs))),
-		)
-
-		// Count outcomes by status using functional composition
-		result := HypotheticalGeneProcessingResult{
-			Processed: countByStatus(
-				"created",
-			)(
-				outcomes,
-			) + countByStatus(
-				"updated",
-			)(
-				outcomes,
-			),
-			Skipped: countByStatus("skipped")(outcomes),
-			Errors:  countByStatus("error")(outcomes),
-		}
-
-		return E.Right[error](result)
+// extractGeneResult extracts final result from context
+var extractGeneResult = func(ctx WithAction) GeneProcessingResult {
+	return GeneProcessingResult{
+		GeneID: ctx.GeneID,
+		Action: ctx.Action,
 	}
 }
 
-// handleProcessingError logs and returns the error
+// processGeneIO processes a single gene using Do notation with IOE.Bind
+var processGeneIO = F.Curry2(
+	func(config ProcessingConfig, geneID string) IOE.IOEither[error, GeneProcessingResult] {
+		return F.Pipe4(
+			createInitialContext(config)(geneID),
+			IOE.Of[error, GeneProcessingContext],
+			IOE.Bind(setAnnotation, fetchAnnotationForContext),
+			IOE.Bind(setAction, ensureHypotheticalProductIO(config)),
+			IOE.Map[error](extractGeneResult),
+		)
+	},
+)
+
+// processAllGenes processes all genes using TraverseArraySeq
+var processAllGenes = F.Curry1(
+	func(cfg ProcessingConfig) IOE.IOEither[error, []GeneProcessingResult] {
+		return F.Pipe1(
+			cfg.GeneIDs,
+			IOE.TraverseArraySeq(processGeneIO(cfg)),
+		)
+	},
+)
+
+// aggregateResults aggregates processing results into stats
+var aggregateResults = func(results []GeneProcessingResult) ProcessingStats {
+	reducer := func(stats ProcessingStats, result GeneProcessingResult) ProcessingStats {
+		switch result.Action {
+		case GeneCreated:
+			return ProcessingStats{
+				Total:   stats.Total,
+				Created: stats.Created + 1,
+				Updated: stats.Updated,
+				Skipped: stats.Skipped,
+			}
+		case GeneUpdated:
+			return ProcessingStats{
+				Total:   stats.Total,
+				Created: stats.Created,
+				Updated: stats.Updated + 1,
+				Skipped: stats.Skipped,
+			}
+		case GeneSkipped:
+			return ProcessingStats{
+				Total:   stats.Total,
+				Created: stats.Created,
+				Updated: stats.Updated,
+				Skipped: stats.Skipped + 1,
+			}
+		default:
+			// This switch is exhaustive for all GeneProcessingAction values
+			// If we reach here, it indicates a programming error
+			return stats
+		}
+	}
+
+	return F.Pipe1(
+		results,
+		A.Reduce(reducer, ProcessingStats{Total: len(results)}),
+	)
+}
+
+// handleProcessingError logs error and returns it
 var handleProcessingError = F.Curry2(
 	func(logger *logrus.Entry, err error) error {
 		logger.Errorf("failed to load hypothetical gene products: %v", err)
@@ -396,24 +421,16 @@ var handleProcessingError = F.Curry2(
 	},
 )
 
-// handleProcessingSuccess logs the result and returns error if there were failures
-var handleProcessingSuccess = F.Curry2(
-	func(
-		logger *logrus.Entry,
-		result HypotheticalGeneProcessingResult,
-	) error {
+// logAndCheckStats logs final statistics
+var logAndCheckStats = F.Curry2(
+	func(logger *logrus.Entry, stats ProcessingStats) error {
 		logger.Infof(
-			"finished loading hypothetical gene products. Processed: %d, Skipped: %d, Errors: %d",
-			result.Processed,
-			result.Skipped,
-			result.Errors,
+			"finished loading hypothetical gene products. Created: %d, Updated: %d, Skipped: %d, Total: %d",
+			stats.Created,
+			stats.Updated,
+			stats.Skipped,
+			stats.Total,
 		)
-		if result.Errors > 0 {
-			return fmt.Errorf(
-				"encountered %d errors during loading",
-				result.Errors,
-			)
-		}
 		return nil
 	},
 )
@@ -421,13 +438,11 @@ var handleProcessingSuccess = F.Curry2(
 // LoadHypotheticalGeneProducts is the main action handler for the command
 func LoadHypotheticalGeneProducts(c *cli.Context) error {
 	logger := registry.GetLogger()
-	configProcessesor := createProcessingConfig(
-		&LoadHypotheticalGeneProductsParams{
-			Client: registry.GetFeatureAnnotationAPIClient(),
-			User:   c.String("user"),
-			Logger: logger,
-		},
-	)
+	params := &LoadHypotheticalGeneProductsParams{
+		Client: registry.GetFeatureAnnotationAPIClient(),
+		User:   c.String("user"),
+		Logger: logger,
+	}
 
 	logger.Infof(
 		"loading hypothetical gene products from %s",
@@ -435,15 +450,22 @@ func LoadHypotheticalGeneProducts(c *cli.Context) error {
 	)
 
 	// Execute the pure functional pipeline - no mutation, consistent IOEither context
-	return F.Pipe5(
-		c.String("input"),
-		readGeneIDsFromFile,
-		IOE.Map[error](configProcessesor),
-		IOE.Chain(processGeneIDsIO),
-		toEither[HypotheticalGeneProcessingResult],
+	return F.Pipe2(
+		F.Pipe5(
+			c.String("input"),
+			readGeneIDsFromFile,
+			IOE.Map[error](createProcessingConfig(params)),
+			IOE.Map[error](func(cfg ProcessingConfig) ProcessingConfig {
+				logger.Infof("found %d gene IDs to process", len(cfg.GeneIDs))
+				return cfg
+			}),
+			IOE.Chain(processAllGenes),
+			IOE.Map[error](aggregateResults),
+		),
+		toEither[ProcessingStats],
 		E.Fold(
 			handleProcessingError(logger),
-			handleProcessingSuccess(logger),
+			logAndCheckStats(logger),
 		),
 	)
 }
