@@ -212,13 +212,15 @@ var convertGrpcResultToOption = func(
 // Returns IOEither[error, Option[Annotation]]
 var fetchAnnotationIO = F.Curry2(
 	func(config ProcessingConfig, geneID string) IOE.IOEither[error, O.Option[*pb.FeatureAnnotation]] {
-		return IOE.TryCatchError(func() (O.Option[*pb.FeatureAnnotation], error) {
-			ctx := context.Background()
-			result, err := config.Client.GetFeatureAnnotation(
-				ctx, &pb.FeatureAnnotationId{Id: geneID},
-			)
-			return convertGrpcResultToOption(geneID, result, err)
-		})
+		return IOE.TryCatchError(
+			func() (O.Option[*pb.FeatureAnnotation], error) {
+				ctx := context.Background()
+				result, err := config.Client.GetFeatureAnnotation(
+					ctx, &pb.FeatureAnnotationId{Id: geneID},
+				)
+				return convertGrpcResultToOption(geneID, result, err)
+			},
+		)
 	},
 )
 
@@ -245,7 +247,11 @@ var createAnnotationWithProductIO = F.Curry2(
 			_, err := config.Client.CreateFeatureAnnotation(ctx, nfa)
 			if err != nil {
 				return 0,
-					fmt.Errorf("failed to create annotation for %s: %w", geneID, err)
+					fmt.Errorf(
+						"failed to create annotation for %s: %w",
+						geneID,
+						err,
+					)
 			}
 
 			return GeneCreated, nil
@@ -329,16 +335,6 @@ var ensureHypotheticalProductIO = F.Curry2(
 	},
 )
 
-// createInitialContext creates initial processing context
-var createInitialContext = F.Curry2(
-	func(config ProcessingConfig, geneID string) GeneProcessingContext {
-		return GeneProcessingContext{
-			Config: config,
-			GeneID: geneID,
-		}
-	},
-)
-
 // fetchAnnotationForContext fetches annotation for context
 var fetchAnnotationForContext = func(ctx GeneProcessingContext) IOE.IOEither[error, O.Option[*pb.FeatureAnnotation]] {
 	return fetchAnnotationIO(ctx.Config)(ctx.GeneID)
@@ -354,10 +350,15 @@ var extractGeneResult = func(ctx WithAction) GeneProcessingResult {
 
 // processGeneIO processes a single gene using Do notation with IOE.Bind
 var processGeneIO = F.Curry2(
-	func(config ProcessingConfig, geneID string) IOE.IOEither[error, GeneProcessingResult] {
-		return F.Pipe4(
-			createInitialContext(config)(geneID),
-			IOE.Of[error, GeneProcessingContext],
+	func(
+		config ProcessingConfig,
+		geneID string,
+	) IOE.IOEither[error, GeneProcessingResult] {
+		return F.Pipe3(
+			IOE.Of[error](GeneProcessingContext{
+				Config: config,
+				GeneID: geneID,
+			}),
 			IOE.Bind(setAnnotation, fetchAnnotationForContext),
 			IOE.Bind(setAction, ensureHypotheticalProductIO(config)),
 			IOE.Map[error](extractGeneResult),
