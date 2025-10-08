@@ -324,8 +324,11 @@ func processAllGenes(
 }
 
 // aggregateResults aggregates processing results into stats
-var aggregateResults = func(results []GeneProcessingResult) ProcessingStats {
-	reducer := func(stats ProcessingStats, result GeneProcessingResult) ProcessingStats {
+func aggregateResults(results []GeneProcessingResult) ProcessingStats {
+	reducer := func(
+		stats ProcessingStats,
+		result GeneProcessingResult,
+	) ProcessingStats {
 		switch result.Action {
 		case GeneCreated:
 			return ProcessingStats{
