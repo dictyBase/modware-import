@@ -348,33 +348,27 @@ var extractGeneResult = func(ctx WithAction) GeneProcessingResult {
 	}
 }
 
-// processGeneIO processes a single gene using Do notation with IOE.Bind
-var processGeneIO = F.Curry2(
-	func(
-		config ProcessingConfig,
-		geneID string,
-	) IOE.IOEither[error, GeneProcessingResult] {
-		return F.Pipe3(
-			IOE.Of[error](GeneProcessingContext{
-				Config: config,
-				GeneID: geneID,
-			}),
-			IOE.Bind(setAnnotation, fetchAnnotationForContext),
-			IOE.Bind(setAction, ensureHypotheticalProductIO(config)),
-			IOE.Map[error](extractGeneResult),
-		)
-	},
-)
-
 // processAllGenes processes all genes using TraverseArraySeq
-var processAllGenes = F.Curry1(
-	func(cfg ProcessingConfig) IOE.IOEither[error, []GeneProcessingResult] {
-		return F.Pipe1(
-			cfg.GeneIDs,
-			IOE.TraverseArraySeq(processGeneIO(cfg)),
-		)
-	},
-)
+func processAllGenes(
+	cfg ProcessingConfig,
+) IOE.IOEither[error, []GeneProcessingResult] {
+	return F.Pipe1(
+		cfg.GeneIDs,
+		IOE.TraverseArraySeq(
+			func(geneID string) IOE.IOEither[error, GeneProcessingResult] {
+				return F.Pipe3(
+					IOE.Of[error](GeneProcessingContext{
+						Config: cfg,
+						GeneID: geneID,
+					}),
+					IOE.Bind(setAnnotation, fetchAnnotationForContext),
+					IOE.Bind(setAction, ensureHypotheticalProductIO(cfg)),
+					IOE.Map[error](extractGeneResult),
+				)
+			},
+		),
+	)
+}
 
 // aggregateResults aggregates processing results into stats
 var aggregateResults = func(results []GeneProcessingResult) ProcessingStats {
