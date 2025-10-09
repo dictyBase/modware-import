@@ -37,11 +37,6 @@ const (
 
 // Point-free helper predicates
 var (
-	// stripBOM removes Unicode byte order mark from beginning of string
-	stripBOM = func(s string) string {
-		return strings.TrimPrefix(s, "\ufeff")
-	}
-
 	// isNotEmpty checks if trimmed string is not empty
 	isNotEmpty = F.Flow2(
 		strings.TrimSpace,
@@ -117,38 +112,6 @@ var (
 		},
 	)
 )
-
-// isHypotheticalProductTag checks if a tag property is the hypothetical protein product
-var isHypotheticalProductTag = func(tag *pb.TagProperty) bool {
-	return tag.Tag == "product" && tag.Value == HypotheticalProteinProduct
-}
-
-// addProductTagIO adds product tag to existing annotation
-var addProductTagIO = func(ctx GeneProcessingContext) IOE.IOEither[error, GeneProcessingAction] {
-	return IOE.TryCatchError(func() (GeneProcessingAction, error) {
-		gctx := context.Background()
-		_, err := ctx.Config.Client.AddTag(gctx, &pb.AddTagRequest{
-			Id: ctx.GeneID,
-			Tag: &pb.TagPropertyCreate{
-				Tag:       "product",
-				Value:     HypotheticalProteinProduct,
-				CreatedBy: ctx.Config.User,
-				CreatedAt: timestamppb.Now(),
-			},
-		})
-		if err != nil {
-			return 0,
-				fmt.Errorf("failed to add tag for %s: %w", ctx.GeneID, err)
-		}
-
-		return GeneUpdated, nil
-	})
-}
-
-// returnSkippedAction returns GeneSkipped action (used in Fold)
-var returnSkippedAction = func(*pb.TagProperty) IOE.IOEither[error, GeneProcessingAction] {
-	return IOE.Of[error](GeneSkipped)
-}
 
 // GeneProcessingAction represents the action taken for a gene
 type GeneProcessingAction int
@@ -431,6 +394,52 @@ func LoadHypotheticalGeneProducts(c *cli.Context) error {
 			logAndCheckStats(logger),
 		),
 	)
+}
+
+// stripBOM removes Unicode byte order mark from beginning of string
+func stripBOM(s string) string {
+	return strings.TrimPrefix(s, "\ufeff")
+}
+
+// isHypotheticalProductTag checks if a tag property is the hypothetical protein
+// product
+func isHypotheticalProductTag(tag *pb.TagProperty) bool {
+	return tag.Tag == "product" && tag.Value == HypotheticalProteinProduct
+}
+
+// addProductTagIO adds product tag to existing annotation
+func addProductTagIO(
+	ctx GeneProcessingContext,
+) IOE.IOEither[error, GeneProcessingAction] {
+	return IOE.TryCatchError(func() (GeneProcessingAction, error) {
+		gctx := context.Background()
+		_, err := ctx.Config.Client.AddTag(gctx, &pb.AddTagRequest{
+			Id: ctx.GeneID,
+			Tag: &pb.TagPropertyCreate{
+				Tag:       "product",
+				Value:     HypotheticalProteinProduct,
+				CreatedBy: ctx.Config.User,
+				CreatedAt: timestamppb.Now(),
+			},
+		})
+		if err != nil {
+			return 0,
+				fmt.Errorf(
+					"failed to add tag for %s: %w",
+					ctx.GeneID,
+					err,
+				)
+		}
+
+		return GeneUpdated, nil
+	})
+}
+
+// returnSkippedAction returns GeneSkipped action (used in Fold)
+func returnSkippedAction(
+	*pb.TagProperty,
+) IOE.IOEither[error, GeneProcessingAction] {
+	return IOE.Of[error](GeneSkipped)
 }
 
 // toEither executes an IOEither to get an Either result
