@@ -152,15 +152,6 @@ var returnSkippedAction = func(*pb.TagProperty) IOE.IOEither[error, GeneProcessi
 	return IOE.Of[error](GeneSkipped)
 }
 
-// handleProductNotFound handles product not found case
-var handleProductNotFound = F.Curry2(
-	func(config ProcessingConfig, geneID string) func() IOE.IOEither[error, GeneProcessingAction] {
-		return func() IOE.IOEither[error, GeneProcessingAction] {
-			return addProductTagIO(config)(geneID)
-		}
-	},
-)
-
 // GeneProcessingAction represents the action taken for a gene
 type GeneProcessingAction int
 
@@ -280,7 +271,12 @@ func processAnnotation(
 				return F.Pipe2(
 					ann.Attributes.Properties,
 					A.FindFirst(isHypotheticalProductTag),
-					O.Fold(handleProductNotFound(ctx.Config)(ctx.GeneID), returnSkippedAction),
+					O.Fold(
+						func() IOE.IOEither[error, GeneProcessingAction] {
+							return addProductTagIO(ctx.Config)(ctx.GeneID)
+						},
+						returnSkippedAction,
+					),
 				)
 			},
 		),
