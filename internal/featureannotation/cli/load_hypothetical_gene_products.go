@@ -19,6 +19,8 @@ import (
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -114,17 +116,6 @@ var (
 			}
 		},
 	)
-
-	// convertGrpcResultToOption converts gRPC (result, error) tuple to Option
-	convertGrpcResultToOption = O.Optionize2(func(
-		result *pb.FeatureAnnotation,
-		err error,
-	) (*pb.FeatureAnnotation, bool) {
-		if err != nil {
-			return nil, false
-		}
-		return result, true
-	})
 )
 
 // isHypotheticalProductTag checks if a tag property is the hypothetical protein product
@@ -235,27 +226,28 @@ func readGeneIDsFromFile(filePath string) IOE.IOEither[error, []string] {
 	)
 }
 
-// handleAnnotationNotFound handles annotation not found case
-func handleAnnotationNotFound(
-	ctx WithAnnotation,
+// createGeneAnnotation creates a new gene annotation with hypothetical product
+func createGeneAnnotation(
+	config ProcessingConfig,
+	geneID string,
 ) IOE.IOEither[error, GeneProcessingAction] {
 	return IOE.TryCatchError(func() (GeneProcessingAction, error) {
 		nfa := &pb.NewFeatureAnnotation{
-			Id:        ctx.GeneID,
-			CreatedBy: ctx.Config.User,
+			Id:        geneID,
+			CreatedBy: config.User,
 			CreatedAt: timestamppb.Now(),
 			Attributes: &pb.FeatureAnnotationAttributes{
-				Name: ctx.GeneID,
+				Name: geneID,
 				Properties: []*pb.TagProperty{{
 					Tag:       "product",
 					Value:     HypotheticalProteinProduct,
-					CreatedBy: ctx.Config.User,
+					CreatedBy: config.User,
 					CreatedAt: timestamppb.Now(),
 				}},
 			},
 		}
 
-		_, err := ctx.Config.Client.CreateFeatureAnnotation(
+		_, err := config.Client.CreateFeatureAnnotation(
 			context.Background(),
 			nfa,
 		)
@@ -263,13 +255,36 @@ func handleAnnotationNotFound(
 			return 0,
 				fmt.Errorf(
 					"failed to create annotation for %s: %w",
-					ctx.GeneID,
+					geneID,
 					err,
 				)
 		}
 
 		return GeneCreated, nil
 	})
+}
+
+// processAnnotation decides whether to create, update or skip a gene annotation
+func processAnnotation(
+	ctx WithAnnotation,
+) IOE.IOEither[error, GeneProcessingAction] {
+	return F.Pipe1(
+		ctx.Annotation,
+		O.Fold(
+			func() IOE.IOEither[error, GeneProcessingAction] {
+				return createGeneAnnotation(ctx.Config, ctx.GeneID)
+			},
+			func(
+				ann *pb.FeatureAnnotation,
+			) IOE.IOEither[error, GeneProcessingAction] {
+				return F.Pipe2(
+					ann.Attributes.Properties,
+					A.FindFirst(isHypotheticalProductTag),
+					O.Fold(handleProductNotFound(ctx.Config)(ctx.GeneID), returnSkippedAction),
+				)
+			},
+		),
+	)
 }
 
 // fetchAnnotationForContext fetches annotation for context
@@ -285,10 +300,13 @@ func fetchAnnotationForContext(
 						Id: ctx.GeneID,
 					},
 				)
-			return convertGrpcResultToOption(
-				result,
-				err,
-			), err
+			if err != nil {
+				if status.Code(err) == codes.NotFound {
+					return O.None[*pb.FeatureAnnotation](), nil
+				}
+				return O.None[*pb.FeatureAnnotation](), err
+			}
+			return O.Some(result), nil
 		},
 	)
 }
@@ -315,7 +333,7 @@ func processAllGenes(
 						GeneID: geneID,
 					}),
 					IOE.Bind(setAnnotation, fetchAnnotationForContext),
-					IOE.Bind(setAction, handleAnnotationNotFound),
+					IOE.Bind(setAction, processAnnotation),
 					IOE.Map[error](extractGeneResult),
 				)
 			},
