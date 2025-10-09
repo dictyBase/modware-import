@@ -111,6 +111,20 @@ var (
 			}
 		},
 	)
+	checkAndHandleProductTag = F.Curry2(
+		func(
+			ctx WithAnnotation,
+			ann *pb.FeatureAnnotation,
+		) IOE.IOEither[error, GeneProcessingAction] {
+			return F.Pipe2(
+				ann.Attributes.Properties,
+				A.FindFirst(isHypotheticalProductTag),
+				O.Fold(
+					addProductTag(ctx.GeneProcessingContext),
+					returnSkippedAction,
+				),
+			)
+		})
 )
 
 // GeneProcessingAction represents the action taken for a gene
@@ -223,25 +237,28 @@ func processAnnotation(
 	return F.Pipe1(
 		ctx.Annotation,
 		O.Fold(
-			func() IOE.IOEither[error, GeneProcessingAction] {
-				return createGeneAnnotation(ctx.Config, ctx.GeneID)
-			},
-			func(
-				ann *pb.FeatureAnnotation,
-			) IOE.IOEither[error, GeneProcessingAction] {
-				return F.Pipe2(
-					ann.Attributes.Properties,
-					A.FindFirst(isHypotheticalProductTag),
-					O.Fold(
-						func() IOE.IOEither[error, GeneProcessingAction] {
-							return addProductTagIO(ctx.GeneProcessingContext)
-						},
-						returnSkippedAction,
-					),
-				)
-			},
+			handleAnnotationNotFound(ctx),
+			checkAndHandleProductTag(ctx),
 		),
 	)
+}
+
+// handleAnnotationNotFound returns a function that creates a gene annotation.
+func handleAnnotationNotFound(
+	ctx WithAnnotation,
+) func() IOE.IOEither[error, GeneProcessingAction] {
+	return func() IOE.IOEither[error, GeneProcessingAction] {
+		return createGeneAnnotation(ctx.Config, ctx.GeneID)
+	}
+}
+
+// addProductTag returns a function that adds a product tag to a gene.
+func addProductTag(
+	gctx GeneProcessingContext,
+) func() IOE.IOEither[error, GeneProcessingAction] {
+	return func() IOE.IOEither[error, GeneProcessingAction] {
+		return addProductTagIO(gctx)
+	}
 }
 
 // fetchAnnotationForContext fetches annotation for context
