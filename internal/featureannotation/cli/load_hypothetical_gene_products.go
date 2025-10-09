@@ -124,28 +124,26 @@ var isHypotheticalProductTag = func(tag *pb.TagProperty) bool {
 }
 
 // addProductTagIO adds product tag to existing annotation
-var addProductTagIO = F.Curry2(
-	func(config ProcessingConfig, geneID string) IOE.IOEither[error, GeneProcessingAction] {
-		return IOE.TryCatchError(func() (GeneProcessingAction, error) {
-			ctx := context.Background()
-			_, err := config.Client.AddTag(ctx, &pb.AddTagRequest{
-				Id: geneID,
-				Tag: &pb.TagPropertyCreate{
-					Tag:       "product",
-					Value:     HypotheticalProteinProduct,
-					CreatedBy: config.User,
-					CreatedAt: timestamppb.Now(),
-				},
-			})
-			if err != nil {
-				return 0,
-					fmt.Errorf("failed to add tag for %s: %w", geneID, err)
-			}
-
-			return GeneUpdated, nil
+var addProductTagIO = func(ctx GeneProcessingContext) IOE.IOEither[error, GeneProcessingAction] {
+	return IOE.TryCatchError(func() (GeneProcessingAction, error) {
+		gctx := context.Background()
+		_, err := ctx.Config.Client.AddTag(gctx, &pb.AddTagRequest{
+			Id: ctx.GeneID,
+			Tag: &pb.TagPropertyCreate{
+				Tag:       "product",
+				Value:     HypotheticalProteinProduct,
+				CreatedBy: ctx.Config.User,
+				CreatedAt: timestamppb.Now(),
+			},
 		})
-	},
-)
+		if err != nil {
+			return 0,
+				fmt.Errorf("failed to add tag for %s: %w", ctx.GeneID, err)
+		}
+
+		return GeneUpdated, nil
+	})
+}
 
 // returnSkippedAction returns GeneSkipped action (used in Fold)
 var returnSkippedAction = func(*pb.TagProperty) IOE.IOEither[error, GeneProcessingAction] {
@@ -273,7 +271,7 @@ func processAnnotation(
 					A.FindFirst(isHypotheticalProductTag),
 					O.Fold(
 						func() IOE.IOEither[error, GeneProcessingAction] {
-							return addProductTagIO(ctx.Config)(ctx.GeneID)
+							return addProductTagIO(ctx.GeneProcessingContext)
 						},
 						returnSkippedAction,
 					),
