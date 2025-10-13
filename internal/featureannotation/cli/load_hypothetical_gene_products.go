@@ -111,6 +111,8 @@ var (
 			}
 		},
 	)
+	boundAnno                = F.Bind1of1(handleAnnotationNotFound)
+	boundAddPdtTag           = F.Bind1of1(addProductTag)
 	checkAndHandleProductTag = F.Curry2(
 		func(
 			ctx WithAnnotation,
@@ -120,7 +122,7 @@ var (
 				ann.Attributes.Properties,
 				A.FindFirst(isHypotheticalProductTag),
 				O.Fold(
-					addProductTag(ctx.GeneProcessingContext),
+					boundAddPdtTag(ctx.GeneProcessingContext),
 					returnSkippedAction,
 				),
 			)
@@ -192,28 +194,39 @@ func readGeneIDsFromFile(filePath string) IOE.IOEither[error, []string] {
 	)
 }
 
-// createGeneAnnotation creates a new gene annotation with hypothetical product
-func createGeneAnnotation(
-	config ProcessingConfig,
-	geneID string,
+// processAnnotation decides whether to create, update or skip a gene annotation
+func processAnnotation(
+	ctx WithAnnotation,
+) IOE.IOEither[error, GeneProcessingAction] {
+	return F.Pipe1(
+		ctx.Annotation,
+		O.Fold(
+			boundAnno(ctx),
+			checkAndHandleProductTag(ctx),
+		),
+	)
+}
+
+func handleAnnotationNotFound(
+	ctx WithAnnotation,
 ) IOE.IOEither[error, GeneProcessingAction] {
 	return IOE.TryCatchError(func() (GeneProcessingAction, error) {
 		nfa := &pb.NewFeatureAnnotation{
-			Id:        geneID,
-			CreatedBy: config.User,
+			Id:        ctx.GeneID,
+			CreatedBy: ctx.Config.User,
 			CreatedAt: timestamppb.Now(),
 			Attributes: &pb.FeatureAnnotationAttributes{
-				Name: geneID,
+				Name: ctx.GeneID,
 				Properties: []*pb.TagProperty{{
 					Tag:       "product",
 					Value:     HypotheticalProteinProduct,
-					CreatedBy: config.User,
+					CreatedBy: ctx.Config.User,
 					CreatedAt: timestamppb.Now(),
 				}},
 			},
 		}
 
-		_, err := config.Client.CreateFeatureAnnotation(
+		_, err := ctx.Config.Client.CreateFeatureAnnotation(
 			context.Background(),
 			nfa,
 		)
@@ -221,7 +234,7 @@ func createGeneAnnotation(
 			return 0,
 				fmt.Errorf(
 					"failed to create annotation for %s: %w",
-					geneID,
+					ctx.GeneID,
 					err,
 				)
 		}
@@ -230,35 +243,34 @@ func createGeneAnnotation(
 	})
 }
 
-// processAnnotation decides whether to create, update or skip a gene annotation
-func processAnnotation(
-	ctx WithAnnotation,
-) IOE.IOEither[error, GeneProcessingAction] {
-	return F.Pipe1(
-		ctx.Annotation,
-		O.Fold(
-			handleAnnotationNotFound(ctx),
-			checkAndHandleProductTag(ctx),
-		),
-	)
-}
-
-// handleAnnotationNotFound returns a function that creates a gene annotation.
-func handleAnnotationNotFound(
-	ctx WithAnnotation,
-) func() IOE.IOEither[error, GeneProcessingAction] {
-	return func() IOE.IOEither[error, GeneProcessingAction] {
-		return createGeneAnnotation(ctx.Config, ctx.GeneID)
-	}
-}
-
 // addProductTag returns a function that adds a product tag to a gene.
 func addProductTag(
 	gctx GeneProcessingContext,
-) func() IOE.IOEither[error, GeneProcessingAction] {
-	return func() IOE.IOEither[error, GeneProcessingAction] {
-		return addProductTagIO(gctx)
-	}
+) IOE.IOEither[error, GeneProcessingAction] {
+	return IOE.TryCatchError(func() (GeneProcessingAction, error) {
+		_, err := gctx.Config.Client.AddTag(
+			context.Background(),
+			&pb.AddTagRequest{
+				Id: gctx.GeneID,
+				Tag: &pb.TagPropertyCreate{
+					Tag:       "product",
+					Value:     HypotheticalProteinProduct,
+					CreatedBy: gctx.Config.User,
+					CreatedAt: timestamppb.Now(),
+				},
+			},
+		)
+		if err != nil {
+			return 0,
+				fmt.Errorf(
+					"failed to add tag for %s: %w",
+					gctx.GeneID,
+					err,
+				)
+		}
+
+		return GeneUpdated, nil
+	})
 }
 
 // fetchAnnotationForContext fetches annotation for context
@@ -422,34 +434,6 @@ func stripBOM(s string) string {
 // product
 func isHypotheticalProductTag(tag *pb.TagProperty) bool {
 	return tag.Tag == "product" && tag.Value == HypotheticalProteinProduct
-}
-
-// addProductTagIO adds product tag to existing annotation
-func addProductTagIO(
-	ctx GeneProcessingContext,
-) IOE.IOEither[error, GeneProcessingAction] {
-	return IOE.TryCatchError(func() (GeneProcessingAction, error) {
-		gctx := context.Background()
-		_, err := ctx.Config.Client.AddTag(gctx, &pb.AddTagRequest{
-			Id: ctx.GeneID,
-			Tag: &pb.TagPropertyCreate{
-				Tag:       "product",
-				Value:     HypotheticalProteinProduct,
-				CreatedBy: ctx.Config.User,
-				CreatedAt: timestamppb.Now(),
-			},
-		})
-		if err != nil {
-			return 0,
-				fmt.Errorf(
-					"failed to add tag for %s: %w",
-					ctx.GeneID,
-					err,
-				)
-		}
-
-		return GeneUpdated, nil
-	})
 }
 
 // returnSkippedAction returns GeneSkipped action (used in Fold)
