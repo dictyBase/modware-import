@@ -317,11 +317,17 @@ func processAllGenes(
 						Config: cfg,
 						GeneID: geneID,
 					}),
-					IOE.Chain(logGeneProcessingStart(geneID)),
+					IOE.ChainFirst(IOE.LogJSON[GeneProcessingContext](
+						fmt.Sprintf("Starting processing for gene %s:\n%%s", geneID),
+					)),
 					IOE.Bind(setAnnotation, fetchAnnotationForContext),
-					IOE.Chain(logAnnotationFetchCtx(geneID)),
+					IOE.ChainFirst(IOE.LogJSON[WithAnnotation](
+						fmt.Sprintf("Fetched annotation for gene %s:\n%%s", geneID),
+					)),
 					IOE.Bind(setAction, processAnnotation),
-					IOE.Chain(logProcessingActionCtx(geneID)),
+					IOE.ChainFirst(IOE.LogJSON[WithAction](
+						fmt.Sprintf("Processing action for gene %s:\n%%s", geneID),
+					)),
 					IOE.Map[error](extractGeneResult),
 				)
 			},
@@ -369,57 +375,6 @@ func aggregateResults(results []GeneProcessingResult) ProcessingStats {
 		A.Reduce(reducer, ProcessingStats{Total: len(results)}),
 	)
 }
-
-// Specialized logging helpers tied into IOEither pipelines
-var logGeneProcessingStart = F.Curry2(
-	func(
-		geneID string,
-		ctx GeneProcessingContext,
-	) IOE.IOEither[error, GeneProcessingContext] {
-		return F.Pipe2(
-			ctx,
-			IOE.Of[error],
-			IOE.ChainFirst(IOE.LogJSON[GeneProcessingContext](
-				fmt.Sprintf(
-					"Starting processing for gene %s:\n%%s",
-					geneID,
-				),
-			)),
-		)
-	},
-)
-
-var logAnnotationFetchCtx = F.Curry2(
-	func(geneID string,
-		w WithAnnotation,
-	) IOE.IOEither[error, WithAnnotation] {
-		return F.Pipe2(
-			w,
-			IOE.Of[error],
-			IOE.ChainFirst(IOE.LogJSON[WithAnnotation](
-				fmt.Sprintf(
-					"Fetched annotation for gene %s:\n%%s",
-					geneID,
-				),
-			)),
-		)
-	},
-)
-
-var logProcessingActionCtx = F.Curry2(
-	func(geneID string, w WithAction) IOE.IOEither[error, WithAction] {
-		return F.Pipe2(
-			w,
-			IOE.Of[error],
-			IOE.ChainFirst(IOE.LogJSON[WithAction](
-				fmt.Sprintf(
-					"Processing action for gene %s:\n%%s",
-					geneID,
-				),
-			)),
-		)
-	},
-)
 
 // LoadHypotheticalGeneProducts is the main action handler for the command
 func LoadHypotheticalGeneProducts(c *cli.Context) error {
