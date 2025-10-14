@@ -318,15 +318,27 @@ func processAllGenes(
 						GeneID: geneID,
 					}),
 					IOE.ChainFirst(IOE.LogJSON[GeneProcessingContext](
-						fmt.Sprintf("Starting processing for gene %s:\n%%s", geneID),
+						fmt.Sprintf(
+							"Starting processing for gene %s:\n%%s",
+							geneID,
+						),
 					)),
-					IOE.Bind(setAnnotation, fetchAnnotationForContext),
+					IOE.Bind(
+						setAnnotation,
+						fetchAnnotationForContext,
+					),
 					IOE.ChainFirst(IOE.LogJSON[WithAnnotation](
-						fmt.Sprintf("Fetched annotation for gene %s:\n%%s", geneID),
+						fmt.Sprintf(
+							"Fetched annotation for gene %s:\n%%s",
+							geneID,
+						),
 					)),
 					IOE.Bind(setAction, processAnnotation),
 					IOE.ChainFirst(IOE.LogJSON[WithAction](
-						fmt.Sprintf("Processing action for gene %s:\n%%s", geneID),
+						fmt.Sprintf(
+							"Processing action for gene %s:\n%%s",
+							geneID,
+						),
 					)),
 					IOE.Map[error](extractGeneResult),
 				)
@@ -335,44 +347,45 @@ func processAllGenes(
 	)
 }
 
+// statsReducer reduces processing results into aggregate statistics
+func statsReducer(
+	stats ProcessingStats,
+	result GeneProcessingResult,
+) ProcessingStats {
+	switch result.Action {
+	case GeneCreated:
+		return ProcessingStats{
+			Total:   stats.Total,
+			Created: stats.Created + 1,
+			Updated: stats.Updated,
+			Skipped: stats.Skipped,
+		}
+	case GeneUpdated:
+		return ProcessingStats{
+			Total:   stats.Total,
+			Created: stats.Created,
+			Updated: stats.Updated + 1,
+			Skipped: stats.Skipped,
+		}
+	case GeneSkipped:
+		return ProcessingStats{
+			Total:   stats.Total,
+			Created: stats.Created,
+			Updated: stats.Updated,
+			Skipped: stats.Skipped + 1,
+		}
+	default:
+		// This switch is exhaustive for all GeneProcessingAction values
+		// If we reach here, it indicates a programming error
+		return stats
+	}
+}
+
 // aggregateResults aggregates processing results into stats
 func aggregateResults(results []GeneProcessingResult) ProcessingStats {
-	reducer := func(
-		stats ProcessingStats,
-		result GeneProcessingResult,
-	) ProcessingStats {
-		switch result.Action {
-		case GeneCreated:
-			return ProcessingStats{
-				Total:   stats.Total,
-				Created: stats.Created + 1,
-				Updated: stats.Updated,
-				Skipped: stats.Skipped,
-			}
-		case GeneUpdated:
-			return ProcessingStats{
-				Total:   stats.Total,
-				Created: stats.Created,
-				Updated: stats.Updated + 1,
-				Skipped: stats.Skipped,
-			}
-		case GeneSkipped:
-			return ProcessingStats{
-				Total:   stats.Total,
-				Created: stats.Created,
-				Updated: stats.Updated,
-				Skipped: stats.Skipped + 1,
-			}
-		default:
-			// This switch is exhaustive for all GeneProcessingAction values
-			// If we reach here, it indicates a programming error
-			return stats
-		}
-	}
-
 	return F.Pipe1(
 		results,
-		A.Reduce(reducer, ProcessingStats{Total: len(results)}),
+		A.Reduce(statsReducer, ProcessingStats{Total: len(results)}),
 	)
 }
 
