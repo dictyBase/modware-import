@@ -3,8 +3,11 @@ package cli
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 
+	fperrors "github.com/IBM/fp-go/errors"
 	P "github.com/IBM/fp-go/predicate"
 
 	A "github.com/IBM/fp-go/array"
@@ -369,7 +372,8 @@ func aggregateResults(results []GeneProcessingResult) ProcessingStats {
 
 // Specialized logging helpers tied into IOEither pipelines
 var logGeneProcessingStart = F.Curry2(
-	func(geneID string,
+	func(
+		geneID string,
 		ctx GeneProcessingContext,
 	) IOE.IOEither[error, GeneProcessingContext] {
 		return F.Pipe2(
@@ -424,8 +428,17 @@ func LoadHypotheticalGeneProducts(c *cli.Context) error {
 		User:   c.String("user"),
 	}
 
-	// Pure functional pipeline with IOEither-based logging
-	return F.Pipe2(
+	// Configure Either loggers (Left=error to stderr, Right=success to stdout)
+	errLogger := log.New(
+		os.Stderr,
+		"[ERROR] ",
+		log.Ldate|log.Ltime|log.Lshortfile,
+	)
+	infoLogger := log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
+	elog := E.Logger[error, ProcessingStats](errLogger, infoLogger)
+
+	// IOEither pipeline with structured logging, then Either logging + fold to error
+	return F.Pipe3(
 		F.Pipe7(
 			IOE.Of[error](c.String("input")),
 			IOE.ChainFirst(
@@ -436,7 +449,9 @@ func LoadHypotheticalGeneProducts(c *cli.Context) error {
 			IOE.Chain(readGeneIDsFromFile),
 			IOE.Map[error](createProcessingConfig(params)),
 			IOE.ChainFirst(
-				IOE.LogJSON[ProcessingConfig]("Processing configuration:\n%s"),
+				IOE.LogJSON[ProcessingConfig](
+					"Processing configuration:\n%s",
+				),
 			),
 			IOE.Chain(processAllGenes),
 			IOE.ChainFirst(
@@ -447,23 +462,10 @@ func LoadHypotheticalGeneProducts(c *cli.Context) error {
 			IOE.Map[error](aggregateResults),
 		),
 		toEither[ProcessingStats],
+		elog("Hypothetical gene products loading result"),
 		E.Fold(
-			func(err error) error {
-				F.Pipe1(
-					err,
-					IOE.LogJSON[error]("Processing failed:\n%s"),
-				)
-				return err
-			},
-			func(stats ProcessingStats) error {
-				F.Pipe1(
-					stats,
-					IOE.LogJSON[ProcessingStats](
-						"Processing completed successfully:\n%s",
-					),
-				)
-				return nil
-			},
+			fperrors.IdentityError,
+			func(_ ProcessingStats) error { return nil },
 		),
 	)
 }
@@ -487,6 +489,8 @@ func returnSkippedAction(
 }
 
 // toEither executes an IOEither to get an Either result
-func toEither[A any](ioe IOE.IOEither[error, A]) E.Either[error, A] {
+func toEither[A any](
+	ioe IOE.IOEither[error, A],
+) E.Either[error, A] {
 	return ioe()
 }
