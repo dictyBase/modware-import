@@ -17,7 +17,6 @@ import (
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/registry"
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -79,7 +78,6 @@ var (
 			return ProcessingConfig{
 				GeneIDs: geneIDs,
 				User:    params.User,
-				Logger:  params.Logger,
 				Client:  params.Client,
 			}
 		},
@@ -135,7 +133,6 @@ type GeneProcessingAction int
 // LoadHypotheticalGeneProductsParams holds parameters for loading hypothetical gene products
 type LoadHypotheticalGeneProductsParams struct {
 	User   string
-	Logger *logrus.Entry
 	Client feature.FeatureAnnotationServiceClient
 }
 
@@ -143,7 +140,6 @@ type LoadHypotheticalGeneProductsParams struct {
 type ProcessingConfig struct {
 	GeneIDs []string
 	User    string
-	Logger  *logrus.Entry
 	Client  feature.FeatureAnnotationServiceClient
 }
 
@@ -313,13 +309,16 @@ func processAllGenes(
 		cfg.GeneIDs,
 		IOE.TraverseArraySeq(
 			func(geneID string) IOE.IOEither[error, GeneProcessingResult] {
-				return F.Pipe3(
+				return F.Pipe6(
 					IOE.Of[error](GeneProcessingContext{
 						Config: cfg,
 						GeneID: geneID,
 					}),
+					IOE.Chain(logGeneProcessingStart(geneID)),
 					IOE.Bind(setAnnotation, fetchAnnotationForContext),
+					IOE.Chain(logAnnotationFetchCtx(geneID)),
 					IOE.Bind(setAction, processAnnotation),
+					IOE.Chain(logProcessingActionCtx(geneID)),
 					IOE.Map[error](extractGeneResult),
 				)
 			},
@@ -368,59 +367,103 @@ func aggregateResults(results []GeneProcessingResult) ProcessingStats {
 	)
 }
 
-// handleProcessingError logs error and returns it
-var handleProcessingError = F.Curry2(
-	func(logger *logrus.Entry, err error) error {
-		logger.Errorf("failed to load hypothetical gene products: %v", err)
-		return err
+// Specialized logging helpers tied into IOEither pipelines
+var logGeneProcessingStart = F.Curry2(
+	func(geneID string,
+		ctx GeneProcessingContext,
+	) IOE.IOEither[error, GeneProcessingContext] {
+		return F.Pipe2(
+			ctx,
+			IOE.Of[error],
+			IOE.ChainFirst(IOE.LogJSON[GeneProcessingContext](
+				fmt.Sprintf(
+					"Starting processing for gene %s:\n%%s",
+					geneID,
+				),
+			)),
+		)
 	},
 )
 
-// logAndCheckStats logs final statistics
-var logAndCheckStats = F.Curry2(
-	func(logger *logrus.Entry, stats ProcessingStats) error {
-		logger.Infof(
-			"finished loading hypothetical gene products. Created: %d, Updated: %d, Skipped: %d, Total: %d",
-			stats.Created,
-			stats.Updated,
-			stats.Skipped,
-			stats.Total,
+var logAnnotationFetchCtx = F.Curry2(
+	func(geneID string,
+		w WithAnnotation,
+	) IOE.IOEither[error, WithAnnotation] {
+		return F.Pipe2(
+			w,
+			IOE.Of[error],
+			IOE.ChainFirst(IOE.LogJSON[WithAnnotation](
+				fmt.Sprintf(
+					"Fetched annotation for gene %s:\n%%s",
+					geneID,
+				),
+			)),
 		)
-		return nil
+	},
+)
+
+var logProcessingActionCtx = F.Curry2(
+	func(geneID string, w WithAction) IOE.IOEither[error, WithAction] {
+		return F.Pipe2(
+			w,
+			IOE.Of[error],
+			IOE.ChainFirst(IOE.LogJSON[WithAction](
+				fmt.Sprintf(
+					"Processing action for gene %s:\n%%s",
+					geneID,
+				),
+			)),
+		)
 	},
 )
 
 // LoadHypotheticalGeneProducts is the main action handler for the command
 func LoadHypotheticalGeneProducts(c *cli.Context) error {
-	logger := registry.GetLogger()
 	params := &LoadHypotheticalGeneProductsParams{
 		Client: registry.GetFeatureAnnotationAPIClient(),
 		User:   c.String("user"),
-		Logger: logger,
 	}
 
-	logger.Infof(
-		"loading hypothetical gene products from %s",
-		c.String("input"),
-	)
-
-	// Execute the pure functional pipeline - no mutation, consistent IOEither context
+	// Pure functional pipeline with IOEither-based logging
 	return F.Pipe2(
-		F.Pipe5(
-			c.String("input"),
-			readGeneIDsFromFile,
+		F.Pipe7(
+			IOE.Of[error](c.String("input")),
+			IOE.ChainFirst(
+				IOE.LogJSON[string](
+					"Starting hypothetical gene products loading:\n%s",
+				),
+			),
+			IOE.Chain(readGeneIDsFromFile),
 			IOE.Map[error](createProcessingConfig(params)),
-			IOE.Map[error](func(cfg ProcessingConfig) ProcessingConfig {
-				logger.Infof("found %d gene IDs to process", len(cfg.GeneIDs))
-				return cfg
-			}),
+			IOE.ChainFirst(
+				IOE.LogJSON[ProcessingConfig]("Processing configuration:\n%s"),
+			),
 			IOE.Chain(processAllGenes),
+			IOE.ChainFirst(
+				IOE.LogJSON[[]GeneProcessingResult](
+					"Gene processing results:\n%s",
+				),
+			),
 			IOE.Map[error](aggregateResults),
 		),
 		toEither[ProcessingStats],
 		E.Fold(
-			handleProcessingError(logger),
-			logAndCheckStats(logger),
+			func(err error) error {
+				F.Pipe1(
+					err,
+					IOE.LogJSON[error]("Processing failed:\n%s"),
+				)
+				return err
+			},
+			func(stats ProcessingStats) error {
+				F.Pipe1(
+					stats,
+					IOE.LogJSON[ProcessingStats](
+						"Processing completed successfully:\n%s",
+					),
+				)
+				return nil
+			},
 		),
 	)
 }
