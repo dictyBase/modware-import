@@ -59,10 +59,12 @@ func setPlasmidInputReader() error {
 				minio.GetObjectOptions{},
 			)
 			if err != nil {
+				objectPath := fmt.Sprintf("%s/%s", viper.GetString("s3-bucket-path"), viper.GetString(k))
 				return fmt.Errorf(
-					"error in getting file %s from bucket %s %s",
-					viper.GetString("plasmid-annotator-input"),
-					viper.GetString(k), err,
+					"error in getting file %s from bucket %s: %w",
+					objectPath,
+					viper.GetString("s3-bucket"),
+					err,
 				)
 			}
 			registry.SetReader(v, reader)
