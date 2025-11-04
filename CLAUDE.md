@@ -120,381 +120,18 @@
         ```
     - **Functional Programming with fp-go Library**
       - Use `github.com/IBM/fp-go` for monadic patterns, pipes, and functional composition
-      - Import pattern: Use single-letter aliases for fp-go modules
-      ```go
-      import (
-          A "github.com/IBM/fp-go/array"
-          E "github.com/IBM/fp-go/either"
-          F "github.com/IBM/fp-go/function"
-          O "github.com/IBM/fp-go/option"
-          T "github.com/IBM/fp-go/tuple"
-          S "github.com/IBM/fp-go/string"
-          J "github.com/IBM/fp-go/json"
-          IOE "github.com/IBM/fp-go/ioeither"
-          H "github.com/IBM/fp-go/context/readerioeither/http"
-          "github.com/IBM/fp-go/ioeither/file"
-      )
-      ```
-
-      - **Either Monad for Error Handling**
-        ```go
-        // Use Either for operations that can fail
-        func validateAndProcess(input string) E.Either[error, ProcessedData] {
-            if input == "" {
-                return E.Left[ProcessedData](fmt.Errorf("input cannot be empty"))
-            }
-
-            processed := ProcessedData{Value: strings.ToUpper(input)}
-            return E.Right[error](processed)
-        }
-
-        // Chain Either operations with Map and Bind
-        func processWorkflow(input string) E.Either[error, string] {
-            return F.Pipe3(
-                input,
-                validateAndProcess,
-                E.Map[error](func(data ProcessedData) ProcessedData {
-                    data.Timestamp = time.Now()
-                    return data
-                }),
-                E.Map[error](func(data ProcessedData) string {
-                    return fmt.Sprintf("%s at %v", data.Value, data.Timestamp)
-                }),
-            )
-        }
-
-        // Handle Either results with Fold
-        result := F.Pipe1(
-            processWorkflow("hello"),
-            E.Fold[error, string](
-                func(err error) string {
-                    return fmt.Sprintf("Error: %v", err)
-                },
-                func(success string) string {
-                    return success
-                },
-            ),
-        )
-        ```
-
-      - **Option Monad for Nullable Values**
-        ```go
-        // Use Option instead of pointers for optional values
-        func findUser(id string) O.Option[User] {
-            user, found := userDatabase[id]
-            if found {
-                return O.Some(user)
-            }
-            return O.None[User]()
-        }
-
-        // Chain Option operations
-        func getUserEmail(id string) O.Option[string] {
-            return F.Pipe1(
-                findUser(id),
-                O.Map(func(user User) string {
-                    return user.Email
-                }),
-            )
-        }
-
-        // Option with fallback using Alt
-        func getConfigValue(key string) O.Option[string] {
-            return F.Pipe2(
-                getFromEnv(key),
-                O.Alt(func() O.Option[string] {
-                    return getFromFile(key)
-                }),
-                O.Alt(func() O.Option[string] {
-                    return getDefaultValue(key)
-                }),
-            )
-        }
-
-        // Extract Option values safely
-        email := F.Pipe1(
-            getUserEmail("user123"),
-            O.GetOrElse(F.Constant("no-email@example.com")),
-        )
-        ```
-
-      - **Function Composition with Pipe and Flow**
-        ```go
-        // Use F.Pipe for sequential composition (left to right)
-        func processFileName(fileName string) string {
-            return F.Pipe7(
-                fileName,
-                filepath.Base,
-                strings.Split("."),
-                A.Head[string],
-                O.GetOrElse(F.Constant("")),
-                strings.Split("_"),
-                A.SliceRight[string](2),
-                S.Join(":"),
-            )
-        }
-
-        // Use F.Flow for creating reusable composed functions
-        var processUserData = F.Flow3(
-            validateInput,
-            normalizeData,
-            saveToDatabase,
-        )
-
-        // Complex pipeline with error handling
-        func processFiles(files []string) E.Either[error, []ProcessedFile] {
-            return F.Pipe2(
-                E.TryCatchError(readFiles(files)),
-                E.Map[error](func(fileContents []string) []ProcessedFile {
-                    return F.Pipe3(
-                        fileContents,
-                        A.Filter(isValidContent),
-                        A.Map(parseContent),
-                        A.FilterMap(validateParsedContent),
-                    )
-                }),
-                E.Fold[error, []ProcessedFile](
-                    func(err error) E.Either[error, []ProcessedFile] {
-                        return E.Left[[]ProcessedFile](err)
-                    },
-                    func(result []ProcessedFile) E.Either[error, []ProcessedFile] {
-                        return E.Right[error](result)
-                    },
-                ),
-            )
-        }
-        ```
-
-      - **Curried Functions for Reusability**
-        ```go
-        // Create curried functions for partial application
-        var HasField = F.Curry2(func(name string, field FieldType) bool {
-            return field.Name == name
-        })
-
-        var SearchUser = F.Curry2(func(email string, workspace WorkspaceResp) int {
-            return F.Pipe3(
-                workspace.Users,
-                A.FindFirst(HasUser(email)),
-                O.Map(func(user WorkspaceUserResp) int { return user.Id }),
-                O.GetOrElse(F.Constant(0)),
-            )
-        })
-
-        // Usage of curried functions
-        hasEmailField := HasField("email")
-        if hasEmailField(userField) {
-            // process email field
-        }
-
-        searchInWorkspace := SearchUser("user@example.com")
-        userID := searchInWorkspace(workspace)
-
-        // Curry custom functions
-        var assignedByIdHandler = F.Curry2(
-            func(aid int, loader *DataLoader) *DataLoader {
-                if aid != 0 {
-                    loader.Payload.AssignedBy = []AssignedBy{{Id: aid}}
-                }
-                return loader
-            })
-        ```
-
-      - **Array/Slice Operations**
-        ```go
-        // Use fp-go array functions for slice operations
-        func processUserList(users []User) []string {
-            return F.Pipe3(
-                users,
-                A.Filter(func(u User) bool { return u.Active }),
-                A.Map(func(u User) string { return u.Email }),
-                A.FilterMap(func(email string) O.Option[string] {
-                    if isValidEmail(email) {
-                        return O.Some(email)
-                    }
-                    return O.None[string]()
-                }),
-            )
-        }
-
-        // Find operations with Option return
-        func findFirstAdmin(users []User) O.Option[User] {
-            return F.Pipe1(
-                users,
-                A.FindFirst(func(u User) bool { return u.Role == "admin" }),
-            )
-        }
-
-        // Complex array transformations
-        func extractTextFromCells(cells []Cell, startCol, endCol int) string {
-            return F.Pipe3(
-                createCellRange(startCol, endCol, len(cells)),
-                A.FilterMap(extractTextFromCellAtIndex(cells)),
-                A.Head[string],
-                O.GetOrElse(F.Constant("")),
-            )
-        }
-        ```
-
-      - **Error Handling Patterns**
-        ```go
-        // Combine Either with TryCatchError for exception handling
-        func safeOperation(input string) E.Either[error, Result] {
-            return F.Pipe2(
-                E.TryCatchError(riskyOperation(input)),
-                E.Map[error](func(rawResult RawResult) Result {
-                    return processResult(rawResult)
-                }),
-                E.MapLeft[Result](func(err error) error {
-                    return fmt.Errorf("operation failed: %w", err)
-                }),
-            )
-        }
-
-        // Chain multiple Either operations
-        func processWorkflowWithValidation(input Input) E.Either[error, Output] {
-            return F.Pipe4(
-                E.Right[error](input),
-                E.Bind(validateInput),
-                E.Bind(processData),
-                E.Bind(formatOutput),
-                E.MapLeft[Output](func(err error) error {
-                    return fmt.Errorf("workflow failed: %w", err)
-                }),
-            )
-        }
-        ```
-
-      - **IOEither for I/O and Side Effects**
-        ```go
-        import (
-            IOE "github.com/IBM/fp-go/ioeither"
-            "github.com/IBM/fp-go/ioeither/file"
-        )
-
-        // IOEither represents a computation that performs I/O and may fail
-        // It's a function type: func() Either[error, T]
-        // Use IOEither for file I/O, network calls, and other side effects
-
-        // Convert Go functions returning (T, error) to IOEither using Eitherize
-        // Eitherize1 for functions with 1 parameter: func(A) (B, error)
-        // Eitherize2 for functions with 2 parameters: func(A, B) (C, error)
-
-        // Example: Converting csv.Reader.ReadAll to IOEither
-        func csvReadAll(f *os.File) ([][]string, error) {
-            defer f.Close()
-            r := csv.NewReader(f)
-            records, err := r.ReadAll()
-            if err != nil {
-                return nil, fmt.Errorf("failed to read CSV data: %w", err)
-            }
-            return records, nil
-        }
-
-        // Convert to IOEither using point-free style with Eitherize1
-        var readCsvRecords = IOE.Eitherize1(csvReadAll)
-
-        // Execute IOEither to get Either result
-        func ToEither[A any](ioe IOE.IOEither[error, A]) E.Either[error, A] {
-            return ioe()
-        }
-
-        // File I/O with IOEither and functional composition
-        func readCsvFile(filePath string) E.Either[error, [][]string] {
-            return F.Pipe2(
-                file.Open(filePath),           // IOEither[error, *os.File]
-                IOE.Chain(readCsvRecords),     // Chain another IOEither operation
-                ToEither,                       // Execute to get Either result
-            )
-        }
-
-        // Curried functions with IOEither for CLI handlers
-        var processFileAction = F.Curry2(
-            func(config *Config, fileName string) error {
-                return F.Pipe3(
-                    fileName,
-                    createParams(config),      // String -> Either[error, Params]
-                    E.Chain(readCsvFile),      // Either -> Either chaining
-                    E.Fold(                    // Handle Either result
-                        func(err error) error {
-                            return fmt.Errorf("processing failed: %w", err)
-                        },
-                        processRecords,        // Success handler
-                    ),
-                )
-            },
-        )
-
-        // Complex I/O pipeline with validation and processing
-        func processDataFile(params FileParams) E.Either[error, ProcessedData] {
-            return F.Pipe4(
-                E.Right[error](params),
-                validateParams,                          // Either[error, Params]
-                E.Chain(func(p FileParams) E.Either[error, [][]string] {
-                    return F.Pipe2(
-                        file.Open(p.FilePath),          // IOEither for file open
-                        IOE.Chain(readAndParseFile),    // Chain I/O operations
-                        ToEither,                        // Execute IOEither
-                    )
-                }),
-                E.Map[error](transformRecords),          // Transform data
-                E.Map[error](aggregateResults),          // Further processing
-            )
-        }
-
-        // Point-free composition with IOEither
-        var readConfigFile = F.Flow2(
-            file.Open,                                   // string -> IOEither[error, *os.File]
-            IOE.Chain(IOE.Eitherize1(parseConfig)),     // Chain parsing operation
-        )
-
-        // Multiple IOEither operations in sequence
-        func setupApplication() E.Either[error, App] {
-            return F.Pipe5(
-                file.Open("config.json"),
-                IOE.Chain(IOE.Eitherize1(readConfig)),
-                IOE.Chain(func(cfg Config) IOE.IOEither[error, Database] {
-                    return IOE.Eitherize1(connectDatabase)(cfg.DBUrl)
-                }),
-                IOE.Map[error](func(db Database) App {
-                    return App{DB: db}
-                }),
-                ToEither,
-            )
-        }
-
-        // Error handling with IOEither and MapLeft
-        func safeFileRead(path string) E.Either[error, string] {
-            return F.Pipe3(
-                file.Open(path),
-                IOE.Chain(IOE.Eitherize1(io.ReadAll)),
-                IOE.MapLeft[[]byte](func(err error) error {
-                    return fmt.Errorf("failed to read file %s: %w", path, err)
-                }),
-                ToEither,
-            )
-        }
-        ```
-
-      - **Tuple Operations**
-        ```go
-        // Use tuples for functions returning multiple values
-        func extractTextWithIndex(cells []Cell, index int) O.Option[T.Tuple2[string, int]] {
-            return F.Pipe1(
-                extractTextFromSingleCell(cells[index]),
-                O.Map(func(text string) T.Tuple2[string, int] {
-                    return T.MakeTuple2(text, index)
-                }),
-            )
-        }
-
-        // Extract tuple values
-        result := extractTextWithIndex(cells, 0)
-        text, index := F.Pipe1(
-            result,
-            O.GetOrElse(F.Constant(T.MakeTuple2("", -1))),
-        ).F1, result.F2
-        ```
+      - **Core Patterns:** [.claude/patterns/fp-go-patterns.md](.claude/patterns/fp-go-patterns.md)
+      - **Comprehensive Examples Library:** [.claude/patterns/fp-go-concepts/](.claude/patterns/fp-go-concepts/)
+        - 200+ production-ready examples across 38 files
+        - Code index: [CODE_EXAMPLES_INDEX.md](.claude/patterns/fp-go-concepts/CODE_EXAMPLES_INDEX.md)
+        - Topics: Option, Reader, Do/Bind, Semigroup, Function Binding, Error Handling, Logging
+      - Import pattern: Use single-letter aliases (IOE, E, F, O, T, A, S, J, H)
+      - **Quick Reference:**
+        - Use **IOEither** for side effects (DB, API, file I/O) - Repository 4-stage pipeline
+        - Use **Either** for pure transformations - Chain with Map/Bind/Fold
+        - Use **Option** for nullable values - Avoid nil pointers
+        - Use **F.Pipe** for composition - Left-to-right data flow
+        - Use **F.Curry2** for context enrichment - Type-safe builder pattern
     - Use options pattern for configurable components
       ```go
       // Option type for functional options
@@ -758,7 +395,110 @@
           }
       }
       ```
-    - Use `github.com/go-playground/validator/v10` for struct field and parameter validation. Consult the library API documentation using context7 MCP when needed for specific validation rules and usage patterns.
+    - Use go-playground/validator for struct field and parameter validation
+      ```go
+      import (
+          "github.com/go-playground/validator/v10"
+      )
+      
+      // Struct with validation tags
+      type CreateUserRequest struct {
+          Name     string `validate:"required,min=2,max=50" json:"name"`
+          Email    string `validate:"required,email" json:"email"`
+          Age      int    `validate:"gte=18,lte=120" json:"age"`
+          Password string `validate:"required,min=8" json:"password"`
+          Role     string `validate:"required,oneof=admin user guest" json:"role"`
+          Website  string `validate:"omitempty,url" json:"website"`
+      }
+      
+      // Global validator instance (thread-safe singleton)
+      var validate = validator.New()
+      
+      // Validate struct fields
+      func CreateUser(req CreateUserRequest) error {
+          if err := validate.Struct(req); err != nil {
+              return fmt.Errorf("validation failed: %w", err)
+          }
+          
+          // Process valid request
+          return nil
+      }
+      
+      // Validate individual parameters
+      func UpdateUserEmail(userID string, newEmail string) error {
+          if err := validate.Var(newEmail, "required,email"); err != nil {
+              return fmt.Errorf("invalid email: %w", err)
+          }
+          
+          if err := validate.Var(userID, "required,uuid"); err != nil {
+              return fmt.Errorf("invalid user ID: %w", err)
+          }
+          
+          // Process update
+          return nil
+      }
+      
+      // Complex validation with nested structs
+      type Address struct {
+          Street  string `validate:"required,min=5"`
+          City    string `validate:"required"`
+          Country string `validate:"required,iso3166_1_alpha2"`
+          ZipCode string `validate:"required,postcode_iso3166_alpha2=US"`
+      }
+      
+      type UserProfile struct {
+          User    CreateUserRequest `validate:"required"`
+          Address Address          `validate:"required"`
+          Tags    []string         `validate:"dive,required,min=2"`
+      }
+      
+      // Custom validation function
+      func validateBusinessEmail(fl validator.FieldLevel) bool {
+          email := fl.Field().String()
+          // Business emails should not be from common free providers
+          blockedDomains := []string{"gmail.com", "yahoo.com", "hotmail.com"}
+          
+          for _, domain := range blockedDomains {
+              if strings.HasSuffix(email, "@"+domain) {
+                  return false
+              }
+          }
+          return true
+      }
+      
+      // Register custom validator
+      func init() {
+          validate.RegisterValidation("business_email", validateBusinessEmail)
+      }
+      
+      // Usage with custom validator
+      type BusinessUser struct {
+          Email string `validate:"required,email,business_email"`
+      }
+      
+      // Helper function to format validation errors
+      func FormatValidationError(err error) string {
+          if validationErrors, ok := err.(validator.ValidationErrors); ok {
+              var messages []string
+              for _, e := range validationErrors {
+                  switch e.Tag() {
+                  case "required":
+                      messages = append(messages, fmt.Sprintf("%s is required", e.Field()))
+                  case "email":
+                      messages = append(messages, fmt.Sprintf("%s must be a valid email", e.Field()))
+                  case "min":
+                      messages = append(messages, fmt.Sprintf("%s must be at least %s characters", e.Field(), e.Param()))
+                  case "max":
+                      messages = append(messages, fmt.Sprintf("%s must be at most %s characters", e.Field(), e.Param()))
+                  default:
+                      messages = append(messages, fmt.Sprintf("%s failed validation: %s", e.Field(), e.Tag()))
+                  }
+              }
+              return strings.Join(messages, "; ")
+          }
+          return err.Error()
+      }
+      ```
     - Any function or method receiving more than three parameters should use a type struct
       ```go
       // Avoid: Too many parameters
@@ -963,6 +703,91 @@
           }
           
           return nil
+      }
+      
+      // Validation errors using go-playground/validator
+      func CreateUserWithValidation(req CreateUserRequest) error {
+          // First validate the struct
+          if err := validate.Struct(req); err != nil {
+              if validationErrors, ok := err.(validator.ValidationErrors); ok {
+                  return fmt.Errorf("validation failed: %w", &UserValidationError{
+                      Errors: validationErrors,
+                  })
+              }
+              return fmt.Errorf("validation failed: %w", err)
+          }
+          
+          // Additional business logic validation
+          if strings.Contains(req.Email, "test") {
+              return fmt.Errorf("test emails not allowed: %w", &BusinessLogicError{
+                  Field:   "email",
+                  Value:   req.Email,
+                  Message: "production environment does not accept test emails",
+              })
+          }
+          
+          // Process valid request
+          return nil
+      }
+      
+      // Custom error types for validation
+      type UserValidationError struct {
+          Errors validator.ValidationErrors
+      }
+      
+      func (e *UserValidationError) Error() string {
+          var messages []string
+          for _, err := range e.Errors {
+              switch err.Tag() {
+              case "required":
+                  messages = append(messages, fmt.Sprintf("%s is required", err.Field()))
+              case "email":
+                  messages = append(messages, fmt.Sprintf("%s must be a valid email address", err.Field()))
+              case "min":
+                  messages = append(messages, fmt.Sprintf("%s must be at least %s characters long", err.Field(), err.Param()))
+              case "max":
+                  messages = append(messages, fmt.Sprintf("%s must be at most %s characters long", err.Field(), err.Param()))
+              case "gte":
+                  messages = append(messages, fmt.Sprintf("%s must be greater than or equal to %s", err.Field(), err.Param()))
+              case "oneof":
+                  messages = append(messages, fmt.Sprintf("%s must be one of: %s", err.Field(), err.Param()))
+              default:
+                  messages = append(messages, fmt.Sprintf("%s failed validation rule: %s", err.Field(), err.Tag()))
+              }
+          }
+          return strings.Join(messages, "; ")
+      }
+      
+      type BusinessLogicError struct {
+          Field   string
+          Value   interface{}
+          Message string
+      }
+      
+      func (e *BusinessLogicError) Error() string {
+          return fmt.Sprintf("business logic error for field '%s' with value '%v': %s", 
+                           e.Field, e.Value, e.Message)
+      }
+      
+      // Error checking with type assertions
+      func HandleUserCreation(req CreateUserRequest) {
+          err := CreateUserWithValidation(req)
+          if err != nil {
+              var validationErr *UserValidationError
+              var businessErr *BusinessLogicError
+              
+              switch {
+              case errors.As(err, &validationErr):
+                  log.Printf("Validation errors: %s", validationErr.Error())
+                  // Handle validation errors - return 400 Bad Request
+              case errors.As(err, &businessErr):
+                  log.Printf("Business logic error: %s", businessErr.Error())
+                  // Handle business logic errors - return 422 Unprocessable Entity
+              default:
+                  log.Printf("Unknown error: %s", err.Error())
+                  // Handle unknown errors - return 500 Internal Server Error
+              }
+          }
       }
       ```
 
