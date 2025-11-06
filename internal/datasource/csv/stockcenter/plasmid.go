@@ -184,6 +184,59 @@ func parseSummary(ctx ParseContext) PlasmidParser {
 	)
 }
 
+// applyAnnotator applies annotator lookup to plasmid context
+func applyAnnotator(ctx ParseContext, deps Dependencies) ParseContext {
+	user, createdOn, updatedOn, ok := deps.Alookup.StockAnnotator(ctx.Plasmid.Id)
+	if ok {
+		ctx.Plasmid.User = user
+		ctx.Plasmid.CreatedOn = createdOn
+		ctx.Plasmid.UpdatedOn = updatedOn
+	}
+	return ctx
+}
+
+// applyPublications applies publication lookup to plasmid context
+func applyPublications(ctx ParseContext, deps Dependencies) ParseContext {
+	return F.Pipe2(
+		deps.Plookup.StockPub(ctx.Plasmid.Id),
+		O.FromPredicate(isNonEmptySlice),
+		O.Fold(
+			func() ParseContext { return ctx },
+			func(pubs []string) ParseContext {
+				filteredPubs := F.Pipe1(
+					pubs,
+					A.Filter(func(pub string) bool {
+						return pub != ""
+					}),
+				)
+				ctx.Plasmid.Publications = append(ctx.Plasmid.Publications, filteredPubs...)
+				return ctx
+			},
+		),
+	)
+}
+
+// applyGenes applies gene lookup to plasmid context
+func applyGenes(ctx ParseContext, deps Dependencies) ParseContext {
+	return F.Pipe2(
+		deps.Glookup.StockGene(ctx.Plasmid.Id),
+		O.FromPredicate(isNonEmptySlice),
+		O.Fold(
+			func() ParseContext { return ctx },
+			func(genes []string) ParseContext {
+				filteredGenes := F.Pipe1(
+					genes,
+					A.Filter(func(gene string) bool {
+						return gene != ""
+					}),
+				)
+				ctx.Plasmid.Genes = append(ctx.Plasmid.Genes, filteredGenes...)
+				return ctx
+			},
+		),
+	)
+}
+
 // enrichWithAnnotator is a curried function that enriches plasmid with annotator data
 var enrichWithAnnotator = F.Curry2(
 	func(alookup StockAnnotatorLookup, plasmid *Plasmid) E.Either[error, *Plasmid] {
