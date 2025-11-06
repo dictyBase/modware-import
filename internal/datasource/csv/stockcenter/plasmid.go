@@ -167,21 +167,21 @@ func parseName(ctx ParseContext) PlasmidParser {
 }
 
 // parseSummary extracts plasmid summary from record
-func parseSummary(record []string) func(*Plasmid) E.Either[error, *Plasmid] {
-	return func(plasmid *Plasmid) E.Either[error, *Plasmid] {
-		return F.Pipe1(
-			getRecordField(record, 2),
+func parseSummary(ctx ParseContext) PlasmidParser {
+	return RE.FromEither[Dependencies](
+		F.Pipe1(
+			getRecordField(ctx.Record, 2),
 			O.Fold(
-				func() E.Either[error, *Plasmid] {
-					return E.Left[*Plasmid](fmt.Errorf("missing summary at index 2"))
+				func() E.Either[error, ParseContext] {
+					return E.Left[ParseContext](fmt.Errorf("missing summary at index 2"))
 				},
-				func(summary string) E.Either[error, *Plasmid] {
-					plasmid.Summary = summary
-					return E.Right[error](plasmid)
+				func(summary string) E.Either[error, ParseContext] {
+					ctx.Plasmid.Summary = summary
+					return E.Right[error](ctx)
 				},
 			),
-		)
-	}
+		),
+	)
 }
 
 // enrichWithAnnotator is a curried function that enriches plasmid with annotator data
