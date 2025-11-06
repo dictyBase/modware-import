@@ -305,14 +305,7 @@ func (plr *csvPlasmidReader) Value() E.Either[error, *Plasmid] {
 	// Create initial context
 	ctx := ParseContext{
 		Record:  plr.Record,
-		Plasmid: new(Plasmid),
-	}
-
-	// Create dependencies
-	deps := Dependencies{
-		Alookup: plr.alookup,
-		Plookup: plr.plookup,
-		Glookup: plr.glookup,
+		Plasmid: &Plasmid{},
 	}
 
 	// Run the point-free pipeline
@@ -326,9 +319,11 @@ func (plr *csvPlasmidReader) Value() E.Either[error, *Plasmid] {
 				return ctx.Plasmid
 			},
 		),
-	)(
-		deps,
-	) // Run with dependencies
+	)
 
-	return result
+	return result(Dependencies{
+		Alookup: plr.alookup,
+		Plookup: plr.plookup,
+		Glookup: plr.glookup,
+	})
 }
