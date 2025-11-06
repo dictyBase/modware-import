@@ -7,6 +7,11 @@ import (
 	"strings"
 	"time"
 
+	A "github.com/IBM/fp-go/array"
+	E "github.com/IBM/fp-go/either"
+	F "github.com/IBM/fp-go/function"
+	O "github.com/IBM/fp-go/option"
+
 	"github.com/dictyBase/modware-import/internal/datasource"
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
 )
@@ -61,7 +66,7 @@ type Plasmid struct {
 // PlasmidReader is the defined interface for reading the plasmid data
 type PlasmidReader interface {
 	datasource.IteratorWithoutValue
-	Value() (*Plasmid, error)
+	Value() E.Either[error, *Plasmid]
 }
 
 type csvPlasmidReader struct {
@@ -89,25 +94,177 @@ func NewCsvPlasmidReader(
 	}
 }
 
-// Value gets a new Plasmid instance
-func (plr *csvPlasmidReader) Value() (*Plasmid, error) {
-	p := new(Plasmid)
+// getRecordField safely accesses CSV record field by index using Option
+func getRecordField(record []string, index int) O.Option[string] {
+	if index < 0 || index >= len(record) {
+		return O.None[string]()
+	}
+	return O.Some(record[index])
+}
+
+// parseId extracts and sets the plasmid ID from record
+func parseId(record []string) func(*Plasmid) E.Either[error, *Plasmid] {
+	return func(plasmid *Plasmid) E.Either[error, *Plasmid] {
+		return F.Pipe1(
+			getRecordField(record, 0),
+			O.Fold(
+				func() E.Either[error, *Plasmid] {
+					return E.Left[*Plasmid](fmt.Errorf("missing id at index 0"))
+				},
+				func(id string) E.Either[error, *Plasmid] {
+					plasmid.Id = id
+					return E.Right[error](plasmid)
+				},
+			),
+		)
+	}
+}
+
+// ensurePlasmidPrefix ensures name starts with 'p' prefix using Option pattern
+func ensurePlasmidPrefix(name string) string {
+	return F.Pipe2(
+		O.Some(name),
+		O.Filter(func(n string) bool {
+			return strings.HasPrefix(n, "p")
+		}),
+		O.GetOrElse(F.Constant(fmt.Sprintf("p%s", name))),
+	)
+}
+
+// parseName extracts and normalizes plasmid name with prefix
+func parseName(record []string) func(*Plasmid) E.Either[error, *Plasmid] {
+	return func(plasmid *Plasmid) E.Either[error, *Plasmid] {
+		return F.Pipe1(
+			getRecordField(record, 1),
+			O.Fold(
+				func() E.Either[error, *Plasmid] {
+					return E.Left[*Plasmid](fmt.Errorf("missing name at index 1"))
+				},
+				func(name string) E.Either[error, *Plasmid] {
+					plasmid.Name = F.Pipe1(name, ensurePlasmidPrefix)
+					return E.Right[error](plasmid)
+				},
+			),
+		)
+	}
+}
+
+// parseSummary extracts plasmid summary from record
+func parseSummary(record []string) func(*Plasmid) E.Either[error, *Plasmid] {
+	return func(plasmid *Plasmid) E.Either[error, *Plasmid] {
+		return F.Pipe1(
+			getRecordField(record, 2),
+			O.Fold(
+				func() E.Either[error, *Plasmid] {
+					return E.Left[*Plasmid](fmt.Errorf("missing summary at index 2"))
+				},
+				func(summary string) E.Either[error, *Plasmid] {
+					plasmid.Summary = summary
+					return E.Right[error](plasmid)
+				},
+			),
+		)
+	}
+}
+
+// enrichWithAnnotator is a curried function that enriches plasmid with annotator data
+var enrichWithAnnotator = F.Curry2(
+	func(alookup StockAnnotatorLookup, plasmid *Plasmid) E.Either[error, *Plasmid] {
+		user, createdOn, updatedOn, ok := alookup.StockAnnotator(plasmid.Id)
+		if ok {
+			plasmid.User = user
+			plasmid.CreatedOn = createdOn
+			plasmid.UpdatedOn = updatedOn
+		}
+		return E.Right[error](plasmid)
+	},
+)
+
+// isNonEmptySlice checks if a slice is non-empty
+func isNonEmptySlice(slice []string) bool {
+	return len(slice) > 0
+}
+
+// enrichWithPublications is a curried function that enriches plasmid with publications
+var enrichWithPublications = F.Curry2(
+	func(plookup StockPubLookup, plasmid *Plasmid) E.Either[error, *Plasmid] {
+		return F.Pipe2(
+			plookup.StockPub(plasmid.Id),
+			O.FromPredicate(isNonEmptySlice),
+			O.Fold(
+				func() E.Either[error, *Plasmid] {
+					// No publications found, keep empty slice
+					return E.Right[error](plasmid)
+				},
+				func(pubs []string) E.Either[error, *Plasmid] {
+					// Filter out empty strings from publications
+					filteredPubs := F.Pipe1(
+						pubs,
+						A.Filter(func(pub string) bool {
+							return pub != ""
+						}),
+					)
+					plasmid.Publications = append(plasmid.Publications, filteredPubs...)
+					return E.Right[error](plasmid)
+				},
+			),
+		)
+	},
+)
+
+// enrichWithGenes is a curried function that enriches plasmid with genes
+var enrichWithGenes = F.Curry2(
+	func(glookup StockGeneLookup, plasmid *Plasmid) E.Either[error, *Plasmid] {
+		return F.Pipe2(
+			glookup.StockGene(plasmid.Id),
+			O.FromPredicate(isNonEmptySlice),
+			O.Fold(
+				func() E.Either[error, *Plasmid] {
+					// No genes found, keep empty slice
+					return E.Right[error](plasmid)
+				},
+				func(genes []string) E.Either[error, *Plasmid] {
+					// Filter out empty strings from genes
+					filteredGenes := F.Pipe1(
+						genes,
+						A.Filter(func(gene string) bool {
+							return gene != ""
+						}),
+					)
+					plasmid.Genes = append(plasmid.Genes, filteredGenes...)
+					return E.Right[error](plasmid)
+				},
+			),
+		)
+	},
+)
+
+// parsePlasmidFields is a curried function that composes all field parsers
+var parsePlasmidFields = F.Curry2(
+	func(record []string, plasmid *Plasmid) E.Either[error, *Plasmid] {
+		return F.Pipe3(
+			E.Of[error](plasmid),
+			E.Chain(parseId(record)),
+			E.Chain(parseName(record)),
+			E.Chain(parseSummary(record)),
+		)
+	},
+)
+
+// Value gets a new Plasmid instance using fp-go Either pattern
+func (plr *csvPlasmidReader) Value() E.Either[error, *Plasmid] {
+	plasmid := new(Plasmid)
+
+	// Check for CSV reader errors first
 	if plr.Err != nil {
-		return p, plr.Err
+		return E.Left[*Plasmid](plr.Err)
 	}
-	p.Id = plr.Record[0]
-	p.Name = plr.Record[1]
-	if !strings.HasPrefix(plr.Record[1], "p") {
-		p.Name = fmt.Sprintf("p%s", p.Name)
-	}
-	p.Summary = plr.Record[2]
-	user, c, u, ok := plr.alookup.StockAnnotator(plr.Record[0])
-	if ok {
-		p.User = user
-		p.CreatedOn = c
-		p.UpdatedOn = u
-	}
-	p.Publications = append(p.Publications, plr.plookup.StockPub(p.Id)...)
-	p.Genes = append(p.Genes, plr.glookup.StockGene(p.Id)...)
-	return p, nil
+
+	// Parse all fields and enrich with lookups using functional composition
+	return F.Pipe3(
+		parsePlasmidFields(plr.Record)(plasmid),
+		E.Chain(enrichWithAnnotator(plr.alookup)),
+		E.Chain(enrichWithPublications(plr.plookup)),
+		E.Chain(enrichWithGenes(plr.glookup)),
+	)
 }
