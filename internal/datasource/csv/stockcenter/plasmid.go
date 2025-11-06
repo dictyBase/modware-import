@@ -281,32 +281,36 @@ func parseAllFields(ctx ParseContext) PlasmidParser {
 	)
 }
 
-// parsePlasmidFields is a curried function that composes all field parsers
-var parsePlasmidFields = F.Curry2(
-	func(record []string, plasmid *Plasmid) E.Either[error, *Plasmid] {
-		return F.Pipe3(
-			E.Of[error](plasmid),
-			E.Chain(parseId(record)),
-			E.Chain(parseName(record)),
-			E.Chain(parseSummary(record)),
-		)
-	},
-)
-
-// Value gets a new Plasmid instance using fp-go Either pattern
+// Value gets a new Plasmid instance using fp-go Reader pattern
 func (plr *csvPlasmidReader) Value() E.Either[error, *Plasmid] {
-	plasmid := new(Plasmid)
-
 	// Check for CSV reader errors first
 	if plr.Err != nil {
 		return E.Left[*Plasmid](plr.Err)
 	}
 
-	// Parse all fields and enrich with lookups using functional composition
-	return F.Pipe3(
-		parsePlasmidFields(plr.Record)(plasmid),
-		E.Chain(enrichWithAnnotator(plr.alookup)),
-		E.Chain(enrichWithPublications(plr.plookup)),
-		E.Chain(enrichWithGenes(plr.glookup)),
-	)
+	// Create initial context
+	ctx := ParseContext{
+		Record:  plr.Record,
+		Plasmid: new(Plasmid),
+	}
+
+	// Create dependencies
+	deps := Dependencies{
+		Alookup: plr.alookup,
+		Plookup: plr.plookup,
+		Glookup: plr.glookup,
+	}
+
+	// Run the point-free pipeline
+	result := F.Pipe4(
+		parseAllFields(ctx),
+		RE.Chain(enrichWithAnnotator),
+		RE.Chain(enrichWithPublications),
+		RE.Chain(enrichWithGenes),
+		RE.Map[Dependencies, error, ParseContext, *Plasmid](func(ctx ParseContext) *Plasmid {
+			return ctx.Plasmid
+		}),
+	)(deps) // Run with dependencies
+
+	return result
 }
