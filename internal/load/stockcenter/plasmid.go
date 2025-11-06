@@ -4,166 +4,523 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	A "github.com/IBM/fp-go/array"
+	E "github.com/IBM/fp-go/either"
+	fperrors "github.com/IBM/fp-go/errors"
+	F "github.com/IBM/fp-go/function"
+	IOE "github.com/IBM/fp-go/ioeither"
+	SG "github.com/IBM/fp-go/semigroup"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-func LoadPlasmid(cmd *cobra.Command, args []string) error {
-	al, err := initAnnotatorLookup()
-	if err != nil {
-		return err
-	}
-	pl, err := initPubLookup()
-	if err != nil {
-		return err
-	}
-	gl, err := initGeneLookup()
-	if err != nil {
-		return err
-	}
-
-	sr := source.NewCsvPlasmidReader(
-		registry.GetReader(regs.PlasmidReader),
-		al, pl, gl,
-	)
-
-	client := regs.GetStockAPIClient()
-	logger := registry.GetLogger()
-
-	count := 0
-	for sr.Next() {
-		if err := processNextPlasmid(sr, client, logger); err != nil {
-			return err
-		}
-		count++
-	}
-	logLoadStats(logger, count)
-
-	return nil
+// PlasmidEnv contains all dependencies for plasmid loading
+type PlasmidEnv struct {
+	Logger    *logrus.Entry
+	APIClient pb.StockServiceClient
 }
 
-func initAnnotatorLookup() (source.StockAnnotatorLookup, error) {
-	al, err := source.NewStockAnnotatorLookup(
-		registry.GetReader(regs.PlasmidAnnotatorReader),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error in opening annotation source %s", err)
-	}
-	return al, nil
+// ValidationError represents a single validation failure
+type ValidationError struct {
+	PlasmidID string
+	Field     string
+	Message   string
+	Err       error
 }
 
-func initPubLookup() (source.StockPubLookup, error) {
-	pl, err := source.NewStockPubLookup(
-		registry.GetReader(regs.PlasmidPubReader),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error in opening publication source %s", err)
-	}
-	return pl, nil
-}
-
-func initGeneLookup() (source.StockGeneLookup, error) {
-	gl, err := source.NewStockGeneLookp(
-		registry.GetReader(regs.PlasmidGeneReader),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error in opening gene source %s", err)
-	}
-	return gl, nil
-}
-
-func processNextPlasmid(
-	sr source.PlasmidReader,
-	client pb.StockServiceClient,
-	logger *logrus.Entry,
-) error {
-	plasmid, err := sr.Value()
-	if err != nil {
-		logger.Errorf("error in reading plasmid value from datasource %s", err)
-		return nil // Continuing to next record, not returning an error to stop the loop
-	}
-	if len(plasmid.User) == 0 {
-		logger.Errorf(
-			"plasmid %s does not have a user assignment, skipping the load",
-			plasmid.Id,
+func (ve ValidationError) Error() string {
+	if ve.Err != nil {
+		return fmt.Sprintf(
+			"plasmid %s: field %s: %s: %v",
+			ve.PlasmidID,
+			ve.Field,
+			ve.Message,
+			ve.Err,
 		)
-		return nil // Continuing to next record
 	}
-
-	exists, err := plasmidExists(client, plasmid.Id)
-	if err != nil {
-		return fmt.Errorf("error in finding plasmid %s %s", plasmid.Id, err)
-	}
-
-	if exists {
-		return updatePlasmid(client, logger, plasmid)
-	}
-
-	return createPlasmid(client, logger, plasmid)
+	return fmt.Sprintf(
+		"plasmid %s: field %s: %s",
+		ve.PlasmidID,
+		ve.Field,
+		ve.Message,
+	)
 }
 
-func plasmidExists(client pb.StockServiceClient, id string) (bool, error) {
-	_, err := client.GetPlasmid(context.Background(), &pb.StockId{Id: id})
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
+// ProcessingResult accumulates successes and errors
+type ProcessingResult struct {
+	Successes []string          // Successfully processed plasmid IDs
+	Errors    []ValidationError // All validation/processing errors
+}
+
+// ProcessingResultSemigroup for combining results
+var ProcessingResultSemigroup = SG.MakeSemigroup(
+	func(a, b ProcessingResult) ProcessingResult {
+		return ProcessingResult{
+			Successes: append(a.Successes, b.Successes...),
+			Errors:    append(a.Errors, b.Errors...),
+		}
+	},
+)
+
+// LookupTuple holds all lookup instances
+type LookupTuple struct {
+	Annotator  source.StockAnnotatorLookup
+	PubLookup  source.StockPubLookup
+	GeneLookup source.StockGeneLookup
+}
+
+// initAnnotatorLookup creates annotator lookup as IOEither
+func initAnnotatorLookup() IOE.IOEither[error, source.StockAnnotatorLookup] {
+	return IOE.TryCatchError(func() (source.StockAnnotatorLookup, error) {
+		lookup, err := source.NewStockAnnotatorLookup(
+			registry.GetReader(regs.PlasmidAnnotatorReader),
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"error in opening annotation source: %w",
+				err,
+			)
+		}
+		return lookup, nil
+	})
+}
+
+// initPubLookup creates publication lookup as IOEither
+func initPubLookup() IOE.IOEither[error, source.StockPubLookup] {
+	return IOE.TryCatchError(func() (source.StockPubLookup, error) {
+		lookup, err := source.NewStockPubLookup(
+			registry.GetReader(regs.PlasmidPubReader),
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"error in opening publication source: %w",
+				err,
+			)
+		}
+		return lookup, nil
+	})
+}
+
+// initGeneLookup creates gene lookup as IOEither
+func initGeneLookup() IOE.IOEither[error, source.StockGeneLookup] {
+	return IOE.TryCatchError(func() (source.StockGeneLookup, error) {
+		lookup, err := source.NewStockGeneLookp(
+			registry.GetReader(regs.PlasmidGeneReader),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error in opening gene source: %w", err)
+		}
+		return lookup, nil
+	})
+}
+
+// initAllLookups initializes all lookups as a tuple using monadic composition
+func initAllLookups() IOE.IOEither[error, LookupTuple] {
+	return F.Pipe2(
+		initAnnotatorLookup(),
+		IOE.Chain(
+			func(annotator source.StockAnnotatorLookup) IOE.IOEither[error, LookupTuple] {
+				return F.Pipe1(
+					initPubLookup(),
+					IOE.Chain(
+						func(pubLookup source.StockPubLookup) IOE.IOEither[error, LookupTuple] {
+							return F.Pipe1(
+								initGeneLookup(),
+								IOE.Map[error](
+									func(geneLookup source.StockGeneLookup) LookupTuple {
+										return LookupTuple{
+											Annotator:  annotator,
+											PubLookup:  pubLookup,
+											GeneLookup: geneLookup,
+										}
+									},
+								),
+							)
+						},
+					),
+				)
+			},
+		),
+		IOE.MapLeft[LookupTuple](
+			fperrors.OnError("failed to initialize lookups"),
+		),
+	)
+}
+
+// createPlasmidReader creates CSV reader with lookups
+func createPlasmidReader(
+	lookups LookupTuple,
+) IOE.IOEither[error, source.PlasmidReader] {
+	return IOE.TryCatchError(func() (source.PlasmidReader, error) {
+		reader := source.NewCsvPlasmidReader(
+			registry.GetReader(regs.PlasmidReader),
+			lookups.Annotator,
+			lookups.PubLookup,
+			lookups.GeneLookup,
+		)
+		return reader, nil
+	})
+}
+
+// hasNextRecord checks if more records exist
+func hasNextRecord(reader source.PlasmidReader) IOE.IOEither[error, bool] {
+	return IOE.Of[error](reader.Next())
+}
+
+// readPlasmidRecord reads one record as IOEither using FromEither
+func readPlasmidRecord(
+	reader source.PlasmidReader,
+) IOE.IOEither[error, *source.Plasmid] {
+	return IOE.FromEither(reader.Value())
+}
+
+// validateUserAssignment checks user field is set
+func validateUserAssignment(
+	plasmid *source.Plasmid,
+) E.Either[[]ValidationError, *source.Plasmid] {
+	if len(plasmid.User) == 0 {
+		return E.Left[*source.Plasmid]([]ValidationError{{
+			Field:   "User",
+			Message: "user assignment required",
+		}})
+	}
+	return E.Right[[]ValidationError](plasmid)
+}
+
+// validateRequiredFields checks Id and Name are set
+func validateRequiredFields(
+	plasmid *source.Plasmid,
+) E.Either[[]ValidationError, *source.Plasmid] {
+	errors := []ValidationError{}
+
+	if plasmid.Id == "" {
+		errors = append(errors, ValidationError{
+			Field:   "Id",
+			Message: "required",
+		})
+	}
+	if plasmid.Name == "" {
+		errors = append(errors, ValidationError{
+			Field:   "Name",
+			Message: "required",
+		})
+	}
+
+	if len(errors) > 0 {
+		return E.Left[*source.Plasmid](errors)
+	}
+	return E.Right[[]ValidationError](plasmid)
+}
+
+// validatePlasmid performs all validation checks
+func validatePlasmid(
+	plasmid *source.Plasmid,
+) E.Either[[]ValidationError, *source.Plasmid] {
+	enrichWithID := func(err ValidationError) ValidationError {
+		err.PlasmidID = plasmid.Id
+		return err
+	}
+
+	return F.Pipe3(
+		E.Of[[]ValidationError](plasmid),
+		E.Chain(validateUserAssignment),
+		E.Chain(validateRequiredFields),
+		E.MapLeft[*source.Plasmid](A.Map(enrichWithID)),
+	)
+}
+
+// checkPlasmidExists wraps gRPC GetPlasmid call in IOEither
+func checkPlasmidExists(env PlasmidEnv, id string) IOE.IOEither[error, bool] {
+	return IOE.TryCatchError(func() (bool, error) {
+		_, err := env.APIClient.GetPlasmid(
+			context.Background(),
+			&pb.StockId{Id: id},
+		)
+		if err != nil && status.Code(err) == codes.NotFound {
 			return false, nil
 		}
-		return false, err
-	}
-	return true, nil
+		if err != nil {
+			return false, fmt.Errorf(
+				"error checking plasmid existence: %w",
+				err,
+			)
+		}
+		return true, nil
+	})
 }
 
-func createPlasmid(
-	client pb.StockServiceClient,
-	logger *logrus.Entry,
+// createPlasmidAPI wraps LoadPlasmid API call
+func createPlasmidAPI(
+	env PlasmidEnv,
 	plasmid *source.Plasmid,
-) error {
-	attr := populateExistingPlasmidAttributes(logger, plasmid)
-	_, err := client.LoadPlasmid(
-		context.Background(),
-		&pb.ExistingPlasmid{
-			Data: &pb.ExistingPlasmid_Data{
-				Type:       "plasmid",
-				Id:         plasmid.Id,
-				Attributes: attr,
+) IOE.IOEither[error, string] {
+	return IOE.TryCatchError(func() (string, error) {
+		attr := populateExistingPlasmidAttributes(env.Logger, plasmid)
+		_, err := env.APIClient.LoadPlasmid(
+			context.Background(),
+			&pb.ExistingPlasmid{
+				Data: &pb.ExistingPlasmid_Data{
+					Type:       "plasmid",
+					Id:         plasmid.Id,
+					Attributes: attr,
+				},
 			},
-		})
-	if err != nil {
-		return fmt.Errorf("error in creating plasmid %s %s", plasmid.Id, err)
-	}
-	logger.Debugf("created plasmid %s", plasmid.Id)
-	return nil
+		)
+		if err != nil {
+			return "", fmt.Errorf(
+				"failed to create plasmid %s: %w",
+				plasmid.Id,
+				err,
+			)
+		}
+		env.Logger.Debugf("created plasmid %s", plasmid.Id)
+		return plasmid.Id, nil
+	})
 }
 
-func updatePlasmid(
-	client pb.StockServiceClient,
-	logger *logrus.Entry,
+// updatePlasmidAPI wraps UpdatePlasmid API call
+func updatePlasmidAPI(
+	env PlasmidEnv,
 	plasmid *source.Plasmid,
-) error {
-	attr := populatePlasmidUpdateAttributes(logger, plasmid)
-	_, err := client.UpdatePlasmid(
-		context.Background(),
-		&pb.PlasmidUpdate{
-			Data: &pb.PlasmidUpdate_Data{
-				Type:       "plasmid",
-				Id:         plasmid.Id,
-				Attributes: attr,
+) IOE.IOEither[error, string] {
+	return IOE.TryCatchError(func() (string, error) {
+		attr := populatePlasmidUpdateAttributes(env.Logger, plasmid)
+		_, err := env.APIClient.UpdatePlasmid(
+			context.Background(),
+			&pb.PlasmidUpdate{
+				Data: &pb.PlasmidUpdate_Data{
+					Type:       "plasmid",
+					Id:         plasmid.Id,
+					Attributes: attr,
+				},
 			},
-		})
-	if err != nil {
-		return fmt.Errorf("error in updating plasmid %s %s", plasmid.Id, err)
-	}
-	logger.Debugf("updated plasmid %s", plasmid.Id)
-	return nil
+		)
+		if err != nil {
+			return "", fmt.Errorf(
+				"failed to update plasmid %s: %w",
+				plasmid.Id,
+				err,
+			)
+		}
+		env.Logger.Debugf("updated plasmid %s", plasmid.Id)
+		return plasmid.Id, nil
+	})
 }
 
+// mergeResult is a curried function that merges new result into accumulator
+var mergeResult = F.Curry2(
+	func(acc ProcessingResult, newResult ProcessingResult) ProcessingResult {
+		return ProcessingResultSemigroup.Concat(acc, newResult)
+	},
+)
+
+// validateAndProcessPlasmid performs validation and API operations
+func validateAndProcessPlasmid(
+	env PlasmidEnv,
+	plasmid *source.Plasmid,
+) IOE.IOEither[error, ProcessingResult] {
+	return IOE.TryCatchError(func() (ProcessingResult, error) {
+		validation := validatePlasmid(plasmid)
+
+		// Handle validation result
+		result := E.Fold(
+			func(errs []ValidationError) ProcessingResult {
+				// Log validation errors
+				for _, err := range errs {
+					env.Logger.Errorf("%s", err.Error())
+				}
+				return ProcessingResult{
+					Successes: []string{},
+					Errors:    errs,
+				}
+			},
+			func(validPlasmid *source.Plasmid) ProcessingResult {
+				// Process the plasmid through API
+				processEither := F.Pipe2(
+					checkPlasmidExists(env, validPlasmid.Id),
+					IOE.Chain(func(exists bool) IOE.IOEither[error, string] {
+						if exists {
+							return updatePlasmidAPI(env, validPlasmid)
+						}
+						return createPlasmidAPI(env, validPlasmid)
+					}),
+					IOE.Map[error](func(id string) ProcessingResult {
+						// Success case
+						return ProcessingResult{
+							Successes: []string{id},
+							Errors:    []ValidationError{},
+						}
+					}),
+				)()
+
+				// Convert API errors to ProcessingResult
+				return E.GetOrElse(func(err error) ProcessingResult {
+					env.Logger.Errorf(
+						"error processing plasmid %s: %v",
+						validPlasmid.Id,
+						err,
+					)
+					return ProcessingResult{
+						Successes: []string{},
+						Errors: []ValidationError{{
+							PlasmidID: validPlasmid.Id,
+							Field:     "API",
+							Message:   "processing failed",
+							Err:       err,
+						}},
+					}
+				})(processEither)
+			},
+		)(validation)
+
+		return result, nil
+	})
+}
+
+// processSingleRecord processes one record and recurses
+func processSingleRecord(
+	env PlasmidEnv,
+	reader source.PlasmidReader,
+	acc ProcessingResult,
+) IOE.IOEither[error, ProcessingResult] {
+	return F.Pipe1(
+		readPlasmidRecord(reader),
+		IOE.Chain(
+			func(plasmid *source.Plasmid) IOE.IOEither[error, ProcessingResult] {
+				return F.Pipe1(
+					validateAndProcessPlasmid(env, plasmid),
+					IOE.Chain(
+						func(result ProcessingResult) IOE.IOEither[error, ProcessingResult] {
+							newAcc := mergeResult(acc)(result)
+							return processNextRecord(env, reader, newAcc)
+						},
+					),
+				)
+			},
+		),
+	)
+}
+
+// processNextRecord is the tail-recursive processor
+func processNextRecord(
+	env PlasmidEnv,
+	reader source.PlasmidReader,
+	acc ProcessingResult,
+) IOE.IOEither[error, ProcessingResult] {
+	return F.Pipe2(
+		hasNextRecord(reader),
+		IOE.Chain(func(hasNext bool) IOE.IOEither[error, ProcessingResult] {
+			if !hasNext {
+				// Base case: no more records, return accumulated result
+				return IOE.Of[error](acc)
+			}
+			// Recursive case: process one record and continue
+			return processSingleRecord(env, reader, acc)
+		}),
+		IOE.MapLeft[ProcessingResult](
+			fperrors.OnError("stream processing failed"),
+		),
+	)
+}
+
+// streamProcessRecords processes CSV records recursively
+func streamProcessRecords(
+	env PlasmidEnv,
+	reader source.PlasmidReader,
+) IOE.IOEither[error, ProcessingResult] {
+	return processNextRecord(env, reader, ProcessingResult{
+		Successes: []string{},
+		Errors:    []ValidationError{},
+	})
+}
+
+// loadPlasmidWorkflow orchestrates the entire loading process
+func loadPlasmidWorkflow(env PlasmidEnv) IOE.IOEither[error, ProcessingResult] {
+	return F.Pipe2(
+		initAllLookups(),
+		IOE.Chain(createPlasmidReader),
+		IOE.Chain(
+			func(reader source.PlasmidReader) IOE.IOEither[error, ProcessingResult] {
+				return streamProcessRecords(env, reader)
+			},
+		),
+	)
+}
+
+// buildPlasmidEnv constructs environment from registry
+func buildPlasmidEnv() PlasmidEnv {
+	return PlasmidEnv{
+		Logger:    registry.GetLogger(),
+		APIClient: regs.GetStockAPIClient(),
+	}
+}
+
+// logFinalStats logs the final processing statistics
+func logFinalStats(logger *logrus.Entry, result ProcessingResult) {
+	successCount := len(result.Successes)
+	errorCount := len(result.Errors)
+
+	logger.WithFields(
+		logrus.Fields{
+			"type":    "annotations",
+			"stock":   "plasmid",
+			"event":   "load",
+			"success": successCount,
+			"errors":  errorCount,
+			"total":   successCount + errorCount,
+		},
+	).Infof(
+		"loaded plasmid annotations: %d succeeded, %d failed",
+		successCount,
+		errorCount,
+	)
+
+	// Log individual errors if any
+	if errorCount > 0 {
+		logger.Warnf(
+			"encountered %d validation/processing errors during plasmid load",
+			errorCount,
+		)
+	}
+}
+
+// LoadPlasmid is the main entry point for plasmid loading
+func LoadPlasmid(cmd *cobra.Command, args []string) error {
+	env := buildPlasmidEnv()
+
+	// Execute the workflow
+	resultIO := loadPlasmidWorkflow(env)
+
+	// Run the IOEither to get Either result
+	resultEither := resultIO()
+
+	// Handle the result
+	return E.Fold(
+		// Error case: workflow failed
+		func(err error) error {
+			env.Logger.Errorf("plasmid loading workflow failed: %v", err)
+			return err
+		},
+		// Success case: log stats and return
+		func(result ProcessingResult) error {
+			logFinalStats(env.Logger, result)
+
+			// If there were any errors, we still return nil to indicate
+			// the workflow completed (errors were logged)
+			return nil
+		},
+	)(resultEither)
+}
+
+// populateExistingPlasmidAttributes creates attributes for new plasmid
 func populateExistingPlasmidAttributes(
 	logger *logrus.Entry,
 	plasmid *source.Plasmid,
@@ -179,6 +536,7 @@ func populateExistingPlasmidAttributes(
 	return attr
 }
 
+// populatePlasmidUpdateAttributes creates attributes for plasmid update
 func populatePlasmidUpdateAttributes(
 	logger *logrus.Entry,
 	plasmid *source.Plasmid,
@@ -192,10 +550,11 @@ func populatePlasmidUpdateAttributes(
 	return attr
 }
 
+// checkPublicationsAndGenes populates publication and gene data
 func checkPublicationsAndGenes(
 	logger *logrus.Entry,
 	plasmid *source.Plasmid,
-	attr interface{},
+	attr any,
 ) {
 	switch a := attr.(type) {
 	case *pb.ExistingPlasmidAttributes:
@@ -217,14 +576,4 @@ func checkPublicationsAndGenes(
 			a.Genes = plasmid.Genes
 		}
 	}
-}
-
-func logLoadStats(logger *logrus.Entry, count int) {
-	logger.WithFields(
-		logrus.Fields{
-			"type":  "annotations",
-			"stock": "plasmid",
-			"event": "load",
-			"count": count,
-		}).Infof("loaded plasmid annotations")
 }
