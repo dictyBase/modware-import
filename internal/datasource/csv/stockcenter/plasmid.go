@@ -149,21 +149,21 @@ func ensurePlasmidPrefix(name string) string {
 }
 
 // parseName extracts and normalizes plasmid name with prefix
-func parseName(record []string) func(*Plasmid) E.Either[error, *Plasmid] {
-	return func(plasmid *Plasmid) E.Either[error, *Plasmid] {
-		return F.Pipe1(
-			getRecordField(record, 1),
+func parseName(ctx ParseContext) PlasmidParser {
+	return RE.FromEither[Dependencies](
+		F.Pipe1(
+			getRecordField(ctx.Record, 1),
 			O.Fold(
-				func() E.Either[error, *Plasmid] {
-					return E.Left[*Plasmid](fmt.Errorf("missing name at index 1"))
+				func() E.Either[error, ParseContext] {
+					return E.Left[ParseContext](fmt.Errorf("missing name at index 1"))
 				},
-				func(name string) E.Either[error, *Plasmid] {
-					plasmid.Name = F.Pipe1(name, ensurePlasmidPrefix)
-					return E.Right[error](plasmid)
+				func(name string) E.Either[error, ParseContext] {
+					ctx.Plasmid.Name = F.Pipe1(name, ensurePlasmidPrefix)
+					return E.Right[error](ctx)
 				},
 			),
-		)
-	}
+		),
+	)
 }
 
 // parseSummary extracts plasmid summary from record
