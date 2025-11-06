@@ -150,7 +150,7 @@ func (loader *StrainLoader) addStrainRow(
 		E.Bind(genModIdHandler, genmodId),
 		E.Bind(assignedByIdHandler, assignedById),
 		E.Bind(creationTimeHandler, creationTime(createdOn)),
-		E.Map[error, *StrainLoader](loaderToPayload),
+		E.Map[error](loaderToPayload),
 		E.Chain[error, *StrainPayload](common.MarshalPayload),
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
 	)

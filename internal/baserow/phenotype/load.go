@@ -142,7 +142,7 @@ func (loader *PhenotypeLoader) addPhenotypeRow(
 		E.Bind(assayIdHandler, assayId),
 		E.Bind(envIdHandler, environmentId),
 		E.Bind(assignedByIdHandler, assignedById),
-		E.Map[error, *PhenotypeLoader](loaderToPayload),
+		E.Map[error](loaderToPayload),
 		E.Chain[error, *PhenotypePayload](common.MarshalPayload),
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
 	)

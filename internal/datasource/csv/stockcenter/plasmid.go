@@ -126,7 +126,9 @@ func parseId(ctx ParseContext) PlasmidParser {
 			getRecordField(ctx.Record, 0),
 			O.Fold(
 				func() E.Either[error, ParseContext] {
-					return E.Left[ParseContext](fmt.Errorf("missing id at index 0"))
+					return E.Left[ParseContext](
+						fmt.Errorf("missing id at index 0"),
+					)
 				},
 				func(id string) E.Either[error, ParseContext] {
 					ctx.Plasmid.Id = id
@@ -155,7 +157,9 @@ func parseName(ctx ParseContext) PlasmidParser {
 			getRecordField(ctx.Record, 1),
 			O.Fold(
 				func() E.Either[error, ParseContext] {
-					return E.Left[ParseContext](fmt.Errorf("missing name at index 1"))
+					return E.Left[ParseContext](
+						fmt.Errorf("missing name at index 1"),
+					)
 				},
 				func(name string) E.Either[error, ParseContext] {
 					ctx.Plasmid.Name = F.Pipe1(name, ensurePlasmidPrefix)
@@ -173,7 +177,9 @@ func parseSummary(ctx ParseContext) PlasmidParser {
 			getRecordField(ctx.Record, 2),
 			O.Fold(
 				func() E.Either[error, ParseContext] {
-					return E.Left[ParseContext](fmt.Errorf("missing summary at index 2"))
+					return E.Left[ParseContext](
+						fmt.Errorf("missing summary at index 2"),
+					)
 				},
 				func(summary string) E.Either[error, ParseContext] {
 					ctx.Plasmid.Summary = summary
@@ -186,7 +192,9 @@ func parseSummary(ctx ParseContext) PlasmidParser {
 
 // applyAnnotator applies annotator lookup to plasmid context
 func applyAnnotator(ctx ParseContext, deps Dependencies) ParseContext {
-	user, createdOn, updatedOn, ok := deps.Alookup.StockAnnotator(ctx.Plasmid.Id)
+	user, createdOn, updatedOn, ok := deps.Alookup.StockAnnotator(
+		ctx.Plasmid.Id,
+	)
 	if ok {
 		ctx.Plasmid.User = user
 		ctx.Plasmid.CreatedOn = createdOn
@@ -209,7 +217,9 @@ func applyPublications(ctx ParseContext, deps Dependencies) ParseContext {
 						return pub != ""
 					}),
 				)
-				ctx.Plasmid.Publications = append(ctx.Plasmid.Publications, filteredPubs...)
+				ctx.Plasmid.Publications = append(
+					ctx.Plasmid.Publications,
+					filteredPubs...)
 				return ctx
 			},
 		),
@@ -241,9 +251,11 @@ func applyGenes(ctx ParseContext, deps Dependencies) ParseContext {
 func enrichWithAnnotator(ctx ParseContext) PlasmidParser {
 	return F.Pipe1(
 		RE.Ask[Dependencies, error](),
-		RE.Map[Dependencies, error, Dependencies, ParseContext](func(deps Dependencies) ParseContext {
-			return applyAnnotator(ctx, deps)
-		}),
+		RE.Map[Dependencies, error](
+			func(deps Dependencies) ParseContext {
+				return applyAnnotator(ctx, deps)
+			},
+		),
 	)
 }
 
@@ -256,7 +268,7 @@ func isNonEmptySlice(slice []string) bool {
 func enrichWithPublications(ctx ParseContext) PlasmidParser {
 	return F.Pipe1(
 		RE.Ask[Dependencies, error](),
-		RE.Map[Dependencies, error, Dependencies, ParseContext](func(deps Dependencies) ParseContext {
+		RE.Map[Dependencies, error](func(deps Dependencies) ParseContext {
 			return applyPublications(ctx, deps)
 		}),
 	)
@@ -266,9 +278,11 @@ func enrichWithPublications(ctx ParseContext) PlasmidParser {
 func enrichWithGenes(ctx ParseContext) PlasmidParser {
 	return F.Pipe1(
 		RE.Ask[Dependencies, error](),
-		RE.Map[Dependencies, error, Dependencies, ParseContext](func(deps Dependencies) ParseContext {
-			return applyGenes(ctx, deps)
-		}),
+		RE.Map[Dependencies, error](
+			func(deps Dependencies) ParseContext {
+				return applyGenes(ctx, deps)
+			},
+		),
 	)
 }
 
@@ -307,10 +321,14 @@ func (plr *csvPlasmidReader) Value() E.Either[error, *Plasmid] {
 		RE.Chain(enrichWithAnnotator),
 		RE.Chain(enrichWithPublications),
 		RE.Chain(enrichWithGenes),
-		RE.Map[Dependencies, error, ParseContext, *Plasmid](func(ctx ParseContext) *Plasmid {
-			return ctx.Plasmid
-		}),
-	)(deps) // Run with dependencies
+		RE.Map[Dependencies, error](
+			func(ctx ParseContext) *Plasmid {
+				return ctx.Plasmid
+			},
+		),
+	)(
+		deps,
+	) // Run with dependencies
 
 	return result
 }
