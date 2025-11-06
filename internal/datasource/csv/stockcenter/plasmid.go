@@ -272,6 +272,15 @@ func enrichWithGenes(ctx ParseContext) PlasmidParser {
 	)
 }
 
+// parseAllFields composes all field parsing functions
+func parseAllFields(ctx ParseContext) PlasmidParser {
+	return F.Pipe2(
+		parseId(ctx),
+		RE.Chain(parseName),
+		RE.Chain(parseSummary),
+	)
+}
+
 // parsePlasmidFields is a curried function that composes all field parsers
 var parsePlasmidFields = F.Curry2(
 	func(record []string, plasmid *Plasmid) E.Either[error, *Plasmid] {
