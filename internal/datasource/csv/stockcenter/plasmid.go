@@ -120,21 +120,21 @@ func getRecordField(record []string, index int) O.Option[string] {
 }
 
 // parseId extracts and sets the plasmid ID from record
-func parseId(record []string) func(*Plasmid) E.Either[error, *Plasmid] {
-	return func(plasmid *Plasmid) E.Either[error, *Plasmid] {
-		return F.Pipe1(
-			getRecordField(record, 0),
+func parseId(ctx ParseContext) PlasmidParser {
+	return RE.FromEither[Dependencies](
+		F.Pipe1(
+			getRecordField(ctx.Record, 0),
 			O.Fold(
-				func() E.Either[error, *Plasmid] {
-					return E.Left[*Plasmid](fmt.Errorf("missing id at index 0"))
+				func() E.Either[error, ParseContext] {
+					return E.Left[ParseContext](fmt.Errorf("missing id at index 0"))
 				},
-				func(id string) E.Either[error, *Plasmid] {
-					plasmid.Id = id
-					return E.Right[error](plasmid)
+				func(id string) E.Either[error, ParseContext] {
+					ctx.Plasmid.Id = id
+					return E.Right[error](ctx)
 				},
 			),
-		)
-	}
+		),
+	)
 }
 
 // ensurePlasmidPrefix ensures name starts with 'p' prefix using Option pattern
