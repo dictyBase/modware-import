@@ -237,77 +237,40 @@ func applyGenes(ctx ParseContext, deps Dependencies) ParseContext {
 	)
 }
 
-// enrichWithAnnotator is a curried function that enriches plasmid with annotator data
-var enrichWithAnnotator = F.Curry2(
-	func(alookup StockAnnotatorLookup, plasmid *Plasmid) E.Either[error, *Plasmid] {
-		user, createdOn, updatedOn, ok := alookup.StockAnnotator(plasmid.Id)
-		if ok {
-			plasmid.User = user
-			plasmid.CreatedOn = createdOn
-			plasmid.UpdatedOn = updatedOn
-		}
-		return E.Right[error](plasmid)
-	},
-)
+// enrichWithAnnotator enriches plasmid with annotator data using Reader
+func enrichWithAnnotator(ctx ParseContext) PlasmidParser {
+	return F.Pipe1(
+		RE.Ask[Dependencies, error](),
+		RE.Map[Dependencies, error, Dependencies, ParseContext](func(deps Dependencies) ParseContext {
+			return applyAnnotator(ctx, deps)
+		}),
+	)
+}
 
 // isNonEmptySlice checks if a slice is non-empty
 func isNonEmptySlice(slice []string) bool {
 	return len(slice) > 0
 }
 
-// enrichWithPublications is a curried function that enriches plasmid with publications
-var enrichWithPublications = F.Curry2(
-	func(plookup StockPubLookup, plasmid *Plasmid) E.Either[error, *Plasmid] {
-		return F.Pipe2(
-			plookup.StockPub(plasmid.Id),
-			O.FromPredicate(isNonEmptySlice),
-			O.Fold(
-				func() E.Either[error, *Plasmid] {
-					// No publications found, keep empty slice
-					return E.Right[error](plasmid)
-				},
-				func(pubs []string) E.Either[error, *Plasmid] {
-					// Filter out empty strings from publications
-					filteredPubs := F.Pipe1(
-						pubs,
-						A.Filter(func(pub string) bool {
-							return pub != ""
-						}),
-					)
-					plasmid.Publications = append(plasmid.Publications, filteredPubs...)
-					return E.Right[error](plasmid)
-				},
-			),
-		)
-	},
-)
+// enrichWithPublications enriches plasmid with publications using Reader
+func enrichWithPublications(ctx ParseContext) PlasmidParser {
+	return F.Pipe1(
+		RE.Ask[Dependencies, error](),
+		RE.Map[Dependencies, error, Dependencies, ParseContext](func(deps Dependencies) ParseContext {
+			return applyPublications(ctx, deps)
+		}),
+	)
+}
 
-// enrichWithGenes is a curried function that enriches plasmid with genes
-var enrichWithGenes = F.Curry2(
-	func(glookup StockGeneLookup, plasmid *Plasmid) E.Either[error, *Plasmid] {
-		return F.Pipe2(
-			glookup.StockGene(plasmid.Id),
-			O.FromPredicate(isNonEmptySlice),
-			O.Fold(
-				func() E.Either[error, *Plasmid] {
-					// No genes found, keep empty slice
-					return E.Right[error](plasmid)
-				},
-				func(genes []string) E.Either[error, *Plasmid] {
-					// Filter out empty strings from genes
-					filteredGenes := F.Pipe1(
-						genes,
-						A.Filter(func(gene string) bool {
-							return gene != ""
-						}),
-					)
-					plasmid.Genes = append(plasmid.Genes, filteredGenes...)
-					return E.Right[error](plasmid)
-				},
-			),
-		)
-	},
-)
+// enrichWithGenes enriches plasmid with genes using Reader
+func enrichWithGenes(ctx ParseContext) PlasmidParser {
+	return F.Pipe1(
+		RE.Ask[Dependencies, error](),
+		RE.Map[Dependencies, error, Dependencies, ParseContext](func(deps Dependencies) ParseContext {
+			return applyGenes(ctx, deps)
+		}),
+	)
+}
 
 // parsePlasmidFields is a curried function that composes all field parsers
 var parsePlasmidFields = F.Curry2(
