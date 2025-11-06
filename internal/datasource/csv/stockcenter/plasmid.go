@@ -11,6 +11,7 @@ import (
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
 	O "github.com/IBM/fp-go/option"
+	RE "github.com/IBM/fp-go/readereither"
 
 	"github.com/dictyBase/modware-import/internal/datasource"
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
@@ -62,6 +63,22 @@ type Plasmid struct {
 	Publications []string
 	Genes        []string
 }
+
+// ParseContext carries data through the parsing pipeline
+type ParseContext struct {
+	Record  []string
+	Plasmid *Plasmid
+}
+
+// Dependencies holds lookup services for enrichment
+type Dependencies struct {
+	Alookup StockAnnotatorLookup
+	Plookup StockPubLookup
+	Glookup StockGeneLookup
+}
+
+// PlasmidParser represents a parsing step in the pipeline
+type PlasmidParser = RE.ReaderEither[Dependencies, error, ParseContext]
 
 // PlasmidReader is the defined interface for reading the plasmid data
 type PlasmidReader interface {
