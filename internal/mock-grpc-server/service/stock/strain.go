@@ -453,7 +453,7 @@ func listStrains(params listStrainsParams) StrainCollectionResult {
 
 // ==================== LIST STRAINS BY IDS ====================
 
-type listStrainsByIdsParams struct {
+type listStrainsByIDsParams struct {
 	ctx     context.Context
 	request *stock.StockIdList
 	storage storage.StockStorage
@@ -466,8 +466,8 @@ type (
 	StrainListConverter = func(StrainListIO) StrainListResult
 )
 
-func retrieveStrainsByIds(params listStrainsByIdsParams) IOE.IOEither[error, *stock.StrainList] {
-	return params.storage.ListStrainsByIds(params.request.Id)
+func retrieveStrainsByIDs(params listStrainsByIDsParams) IOE.IOEither[error, *stock.StrainList] {
+	return params.storage.ListStrainsByIDs(params.request.Id)
 }
 
 func toStrainListResult(ctx context.Context) StrainListConverter {
@@ -490,10 +490,10 @@ func toStrainListResult(ctx context.Context) StrainListConverter {
 	}
 }
 
-func listStrainsByIds(params listStrainsByIdsParams) StrainListResult {
+func listStrainsByIDs(params listStrainsByIDsParams) StrainListResult {
 	result := F.Pipe2(
 		IOE.Of[error](params),
-		IOE.Chain(retrieveStrainsByIds),
+		IOE.Chain(retrieveStrainsByIDs),
 		toStrainListResult(params.ctx),
 	)
 	return result
