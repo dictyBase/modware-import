@@ -8,6 +8,7 @@ import (
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
 	O "github.com/IBM/fp-go/option"
+	T "github.com/IBM/fp-go/tuple"
 	"github.com/cockroachdb/pebble"
 	"github.com/cockroachdb/pebble/vfs"
 )
@@ -156,7 +157,7 @@ func buildStorage(dbSetup DatabaseSetup) *pebbleStorage {
 
 // NewStockStorage creates a new Pebble-backed stock storage
 func NewStockStorage(config *Config) (*pebbleStorage, error) {
-	result := F.Pipe2(
+	result := F.Pipe3(
 		validateConfig(config),
 		E.Map[error](func(cfg ValidatedConfig) StorageMode {
 			return cfg.mode
@@ -169,19 +170,17 @@ func NewStockStorage(config *Config) (*pebbleStorage, error) {
 			)
 			return ioePipeline()
 		}),
+		E.Fold(
+			func(err error) T.Tuple2[*pebbleStorage, error] {
+				return T.MakeTuple2[*pebbleStorage, error](nil, err)
+			},
+			func(storage *pebbleStorage) T.Tuple2[*pebbleStorage, error] {
+				return T.MakeTuple2[*pebbleStorage, error](storage, nil)
+			},
+		),
 	)
 
-	if E.IsLeft(result) {
-		return nil, E.Fold(
-			func(err error) error { return err },
-			func(_ *pebbleStorage) error { return nil },
-		)(result)
-	}
-
-	return E.Fold(
-		func(_ error) *pebbleStorage { return nil },
-		func(storage *pebbleStorage) *pebbleStorage { return storage },
-	)(result), nil
+	return result.F1, result.F2
 }
 
 // Close closes the Pebble database
