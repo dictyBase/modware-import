@@ -55,13 +55,16 @@ func RunStockServer(cliCtx *cli.Context) error {
 	grpcServer := grpc.NewServer()
 
 	// Register stock service
-	stockService := stocksvc.NewStockService(storageBackend, &stocksvc.ServiceConfig{
-		StrainOntology:  cliCtx.String("strain-ontology"),
-		StrainTerm:      cliCtx.String("strain-term"),
-		PlasmidOntology: cliCtx.String("plasmid-ontology"),
-		PlasmidTerm:     cliCtx.String("plasmid-term"),
-		Logger:          loggerInstance,
-	})
+	stockService := stocksvc.NewStockService(
+		storageBackend,
+		&stocksvc.ServiceConfig{
+			StrainOntology:  cliCtx.String("strain-ontology"),
+			StrainTerm:      cliCtx.String("strain-term"),
+			PlasmidOntology: cliCtx.String("plasmid-ontology"),
+			PlasmidTerm:     cliCtx.String("plasmid-term"),
+			Logger:          loggerInstance,
+		},
+	)
 
 	stock.RegisterStockServiceServer(grpcServer, stockService)
 
@@ -84,7 +87,10 @@ func RunStockServer(cliCtx *cli.Context) error {
 
 	go func() {
 		sig := <-sigChan
-		loggerInstance.WithField("signal", sig.String()).Info("Shutting down gRPC server...")
+		loggerInstance.WithField(
+			"signal",
+			sig.String(),
+		).Info("Shutting down gRPC server...")
 		grpcServer.GracefulStop()
 	}()
 
