@@ -195,7 +195,7 @@ func (storage *pebbleStorage) LoadStrain(
 ) IOE.IOEither[error, *stock.Strain] {
 	return F.Pipe7(
 		IOE.Of[error](createStrainContext{
-			req: convertExistingToNewStrain(stockID, req),
+			req: convertExistingToNewStrain(req),
 			db:  storage.db,
 		}),
 		IOE.Let[error](setGeneratedStrainID, func(ctx createStrainContext) string {
@@ -212,7 +212,6 @@ func (storage *pebbleStorage) LoadStrain(
 
 // convertExistingToNewStrain converts ExistingStrain to NewStrain for loading
 func convertExistingToNewStrain(
-	stockID string,
 	existing *stock.ExistingStrain,
 ) *stock.NewStrain {
 	attrs := existing.Data.Attributes

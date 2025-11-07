@@ -15,12 +15,6 @@ const (
 	// Type edges - stock classification (strain or plasmid)
 	typePrefix = "type:"
 
-	// Parent relationships - strain hierarchy
-	parentPrefix = "parent:"
-
-	// Ontology terms - stock classification
-	termPrefix = "term:"
-
 	// ID counters - sequential ID generation
 	counterPrefix = "counter:"
 
@@ -56,16 +50,6 @@ func (keyBuilder) indexKey(stockID string) []byte {
 // typeKey returns the key for stock type classification
 func (keyBuilder) typeKey(stockID string) []byte {
 	return []byte(typePrefix + stockID)
-}
-
-// parentKey returns the key for parent strain relationship
-func (keyBuilder) parentKey(strainID string) []byte {
-	return []byte(parentPrefix + strainID)
-}
-
-// termKey returns the key for ontology term
-func (keyBuilder) termKey(stockID string) []byte {
-	return []byte(termPrefix + stockID)
 }
 
 // depositorKey returns the reverse index key for depositor

@@ -118,19 +118,13 @@ func serializeJSON(value interface{}) ([]byte, error) {
 	return jsonBytes, nil
 }
 
-// deserializeJSON deserializes JSON bytes to a map
-func deserializeJSON(data []byte) (jsonIndex, error) {
-	var index jsonIndex
-	if err := json.Unmarshal(data, &index); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
-	}
-	return index, nil
-}
-
 // encodeCounter encodes an int64 counter value to bytes
 func encodeCounter(value int64) []byte {
+	if value < 0 {
+		value = 0
+	}
 	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, uint64(value))
+	binary.BigEndian.PutUint64(buf, uint64(value)) // #nosec G115 -- validated non-negative
 	return buf
 }
 
@@ -139,7 +133,12 @@ func decodeCounter(data []byte) int64 {
 	if len(data) != 8 {
 		return 0
 	}
-	return int64(binary.BigEndian.Uint64(data))
+	uValue := binary.BigEndian.Uint64(data)
+	// Prevent overflow: uint64 values > math.MaxInt64 would overflow when converted to int64
+	if uValue > (1<<63 - 1) {
+		return 0
+	}
+	return int64(uValue) // #nosec G115 -- validated within int64 range
 }
 
 // nowTimestamp returns the current time as a protobuf timestamp

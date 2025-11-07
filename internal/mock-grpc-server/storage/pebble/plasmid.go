@@ -430,7 +430,7 @@ func (storage *pebbleStorage) LoadPlasmid(
 ) IOE.IOEither[error, *stock.Plasmid] {
 	return F.Pipe7(
 		IOE.Of[error](createPlasmidContext{
-			req: convertExistingToNewPlasmid(stockID, req),
+			req: convertExistingToNewPlasmid(req),
 			db:  storage.db,
 		}),
 		IOE.Let[error](setGeneratedPlasmidID, func(ctx createPlasmidContext) string {
@@ -446,7 +446,6 @@ func (storage *pebbleStorage) LoadPlasmid(
 }
 
 func convertExistingToNewPlasmid(
-	stockID string,
 	existing *stock.ExistingPlasmid,
 ) *stock.NewPlasmid {
 	attrs := existing.Data.Attributes
