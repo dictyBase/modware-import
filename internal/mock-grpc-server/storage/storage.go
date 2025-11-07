@@ -41,8 +41,8 @@ type StockStorage interface {
 	// ListPlasmids lists plasmids with filtering and pagination
 	ListPlasmids(params *stock.StockParameters) IOE.IOEither[error, *stock.PlasmidCollection]
 
-	// ListStrainsByIds retrieves multiple strains by their IDs
-	ListStrainsByIds(ids []string) IOE.IOEither[error, *stock.StrainList]
+	// ListStrainsByIDs retrieves multiple strains by their IDs
+	ListStrainsByIDs(ids []string) IOE.IOEither[error, *stock.StrainList]
 
 	// Close closes the storage backend
 	Close() error
