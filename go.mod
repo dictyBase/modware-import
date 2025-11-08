@@ -63,7 +63,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/xuri/excelize/v2 v2.10.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
-	golang.org/x/sync v0.17.0
+	golang.org/x/sync v0.18.0
 )
 
 require (
