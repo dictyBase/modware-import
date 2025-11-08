@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/IBM/fp-go/either"
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
@@ -155,6 +156,11 @@ func buildStorage(dbSetup DatabaseSetup) *pebbleStorage {
 	}
 }
 
+// ToEither executes IOEither and returns the underlying Either
+func ToEither[E, A any](ioe IOE.IOEither[E, A]) either.Either[E, A] {
+	return ioe()
+}
+
 // NewStockStorage creates a new Pebble-backed stock storage
 func NewStockStorage(config *Config) (*pebbleStorage, error) {
 	result := F.Pipe3(
@@ -162,13 +168,13 @@ func NewStockStorage(config *Config) (*pebbleStorage, error) {
 		E.Map[error](func(cfg ValidatedConfig) StorageMode {
 			return cfg.mode
 		}),
-		E.Chain(func(mode StorageMode) E.Either[error, *pebbleStorage] {
-			ioePipeline := F.Pipe2(
+		E.Chain(func(mode StorageMode) either.Either[error, *pebbleStorage] {
+			return F.Pipe3(
 				setupFilesystem(mode),
 				IOE.Chain(openDatabase),
 				IOE.Map[error](buildStorage),
+				ToEither[error, *pebbleStorage],
 			)
-			return ioePipeline()
 		}),
 		E.Fold(
 			func(err error) T.Tuple2[*pebbleStorage, error] {
