@@ -83,7 +83,9 @@ func determineStorageMode(config *Config) E.Either[error, ValidatedConfig] {
 }
 
 // setupInMemoryFilesystem creates virtual filesystem for in-memory mode
-func setupInMemoryFilesystem(cfg InMemoryConfig) IOE.IOEither[error, FilesystemSetup] {
+func setupInMemoryFilesystem(
+	cfg InMemoryConfig,
+) IOE.IOEither[error, FilesystemSetup] {
 	return func() E.Either[error, FilesystemSetup] {
 		memFS := vfs.NewMem()
 		return E.Right[error](FilesystemSetup{
@@ -95,10 +97,15 @@ func setupInMemoryFilesystem(cfg InMemoryConfig) IOE.IOEither[error, FilesystemS
 }
 
 // setupPersistentFilesystem creates directory for persistent mode
-func setupPersistentFilesystem(cfg PersistentConfig) IOE.IOEither[error, FilesystemSetup] {
+func setupPersistentFilesystem(
+	cfg PersistentConfig,
+) IOE.IOEither[error, FilesystemSetup] {
 	return IOE.TryCatchError(func() (FilesystemSetup, error) {
 		if err := os.MkdirAll(cfg.dataDir, 0o755); err != nil {
-			return FilesystemSetup{}, fmt.Errorf("failed to create data directory: %w", err)
+			return FilesystemSetup{}, fmt.Errorf(
+				"failed to create data directory: %w",
+				err,
+			)
 		}
 		return FilesystemSetup{
 			memFS:   nil,
@@ -128,7 +135,10 @@ func openDatabase(fsSetup FilesystemSetup) IOE.IOEither[error, DatabaseSetup] {
 				FS: fsSetup.memFS,
 			})
 			if err != nil {
-				return DatabaseSetup{}, fmt.Errorf("failed to open in-memory pebble database: %w", err)
+				return DatabaseSetup{}, fmt.Errorf(
+					"failed to open in-memory pebble database: %w",
+					err,
+				)
 			}
 		} else {
 			// Persistent mode
@@ -161,6 +171,21 @@ func ToEither[E, A any](ioe IOE.IOEither[E, A]) either.Either[E, A] {
 	return ioe()
 }
 
+// ToTuple converts Either to Go-style tuple (value, error)
+func ToTuple[A any](e either.Either[error, A]) T.Tuple2[A, error] {
+	return F.Pipe1(
+		e,
+		E.Fold(
+			func(err error) T.Tuple2[A, error] {
+				var zero A
+				return T.MakeTuple2(zero, err)
+			},
+			func(val A) T.Tuple2[A, error] {
+				return T.MakeTuple2[A, error](val, nil)
+			},
+		))
+}
+
 // NewStockStorage creates a new Pebble-backed stock storage
 func NewStockStorage(config *Config) (*pebbleStorage, error) {
 	result := F.Pipe3(
@@ -176,14 +201,7 @@ func NewStockStorage(config *Config) (*pebbleStorage, error) {
 				ToEither[error, *pebbleStorage],
 			)
 		}),
-		E.Fold(
-			func(err error) T.Tuple2[*pebbleStorage, error] {
-				return T.MakeTuple2[*pebbleStorage, error](nil, err)
-			},
-			func(storage *pebbleStorage) T.Tuple2[*pebbleStorage, error] {
-				return T.MakeTuple2[*pebbleStorage, error](storage, nil)
-			},
-		),
+		ToTuple[*pebbleStorage],
 	)
 
 	return result.F1, result.F2
