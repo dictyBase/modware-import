@@ -186,21 +186,30 @@ func ToTuple[A any](e either.Either[error, A]) T.Tuple2[A, error] {
 		))
 }
 
+// extractStorageMode extracts StorageMode from ValidatedConfig
+func extractStorageMode(cfg ValidatedConfig) StorageMode {
+	return cfg.mode
+}
+
+// executeStorageSetup executes the complete storage setup pipeline
+func executeStorageSetup(
+	mode StorageMode,
+) either.Either[error, *pebbleStorage] {
+	return F.Pipe3(
+		setupFilesystem(mode),
+		IOE.Chain(openDatabase),
+		IOE.Map[error](buildStorage),
+		ToEither[error, *pebbleStorage],
+	)
+}
+
 // NewStockStorage creates a new Pebble-backed stock storage
 func NewStockStorage(config *Config) (*pebbleStorage, error) {
-	result := F.Pipe3(
-		validateConfig(config),
-		E.Map[error](func(cfg ValidatedConfig) StorageMode {
-			return cfg.mode
-		}),
-		E.Chain(func(mode StorageMode) either.Either[error, *pebbleStorage] {
-			return F.Pipe3(
-				setupFilesystem(mode),
-				IOE.Chain(openDatabase),
-				IOE.Map[error](buildStorage),
-				ToEither[error, *pebbleStorage],
-			)
-		}),
+	result := F.Pipe4(
+		config,
+		validateConfig,
+		E.Map[error](extractStorageMode),
+		E.Chain(executeStorageSetup),
 		ToTuple[*pebbleStorage],
 	)
 
