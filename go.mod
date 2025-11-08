@@ -54,7 +54,7 @@ require (
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/google/uuid v1.6.0
-	github.com/hasura/go-graphql-client v0.14.5
+	github.com/hasura/go-graphql-client v0.15.0
 	github.com/jedib0t/go-pretty/v6 v6.7.0
 	github.com/jellydator/ttlcache/v3 v3.4.0
 	github.com/pkg/errors v0.9.1
