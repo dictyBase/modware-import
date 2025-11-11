@@ -2,6 +2,17 @@ package filter
 
 import (
 	"strings"
+
+	A "github.com/IBM/fp-go/array"
+	EQ "github.com/IBM/fp-go/eq"
+	F "github.com/IBM/fp-go/function"
+	ORD "github.com/IBM/fp-go/ord"
+)
+
+// Ord and Eq instances for functional comparison
+var (
+	intOrd   = ORD.FromStrictCompare[int]()
+	stringEq = EQ.FromEquals(func(a, b string) bool { return a == b })
 )
 
 // operatorSymbols defines all valid operator symbols in order of precedence (longest first)
@@ -121,12 +132,49 @@ func extractValue(filter string, startPos, position int, tokens *[]Token) int {
 	return position
 }
 
-// isAtOperator checks if the current position is at the start of an operator
-func isAtOperator(filter string, position int) bool {
-	for _, opSymbol := range operatorSymbols {
-		if position+len(opSymbol) <= len(filter) && filter[position:position+len(opSymbol)] == opSymbol {
-			return true
-		}
+// hasEnoughSpaceImpl checks if there's enough space for an operator
+func hasEnoughSpaceImpl(filterLen, position, opLen int) bool {
+	return ORD.Leq(intOrd)(filterLen)(position + opLen)
+}
+
+// hasEnoughSpace is the curried version using F.Bind1of3
+var hasEnoughSpace = F.Bind1of3(hasEnoughSpaceImpl)
+
+// extractSubstringImpl safely extracts substring from filter
+func extractSubstringImpl(filter string, position, opLen int) string {
+	endPos := position + opLen
+	if endPos > len(filter) {
+		return ""
 	}
-	return false
+	return filter[position:endPos]
+}
+
+// extractSubstring is the curried version
+var extractSubstring = F.Bind1of3(extractSubstringImpl)
+
+// substringMatchesImpl checks if substring equals operator symbol
+func substringMatchesImpl(filter string, position int, opSymbol string) bool {
+	substring := extractSubstring(filter)(position, len(opSymbol))
+	return stringEq.Equals(substring, opSymbol)
+}
+
+// substringMatches is the curried version
+var substringMatches = F.Bind1of3(substringMatchesImpl)
+
+// operatorMatchesAtPositionImpl combines boundary and match checks
+func operatorMatchesAtPositionImpl(filter string, position int, opSymbol string) bool {
+	// Boundary check first
+	if !hasEnoughSpace(len(filter))(position, len(opSymbol)) {
+		return false
+	}
+	// Then string match
+	return substringMatches(filter)(position, opSymbol)
+}
+
+// isAtOperator checks if the current position is at the start of an operator
+// using functional predicate composition with Ord and Eq
+func isAtOperator(filter string, position int) bool {
+	return A.Any(func(opSymbol string) bool {
+		return operatorMatchesAtPositionImpl(filter, position, opSymbol)
+	})(operatorSymbols)
 }
