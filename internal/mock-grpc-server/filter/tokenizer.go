@@ -13,7 +13,7 @@ import (
 // Ord and Eq instances for functional comparison
 var (
 	intOrd   = ORD.FromStrictCompare[int]()
-	stringEq = EQ.FromEquals(func(a, b string) bool { return a == b })
+	stringEq = EQ.FromStrictEquals[string]()
 	leqOrd   = ORD.Leq(intOrd)
 )
 
