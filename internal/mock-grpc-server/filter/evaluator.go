@@ -287,19 +287,46 @@ func typeAssertString(val any) (string, bool) {
 // extractString converts any value to Option[string] using Optionize1
 var extractString = O.Optionize1(typeAssertString)
 
-func extractFloat64(val any) O.Option[float64] {
-	switch num := val.(type) {
-	case float64:
+// tryExtractFloat64 attempts direct float64 type assertion
+func tryExtractFloat64(val any) O.Option[float64] {
+	if num, ok := val.(float64); ok {
 		return O.Some(num)
-	case float32:
-		return O.Some(float64(num))
-	case int:
-		return O.Some(float64(num))
-	case int64:
-		return O.Some(float64(num))
-	default:
-		return O.None[float64]()
 	}
+	return O.None[float64]()
+}
+
+// tryExtractFloat32 attempts float32 type assertion and converts to float64
+func tryExtractFloat32(val any) O.Option[float64] {
+	if num, ok := val.(float32); ok {
+		return O.Some(float64(num))
+	}
+	return O.None[float64]()
+}
+
+// tryExtractInt attempts int type assertion and converts to float64
+func tryExtractInt(val any) O.Option[float64] {
+	if num, ok := val.(int); ok {
+		return O.Some(float64(num))
+	}
+	return O.None[float64]()
+}
+
+// tryExtractInt64 attempts int64 type assertion and converts to float64
+func tryExtractInt64(val any) O.Option[float64] {
+	if num, ok := val.(int64); ok {
+		return O.Some(float64(num))
+	}
+	return O.None[float64]()
+}
+
+// extractFloat64 tries multiple numeric type conversions using O.Alt chain
+func extractFloat64(val any) O.Option[float64] {
+	return F.Pipe3(
+		tryExtractFloat64(val),
+		O.Alt(func() O.Option[float64] { return tryExtractFloat32(val) }),
+		O.Alt(func() O.Option[float64] { return tryExtractInt(val) }),
+		O.Alt(func() O.Option[float64] { return tryExtractInt64(val) }),
+	)
 }
 
 // typeAssertArray performs type assertion to []any, returning (value, success)
