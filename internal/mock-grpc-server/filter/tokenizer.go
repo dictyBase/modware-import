@@ -146,40 +146,53 @@ func extractValue(filter string, startPos, position int, tokens *[]Token) int {
 	return position
 }
 
-// operatorMatchesAtPositionImpl checks if operator matches at position
-// using a unified functional pipeline combining boundary check, substring extraction,
-// and equality comparison
-func operatorMatchesAtPositionImpl(
-	filter string,
-	position int,
-	opSymbol string,
-) bool {
-	endPos := position + len(opSymbol)
+// operatorContext holds the context needed to check if an operator matches
+type operatorContext struct {
+	filter   string
+	position int
+	opSymbol string
+}
+
+// matches checks if operator matches at position using a unified pipeline
+func (ctx operatorContext) matches() bool {
+	endPos := ctx.position + len(ctx.opSymbol)
 
 	return F.Pipe4(
 		endPos,
 		// 1. Check boundary: endPos <= len(filter)
-		O.FromPredicate(leqOrd(len(filter))),
+		O.FromPredicate(leqOrd(len(ctx.filter))),
 		// 2. Extract substring if valid
 		O.Map(func(_ int) string {
-			return filter[position:endPos]
+			return ctx.filter[ctx.position:endPos]
 		}),
 		// 3. Check if substring equals operator
 		O.Map(func(substring string) bool {
-			return stringEq.Equals(substring, opSymbol)
+			return stringEq.Equals(substring, ctx.opSymbol)
 		}),
 		// 4. Return false if any step failed, otherwise return the result
 		O.GetOrElse(F.Constant(false)),
 	)
 }
 
+// toOperatorContext creates an operatorContext from a symbol
+func toOperatorContext(filter string, position int) func(string) operatorContext {
+	return func(opSymbol string) operatorContext {
+		return operatorContext{
+			filter:   filter,
+			position: position,
+			opSymbol: opSymbol,
+		}
+	}
+}
+
 // isAtOperator checks if the current position is at the start of an operator
-// using functional predicate composition with Ord and Eq
+// using point-free functional composition
 func isAtOperator(filter string, position int) bool {
-	return F.Pipe1(
+	return F.Pipe2(
 		operatorSymbols,
-		A.Any(func(opSymbol string) bool {
-			return operatorMatchesAtPositionImpl(filter, position, opSymbol)
+		A.Map(toOperatorContext(filter, position)),
+		A.Any(func(ctx operatorContext) bool {
+			return ctx.matches()
 		}),
 	)
 }
