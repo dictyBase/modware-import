@@ -159,87 +159,27 @@ func TestParseInvalidFilter(t *testing.T) {
 }
 
 func TestSplitByOperator_EdgeCases(t *testing.T) {
+	fieldA := Token{Type: TokenField, Value: "A"}
+	fieldB := Token{Type: TokenField, Value: "B"}
+	fieldC := Token{Type: TokenField, Value: "C"}
+	orToken := Token{Type: TokenOr}
+
 	tests := []struct {
 		name     string
 		tokens   []Token
 		opType   TokenType
 		expected [][]Token
 	}{
-		{
-			name:     "empty input",
-			tokens:   []Token{},
-			opType:   TokenOr,
-			expected: [][]Token{},
-		},
-		{
-			name:     "no separators",
-			tokens:   []Token{{Type: TokenField, Value: "A"}, {Type: TokenField, Value: "B"}},
-			opType:   TokenOr,
-			expected: [][]Token{{{Type: TokenField, Value: "A"}, {Type: TokenField, Value: "B"}}},
-		},
-		{
-			name: "consecutive separators",
-			tokens: []Token{
-				{Type: TokenField, Value: "A"},
-				{Type: TokenOr},
-				{Type: TokenOr},
-				{Type: TokenField, Value: "B"},
-			},
-			opType: TokenOr,
-			expected: [][]Token{
-				{{Type: TokenField, Value: "A"}},
-				{{Type: TokenField, Value: "B"}},
-			},
-		},
-		{
-			name: "trailing separator",
-			tokens: []Token{
-				{Type: TokenField, Value: "A"},
-				{Type: TokenOr},
-			},
-			opType:   TokenOr,
-			expected: [][]Token{{{Type: TokenField, Value: "A"}}},
-		},
-		{
-			name: "leading separator",
-			tokens: []Token{
-				{Type: TokenOr},
-				{Type: TokenField, Value: "A"},
-			},
-			opType:   TokenOr,
-			expected: [][]Token{{{Type: TokenField, Value: "A"}}},
-		},
-		{
-			name: "multiple consecutive separators",
-			tokens: []Token{
-				{Type: TokenField, Value: "A"},
-				{Type: TokenOr},
-				{Type: TokenOr},
-				{Type: TokenOr},
-				{Type: TokenField, Value: "B"},
-			},
-			opType: TokenOr,
-			expected: [][]Token{
-				{{Type: TokenField, Value: "A"}},
-				{{Type: TokenField, Value: "B"}},
-			},
-		},
-		{
-			name: "normal case with single separators",
-			tokens: []Token{
-				{Type: TokenField, Value: "A"},
-				{Type: TokenOr},
-				{Type: TokenField, Value: "B"},
-				{Type: TokenOr},
-				{Type: TokenField, Value: "C"},
-			},
-			opType: TokenOr,
-			expected: [][]Token{
-				{{Type: TokenField, Value: "A"}},
-				{{Type: TokenField, Value: "B"}},
-				{{Type: TokenField, Value: "C"}},
-			},
-		},
+		{"empty input", []Token{}, TokenOr, [][]Token{}},
+		{"no separators", []Token{fieldA, fieldB}, TokenOr, [][]Token{{fieldA, fieldB}}},
+		{"consecutive separators", []Token{fieldA, orToken, orToken, fieldB}, TokenOr,
+			[][]Token{{fieldA}, {fieldB}}},
+		{"trailing separator", []Token{fieldA, orToken}, TokenOr, [][]Token{{fieldA}}},
+		{"leading separator", []Token{orToken, fieldA}, TokenOr, [][]Token{{fieldA}}},
+		{"multiple consecutive separators", []Token{fieldA, orToken, orToken, orToken, fieldB},
+			TokenOr, [][]Token{{fieldA}, {fieldB}}},
+		{"normal case with single separators", []Token{fieldA, orToken, fieldB, orToken, fieldC},
+			TokenOr, [][]Token{{fieldA}, {fieldB}, {fieldC}}},
 	}
 
 	for _, tt := range tests {
