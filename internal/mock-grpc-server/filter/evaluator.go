@@ -10,7 +10,7 @@ import (
 )
 
 // OperatorEvaluator is a function that evaluates an operator against actual and expected values
-type OperatorEvaluator func(actual interface{}, expected string) bool
+type OperatorEvaluator func(actual any, expected string) bool
 
 // operatorEvaluators maps operators to their evaluation functions
 var operatorEvaluators = map[Operator]OperatorEvaluator{
@@ -42,7 +42,7 @@ var operatorEvaluators = map[Operator]OperatorEvaluator{
 }
 
 // UpdatePredicateEvaluate updates the Predicate's Evaluate method
-func (pred Predicate) Evaluate(data map[string]interface{}) bool {
+func (pred Predicate) Evaluate(data map[string]any) bool {
 	// Get field value from data
 	fieldValue, exists := data[pred.Field]
 	if !exists {
@@ -60,7 +60,7 @@ func (pred Predicate) Evaluate(data map[string]interface{}) bool {
 
 // String evaluators using Option for type safety
 
-func evalStringContains(actual interface{}, expected string) bool {
+func evalStringContains(actual any, expected string) bool {
 	return F.Pipe2(
 		extractString(actual),
 		O.Map(func(str string) bool {
@@ -70,7 +70,7 @@ func evalStringContains(actual interface{}, expected string) bool {
 	)
 }
 
-func evalStringNotContains(actual interface{}, expected string) bool {
+func evalStringNotContains(actual any, expected string) bool {
 	return F.Pipe2(
 		extractString(actual),
 		O.Map(func(str string) bool {
@@ -80,7 +80,7 @@ func evalStringNotContains(actual interface{}, expected string) bool {
 	)
 }
 
-func evalStringEquals(actual interface{}, expected string) bool {
+func evalStringEquals(actual any, expected string) bool {
 	return F.Pipe2(
 		extractString(actual),
 		O.Map(func(str string) bool {
@@ -90,7 +90,7 @@ func evalStringEquals(actual interface{}, expected string) bool {
 	)
 }
 
-func evalStringNotEquals(actual interface{}, expected string) bool {
+func evalStringNotEquals(actual any, expected string) bool {
 	return F.Pipe2(
 		extractString(actual),
 		O.Map(func(str string) bool {
@@ -102,27 +102,51 @@ func evalStringNotEquals(actual interface{}, expected string) bool {
 
 // Numeric evaluators using Option chains
 
-func evalNumericEquals(actual interface{}, expected string) bool {
-	return evaluateNumeric(actual, expected, func(a, b float64) bool { return a == b })
+func evalNumericEquals(actual any, expected string) bool {
+	return evaluateNumeric(
+		actual,
+		expected,
+		func(a, b float64) bool { return a == b },
+	)
 }
 
-func evalNumericGreaterThan(actual interface{}, expected string) bool {
-	return evaluateNumeric(actual, expected, func(a, b float64) bool { return a > b })
+func evalNumericGreaterThan(actual any, expected string) bool {
+	return evaluateNumeric(
+		actual,
+		expected,
+		func(a, b float64) bool { return a > b },
+	)
 }
 
-func evalNumericLessThan(actual interface{}, expected string) bool {
-	return evaluateNumeric(actual, expected, func(a, b float64) bool { return a < b })
+func evalNumericLessThan(actual any, expected string) bool {
+	return evaluateNumeric(
+		actual,
+		expected,
+		func(a, b float64) bool { return a < b },
+	)
 }
 
-func evalNumericGreaterOrEqual(actual interface{}, expected string) bool {
-	return evaluateNumeric(actual, expected, func(a, b float64) bool { return a >= b })
+func evalNumericGreaterOrEqual(actual any, expected string) bool {
+	return evaluateNumeric(
+		actual,
+		expected,
+		func(a, b float64) bool { return a >= b },
+	)
 }
 
-func evalNumericLessOrEqual(actual interface{}, expected string) bool {
-	return evaluateNumeric(actual, expected, func(a, b float64) bool { return a <= b })
+func evalNumericLessOrEqual(actual any, expected string) bool {
+	return evaluateNumeric(
+		actual,
+		expected,
+		func(a, b float64) bool { return a <= b },
+	)
 }
 
-func evaluateNumeric(actual interface{}, expected string, comparator func(float64, float64) bool) bool {
+func evaluateNumeric(
+	actual any,
+	expected string,
+	comparator func(float64, float64) bool,
+) bool {
 	return F.Pipe2(
 		extractFloat64(actual),
 		O.Chain(func(actualNum float64) O.Option[bool] {
@@ -139,31 +163,47 @@ func evaluateNumeric(actual interface{}, expected string, comparator func(float6
 
 // Date evaluators
 
-func evalDateEquals(actual interface{}, expected string) bool {
-	return evaluateDate(actual, expected, func(a, b time.Time) bool { return a.Equal(b) })
+func evalDateEquals(actual any, expected string) bool {
+	return evaluateDate(
+		actual,
+		expected,
+		func(a, b time.Time) bool { return a.Equal(b) },
+	)
 }
 
-func evalDateGreater(actual interface{}, expected string) bool {
-	return evaluateDate(actual, expected, func(a, b time.Time) bool { return a.After(b) })
+func evalDateGreater(actual any, expected string) bool {
+	return evaluateDate(
+		actual,
+		expected,
+		func(a, b time.Time) bool { return a.After(b) },
+	)
 }
 
-func evalDateLess(actual interface{}, expected string) bool {
-	return evaluateDate(actual, expected, func(a, b time.Time) bool { return a.Before(b) })
+func evalDateLess(actual any, expected string) bool {
+	return evaluateDate(
+		actual,
+		expected,
+		func(a, b time.Time) bool { return a.Before(b) },
+	)
 }
 
-func evalDateGreaterOrEqual(actual interface{}, expected string) bool {
+func evalDateGreaterOrEqual(actual any, expected string) bool {
 	return evaluateDate(actual, expected, func(a, b time.Time) bool {
 		return a.After(b) || a.Equal(b)
 	})
 }
 
-func evalDateLessOrEqual(actual interface{}, expected string) bool {
+func evalDateLessOrEqual(actual any, expected string) bool {
 	return evaluateDate(actual, expected, func(a, b time.Time) bool {
 		return a.Before(b) || a.Equal(b)
 	})
 }
 
-func evaluateDate(actual interface{}, expected string, comparator func(time.Time, time.Time) bool) bool {
+func evaluateDate(
+	actual any,
+	expected string,
+	comparator func(time.Time, time.Time) bool,
+) bool {
 	return F.Pipe2(
 		extractTime(actual),
 		O.Chain(func(actualTime time.Time) O.Option[bool] {
@@ -180,10 +220,10 @@ func evaluateDate(actual interface{}, expected string, comparator func(time.Time
 
 // Array evaluators
 
-func evalArrayContains(actual interface{}, expected string) bool {
+func evalArrayContains(actual any, expected string) bool {
 	return F.Pipe2(
 		extractArray(actual),
-		O.Map(func(arr []interface{}) bool {
+		O.Map(func(arr []any) bool {
 			for _, item := range arr {
 				if itemMatches(item, expected) {
 					return true
@@ -195,10 +235,10 @@ func evalArrayContains(actual interface{}, expected string) bool {
 	)
 }
 
-func evalArrayNotContains(actual interface{}, expected string) bool {
+func evalArrayNotContains(actual any, expected string) bool {
 	return F.Pipe2(
 		extractArray(actual),
-		O.Map(func(arr []interface{}) bool {
+		O.Map(func(arr []any) bool {
 			for _, item := range arr {
 				if itemMatches(item, expected) {
 					return false
@@ -210,10 +250,10 @@ func evalArrayNotContains(actual interface{}, expected string) bool {
 	)
 }
 
-func evalArrayEquals(actual interface{}, expected string) bool {
+func evalArrayEquals(actual any, expected string) bool {
 	return F.Pipe2(
 		extractArray(actual),
-		O.Map(func(arr []interface{}) bool {
+		O.Map(func(arr []any) bool {
 			if len(arr) != 1 {
 				return false
 			}
@@ -223,10 +263,10 @@ func evalArrayEquals(actual interface{}, expected string) bool {
 	)
 }
 
-func evalArrayNotEquals(actual interface{}, expected string) bool {
+func evalArrayNotEquals(actual any, expected string) bool {
 	return F.Pipe2(
 		extractArray(actual),
-		O.Map(func(arr []interface{}) bool {
+		O.Map(func(arr []any) bool {
 			if len(arr) != 1 {
 				return true
 			}
@@ -238,7 +278,7 @@ func evalArrayNotEquals(actual interface{}, expected string) bool {
 
 // Helper functions using Option for type safety
 
-func extractString(val interface{}) O.Option[string] {
+func extractString(val any) O.Option[string] {
 	str, ok := val.(string)
 	if !ok {
 		return O.None[string]()
@@ -246,7 +286,7 @@ func extractString(val interface{}) O.Option[string] {
 	return O.Some(str)
 }
 
-func extractFloat64(val interface{}) O.Option[float64] {
+func extractFloat64(val any) O.Option[float64] {
 	switch num := val.(type) {
 	case float64:
 		return O.Some(num)
@@ -261,15 +301,15 @@ func extractFloat64(val interface{}) O.Option[float64] {
 	}
 }
 
-func extractArray(val interface{}) O.Option[[]interface{}] {
-	arr, ok := val.([]interface{})
+func extractArray(val any) O.Option[[]any] {
+	arr, ok := val.([]any)
 	if !ok {
-		return O.None[[]interface{}]()
+		return O.None[[]any]()
 	}
 	return O.Some(arr)
 }
 
-func extractTime(val interface{}) O.Option[time.Time] {
+func extractTime(val any) O.Option[time.Time] {
 	// Try parsing as string first (common case from JSON)
 	if str, ok := val.(string); ok {
 		return parseTime(str)
@@ -307,7 +347,7 @@ func parseTime(str string) O.Option[time.Time] {
 	return O.None[time.Time]()
 }
 
-func itemMatches(item interface{}, expected string) bool {
+func itemMatches(item any, expected string) bool {
 	return F.Pipe2(
 		extractString(item),
 		O.Map(func(str string) bool {
