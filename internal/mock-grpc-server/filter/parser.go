@@ -140,42 +140,92 @@ func buildAndTree(groups [][]Token) E.Either[error, FilterExpression] {
 	)
 }
 
-// parsePredicate parses a single field-operator-value predicate
-func parsePredicate(tokens []Token) E.Either[error, FilterExpression] {
-	if len(tokens) != 3 {
-		return E.Left[FilterExpression](
-			fmt.Errorf("invalid predicate: expected 3 tokens, got %d", len(tokens)),
-		)
-	}
-
-	if tokens[0].Type != TokenField {
-		return E.Left[FilterExpression](
-			fmt.Errorf("invalid predicate: first token must be field, got %v", tokens[0].Type),
-		)
-	}
-
-	if tokens[1].Type != TokenOperator {
-		return E.Left[FilterExpression](
-			fmt.Errorf("invalid predicate: second token must be operator, got %v", tokens[1].Type),
-		)
-	}
-
-	if tokens[2].Type != TokenValue {
-		return E.Left[FilterExpression](
-			fmt.Errorf("invalid predicate: third token must be value, got %v", tokens[2].Type),
-		)
-	}
-
-	operator, ok := operatorMap[tokens[1].Value]
-	if !ok {
-		return E.Left[FilterExpression](
-			fmt.Errorf("unknown operator: %s", tokens[1].Value),
-		)
-	}
-
-	return E.Right[error](FilterExpression(Predicate{
-		Field:    tokens[0].Value,
-		Operator: operator,
-		Value:    tokens[2].Value,
-	}))
+// Predicates for token validation
+// checkLength validates that the token slice has a length of 3.
+func checkLength(tokens []Token) E.Either[error, []Token] {
+	return F.Pipe1(
+		tokens,
+		E.FromPredicate(
+			func(t []Token) bool { return len(t) == 3 },
+			func(t []Token) error {
+				return fmt.Errorf(
+					"invalid predicate: expected 3 tokens, got %d",
+					len(t),
+				)
+			},
+		),
+	)
 }
+
+// checkFieldToken validates the first token's type.
+func checkFieldToken(tokens []Token) E.Either[error, []Token] {
+	return F.Pipe1(
+		tokens,
+		E.FromPredicate(
+			func(t []Token) bool { return t[0].Type == TokenField },
+			func(t []Token) error {
+				return fmt.Errorf(
+					"invalid predicate: first token must be a Field, got %v",
+					t[0].Type,
+				)
+			},
+		),
+	)
+}
+
+// checkOperatorToken validates the second token's type.
+func checkOperatorToken(tokens []Token) E.Either[error, []Token] {
+	return F.Pipe1(
+		tokens,
+		E.FromPredicate(
+			func(t []Token) bool { return t[1].Type == TokenOperator },
+			func(t []Token) error {
+				return fmt.Errorf(
+					"invalid predicate: second token must be an Operator, got %v",
+					t[1].Type,
+				)
+			},
+		),
+	)
+}
+
+// checkValueToken validates the third token's type.
+func checkValueToken(tokens []Token) E.Either[error, []Token] {
+	return F.Pipe1(
+		tokens,
+		E.FromPredicate(
+			func(t []Token) bool { return t[2].Type == TokenValue },
+			func(t []Token) error {
+				return fmt.Errorf(
+					"invalid predicate: third token must be a Value, got %v",
+					t[2].Type,
+				)
+			},
+		),
+	)
+}
+
+// validateTokenStructure executes the full validation pipeline.
+// It takes tokens and returns the result of the composed validation checks.
+func validateTokenStructure(tokens []Token) E.Either[error, []Token] {
+	return F.Pipe4(
+		tokens,
+		checkLength,
+		E.Chain(checkFieldToken),
+		E.Chain(checkOperatorToken),
+		E.Chain(checkValueToken),
+	)
+}
+
+// operatorExists checks if operator symbol exists in operatorMap
+func operatorExists(operatorSymbol string) bool {
+	_, ok := operatorMap[operatorSymbol]
+	return ok
+}
+
+// validateOperatorExists validates operator symbol using predicate
+var validateOperatorExists = E.FromPredicate(
+	operatorExists,
+	func(symbol string) error {
+		return fmt.Errorf("unknown operator: %s", symbol)
+	},
