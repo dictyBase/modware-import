@@ -157,3 +157,95 @@ func TestParseInvalidFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitByOperator_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		tokens   []Token
+		opType   TokenType
+		expected [][]Token
+	}{
+		{
+			name:     "empty input",
+			tokens:   []Token{},
+			opType:   TokenOr,
+			expected: [][]Token{},
+		},
+		{
+			name:     "no separators",
+			tokens:   []Token{{Type: TokenField, Value: "A"}, {Type: TokenField, Value: "B"}},
+			opType:   TokenOr,
+			expected: [][]Token{{{Type: TokenField, Value: "A"}, {Type: TokenField, Value: "B"}}},
+		},
+		{
+			name: "consecutive separators",
+			tokens: []Token{
+				{Type: TokenField, Value: "A"},
+				{Type: TokenOr},
+				{Type: TokenOr},
+				{Type: TokenField, Value: "B"},
+			},
+			opType: TokenOr,
+			expected: [][]Token{
+				{{Type: TokenField, Value: "A"}},
+				{{Type: TokenField, Value: "B"}},
+			},
+		},
+		{
+			name: "trailing separator",
+			tokens: []Token{
+				{Type: TokenField, Value: "A"},
+				{Type: TokenOr},
+			},
+			opType:   TokenOr,
+			expected: [][]Token{{{Type: TokenField, Value: "A"}}},
+		},
+		{
+			name: "leading separator",
+			tokens: []Token{
+				{Type: TokenOr},
+				{Type: TokenField, Value: "A"},
+			},
+			opType:   TokenOr,
+			expected: [][]Token{{{Type: TokenField, Value: "A"}}},
+		},
+		{
+			name: "multiple consecutive separators",
+			tokens: []Token{
+				{Type: TokenField, Value: "A"},
+				{Type: TokenOr},
+				{Type: TokenOr},
+				{Type: TokenOr},
+				{Type: TokenField, Value: "B"},
+			},
+			opType: TokenOr,
+			expected: [][]Token{
+				{{Type: TokenField, Value: "A"}},
+				{{Type: TokenField, Value: "B"}},
+			},
+		},
+		{
+			name: "normal case with single separators",
+			tokens: []Token{
+				{Type: TokenField, Value: "A"},
+				{Type: TokenOr},
+				{Type: TokenField, Value: "B"},
+				{Type: TokenOr},
+				{Type: TokenField, Value: "C"},
+			},
+			opType: TokenOr,
+			expected: [][]Token{
+				{{Type: TokenField, Value: "A"}},
+				{{Type: TokenField, Value: "B"}},
+				{{Type: TokenField, Value: "C"}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := splitByOperator(tt.tokens, tt.opType)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
