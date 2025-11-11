@@ -278,13 +278,14 @@ func evalArrayNotEquals(actual any, expected string) bool {
 
 // Helper functions using Option for type safety
 
-func extractString(val any) O.Option[string] {
+// typeAssertString performs type assertion to string, returning (value, success)
+func typeAssertString(val any) (string, bool) {
 	str, ok := val.(string)
-	if !ok {
-		return O.None[string]()
-	}
-	return O.Some(str)
+	return str, ok
 }
+
+// extractString converts any value to Option[string] using Optionize1
+var extractString = O.Optionize1(typeAssertString)
 
 func extractFloat64(val any) O.Option[float64] {
 	switch num := val.(type) {
@@ -301,13 +302,14 @@ func extractFloat64(val any) O.Option[float64] {
 	}
 }
 
-func extractArray(val any) O.Option[[]any] {
+// typeAssertArray performs type assertion to []any, returning (value, success)
+func typeAssertArray(val any) ([]any, bool) {
 	arr, ok := val.([]any)
-	if !ok {
-		return O.None[[]any]()
-	}
-	return O.Some(arr)
+	return arr, ok
 }
+
+// extractArray converts any value to Option[[]any] using Optionize1
+var extractArray = O.Optionize1(typeAssertArray)
 
 func extractTime(val any) O.Option[time.Time] {
 	// Try parsing as string first (common case from JSON)
