@@ -146,47 +146,31 @@ func extractValue(filter string, startPos, position int, tokens *[]Token) int {
 	return position
 }
 
-// extractSubstringImpl safely extracts substring from filter using Option
-func extractSubstringImpl(filter string, position, opLen int) string {
-	endPos := position + opLen
-
-	return F.Pipe3(
-		endPos,
-		// Check if endPos is within bounds using Ord.Leq
-		O.FromPredicate(leqOrd(len(filter))),
-		// If valid, extract substring
-		O.Map(func(_ int) string {
-			return filter[position:endPos]
-		}),
-		// Otherwise return empty string
-		O.GetOrElse(F.Constant("")),
-	)
-}
-
-// extractSubstring is the curried version
-var extractSubstring = F.Bind1of3(extractSubstringImpl)
-
-// substringMatchesImpl checks if substring equals operator symbol
-func substringMatchesImpl(filter string, position int, opSymbol string) bool {
-	substring := extractSubstring(filter)(position, len(opSymbol))
-	return stringEq.Equals(substring, opSymbol)
-}
-
-// substringMatches is the curried version
-var substringMatches = F.Bind1of3(substringMatchesImpl)
-
-// operatorMatchesAtPositionImpl combines boundary and match checks
+// operatorMatchesAtPositionImpl checks if operator matches at position
+// using a unified functional pipeline combining boundary check, substring extraction,
+// and equality comparison
 func operatorMatchesAtPositionImpl(
 	filter string,
 	position int,
 	opSymbol string,
 ) bool {
-	// Boundary check first: position+len(opSymbol) <= len(filter)
-	if !leqOrd(len(filter))(position + len(opSymbol)) {
-		return false
-	}
-	// Then string match
-	return substringMatches(filter)(position, opSymbol)
+	endPos := position + len(opSymbol)
+
+	return F.Pipe4(
+		endPos,
+		// 1. Check boundary: endPos <= len(filter)
+		O.FromPredicate(leqOrd(len(filter))),
+		// 2. Extract substring if valid
+		O.Map(func(_ int) string {
+			return filter[position:endPos]
+		}),
+		// 3. Check if substring equals operator
+		O.Map(func(substring string) bool {
+			return stringEq.Equals(substring, opSymbol)
+		}),
+		// 4. Return false if any step failed, otherwise return the result
+		O.GetOrElse(F.Constant(false)),
+	)
 }
 
 // isAtOperator checks if the current position is at the start of an operator
