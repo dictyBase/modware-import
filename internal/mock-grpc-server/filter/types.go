@@ -55,7 +55,7 @@ const (
 
 // FilterExpression represents an evaluatable filter expression
 type FilterExpression interface {
-	Evaluate(data map[string]interface{}) bool
+	Evaluate(data map[string]any) bool
 }
 
 // Predicate represents a single comparison operation
