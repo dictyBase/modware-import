@@ -6,6 +6,7 @@ import (
 	A "github.com/IBM/fp-go/array"
 	EQ "github.com/IBM/fp-go/eq"
 	F "github.com/IBM/fp-go/function"
+	O "github.com/IBM/fp-go/option"
 	ORD "github.com/IBM/fp-go/ord"
 )
 
@@ -13,6 +14,7 @@ import (
 var (
 	intOrd   = ORD.FromStrictCompare[int]()
 	stringEq = EQ.FromEquals(func(a, b string) bool { return a == b })
+	leqOrd   = ORD.Leq(intOrd)
 )
 
 // operatorSymbols defines all valid operator symbols in order of precedence (longest first)
@@ -58,7 +60,11 @@ func processNextToken(filter string, position int, tokens *[]Token) int {
 }
 
 // tryLogicalOperator checks for AND (;) or OR (,) operators
-func tryLogicalOperator(filter string, position int, tokens *[]Token) (int, bool) {
+func tryLogicalOperator(
+	filter string,
+	position int,
+	tokens *[]Token,
+) (int, bool) {
 	switch filter[position] {
 	case ';':
 		*tokens = append(*tokens, Token{Type: TokenAnd, Value: ";"})
@@ -71,10 +77,18 @@ func tryLogicalOperator(filter string, position int, tokens *[]Token) (int, bool
 }
 
 // tryComparisonOperator attempts to match a comparison operator at the current position
-func tryComparisonOperator(filter string, position int, tokens *[]Token) (int, bool) {
+func tryComparisonOperator(
+	filter string,
+	position int,
+	tokens *[]Token,
+) (int, bool) {
 	for _, opSymbol := range operatorSymbols {
-		if position+len(opSymbol) <= len(filter) && filter[position:position+len(opSymbol)] == opSymbol {
-			*tokens = append(*tokens, Token{Type: TokenOperator, Value: opSymbol})
+		if position+len(opSymbol) <= len(filter) &&
+			filter[position:position+len(opSymbol)] == opSymbol {
+			*tokens = append(
+				*tokens,
+				Token{Type: TokenOperator, Value: opSymbol},
+			)
 			return position + len(opSymbol), true
 		}
 	}
@@ -132,21 +146,21 @@ func extractValue(filter string, startPos, position int, tokens *[]Token) int {
 	return position
 }
 
-// hasEnoughSpaceImpl checks if there's enough space for an operator
-func hasEnoughSpaceImpl(filterLen, position, opLen int) bool {
-	return ORD.Leq(intOrd)(filterLen)(position + opLen)
-}
-
-// hasEnoughSpace is the curried version using F.Bind1of3
-var hasEnoughSpace = F.Bind1of3(hasEnoughSpaceImpl)
-
-// extractSubstringImpl safely extracts substring from filter
+// extractSubstringImpl safely extracts substring from filter using Option
 func extractSubstringImpl(filter string, position, opLen int) string {
 	endPos := position + opLen
-	if endPos > len(filter) {
-		return ""
-	}
-	return filter[position:endPos]
+
+	return F.Pipe3(
+		endPos,
+		// Check if endPos is within bounds using Ord.Leq
+		O.FromPredicate(leqOrd(len(filter))),
+		// If valid, extract substring
+		O.Map(func(_ int) string {
+			return filter[position:endPos]
+		}),
+		// Otherwise return empty string
+		O.GetOrElse(F.Constant("")),
+	)
 }
 
 // extractSubstring is the curried version
@@ -162,9 +176,13 @@ func substringMatchesImpl(filter string, position int, opSymbol string) bool {
 var substringMatches = F.Bind1of3(substringMatchesImpl)
 
 // operatorMatchesAtPositionImpl combines boundary and match checks
-func operatorMatchesAtPositionImpl(filter string, position int, opSymbol string) bool {
-	// Boundary check first
-	if !hasEnoughSpace(len(filter))(position, len(opSymbol)) {
+func operatorMatchesAtPositionImpl(
+	filter string,
+	position int,
+	opSymbol string,
+) bool {
+	// Boundary check first: position+len(opSymbol) <= len(filter)
+	if !leqOrd(len(filter))(position + len(opSymbol)) {
 		return false
 	}
 	// Then string match
@@ -174,7 +192,10 @@ func operatorMatchesAtPositionImpl(filter string, position int, opSymbol string)
 // isAtOperator checks if the current position is at the start of an operator
 // using functional predicate composition with Ord and Eq
 func isAtOperator(filter string, position int) bool {
-	return A.Any(func(opSymbol string) bool {
-		return operatorMatchesAtPositionImpl(filter, position, opSymbol)
-	})(operatorSymbols)
+	return F.Pipe1(
+		operatorSymbols,
+		A.Any(func(opSymbol string) bool {
+			return operatorMatchesAtPositionImpl(filter, position, opSymbol)
+		}),
+	)
 }
