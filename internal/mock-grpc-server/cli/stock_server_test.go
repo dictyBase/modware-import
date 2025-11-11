@@ -58,8 +58,8 @@ func setupRealServer(t *testing.T, persistent bool) *realServerFixture {
 	serverErr := make(chan error, 1)
 
 	go func() {
-		if err := RunStockServer(cliCtx); err != nil {
-			serverErr <- err
+		if nerr := RunStockServer(cliCtx); err != nil {
+			serverErr <- nerr
 		}
 	}()
 
@@ -92,7 +92,11 @@ func setupRealServer(t *testing.T, persistent bool) *realServerFixture {
 }
 
 // waitForServerReady polls until server accepts connections
-func waitForServerReady(ctx context.Context, port int, timeout time.Duration) error {
+func waitForServerReady(
+	ctx context.Context,
+	port int,
+	timeout time.Duration,
+) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		conn, err := net.DialTimeout("tcp",
@@ -150,6 +154,66 @@ func TestRealServer_GracefulShutdown(t *testing.T) {
 	}
 }
 
+// setupServerWithDataDir creates a server with specified data directory
+func setupServerWithDataDir(
+	t *testing.T,
+	dataDir string,
+) (*realServerFixture, func()) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	port := listener.Addr().(*net.TCPAddr).Port
+	listener.Close()
+
+	app := &cli.App{}
+	flagSet := flag.NewFlagSet("test", flag.ContinueOnError)
+	flagSet.Int("port", port, "")
+	flagSet.String("log-level", "error", "")
+	flagSet.String("log-format", "json", "")
+	flagSet.String("log-file", "", "")
+	flagSet.String("data-dir", dataDir, "")
+	flagSet.Bool("reflection", true, "")
+	flagSet.String("strain-ontology", "dicty_strain_property", "")
+	flagSet.String("strain-term", "general strain", "")
+	flagSet.String("plasmid-ontology", "plasmid_keywords", "")
+	flagSet.String("plasmid-term", "cloning vector", "")
+
+	cliCtx := cli.NewContext(app, flagSet, nil)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	serverErr := make(chan error, 1)
+
+	go func() {
+		if gerr := RunStockServer(cliCtx); err != nil {
+			serverErr <- gerr
+		}
+	}()
+
+	require.NoError(t, waitForServerReady(ctx, port, 5*time.Second))
+
+	conn, err := grpc.NewClient(
+		fmt.Sprintf("127.0.0.1:%d", port),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	require.NoError(t, err)
+
+	cleanup := func() {
+		conn.Close()
+		cancel()
+		select {
+		case <-serverErr:
+		case <-time.After(2 * time.Second):
+		}
+	}
+
+	return &realServerFixture{
+		port:    port,
+		client:  stockpb.NewStockServiceClient(conn),
+		cancel:  cancel,
+		dataDir: dataDir,
+		cleanup: cleanup,
+	}, cleanup
+}
+
 // TestRealServer_PersistentStorage tests persistent storage across restarts
 func TestRealServer_PersistentStorage(t *testing.T) {
 	// First server with persistent storage
@@ -164,59 +228,16 @@ func TestRealServer_PersistentStorage(t *testing.T) {
 	strainID := created.Data.Id
 
 	fix1.cleanup()
+	time.Sleep(100 * time.Millisecond) // Allow port to be released
 
 	// Second server with same data dir
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	port := listener.Addr().(*net.TCPAddr).Port
-	listener.Close()
-
-	app := &cli.App{}
-	flagSet := flag.NewFlagSet("test", flag.ContinueOnError)
-	flagSet.Int("port", port, "")
-	flagSet.String("log-level", "error", "")
-	flagSet.String("log-format", "json", "")
-	flagSet.String("log-file", "", "")
-	flagSet.String("data-dir", dataDir, "") // Same data dir
-	flagSet.Bool("reflection", true, "")
-	flagSet.String("strain-ontology", "dicty_strain_property", "")
-	flagSet.String("strain-term", "general strain", "")
-	flagSet.String("plasmid-ontology", "plasmid_keywords", "")
-	flagSet.String("plasmid-term", "cloning vector", "")
-
-	cliCtx := cli.NewContext(app, flagSet, nil)
-
-	ctx2, cancel2 := context.WithCancel(context.Background())
-	serverErr := make(chan error, 1)
-
-	go func() {
-		if err := RunStockServer(cliCtx); err != nil {
-			serverErr <- err
-		}
-	}()
-
-	require.NoError(t, waitForServerReady(ctx2, port, 5*time.Second))
-
-	conn2, err := grpc.NewClient(
-		fmt.Sprintf("127.0.0.1:%d", port),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	require.NoError(t, err)
-
-	client2 := stockpb.NewStockServiceClient(conn2)
+	fix2, cleanup2 := setupServerWithDataDir(t, dataDir)
+	defer cleanup2()
 
 	// Verify data persisted
-	retrieved, err := client2.GetStrain(ctx, &stockpb.StockId{Id: strainID})
+	retrieved, err := fix2.client.GetStrain(ctx, &stockpb.StockId{Id: strainID})
 	require.NoError(t, err)
 	require.Equal(t, "persistent", retrieved.Data.Attributes.Label)
-
-	// Cleanup
-	conn2.Close()
-	cancel2()
-	select {
-	case <-serverErr:
-	case <-time.After(2 * time.Second):
-	}
 }
 
 // TestRealServer_PortConflict tests port binding behavior
@@ -288,7 +309,10 @@ func TestRealServer_InMemoryMode(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify it exists
-	retrieved, err := fix.client.GetStrain(ctx, &stockpb.StockId{Id: created.Data.Id})
+	retrieved, err := fix.client.GetStrain(
+		ctx,
+		&stockpb.StockId{Id: created.Data.Id},
+	)
 	require.NoError(t, err)
 	require.Equal(t, "in-memory", retrieved.Data.Attributes.Label)
 

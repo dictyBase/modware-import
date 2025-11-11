@@ -176,12 +176,19 @@ func TestCreateAndGetStrain(t *testing.T) {
 	require.Regexp(t, `^DBS\d{7}$`, created.Data.Id)
 	require.Equal(t, "axeA2 axeB2", created.Data.Attributes.Label)
 	require.Equal(t, "Costanza", created.Data.Attributes.Depositor)
-	require.Equal(t, "general strain", created.Data.Attributes.DictyStrainProperty)
+	require.Equal(
+		t,
+		"general strain",
+		created.Data.Attributes.DictyStrainProperty,
+	)
 	require.NotNil(t, created.Data.Attributes.CreatedAt)
 	require.NotNil(t, created.Data.Attributes.UpdatedAt)
 
 	// Get strain
-	retrieved, err := fix.client.GetStrain(ctx, &stockpb.StockId{Id: created.Data.Id})
+	retrieved, err := fix.client.GetStrain(
+		ctx,
+		&stockpb.StockId{Id: created.Data.Id},
+	)
 	require.NoError(t, err)
 	require.Equal(t, created.Data.Id, retrieved.Data.Id)
 	require.Equal(t, "axeA2 axeB2", retrieved.Data.Attributes.Label)
@@ -252,7 +259,10 @@ func TestLoadStrain(t *testing.T) {
 	require.Equal(t, "loaded strain", loaded.Data.Attributes.Label)
 
 	// Verify it can be retrieved
-	retrieved, err := fix.client.GetStrain(ctx, &stockpb.StockId{Id: "DBS9999999"})
+	retrieved, err := fix.client.GetStrain(
+		ctx,
+		&stockpb.StockId{Id: "DBS9999999"},
+	)
 	require.NoError(t, err)
 	require.Equal(t, "DBS9999999", retrieved.Data.Id)
 }
@@ -294,10 +304,17 @@ func TestCreateAndGetPlasmid(t *testing.T) {
 	require.NoError(t, err)
 	require.Regexp(t, `^DBP\d{7}$`, created.Data.Id)
 	require.Equal(t, "pDV-CFPC-act15", created.Data.Attributes.Name)
-	require.Equal(t, "cloning vector", created.Data.Attributes.DictyPlasmidProperty)
+	require.Equal(
+		t,
+		"cloning vector",
+		created.Data.Attributes.DictyPlasmidProperty,
+	)
 
 	// Get plasmid
-	retrieved, err := fix.client.GetPlasmid(ctx, &stockpb.StockId{Id: created.Data.Id})
+	retrieved, err := fix.client.GetPlasmid(
+		ctx,
+		&stockpb.StockId{Id: created.Data.Id},
+	)
 	require.NoError(t, err)
 	require.Equal(t, created.Data.Id, retrieved.Data.Id)
 }
@@ -849,7 +866,7 @@ func TestCreateStrain_SequentialIDs(t *testing.T) {
 
 	// Create 3 strains and verify IDs are sequential
 	var ids []string
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		created, err := fix.client.CreateStrain(ctx,
 			NewStrainBuilder().WithLabel(fmt.Sprintf("strain%d", i)).Build())
 		require.NoError(t, err)
@@ -870,7 +887,7 @@ func TestCreatePlasmid_SequentialIDs(t *testing.T) {
 	ctx := context.Background()
 
 	var ids []string
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		created, err := fix.client.CreatePlasmid(ctx,
 			NewPlasmidBuilder().WithName(fmt.Sprintf("plasmid%d", i)).Build())
 		require.NoError(t, err)
@@ -925,7 +942,10 @@ func TestListStrainsByIds_EmptyList(t *testing.T) {
 
 	ctx := context.Background()
 
-	result, err := fix.client.ListStrainsByIds(ctx, &stockpb.StockIdList{Id: []string{}})
+	result, err := fix.client.ListStrainsByIds(
+		ctx,
+		&stockpb.StockIdList{Id: []string{}},
+	)
 	require.NoError(t, err)
 	require.Empty(t, result.Data)
 }
@@ -938,8 +958,12 @@ func TestListStrainsByIds_NonExistentIDs(t *testing.T) {
 	ctx := context.Background()
 
 	// Request non-existent IDs
-	result, err := fix.client.ListStrainsByIds(ctx,
-		&stockpb.StockIdList{Id: []string{"DBS9999997", "DBS9999998", "DBS9999999"}})
+	result, err := fix.client.ListStrainsByIds(
+		ctx,
+		&stockpb.StockIdList{
+			Id: []string{"DBS9999997", "DBS9999998", "DBS9999999"},
+		},
+	)
 
 	// Should return empty results, not error
 	require.NoError(t, err)
@@ -961,7 +985,11 @@ func TestDefaultTermApplication(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify default term applied
-	require.Equal(t, "general strain", created.Data.Attributes.DictyStrainProperty)
+	require.Equal(
+		t,
+		"general strain",
+		created.Data.Attributes.DictyStrainProperty,
+	)
 
 	// Same for plasmid
 	plasmidReq := NewPlasmidBuilder().WithName("test").Build()
@@ -969,7 +997,11 @@ func TestDefaultTermApplication(t *testing.T) {
 
 	createdPlasmid, err := fix.client.CreatePlasmid(ctx, plasmidReq)
 	require.NoError(t, err)
-	require.Equal(t, "cloning vector", createdPlasmid.Data.Attributes.DictyPlasmidProperty)
+	require.Equal(
+		t,
+		"cloning vector",
+		createdPlasmid.Data.Attributes.DictyPlasmidProperty,
+	)
 }
 
 // TestConcurrentCreates tests concurrent strain creation
@@ -984,7 +1016,7 @@ func TestConcurrentCreates(t *testing.T) {
 	errChan := make(chan error, numGoroutines)
 	idChan := make(chan string, numGoroutines)
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		go func(idx int) {
 			created, err := fix.client.CreateStrain(ctx,
 				NewStrainBuilder().
@@ -1001,7 +1033,7 @@ func TestConcurrentCreates(t *testing.T) {
 
 	// Collect results
 	var ids []string
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		err := <-errChan
 		require.NoError(t, err)
 		if err == nil {
