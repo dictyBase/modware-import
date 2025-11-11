@@ -325,28 +325,36 @@ func extractTime(val any) O.Option[time.Time] {
 	return O.None[time.Time]()
 }
 
+// parseFloat converts string to float64 using O.TryCatch for error handling
 func parseFloat(str string) O.Option[float64] {
-	num, err := strconv.ParseFloat(str, 64)
-	if err != nil {
-		return O.None[float64]()
-	}
-	return O.Some(num)
+	return O.TryCatch(func() (float64, error) {
+		return strconv.ParseFloat(str, 64)
+	})
 }
 
+// tryParseRFC3339 attempts to parse time in RFC3339 format (ISO 8601)
+func tryParseRFC3339(str string) O.Option[time.Time] {
+	return O.TryCatch(func() (time.Time, error) {
+		return time.Parse(time.RFC3339, str)
+	})
+}
+
+// tryParseDateOnly attempts to parse time in date-only format
+func tryParseDateOnly(str string) O.Option[time.Time] {
+	return O.TryCatch(func() (time.Time, error) {
+		return time.Parse("2006-01-02", str)
+	})
+}
+
+// parseTime converts string to time.Time using O.Alt for fallback logic
 func parseTime(str string) O.Option[time.Time] {
-	// Try RFC3339 format first (ISO 8601)
-	timeVal, err := time.Parse(time.RFC3339, str)
-	if err == nil {
-		return O.Some(timeVal)
-	}
-
-	// Try date-only format
-	timeVal, err = time.Parse("2006-01-02", str)
-	if err == nil {
-		return O.Some(timeVal)
-	}
-
-	return O.None[time.Time]()
+	// Try RFC3339 first, fall back to date-only format
+	return F.Pipe1(
+		tryParseRFC3339(str),
+		O.Alt(func() O.Option[time.Time] {
+			return tryParseDateOnly(str)
+		}),
+	)
 }
 
 func itemMatches(item any, expected string) bool {
