@@ -27,6 +27,13 @@ var operatorSymbols = []string{
 	"=~", "!~",
 }
 
+// operatorContext holds the context needed to check if an operator matches
+type operatorContext struct {
+	filter   string
+	position int
+	opSymbol string
+}
+
 // Tokenize converts a filter string into a sequence of tokens
 func Tokenize(filter string) []Token {
 	if filter == "" {
@@ -146,15 +153,8 @@ func extractValue(filter string, startPos, position int, tokens *[]Token) int {
 	return position
 }
 
-// operatorContext holds the context needed to check if an operator matches
-type operatorContext struct {
-	filter   string
-	position int
-	opSymbol string
-}
-
-// matches checks if operator matches at position using a unified pipeline
-func (ctx operatorContext) matches() bool {
+// operatorMatches checks if operator matches at position using a unified pipeline
+func operatorMatches(ctx operatorContext) bool {
 	endPos := ctx.position + len(ctx.opSymbol)
 
 	return F.Pipe4(
@@ -175,7 +175,10 @@ func (ctx operatorContext) matches() bool {
 }
 
 // toOperatorContext creates an operatorContext from a symbol
-func toOperatorContext(filter string, position int) func(string) operatorContext {
+func toOperatorContext(
+	filter string,
+	position int,
+) func(string) operatorContext {
 	return func(opSymbol string) operatorContext {
 		return operatorContext{
 			filter:   filter,
@@ -188,11 +191,10 @@ func toOperatorContext(filter string, position int) func(string) operatorContext
 // isAtOperator checks if the current position is at the start of an operator
 // using point-free functional composition
 func isAtOperator(filter string, position int) bool {
+	addContext := toOperatorContext(filter, position)
 	return F.Pipe2(
 		operatorSymbols,
-		A.Map(toOperatorContext(filter, position)),
-		A.Any(func(ctx operatorContext) bool {
-			return ctx.matches()
-		}),
+		A.Map(addContext),
+		A.Any(operatorMatches),
 	)
 }
