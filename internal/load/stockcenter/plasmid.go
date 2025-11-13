@@ -2,9 +2,9 @@ package stockcenter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
 	fperrors "github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
@@ -28,44 +28,20 @@ type PlasmidEnv struct {
 	APIClient pb.StockServiceClient
 }
 
-// ValidationError represents a single validation failure
-type ValidationError struct {
-	PlasmidID string
-	Field     string
-	Message   string
-	Err       error
-}
-
-func (ve ValidationError) Error() string {
-	if ve.Err != nil {
-		return fmt.Sprintf(
-			"plasmid %s: field %s: %s: %v",
-			ve.PlasmidID,
-			ve.Field,
-			ve.Message,
-			ve.Err,
-		)
-	}
-	return fmt.Sprintf(
-		"plasmid %s: field %s: %s",
-		ve.PlasmidID,
-		ve.Field,
-		ve.Message,
-	)
-}
-
 // ProcessingResult accumulates successes and errors
 type ProcessingResult struct {
-	Successes []string          // Successfully processed plasmid IDs
-	Errors    []ValidationError // All validation/processing errors
+	Successes  []string // Successfully processed plasmid IDs
+	Errors     error    // All validation/processing errors
+	ErrorCount int      // Number of errors (for accurate statistics)
 }
 
 // ProcessingResultSemigroup for combining results
 var ProcessingResultSemigroup = SG.MakeSemigroup(
 	func(a, b ProcessingResult) ProcessingResult {
 		return ProcessingResult{
-			Successes: append(a.Successes, b.Successes...),
-			Errors:    append(a.Errors, b.Errors...),
+			Successes:  append(a.Successes, b.Successes...),
+			Errors:     errors.Join(a.Errors, b.Errors),
+			ErrorCount: a.ErrorCount + b.ErrorCount,
 		}
 	},
 )
@@ -126,7 +102,9 @@ var (
 )
 
 // initAnnotatorLookup creates annotator lookup as IOEither
-func initAnnotatorLookup(ctx LookupContext) IOE.IOEither[error, source.StockAnnotatorLookup] {
+func initAnnotatorLookup(
+	ctx LookupContext,
+) IOE.IOEither[error, source.StockAnnotatorLookup] {
 	return IOE.TryCatchError(func() (source.StockAnnotatorLookup, error) {
 		lookup, err := source.NewStockAnnotatorLookup(
 			registry.GetReader(regs.PlasmidAnnotatorReader),
@@ -142,7 +120,9 @@ func initAnnotatorLookup(ctx LookupContext) IOE.IOEither[error, source.StockAnno
 }
 
 // initPubLookup creates publication lookup as IOEither
-func initPubLookup(ctx WithAnnotator) IOE.IOEither[error, source.StockPubLookup] {
+func initPubLookup(
+	ctx WithAnnotator,
+) IOE.IOEither[error, source.StockPubLookup] {
 	return IOE.TryCatchError(func() (source.StockPubLookup, error) {
 		lookup, err := source.NewStockPubLookup(
 			registry.GetReader(regs.PlasmidPubReader),
@@ -158,7 +138,9 @@ func initPubLookup(ctx WithAnnotator) IOE.IOEither[error, source.StockPubLookup]
 }
 
 // initGeneLookup creates gene lookup as IOEither
-func initGeneLookup(ctx WithPubLookup) IOE.IOEither[error, source.StockGeneLookup] {
+func initGeneLookup(
+	ctx WithPubLookup,
+) IOE.IOEither[error, source.StockGeneLookup] {
 	return IOE.TryCatchError(func() (source.StockGeneLookup, error) {
 		lookup, err := source.NewStockGeneLookp(
 			registry.GetReader(regs.PlasmidGeneReader),
@@ -220,55 +202,46 @@ func readPlasmidRecord(
 // validateUserAssignment checks user field is set
 func validateUserAssignment(
 	plasmid *source.Plasmid,
-) E.Either[[]ValidationError, *source.Plasmid] {
+) E.Either[error, *source.Plasmid] {
 	if len(plasmid.User) == 0 {
-		return E.Left[*source.Plasmid]([]ValidationError{{
-			Field:   "User",
-			Message: "user assignment required",
-		}})
+		return E.Left[*source.Plasmid](
+			fmt.Errorf("field User: user assignment required"),
+		)
 	}
-	return E.Right[[]ValidationError](plasmid)
+	return E.Right[error](plasmid)
 }
 
 // validateRequiredFields checks Id and Name are set
 func validateRequiredFields(
 	plasmid *source.Plasmid,
-) E.Either[[]ValidationError, *source.Plasmid] {
-	errors := []ValidationError{}
+) E.Either[error, *source.Plasmid] {
+	var errs []error
 
 	if plasmid.Id == "" {
-		errors = append(errors, ValidationError{
-			Field:   "Id",
-			Message: "required",
-		})
+		errs = append(errs, fmt.Errorf("field Id: required"))
 	}
 	if plasmid.Name == "" {
-		errors = append(errors, ValidationError{
-			Field:   "Name",
-			Message: "required",
-		})
+		errs = append(errs, fmt.Errorf("field Name: required"))
 	}
 
-	if len(errors) > 0 {
-		return E.Left[*source.Plasmid](errors)
+	if len(errs) > 0 {
+		return E.Left[*source.Plasmid](errors.Join(errs...))
 	}
-	return E.Right[[]ValidationError](plasmid)
+	return E.Right[error](plasmid)
 }
 
 // validatePlasmid performs all validation checks
 func validatePlasmid(
 	plasmid *source.Plasmid,
-) E.Either[[]ValidationError, *source.Plasmid] {
-	enrichWithID := func(err ValidationError) ValidationError {
-		err.PlasmidID = plasmid.Id
-		return err
+) E.Either[error, *source.Plasmid] {
+	enrichWithID := func(err error) error {
+		return fmt.Errorf("plasmid %s: %w", plasmid.Id, err)
 	}
-
 	return F.Pipe3(
-		E.Of[[]ValidationError](plasmid),
+		E.Of[error](plasmid),
 		E.Chain(validateUserAssignment),
 		E.Chain(validateRequiredFields),
-		E.MapLeft[*source.Plasmid](A.Map(enrichWithID)),
+		E.MapLeft[*source.Plasmid](enrichWithID),
 	)
 }
 
@@ -364,17 +337,15 @@ func validateAndProcessPlasmid(
 ) IOE.IOEither[error, ProcessingResult] {
 	return IOE.TryCatchError(func() (ProcessingResult, error) {
 		validation := validatePlasmid(plasmid)
-
 		// Handle validation result
 		result := E.Fold(
-			func(errs []ValidationError) ProcessingResult {
-				// Log validation errors
-				for _, err := range errs {
-					env.Logger.Errorf("%s", err.Error())
-				}
+			func(err error) ProcessingResult {
+				// Log validation error
+				env.Logger.Errorf("%v", err)
 				return ProcessingResult{
-					Successes: []string{},
-					Errors:    errs,
+					Successes:  []string{},
+					Errors:     err,
+					ErrorCount: 1,
 				}
 			},
 			func(validPlasmid *source.Plasmid) ProcessingResult {
@@ -390,8 +361,9 @@ func validateAndProcessPlasmid(
 					IOE.Map[error](func(id string) ProcessingResult {
 						// Success case
 						return ProcessingResult{
-							Successes: []string{id},
-							Errors:    []ValidationError{},
+							Successes:  []string{id},
+							Errors:     nil,
+							ErrorCount: 0,
 						}
 					}),
 				)()
@@ -405,12 +377,12 @@ func validateAndProcessPlasmid(
 					)
 					return ProcessingResult{
 						Successes: []string{},
-						Errors: []ValidationError{{
-							PlasmidID: validPlasmid.Id,
-							Field:     "API",
-							Message:   "processing failed",
-							Err:       err,
-						}},
+						Errors: fmt.Errorf(
+							"plasmid %s: %w",
+							validPlasmid.Id,
+							err,
+						),
+						ErrorCount: 1,
 					}
 				})(processEither)
 			},
@@ -472,8 +444,9 @@ func streamProcessRecords(
 	reader source.PlasmidReader,
 ) IOE.IOEither[error, ProcessingResult] {
 	return processNextRecord(env, reader, ProcessingResult{
-		Successes: []string{},
-		Errors:    []ValidationError{},
+		Successes:  []string{},
+		Errors:     nil,
+		ErrorCount: 0,
 	})
 }
 
@@ -501,7 +474,7 @@ func buildPlasmidEnv() PlasmidEnv {
 // logFinalStats logs the final processing statistics
 func logFinalStats(logger *logrus.Entry, result ProcessingResult) {
 	successCount := len(result.Successes)
-	errorCount := len(result.Errors)
+	errorCount := result.ErrorCount
 
 	logger.WithFields(
 		logrus.Fields{
@@ -518,12 +491,9 @@ func logFinalStats(logger *logrus.Entry, result ProcessingResult) {
 		errorCount,
 	)
 
-	// Log individual errors if any
-	if errorCount > 0 {
-		logger.Warnf(
-			"encountered %d validation/processing errors during plasmid load",
-			errorCount,
-		)
+	// Log errors if any
+	if result.Errors != nil {
+		logger.Warnf("validation/processing errors: %v", result.Errors)
 	}
 }
 
