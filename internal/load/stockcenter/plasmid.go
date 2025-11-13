@@ -77,8 +77,56 @@ type LookupTuple struct {
 	GeneLookup source.StockGeneLookup
 }
 
+// Context types for Do/Bind pattern
+type LookupContext struct{}
+
+type WithAnnotator struct {
+	LookupContext
+	Annotator source.StockAnnotatorLookup
+}
+
+type WithPubLookup struct {
+	WithAnnotator
+	PubLookup source.StockPubLookup
+}
+
+type WithGeneLookup struct {
+	WithPubLookup
+	GeneLookup source.StockGeneLookup
+}
+
+// Curried setters for Do/Bind pattern
+var (
+	SetAnnotator = F.Curry2(
+		func(annotator source.StockAnnotatorLookup, ctx LookupContext) WithAnnotator {
+			return WithAnnotator{
+				LookupContext: ctx,
+				Annotator:     annotator,
+			}
+		},
+	)
+
+	SetPubLookup = F.Curry2(
+		func(pubLookup source.StockPubLookup, ctx WithAnnotator) WithPubLookup {
+			return WithPubLookup{
+				WithAnnotator: ctx,
+				PubLookup:     pubLookup,
+			}
+		},
+	)
+
+	SetGeneLookup = F.Curry2(
+		func(geneLookup source.StockGeneLookup, ctx WithPubLookup) WithGeneLookup {
+			return WithGeneLookup{
+				WithPubLookup: ctx,
+				GeneLookup:    geneLookup,
+			}
+		},
+	)
+)
+
 // initAnnotatorLookup creates annotator lookup as IOEither
-func initAnnotatorLookup() IOE.IOEither[error, source.StockAnnotatorLookup] {
+func initAnnotatorLookup(ctx LookupContext) IOE.IOEither[error, source.StockAnnotatorLookup] {
 	return IOE.TryCatchError(func() (source.StockAnnotatorLookup, error) {
 		lookup, err := source.NewStockAnnotatorLookup(
 			registry.GetReader(regs.PlasmidAnnotatorReader),
@@ -94,7 +142,7 @@ func initAnnotatorLookup() IOE.IOEither[error, source.StockAnnotatorLookup] {
 }
 
 // initPubLookup creates publication lookup as IOEither
-func initPubLookup() IOE.IOEither[error, source.StockPubLookup] {
+func initPubLookup(ctx WithAnnotator) IOE.IOEither[error, source.StockPubLookup] {
 	return IOE.TryCatchError(func() (source.StockPubLookup, error) {
 		lookup, err := source.NewStockPubLookup(
 			registry.GetReader(regs.PlasmidPubReader),
@@ -110,7 +158,7 @@ func initPubLookup() IOE.IOEither[error, source.StockPubLookup] {
 }
 
 // initGeneLookup creates gene lookup as IOEither
-func initGeneLookup() IOE.IOEither[error, source.StockGeneLookup] {
+func initGeneLookup(ctx WithPubLookup) IOE.IOEither[error, source.StockGeneLookup] {
 	return IOE.TryCatchError(func() (source.StockGeneLookup, error) {
 		lookup, err := source.NewStockGeneLookp(
 			registry.GetReader(regs.PlasmidGeneReader),
@@ -122,33 +170,20 @@ func initGeneLookup() IOE.IOEither[error, source.StockGeneLookup] {
 	})
 }
 
-// initAllLookups initializes all lookups as a tuple using monadic composition
+// initAllLookups initializes all lookups using Do/Bind pattern
 func initAllLookups() IOE.IOEither[error, LookupTuple] {
-	return F.Pipe2(
-		initAnnotatorLookup(),
-		IOE.Chain(
-			func(annotator source.StockAnnotatorLookup) IOE.IOEither[error, LookupTuple] {
-				return F.Pipe1(
-					initPubLookup(),
-					IOE.Chain(
-						func(pubLookup source.StockPubLookup) IOE.IOEither[error, LookupTuple] {
-							return F.Pipe1(
-								initGeneLookup(),
-								IOE.Map[error](
-									func(geneLookup source.StockGeneLookup) LookupTuple {
-										return LookupTuple{
-											Annotator:  annotator,
-											PubLookup:  pubLookup,
-											GeneLookup: geneLookup,
-										}
-									},
-								),
-							)
-						},
-					),
-				)
-			},
-		),
+	return F.Pipe5(
+		IOE.Do[error](LookupContext{}),
+		IOE.Bind(SetAnnotator, initAnnotatorLookup),
+		IOE.Bind(SetPubLookup, initPubLookup),
+		IOE.Bind(SetGeneLookup, initGeneLookup),
+		IOE.Map[error](func(ctx WithGeneLookup) LookupTuple {
+			return LookupTuple{
+				Annotator:  ctx.Annotator,
+				PubLookup:  ctx.PubLookup,
+				GeneLookup: ctx.GeneLookup,
+			}
+		}),
 		IOE.MapLeft[LookupTuple](
 			fperrors.OnError("failed to initialize lookups"),
 		),
