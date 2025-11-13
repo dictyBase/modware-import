@@ -9,7 +9,9 @@ import (
 	fperrors "github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
+	P "github.com/IBM/fp-go/predicate"
 	SG "github.com/IBM/fp-go/semigroup"
+	S "github.com/IBM/fp-go/string"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
@@ -21,6 +23,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+var notEmpty = P.Not(S.IsEmpty)
 
 // PlasmidEnv contains all dependencies for plasmid loading
 type PlasmidEnv struct {
@@ -199,49 +203,45 @@ func readPlasmidRecord(
 	return IOE.FromEither(reader.Value())
 }
 
-// validateUserAssignment checks user field is set
-func validateUserAssignment(
-	plasmid *source.Plasmid,
-) E.Either[error, *source.Plasmid] {
-	if len(plasmid.User) == 0 {
-		return E.Left[*source.Plasmid](
-			fmt.Errorf("field User: user assignment required"),
-		)
-	}
-	return E.Right[error](plasmid)
+func hasValidPlasmidUser(plasmid *source.Plasmid) bool {
+	return len(plasmid.User) == 0
 }
 
-// validateRequiredFields checks Id and Name are set
-func validateRequiredFields(
-	plasmid *source.Plasmid,
-) E.Either[error, *source.Plasmid] {
-	var errs []error
+func plasmidUserError(plasmid *source.Plasmid) error {
+	return fmt.Errorf(
+		"field User: user assignment required for plasmid %s",
+		plasmid.Id,
+	)
+}
 
-	if plasmid.Id == "" {
-		errs = append(errs, fmt.Errorf("field Id: required"))
-	}
-	if plasmid.Name == "" {
-		errs = append(errs, fmt.Errorf("field Name: required"))
-	}
+func hasValidPlasmidId(plasmid *source.Plasmid) bool {
+	return notEmpty(plasmid.Id)
+}
 
-	if len(errs) > 0 {
-		return E.Left[*source.Plasmid](errors.Join(errs...))
-	}
-	return E.Right[error](plasmid)
+func plasmidIdError(plasmid *source.Plasmid) error {
+	return fmt.Errorf("field Id: required")
+}
+
+func hasValidPlasmidName(plasmid *source.Plasmid) bool {
+	return notEmpty(plasmid.Name)
+}
+
+func plasmidNameError(plasmid *source.Plasmid) error {
+	return fmt.Errorf("field Name: required")
 }
 
 // validatePlasmid performs all validation checks
 func validatePlasmid(
 	plasmid *source.Plasmid,
 ) E.Either[error, *source.Plasmid] {
-	enrichWithID := func(err error) error {
-		return fmt.Errorf("plasmid %s: %w", plasmid.Id, err)
-	}
-	return F.Pipe3(
+	return F.Pipe4(
 		E.Of[error](plasmid),
-		E.Chain(validateUserAssignment),
-		E.Chain(validateRequiredFields),
-		E.MapLeft[*source.Plasmid](enrichWithID),
+		E.Chain(E.FromPredicate(hasValidPlasmidUser, plasmidUserError)),
+		E.Chain(E.FromPredicate(hasValidPlasmidId, plasmidIdError)),
+		E.Chain(E.FromPredicate(hasValidPlasmidName, plasmidNameError)),
+		E.MapLeft[*source.Plasmid](func(err error) error {
+			return fmt.Errorf("plasmid %s: %w", plasmid.Id, err)
+		}),
 	)
 }
 
