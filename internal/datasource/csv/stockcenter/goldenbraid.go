@@ -15,14 +15,14 @@ import (
 
 // GoldenBraidPlasmid represents a plasmid from the GoldenBraid CSV file
 type GoldenBraidPlasmid struct {
-	Name         string              // Column 0: "Plasmid  Name"
-	Summary      string              // Column 5: "Description"
-	Genes        O.Option[[]string]  // Column 3: parsed comma-separated genes
-	Publications O.Option[[]string]  // Column 6: "PMID" (stored as single-element slice)
-	User         string              // From CLI --user-email
-	PlasmidType  string              // From CLI --plasmid-cvterm
-	CreatedOn    time.Time           // Default timestamp
-	UpdatedOn    time.Time           // Default timestamp
+	Name         string             // Column 0: "Plasmid  Name"
+	Summary      string             // Column 5: "Description"
+	Genes        O.Option[[]string] // Column 3: parsed comma-separated genes
+	Publications O.Option[[]string] // Column 6: "PMID" (stored as single-element slice)
+	User         string             // From CLI --user-email
+	PlasmidType  string             // From CLI --plasmid-cvterm
+	CreatedOn    time.Time          // Default timestamp
+	UpdatedOn    time.Time          // Default timestamp
 }
 
 // parseCommaSeparatedField parses a comma-separated string into Option[[]string]
