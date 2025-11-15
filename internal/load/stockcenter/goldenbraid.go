@@ -11,16 +11,23 @@ import (
 
 	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
-	F "github.com/IBM/fp-go/function"
 	fperrors "github.com/IBM/fp-go/errors"
+	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
 	O "github.com/IBM/fp-go/option"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
-	"github.com/dictyBase/modware-import/internal/registry"
+	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+// StreamProcessingConfig holds configuration for CSV streaming and processing
+type StreamProcessingConfig struct {
+	Reader        *csv.Reader
+	UserEmail     string
+	PlasmidCVTerm string
+}
 
 // PlasmidProcessingResult represents the result of processing a single plasmid
 type PlasmidProcessingResult struct {
@@ -28,8 +35,8 @@ type PlasmidProcessingResult struct {
 	Error     O.Option[error]
 }
 
-// ProcessingResult holds aggregate processing statistics
-type ProcessingResult struct {
+// GoldenBraidProcessingResult holds aggregate processing statistics
+type GoldenBraidProcessingResult struct {
 	Successes  []string
 	Errors     error
 	ErrorCount int
@@ -59,86 +66,76 @@ func openCSVReader(path string) IOE.IOEither[error, *csv.Reader] {
 
 // streamAndProcessRecords reads CSV records one by one and processes them
 func streamAndProcessRecords(
-	userEmail string,
-	plasmidCVTerm string,
-) func(*csv.Reader) IOE.IOEither[error, []PlasmidProcessingResult] {
-	return func(reader *csv.Reader) IOE.IOEither[error, []PlasmidProcessingResult] {
-		return IOE.TryCatchError(func() ([]PlasmidProcessingResult, error) {
-			results := []PlasmidProcessingResult{}
+	config StreamProcessingConfig,
+) IOE.IOEither[error, []PlasmidProcessingResult] {
+	return IOE.TryCatchError(func() ([]PlasmidProcessingResult, error) {
+		results := []PlasmidProcessingResult{}
 
-			for {
-				record, err := reader.Read()
-				if err == io.EOF {
-					break
-				}
-				if err != nil {
-					return nil, fmt.Errorf("CSV read error: %w", err)
-				}
-
-				// Process single record (pure Either pipeline)
-				result := F.Pipe3(
-					source.ParseRecord(record, userEmail, plasmidCVTerm),
-					E.Chain(source.ValidatePlasmid),
-					E.Fold(
-						func(e error) PlasmidProcessingResult {
-							return PlasmidProcessingResult{
-								PlasmidID: "",
-								Error:     O.Some(e),
-							}
-						},
-						func(p *source.GoldenBraidPlasmid) PlasmidProcessingResult {
-							return processPlasmid(p)
-						},
-					),
-				)
-
-				results = append(results, result)
+		for {
+			record, err := config.Reader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return nil, fmt.Errorf("CSV read error: %w", err)
 			}
 
-			return results, nil
-		})
-	}
+			// Process single record (pure Either pipeline)
+			result := F.Pipe2(
+				source.ParseRecord(record, config.UserEmail, config.PlasmidCVTerm),
+				E.Chain(source.ValidatePlasmid),
+				E.Fold(
+					func(e error) PlasmidProcessingResult {
+						return PlasmidProcessingResult{
+							PlasmidID: "",
+							Error:     O.Some(e),
+						}
+					},
+					processPlasmid,
+				),
+			)
+
+			results = append(results, result)
+		}
+
+		return results, nil
+	})
 }
 
 // processPlasmid processes a single validated plasmid by loading it to the API
 func processPlasmid(p *source.GoldenBraidPlasmid) PlasmidProcessingResult {
 	// Execute IOEither to load plasmid to API
-	result := F.Pipe1(
-		loadPlasmidToAPI(p),
-		IOE.Fold(
-			func(err error) PlasmidProcessingResult {
-				return PlasmidProcessingResult{
-					PlasmidID: p.Name,
-					Error:     O.Some(err),
-				}
-			},
-			func(id string) PlasmidProcessingResult {
-				return PlasmidProcessingResult{
-					PlasmidID: id,
-					Error:     O.None[error](),
-				}
-			},
-		),
-	)()
+	result := loadPlasmidToAPI(p)()
 
-	return result
+	return E.Fold(
+		func(err error) PlasmidProcessingResult {
+			return PlasmidProcessingResult{
+				PlasmidID: p.Name,
+				Error:     O.Some(err),
+			}
+		},
+		func(id string) PlasmidProcessingResult {
+			return PlasmidProcessingResult{
+				PlasmidID: id,
+				Error:     O.None[error](),
+			}
+		},
+	)(result)
 }
 
 // loadPlasmidToAPI loads a plasmid to the stock center API
 func loadPlasmidToAPI(p *source.GoldenBraidPlasmid) IOE.IOEither[error, string] {
 	return IOE.TryCatchError(func() (string, error) {
-		client := registry.GetStockClient()
+		client := regsc.GetStockAPIClient()
 
-		plasmidData := &stock.StockPlasmid{
-			Data: &stock.StockPlasmid_Data{
+		plasmidData := &stock.NewPlasmid{
+			Data: &stock.NewPlasmid_Data{
 				Type: "plasmid",
-				Attributes: &stock.PlasmidAttributes{
-					Name:      p.Name,
-					Summary:   p.Summary,
-					CreatedBy: p.User,
-					UpdatedBy: p.User,
-					Plasmid:   p.PlasmidType,
-					// Convert Option fields to slices
+				Attributes: &stock.NewPlasmidAttributes{
+					Name:         p.Name,
+					Summary:      p.Summary,
+					CreatedBy:    p.User,
+					UpdatedBy:    p.User,
 					Genes:        O.GetOrElse(F.Constant([]string{}))(p.Genes),
 					Publications: O.GetOrElse(F.Constant([]string{}))(p.Publications),
 				},
@@ -155,25 +152,25 @@ func loadPlasmidToAPI(p *source.GoldenBraidPlasmid) IOE.IOEither[error, string] 
 }
 
 // aggregateResults aggregates processing results using A.Reduce
-func aggregateResults(results []PlasmidProcessingResult) ProcessingResult {
+func aggregateResults(results []PlasmidProcessingResult) GoldenBraidProcessingResult {
 	return F.Pipe1(
 		results,
 		A.Reduce(
-			func(acc ProcessingResult, r PlasmidProcessingResult) ProcessingResult {
+			func(acc GoldenBraidProcessingResult, r PlasmidProcessingResult) GoldenBraidProcessingResult {
 				return F.Pipe1(
 					r.Error,
 					O.Fold(
 						// No error - success
-						func() ProcessingResult {
-							return ProcessingResult{
+						func() GoldenBraidProcessingResult {
+							return GoldenBraidProcessingResult{
 								Successes:  append(acc.Successes, r.PlasmidID),
 								Errors:     acc.Errors,
 								ErrorCount: acc.ErrorCount,
 							}
 						},
 						// Error - accumulate
-						func(err error) ProcessingResult {
-							return ProcessingResult{
+						func(err error) GoldenBraidProcessingResult {
+							return GoldenBraidProcessingResult{
 								Successes:  acc.Successes,
 								Errors:     errors.Join(acc.Errors, err),
 								ErrorCount: acc.ErrorCount + 1,
@@ -182,7 +179,7 @@ func aggregateResults(results []PlasmidProcessingResult) ProcessingResult {
 					),
 				)
 			},
-			ProcessingResult{}, // Initial empty result
+			GoldenBraidProcessingResult{}, // Initial empty result
 		),
 	)
 }
@@ -192,31 +189,49 @@ func toEither[A any](ioe IOE.IOEither[error, A]) E.Either[error, A] {
 	return ioe()
 }
 
+// createEitherLogger creates a reusable Either logger with configured error and info loggers
+func createEitherLogger[A any]() func(string) func(E.Either[error, A]) E.Either[error, A] {
+	errLogger := log.New(os.Stderr, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
+	infoLogger := log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
+	return E.Logger[error, A](errLogger, infoLogger)
+}
+
+// createStreamConfig is a curried function to create StreamProcessingConfig
+var createStreamConfig = F.Curry3(
+	func(
+		userEmail string,
+		plasmidCVTerm string,
+		reader *csv.Reader,
+	) StreamProcessingConfig {
+		return StreamProcessingConfig{
+			Reader:        reader,
+			UserEmail:     userEmail,
+			PlasmidCVTerm: plasmidCVTerm,
+		}
+	},
+)
+
 // LoadGoldenBraid is the main entry point for loading GoldenBraid CSV data
 func LoadGoldenBraid(cmd *cobra.Command, args []string) error {
 	userEmail := viper.GetString("user-email")
 	plasmidCVTerm := viper.GetString("plasmid-cvterm")
 	inputPath := viper.GetString("input")
 
-	// Configure loggers
-	errLogger := log.New(os.Stderr, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
-	infoLogger := log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
-	elog := E.Logger[error, ProcessingResult](errLogger, infoLogger)
-
 	return F.Pipe3(
-		F.Pipe7(
+		F.Pipe6(
 			IOE.Of[error](inputPath),
 			IOE.ChainFirst(IOE.LogJSON[string]("Starting GoldenBraid loading:\n%s")),
 			IOE.Chain(openCSVReader),
-			IOE.Chain(streamAndProcessRecords(userEmail, plasmidCVTerm)),
+			IOE.Map[error](createStreamConfig(userEmail)(plasmidCVTerm)),
+			IOE.Chain(streamAndProcessRecords),
 			IOE.Map[error](aggregateResults),
-			IOE.ChainFirst(IOE.LogJSON[ProcessingResult]("Processing results:\n%s")),
+			IOE.ChainFirst(IOE.LogJSON[GoldenBraidProcessingResult]("Processing results:\n%s")),
 		),
-		toEither[ProcessingResult],
-		elog("GoldenBraid loading result"),
+		toEither[GoldenBraidProcessingResult],
+		createEitherLogger[GoldenBraidProcessingResult]()("GoldenBraid loading result"),
 		E.Fold(
 			fperrors.IdentityError,
-			func(_ ProcessingResult) error { return nil },
+			func(_ GoldenBraidProcessingResult) error { return nil },
 		),
 	)
 }
