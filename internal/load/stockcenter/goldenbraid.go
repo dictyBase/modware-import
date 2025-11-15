@@ -217,16 +217,14 @@ func LoadGoldenBraid(cmd *cobra.Command, args []string) error {
 	plasmidCVTerm := viper.GetString("plasmid-cvterm")
 	inputPath := viper.GetString("input")
 
-	return F.Pipe3(
-		F.Pipe6(
-			IOE.Of[error](inputPath),
-			IOE.ChainFirst(IOE.LogJSON[string]("Starting GoldenBraid loading:\n%s")),
-			IOE.Chain(openCSVReader),
-			IOE.Map[error](createStreamConfig(userEmail)(plasmidCVTerm)),
-			IOE.Chain(streamAndProcessRecords),
-			IOE.Map[error](aggregateResults),
-			IOE.ChainFirst(IOE.LogJSON[GoldenBraidProcessingResult]("Processing results:\n%s")),
-		),
+	return F.Pipe9(
+		IOE.Of[error](inputPath),
+		IOE.ChainFirst(IOE.LogJSON[string]("Starting GoldenBraid loading:\n%s")),
+		IOE.Chain(openCSVReader),
+		IOE.Map[error](createStreamConfig(userEmail)(plasmidCVTerm)),
+		IOE.Chain(streamAndProcessRecords),
+		IOE.Map[error](aggregateResults),
+		IOE.ChainFirst(IOE.LogJSON[GoldenBraidProcessingResult]("Processing results:\n%s")),
 		toEither[GoldenBraidProcessingResult],
 		createEitherLogger[GoldenBraidProcessingResult]()("GoldenBraid loading result"),
 		E.Fold(
