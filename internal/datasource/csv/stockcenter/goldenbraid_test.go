@@ -107,13 +107,13 @@ func TestParseRecord(t *testing.T) {
 		{
 			name: "valid record with all fields",
 			record: []string{
-				"pDGB_A1",           // Name
-				"pDGB_A1",           // Synonym (ignored)
-				"Peter Kundert",     // Depositor (ignored)
-				"abpC, gtaC",        // Genes
-				"GB backbone",       // Keywords (ignored)
-				"Test description",  // Summary
-				"32232356",          // PMID
+				"pDGB_A1",          // Name
+				"pDGB_A1",          // Synonym (ignored)
+				"Peter Kundert",    // Depositor (ignored)
+				"abpC, gtaC",       // Genes
+				"GB backbone",      // Keywords (ignored)
+				"Test description", // Summary
+				"32232356",         // PMID
 			},
 			userEmail: "test@example.com",
 			cvterm:    "GB vector",
@@ -141,7 +141,7 @@ func TestParseRecord(t *testing.T) {
 				"pDGB_A1",
 				"pDGB_A1",
 				"Peter Kundert",
-				"",                  // Empty genes
+				"", // Empty genes
 				"GB backbone",
 				"Test description",
 				"32232356",
@@ -263,6 +263,7 @@ func TestValidatePlasmid(t *testing.T) {
 	}
 }
 
+//nolint:funlen // Table-driven test with multiple predicates
 func TestValidationPredicates(t *testing.T) {
 	t.Run("hasValidName", func(t *testing.T) {
 		tests := []struct {
