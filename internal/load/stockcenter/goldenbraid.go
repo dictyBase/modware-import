@@ -22,11 +22,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-// StreamProcessingConfig holds configuration for CSV streaming and processing
-type StreamProcessingConfig struct {
-	Reader        *csv.Reader
-	UserEmail     string
-	PlasmidCVTerm string
+// LoaderContext is the initial empty context
+type LoaderContext struct{}
+
+// LoaderConfig holds viper configuration and CSV reader
+type LoaderConfig struct {
+	LoaderContext
+	Viper  *viper.Viper
+	Reader *csv.Reader
 }
 
 // PlasmidProcessingResult represents the result of processing a single plasmid
@@ -42,12 +45,17 @@ type GoldenBraidProcessingResult struct {
 	ErrorCount int
 }
 
-// openCSVReader opens a CSV file and returns a reader wrapped in IOEither
-func openCSVReader(path string) IOE.IOEither[error, *csv.Reader] {
+// openCSVReader opens a CSV file from config and returns a reader wrapped in IOEither
+func openCSVReader(config LoaderConfig) IOE.IOEither[error, *csv.Reader] {
 	return IOE.TryCatchError(func() (*csv.Reader, error) {
-		file, err := os.Open(path)
+		inputPath := config.Viper.GetString("input")
+		file, err := os.Open(inputPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open CSV file %s: %w", path, err)
+			return nil, fmt.Errorf(
+				"failed to open CSV file %s: %w",
+				inputPath,
+				err,
+			)
 		}
 
 		reader := csv.NewReader(file)
@@ -66,9 +74,11 @@ func openCSVReader(path string) IOE.IOEither[error, *csv.Reader] {
 
 // streamAndProcessRecords reads CSV records one by one and processes them
 func streamAndProcessRecords(
-	config StreamProcessingConfig,
+	config LoaderConfig,
 ) IOE.IOEither[error, []PlasmidProcessingResult] {
 	return IOE.TryCatchError(func() ([]PlasmidProcessingResult, error) {
+		userEmail := config.Viper.GetString("user-email")
+		plasmidCVTerm := config.Viper.GetString("plasmid-cvterm")
 		results := []PlasmidProcessingResult{}
 
 		for {
@@ -82,7 +92,7 @@ func streamAndProcessRecords(
 
 			// Process single record (pure Either pipeline)
 			result := F.Pipe2(
-				source.ParseRecord(record, config.UserEmail, config.PlasmidCVTerm),
+				source.ParseRecord(record, userEmail, plasmidCVTerm),
 				E.Chain(source.ValidatePlasmid),
 				E.Fold(
 					func(e error) PlasmidProcessingResult {
@@ -124,7 +134,9 @@ func processPlasmid(p *source.GoldenBraidPlasmid) PlasmidProcessingResult {
 }
 
 // loadPlasmidToAPI loads a plasmid to the stock center API
-func loadPlasmidToAPI(p *source.GoldenBraidPlasmid) IOE.IOEither[error, string] {
+func loadPlasmidToAPI(
+	p *source.GoldenBraidPlasmid,
+) IOE.IOEither[error, string] {
 	return IOE.TryCatchError(func() (string, error) {
 		client := regsc.GetStockAPIClient()
 
@@ -132,19 +144,27 @@ func loadPlasmidToAPI(p *source.GoldenBraidPlasmid) IOE.IOEither[error, string] 
 			Data: &stock.NewPlasmid_Data{
 				Type: "plasmid",
 				Attributes: &stock.NewPlasmidAttributes{
-					Name:         p.Name,
-					Summary:      p.Summary,
-					CreatedBy:    p.User,
-					UpdatedBy:    p.User,
-					Genes:        O.GetOrElse(F.Constant([]string{}))(p.Genes),
-					Publications: O.GetOrElse(F.Constant([]string{}))(p.Publications),
+					Name:      p.Name,
+					Summary:   p.Summary,
+					CreatedBy: p.User,
+					UpdatedBy: p.User,
+					Genes:     O.GetOrElse(F.Constant([]string{}))(p.Genes),
+					Publications: O.GetOrElse(
+						F.Constant([]string{}),
+					)(
+						p.Publications,
+					),
 				},
 			},
 		}
 
 		response, err := client.CreatePlasmid(context.Background(), plasmidData)
 		if err != nil {
-			return "", fmt.Errorf("failed to create plasmid %s: %w", p.Name, err)
+			return "", fmt.Errorf(
+				"failed to create plasmid %s: %w",
+				p.Name,
+				err,
+			)
 		}
 
 		return response.Data.Id, nil
@@ -152,7 +172,9 @@ func loadPlasmidToAPI(p *source.GoldenBraidPlasmid) IOE.IOEither[error, string] 
 }
 
 // aggregateResults aggregates processing results using A.Reduce
-func aggregateResults(results []PlasmidProcessingResult) GoldenBraidProcessingResult {
+func aggregateResults(
+	results []PlasmidProcessingResult,
+) GoldenBraidProcessingResult {
 	return F.Pipe1(
 		results,
 		A.Reduce(
@@ -189,44 +211,52 @@ func toEither[A any](ioe IOE.IOEither[error, A]) E.Either[error, A] {
 	return ioe()
 }
 
-// createEitherLogger creates a reusable Either logger with configured error and info loggers
-func createEitherLogger[A any]() func(string) func(E.Either[error, A]) E.Either[error, A] {
-	errLogger := log.New(os.Stderr, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
-	infoLogger := log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
-	return E.Logger[error, A](errLogger, infoLogger)
-}
-
-// createStreamConfig is a curried function to create StreamProcessingConfig
-var createStreamConfig = F.Curry3(
-	func(
-		userEmail string,
-		plasmidCVTerm string,
-		reader *csv.Reader,
-	) StreamProcessingConfig {
-		return StreamProcessingConfig{
+// SetReader is a curried setter that adds CSV reader to config
+var SetReader = F.Curry2(
+	func(reader *csv.Reader, config LoaderConfig) LoaderConfig {
+		return LoaderConfig{
+			LoaderContext: config.LoaderContext,
+			Viper:         config.Viper,
 			Reader:        reader,
-			UserEmail:     userEmail,
-			PlasmidCVTerm: plasmidCVTerm,
 		}
 	},
 )
 
 // LoadGoldenBraid is the main entry point for loading GoldenBraid CSV data
 func LoadGoldenBraid(cmd *cobra.Command, args []string) error {
-	userEmail := viper.GetString("user-email")
-	plasmidCVTerm := viper.GetString("plasmid-cvterm")
-	inputPath := viper.GetString("input")
+	errLogger := log.New(
+		os.Stderr,
+		"[ERROR] ",
+		log.Ldate|log.Ltime|log.Lshortfile,
+	)
+	infoLogger := log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
+	elog := E.Logger[error, GoldenBraidProcessingResult](errLogger, infoLogger)
 
 	return F.Pipe9(
-		IOE.Of[error](inputPath),
-		IOE.ChainFirst(IOE.LogJSON[string]("Starting GoldenBraid loading:\n%s")),
-		IOE.Chain(openCSVReader),
-		IOE.Map[error](createStreamConfig(userEmail)(plasmidCVTerm)),
+		IOE.Do[error](LoaderConfig{
+			Viper:  viper.GetViper(),
+			Reader: nil,
+		}),
+		IOE.ChainFirst(
+			IOE.LogJSON[LoaderConfig](
+				"Starting GoldenBraid loading with config:\n%s",
+			),
+		),
+		IOE.Bind(SetReader, openCSVReader),
+		IOE.ChainFirst(
+			IOE.LogJSON[LoaderConfig](
+				"CSV reader opened, processing records...\n%s",
+			),
+		),
 		IOE.Chain(streamAndProcessRecords),
 		IOE.Map[error](aggregateResults),
-		IOE.ChainFirst(IOE.LogJSON[GoldenBraidProcessingResult]("Processing results:\n%s")),
+		IOE.ChainFirst(
+			IOE.LogJSON[GoldenBraidProcessingResult](
+				"Processing complete:\n%s",
+			),
+		),
 		toEither[GoldenBraidProcessingResult],
-		createEitherLogger[GoldenBraidProcessingResult]()("GoldenBraid loading result"),
+		elog("GoldenBraid loading result"),
 		E.Fold(
 			fperrors.IdentityError,
 			func(_ GoldenBraidProcessingResult) error { return nil },
