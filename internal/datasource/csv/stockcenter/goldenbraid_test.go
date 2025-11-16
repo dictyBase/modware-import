@@ -95,13 +95,48 @@ func TestParsePublicationField(t *testing.T) {
 	}
 }
 
-func TestParseRecord(t *testing.T) {
+func TestHasValidRecordLength(t *testing.T) {
+	tests := []struct {
+		name     string
+		record   []string
+		expected bool
+	}{
+		{
+			name:     "valid 7 fields",
+			record:   []string{"a", "b", "c", "d", "e", "f", "g"},
+			expected: true,
+		},
+		{
+			name:     "invalid - too few fields",
+			record:   []string{"a", "b"},
+			expected: false,
+		},
+		{
+			name:     "invalid - too many fields",
+			record:   []string{"a", "b", "c", "d", "e", "f", "g", "h"},
+			expected: false,
+		},
+		{
+			name:     "invalid - empty",
+			record:   []string{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := HasValidRecordLength(tt.record)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestBuildPlasmid(t *testing.T) {
 	tests := []struct {
 		name      string
 		record    []string
 		userEmail string
 		cvterm    string
-		shouldErr bool
 		validate  func(*testing.T, *GoldenBraidPlasmid)
 	}{
 		{
@@ -117,7 +152,6 @@ func TestParseRecord(t *testing.T) {
 			},
 			userEmail: "test@example.com",
 			cvterm:    "GB vector",
-			shouldErr: false,
 			validate: func(t *testing.T, p *GoldenBraidPlasmid) {
 				require.Equal(t, "pDGB_A1", p.Name)
 				require.Equal(t, "Test description", p.Summary)
@@ -148,37 +182,18 @@ func TestParseRecord(t *testing.T) {
 			},
 			userEmail: "test@example.com",
 			cvterm:    "GB vector",
-			shouldErr: false,
 			validate: func(t *testing.T, p *GoldenBraidPlasmid) {
 				require.True(t, O.IsNone(p.Genes))
 			},
-		},
-		{
-			name: "invalid record - wrong number of fields",
-			record: []string{
-				"pDGB_A1",
-				"Test description",
-			},
-			userEmail: "test@example.com",
-			cvterm:    "GB vector",
-			shouldErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ParseRecord(tt.record, tt.userEmail, tt.cvterm)
-
-			if tt.shouldErr {
-				require.True(t, E.IsLeft(result))
-			} else {
-				require.True(t, E.IsRight(result))
-				plasmid := E.GetOrElse(func(error) *GoldenBraidPlasmid {
-					return &GoldenBraidPlasmid{}
-				})(result)
-				if tt.validate != nil {
-					tt.validate(t, plasmid)
-				}
+			plasmid := BuildPlasmid(tt.userEmail, tt.cvterm)(tt.record)
+			require.NotNil(t, plasmid)
+			if tt.validate != nil {
+				tt.validate(t, plasmid)
 			}
 		})
 	}
