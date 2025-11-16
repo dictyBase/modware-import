@@ -3,7 +3,6 @@ package stockcenter
 import (
 	"testing"
 
-	E "github.com/IBM/fp-go/either"
 	O "github.com/IBM/fp-go/option"
 	"github.com/stretchr/testify/require"
 )
@@ -199,88 +198,9 @@ func TestBuildPlasmid(t *testing.T) {
 	}
 }
 
-func TestValidatePlasmid(t *testing.T) {
-	tests := []struct {
-		name      string
-		plasmid   *GoldenBraidPlasmid
-		shouldErr bool
-		errorMsg  string
-	}{
-		{
-			name: "valid plasmid",
-			plasmid: &GoldenBraidPlasmid{
-				Name:    "pDGB_A1",
-				Summary: "Test plasmid",
-				User:    "test@example.com",
-			},
-			shouldErr: false,
-		},
-		{
-			name: "invalid name - no 'p' prefix",
-			plasmid: &GoldenBraidPlasmid{
-				Name:    "DGB_A1",
-				Summary: "Test",
-				User:    "test@example.com",
-			},
-			shouldErr: true,
-			errorMsg:  "must start with 'p'",
-		},
-		{
-			name: "invalid name - empty",
-			plasmid: &GoldenBraidPlasmid{
-				Name:    "",
-				Summary: "Test",
-				User:    "test@example.com",
-			},
-			shouldErr: true,
-			errorMsg:  "must start with 'p'",
-		},
-		{
-			name: "invalid summary - empty",
-			plasmid: &GoldenBraidPlasmid{
-				Name:    "pDGB_A1",
-				Summary: "",
-				User:    "test@example.com",
-			},
-			shouldErr: true,
-			errorMsg:  "empty summary",
-		},
-		{
-			name: "invalid user - empty",
-			plasmid: &GoldenBraidPlasmid{
-				Name:    "pDGB_A1",
-				Summary: "Test",
-				User:    "",
-			},
-			shouldErr: true,
-			errorMsg:  "no user email",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := ValidatePlasmid(tt.plasmid)
-
-			if tt.shouldErr {
-				require.True(t, E.IsLeft(result))
-				err := E.Fold(
-					func(e error) error { return e },
-					func(*GoldenBraidPlasmid) error { return nil },
-				)(result)
-				require.Error(t, err)
-				if tt.errorMsg != "" {
-					require.Contains(t, err.Error(), tt.errorMsg)
-				}
-			} else {
-				require.True(t, E.IsRight(result))
-			}
-		})
-	}
-}
-
 //nolint:funlen // Table-driven test with multiple predicates
 func TestValidationPredicates(t *testing.T) {
-	t.Run("hasValidName", func(t *testing.T) {
+	t.Run("HasValidName", func(t *testing.T) {
 		tests := []struct {
 			name     string
 			plasmid  *GoldenBraidPlasmid
@@ -305,13 +225,13 @@ func TestValidationPredicates(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := hasValidName(tt.plasmid)
+				result := HasValidName(tt.plasmid)
 				require.Equal(t, tt.expected, result)
 			})
 		}
 	})
 
-	t.Run("hasValidSummary", func(t *testing.T) {
+	t.Run("HasValidSummary", func(t *testing.T) {
 		tests := []struct {
 			name     string
 			plasmid  *GoldenBraidPlasmid
@@ -331,13 +251,13 @@ func TestValidationPredicates(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := hasValidSummary(tt.plasmid)
+				result := HasValidSummary(tt.plasmid)
 				require.Equal(t, tt.expected, result)
 			})
 		}
 	})
 
-	t.Run("hasValidUser", func(t *testing.T) {
+	t.Run("HasValidUser", func(t *testing.T) {
 		tests := []struct {
 			name     string
 			plasmid  *GoldenBraidPlasmid
@@ -357,7 +277,7 @@ func TestValidationPredicates(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := hasValidUser(tt.plasmid)
+				result := HasValidUser(tt.plasmid)
 				require.Equal(t, tt.expected, result)
 			})
 		}
