@@ -38,6 +38,14 @@ type PlasmidProcessingResult struct {
 	Error     O.Option[error]
 }
 
+// createErrorResult creates a PlasmidProcessingResult for an error
+func createErrorResult(e error) PlasmidProcessingResult {
+	return PlasmidProcessingResult{
+		PlasmidID: "",
+		Error:     O.Some(e),
+	}
+}
+
 // GoldenBraidProcessingResult holds aggregate processing statistics
 type GoldenBraidProcessingResult struct {
 	Successes  []string
@@ -102,15 +110,7 @@ func streamAndProcessRecords(
 					plasmidCVTerm,
 				)),
 				E.Chain(source.ValidatePlasmid),
-				E.Fold(
-					func(e error) PlasmidProcessingResult {
-						return PlasmidProcessingResult{
-							PlasmidID: "",
-							Error:     O.Some(e),
-						}
-					},
-					processPlasmid,
-				),
+				E.Fold(createErrorResult, processPlasmid),
 			)
 
 			results = append(results, result)
