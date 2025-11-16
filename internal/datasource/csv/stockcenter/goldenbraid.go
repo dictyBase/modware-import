@@ -56,75 +56,31 @@ func parsePublicationField(field string) O.Option[[]string] {
 	return O.Some([]string{trimmed})
 }
 
-// setPlasmidName is a curried setter for the Name field
-var setPlasmidName = F.Curry2(
-	func(record []string, p *GoldenBraidPlasmid) *GoldenBraidPlasmid {
-		p.Name = strings.TrimSpace(record[0])
-		return p
-	},
-)
+// HasValidRecordLength checks if CSV record has exactly 7 fields
+func HasValidRecordLength(r []string) bool {
+	return len(r) == 7
+}
 
-// setPlasmidSummary is a curried setter for the Summary field
-var setPlasmidSummary = F.Curry2(
-	func(record []string, p *GoldenBraidPlasmid) *GoldenBraidPlasmid {
-		p.Summary = strings.TrimSpace(record[5])
-		return p
-	},
-)
+// RecordLengthError creates error for invalid record length
+func RecordLengthError(r []string) error {
+	return fmt.Errorf("invalid CSV record: expected 7 fields, got %d", len(r))
+}
 
-// setPlasmidGenes is a curried setter for the Genes field
-var setPlasmidGenes = F.Curry2(
-	func(record []string, p *GoldenBraidPlasmid) E.Either[error, *GoldenBraidPlasmid] {
-		p.Genes = parseCommaSeparatedField(record[3])
-		return E.Of[error](p)
-	},
-)
-
-// setPlasmidPublications is a curried setter for the Publications field
-var setPlasmidPublications = F.Curry2(
-	func(record []string, p *GoldenBraidPlasmid) E.Either[error, *GoldenBraidPlasmid] {
-		p.Publications = parsePublicationField(record[6])
-		return E.Of[error](p)
-	},
-)
-
-// setMetadata is a curried setter for user, plasmid type, and timestamps
-var setMetadata = F.Curry3(
-	func(
-		userEmail string,
-		plasmidCVTerm string,
-		p *GoldenBraidPlasmid,
-	) *GoldenBraidPlasmid {
+// BuildPlasmid constructs GoldenBraidPlasmid immutably from CSV record (curried)
+func BuildPlasmid(userEmail string, plasmidCVTerm string) func([]string) *GoldenBraidPlasmid {
+	return func(r []string) *GoldenBraidPlasmid {
 		now := time.Now()
-		p.User = userEmail
-		p.PlasmidType = plasmidCVTerm
-		p.CreatedOn = now
-		p.UpdatedOn = now
-		return p
-	},
-)
-
-// ParseRecord parses a single CSV record into a GoldenBraidPlasmid
-func ParseRecord(
-	record []string,
-	userEmail string,
-	plasmidCVTerm string,
-) E.Either[error, *GoldenBraidPlasmid] {
-	// Validate record length
-	if len(record) != 7 {
-		return E.Left[*GoldenBraidPlasmid](
-			fmt.Errorf("invalid CSV record: expected 7 fields, got %d", len(record)),
-		)
+		return &GoldenBraidPlasmid{
+			Name:         strings.TrimSpace(r[0]),
+			Summary:      strings.TrimSpace(r[5]),
+			Genes:        parseCommaSeparatedField(r[3]),
+			Publications: parsePublicationField(r[6]),
+			User:         userEmail,
+			PlasmidType:  plasmidCVTerm,
+			CreatedOn:    now,
+			UpdatedOn:    now,
+		}
 	}
-
-	return F.Pipe5(
-		E.Of[error](&GoldenBraidPlasmid{}),
-		E.Map[error](setPlasmidName(record)),
-		E.Map[error](setPlasmidSummary(record)),
-		E.Chain[error](setPlasmidGenes(record)),
-		E.Chain[error](setPlasmidPublications(record)),
-		E.Map[error](setMetadata(userEmail)(plasmidCVTerm)),
-	)
 }
 
 // Validation predicates
@@ -160,7 +116,9 @@ var userError = func(p *GoldenBraidPlasmid) error {
 }
 
 // ValidatePlasmid validates a GoldenBraidPlasmid using predicate chain
-func ValidatePlasmid(p *GoldenBraidPlasmid) E.Either[error, *GoldenBraidPlasmid] {
+func ValidatePlasmid(
+	p *GoldenBraidPlasmid,
+) E.Either[error, *GoldenBraidPlasmid] {
 	return F.Pipe3(
 		E.Of[error](p),
 		E.Chain(E.FromPredicate(hasValidName, nameError)),

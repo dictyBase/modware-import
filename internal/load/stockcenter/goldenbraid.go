@@ -49,7 +49,7 @@ type GoldenBraidProcessingResult struct {
 func openCSVReader(config LoaderConfig) IOE.IOEither[error, *csv.Reader] {
 	return IOE.TryCatchError(func() (*csv.Reader, error) {
 		inputPath := config.Viper.GetString("input")
-		file, err := os.Open(inputPath)
+		file, err := os.Open(config.Viper.GetString("input"))
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to open CSV file %s: %w",
@@ -90,9 +90,17 @@ func streamAndProcessRecords(
 				return nil, fmt.Errorf("CSV read error: %w", err)
 			}
 
-			// Process single record (pure Either pipeline)
-			result := F.Pipe2(
-				source.ParseRecord(record, userEmail, plasmidCVTerm),
+			// Process single record (pure Either pipeline - integrated)
+			result := F.Pipe4(
+				record,
+				E.FromPredicate(
+					source.HasValidRecordLength,
+					source.RecordLengthError,
+				),
+				E.Map[error](source.BuildPlasmid(
+					userEmail,
+					plasmidCVTerm,
+				)),
 				E.Chain(source.ValidatePlasmid),
 				E.Fold(
 					func(e error) PlasmidProcessingResult {
