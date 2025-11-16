@@ -99,7 +99,7 @@ func streamAndProcessRecords(
 			}
 
 			// Process single record (pure Either pipeline - integrated)
-			result := F.Pipe4(
+			result := F.Pipe6(
 				record,
 				E.FromPredicate(
 					source.HasValidRecordLength,
@@ -109,7 +109,20 @@ func streamAndProcessRecords(
 					userEmail,
 					plasmidCVTerm,
 				)),
-				E.Chain(source.ValidatePlasmid),
+				E.Chain(E.FromPredicate(
+					source.HasValidName,
+					source.NameError,
+				)),
+				E.Chain(
+					E.FromPredicate(
+						source.HasValidSummary,
+						source.SummaryError,
+					),
+				),
+				E.Chain(E.FromPredicate(
+					source.HasValidUser,
+					source.UserError,
+				)),
 				E.Fold(createErrorResult, processPlasmid),
 			)
 

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	A "github.com/IBM/fp-go/array"
-	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
 	O "github.com/IBM/fp-go/option"
 	Pred "github.com/IBM/fp-go/predicate"
@@ -85,44 +84,32 @@ func BuildPlasmid(userEmail string, plasmidCVTerm string) func([]string) *Golden
 
 // Validation predicates
 
-// hasValidName checks if plasmid name starts with 'p' and is non-empty
-var hasValidName = func(p *GoldenBraidPlasmid) bool {
+// HasValidName checks if plasmid name starts with 'p' and is non-empty
+func HasValidName(p *GoldenBraidPlasmid) bool {
 	return !S.IsEmpty(p.Name) && strings.HasPrefix(p.Name, "p")
 }
 
-// nameError creates error for invalid name
-var nameError = func(p *GoldenBraidPlasmid) error {
+// NameError creates error for invalid name
+func NameError(p *GoldenBraidPlasmid) error {
 	return fmt.Errorf("invalid plasmid name '%s': must start with 'p'", p.Name)
 }
 
-// hasValidSummary checks if summary is non-empty
-var hasValidSummary = func(p *GoldenBraidPlasmid) bool {
+// HasValidSummary checks if summary is non-empty
+func HasValidSummary(p *GoldenBraidPlasmid) bool {
 	return !S.IsEmpty(p.Summary)
 }
 
-// summaryError creates error for empty summary
-var summaryError = func(p *GoldenBraidPlasmid) error {
+// SummaryError creates error for empty summary
+func SummaryError(p *GoldenBraidPlasmid) error {
 	return fmt.Errorf("plasmid '%s' has empty summary", p.Name)
 }
 
-// hasValidUser checks if user email is non-empty
-var hasValidUser = func(p *GoldenBraidPlasmid) bool {
+// HasValidUser checks if user email is non-empty
+func HasValidUser(p *GoldenBraidPlasmid) bool {
 	return !S.IsEmpty(p.User)
 }
 
-// userError creates error for missing user
-var userError = func(p *GoldenBraidPlasmid) error {
+// UserError creates error for missing user
+func UserError(p *GoldenBraidPlasmid) error {
 	return fmt.Errorf("plasmid '%s' has no user email", p.Name)
-}
-
-// ValidatePlasmid validates a GoldenBraidPlasmid using predicate chain
-func ValidatePlasmid(
-	p *GoldenBraidPlasmid,
-) E.Either[error, *GoldenBraidPlasmid] {
-	return F.Pipe3(
-		E.Of[error](p),
-		E.Chain(E.FromPredicate(hasValidName, nameError)),
-		E.Chain(E.FromPredicate(hasValidSummary, summaryError)),
-		E.Chain(E.FromPredicate(hasValidUser, userError)),
-	)
 }
