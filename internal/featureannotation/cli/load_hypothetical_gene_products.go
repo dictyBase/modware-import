@@ -19,6 +19,7 @@ import (
 	S "github.com/IBM/fp-go/string"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	"github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc/codes"
@@ -429,7 +430,7 @@ func LoadHypotheticalGeneProducts(c *cli.Context) error {
 			),
 			IOE.Map[error](aggregateResults),
 		),
-		toEither[ProcessingStats],
+		fputil.ToEither[error, ProcessingStats],
 		elog("Hypothetical gene products loading result"),
 		E.Fold(
 			fperrors.IdentityError,
@@ -454,11 +455,4 @@ func returnSkippedAction(
 	*pb.TagProperty,
 ) IOE.IOEither[error, GeneProcessingAction] {
 	return IOE.Of[error](GeneSkipped)
-}
-
-// toEither executes an IOEither to get an Either result
-func toEither[A any](
-	ioe IOE.IOEither[error, A],
-) E.Either[error, A] {
-	return ioe()
 }

@@ -17,6 +17,7 @@ import (
 	O "github.com/IBM/fp-go/option"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
+	"github.com/dictyBase/modware-import/internal/fputil"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -146,7 +147,7 @@ func streamAndProcessRecords(
 
 // processPlasmid processes a single validated plasmid by loading it to the API
 func processPlasmid(p *source.GoldenBraidPlasmid) E.Either[error, string] {
-	return F.Pipe2(p, loadPlasmidToAPI, ToEither)
+	return F.Pipe2(p, loadPlasmidToAPI, fputil.ToEither[error, string])
 }
 
 // loadPlasmidToAPI loads a plasmid to the stock center API
@@ -226,11 +227,6 @@ func aggregateResults(
 	)
 }
 
-// toEither executes an IOEither to get an Either result
-func toEither[A any](ioe IOE.IOEither[error, A]) E.Either[error, A] {
-	return ioe()
-}
-
 // SetReader is a curried setter that adds CSV reader to config
 var SetReader = F.Curry2(
 	func(reader *csv.Reader, config LoaderConfig) LoaderConfig {
@@ -275,15 +271,11 @@ func LoadGoldenBraid(cmd *cobra.Command, args []string) error {
 				"Processing complete:\n%s",
 			),
 		),
-		toEither[GoldenBraidProcessingResult],
+		fputil.ToEither[error, GoldenBraidProcessingResult],
 		elog("GoldenBraid loading result"),
 		E.Fold(
 			fperrors.IdentityError,
 			func(_ GoldenBraidProcessingResult) error { return nil },
 		),
 	)
-}
-
-func ToEither[ER, A any](ioe IOE.IOEither[ER, A]) E.Either[ER, A] {
-	return ioe()
 }

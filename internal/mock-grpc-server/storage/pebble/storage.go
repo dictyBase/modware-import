@@ -12,6 +12,7 @@ import (
 	T "github.com/IBM/fp-go/tuple"
 	"github.com/cockroachdb/pebble"
 	"github.com/cockroachdb/pebble/vfs"
+	"github.com/dictyBase/modware-import/internal/fputil"
 )
 
 // Config holds configuration for Pebble storage
@@ -166,11 +167,6 @@ func buildStorage(dbSetup DatabaseSetup) *pebbleStorage {
 	}
 }
 
-// ToEither executes IOEither and returns the underlying Either
-func ToEither[E, A any](ioe IOE.IOEither[E, A]) either.Either[E, A] {
-	return ioe()
-}
-
 // ToTuple converts Either to Go-style tuple (value, error)
 func ToTuple[A any](e either.Either[error, A]) T.Tuple2[A, error] {
 	return F.Pipe1(
@@ -199,7 +195,7 @@ func executeStorageSetup(
 		setupFilesystem(mode),
 		IOE.Chain(openDatabase),
 		IOE.Map[error](buildStorage),
-		ToEither[error, *pebbleStorage],
+		fputil.ToEither[error, *pebbleStorage],
 	)
 }
 
