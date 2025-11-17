@@ -17,6 +17,10 @@ import (
 	csource "github.com/dictyBase/modware-import/internal/datasource/csv"
 )
 
+const (
+	summaryFieldIndex = 2 // Index of summary field in record
+)
+
 // PlasmidGenbank is the container for genbank link for plasmid
 type PlasmidGenbank struct {
 	Id      string
@@ -174,11 +178,11 @@ func parseName(ctx ParseContext) PlasmidParser {
 func parseSummary(ctx ParseContext) PlasmidParser {
 	return RE.FromEither[Dependencies](
 		F.Pipe1(
-			getRecordField(ctx.Record, 2),
+			getRecordField(ctx.Record, summaryFieldIndex),
 			O.Fold(
 				func() E.Either[error, ParseContext] {
 					return E.Left[ParseContext](
-						fmt.Errorf("missing summary at index 2"),
+						fmt.Errorf("missing summary at index %d", summaryFieldIndex),
 					)
 				},
 				func(summary string) E.Either[error, ParseContext] {

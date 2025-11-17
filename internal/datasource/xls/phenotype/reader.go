@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/datasource/xls"
 )
 
@@ -58,9 +59,9 @@ func (phr *PhenotypeAnnotationReader) Value() (*PhenotypeAnnotation, error) {
 	case 0:
 		anno.empty = true
 		return anno, nil
-	case 10:
+	case config.PhenotypeColumnCount:
 		anno = phr.hanldeTenRows(row)
-	case 12:
+	case config.ExtendedColumnCount:
 		anno = phr.hanldeTwelveRows(row)
 	default:
 		return nil, fmt.Errorf(

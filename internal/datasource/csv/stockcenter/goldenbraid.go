@@ -12,6 +12,11 @@ import (
 	S "github.com/IBM/fp-go/string"
 )
 
+const (
+	// GoldenBraidFieldCount is the expected number of fields in a GoldenBraid CSV record
+	GoldenBraidFieldCount = 7
+)
+
 // GoldenBraidPlasmid represents a plasmid from the GoldenBraid CSV file
 type GoldenBraidPlasmid struct {
 	Name         string             // Column 0: "Plasmid  Name"
@@ -55,14 +60,14 @@ func parsePublicationField(field string) O.Option[[]string] {
 	return O.Some([]string{trimmed})
 }
 
-// HasValidRecordLength checks if CSV record has exactly 7 fields
+// HasValidRecordLength checks if CSV record has exactly GoldenBraidFieldCount fields
 func HasValidRecordLength(r []string) bool {
-	return len(r) == 7
+	return len(r) == GoldenBraidFieldCount
 }
 
 // RecordLengthError creates error for invalid record length
 func RecordLengthError(r []string) error {
-	return fmt.Errorf("invalid CSV record: expected 7 fields, got %d", len(r))
+	return fmt.Errorf("invalid CSV record: expected %d fields, got %d", GoldenBraidFieldCount, len(r))
 }
 
 // BuildPlasmid constructs GoldenBraidPlasmid immutably from CSV record (curried)

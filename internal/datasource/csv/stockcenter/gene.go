@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/emirpasic/gods/maps/hashmap"
 )
 
@@ -29,7 +30,7 @@ func NewStockGeneLookp(r io.Reader) (StockGeneLookup, error) {
 	sgr := bufio.NewScanner(r)
 	for sgr.Scan() {
 		record := strings.Split(sgr.Text(), "\t")
-		if len(record) != 2 {
+		if len(record) != config.MinimumFieldCount {
 			return l, fmt.Errorf("does not expected record in line %s", sgr.Text())
 		}
 		if v, ok := m.Get(record[0]); ok {
