@@ -22,7 +22,7 @@ func checkIfSeparatorImpl(
 	// Use FromPredicate idiomatically: test token, return index if match
 	return F.Pipe1(
 		i,
-		O.FromPredicate(func(idx int) bool {
+		O.FromPredicate(func(_ int) bool {
 			return token.Type == opType
 		}),
 	)
