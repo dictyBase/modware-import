@@ -18,23 +18,23 @@ type ServiceConfig struct {
 	Logger          *logrus.Logger
 }
 
-// StockService implements the gRPC stock service
-type StockService struct {
+// Service implements the gRPC stock service
+type Service struct {
 	stock.UnimplementedStockServiceServer
 	storage storage.StockStorage
 	config  *ServiceConfig
 }
 
-// NewStockService creates a new stock service instance
-func NewStockService(storage storage.StockStorage, config *ServiceConfig) *StockService {
-	return &StockService{
+// NewService creates a new stock service instance
+func NewService(storage storage.StockStorage, config *ServiceConfig) *Service {
+	return &Service{
 		storage: storage,
 		config:  config,
 	}
 }
 
 // GetStrain retrieves a strain by ID
-func (service *StockService) GetStrain(
+func (service *Service) GetStrain(
 	ctx context.Context,
 	req *stock.StockId,
 ) (*stock.Strain, error) {
@@ -47,7 +47,7 @@ func (service *StockService) GetStrain(
 }
 
 // CreateStrain creates a new strain
-func (service *StockService) CreateStrain(
+func (service *Service) CreateStrain(
 	ctx context.Context,
 	req *stock.NewStrain,
 ) (*stock.Strain, error) {
@@ -61,7 +61,7 @@ func (service *StockService) CreateStrain(
 }
 
 // UpdateStrain updates an existing strain
-func (service *StockService) UpdateStrain(
+func (service *Service) UpdateStrain(
 	ctx context.Context,
 	req *stock.StrainUpdate,
 ) (*stock.Strain, error) {
@@ -74,7 +74,7 @@ func (service *StockService) UpdateStrain(
 }
 
 // GetPlasmid retrieves a plasmid by ID
-func (service *StockService) GetPlasmid(
+func (service *Service) GetPlasmid(
 	ctx context.Context,
 	req *stock.StockId,
 ) (*stock.Plasmid, error) {
@@ -87,7 +87,7 @@ func (service *StockService) GetPlasmid(
 }
 
 // CreatePlasmid creates a new plasmid
-func (service *StockService) CreatePlasmid(
+func (service *Service) CreatePlasmid(
 	ctx context.Context,
 	req *stock.NewPlasmid,
 ) (*stock.Plasmid, error) {
@@ -101,7 +101,7 @@ func (service *StockService) CreatePlasmid(
 }
 
 // UpdatePlasmid updates an existing plasmid
-func (service *StockService) UpdatePlasmid(
+func (service *Service) UpdatePlasmid(
 	ctx context.Context,
 	req *stock.PlasmidUpdate,
 ) (*stock.Plasmid, error) {
@@ -114,7 +114,7 @@ func (service *StockService) UpdatePlasmid(
 }
 
 // RemoveStock removes a stock by ID
-func (service *StockService) RemoveStock(
+func (service *Service) RemoveStock(
 	ctx context.Context,
 	req *stock.StockId,
 ) (*emptypb.Empty, error) {
@@ -127,7 +127,7 @@ func (service *StockService) RemoveStock(
 }
 
 // ListStrains lists strains with filtering and pagination
-func (service *StockService) ListStrains(
+func (service *Service) ListStrains(
 	ctx context.Context,
 	params *stock.StockParameters,
 ) (*stock.StrainCollection, error) {
@@ -140,7 +140,7 @@ func (service *StockService) ListStrains(
 }
 
 // ListPlasmids lists plasmids with filtering and pagination
-func (service *StockService) ListPlasmids(
+func (service *Service) ListPlasmids(
 	ctx context.Context,
 	params *stock.StockParameters,
 ) (*stock.PlasmidCollection, error) {
@@ -153,7 +153,7 @@ func (service *StockService) ListPlasmids(
 }
 
 // LoadStrain loads an existing strain with a specific ID
-func (service *StockService) LoadStrain(
+func (service *Service) LoadStrain(
 	ctx context.Context,
 	req *stock.ExistingStrain,
 ) (*stock.Strain, error) {
@@ -166,7 +166,7 @@ func (service *StockService) LoadStrain(
 }
 
 // LoadPlasmid loads an existing plasmid with a specific ID
-func (service *StockService) LoadPlasmid(
+func (service *Service) LoadPlasmid(
 	ctx context.Context,
 	req *stock.ExistingPlasmid,
 ) (*stock.Plasmid, error) {
@@ -179,7 +179,7 @@ func (service *StockService) LoadPlasmid(
 }
 
 // ListStrainsByIDs retrieves multiple strains by their IDs
-func (service *StockService) ListStrainsByIDs(
+func (service *Service) ListStrainsByIDs(
 	ctx context.Context,
 	req *stock.StockIdList,
 ) (*stock.StrainList, error) {

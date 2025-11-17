@@ -114,23 +114,23 @@ func parseOperator(tokens []Token) E.Either[error, Operator] {
 	)
 }
 
-// constructPredicate creates a FilterExpression from operator and tokens
-func constructPredicate(op Operator, tokens []Token) FilterExpression {
-	return FilterExpression(Predicate{
+// constructPredicate creates a Expression from operator and tokens
+func constructPredicate(op Operator, tokens []Token) Expression {
+	return Expression(Predicate{
 		Field:    tokens[0].Value,
 		Operator: op,
 		Value:    tokens[2].Value,
 	})
 }
 
-// buildPredicate constructs FilterExpression from validated tokens and operator
+// buildPredicate constructs Expression from validated tokens and operator
 var buildPredicate = F.Curry2(constructPredicate)
 
 // applyOperatorToPredicate applies parsed operator to build the final predicate
 func applyOperatorToPredicate(
 	validTokens []Token,
-) func(Operator) FilterExpression {
-	return func(op Operator) FilterExpression {
+) func(Operator) Expression {
+	return func(op Operator) Expression {
 		return buildPredicate(op)(validTokens)
 	}
 }
@@ -138,7 +138,7 @@ func applyOperatorToPredicate(
 // buildPredicateFromTokens chains operator parsing and predicate construction
 func buildPredicateFromTokens(
 	validTokens []Token,
-) E.Either[error, FilterExpression] {
+) E.Either[error, Expression] {
 	return F.Pipe1(
 		parseOperator(validTokens),
 		E.Map[error](applyOperatorToPredicate(validTokens)),
@@ -146,7 +146,7 @@ func buildPredicateFromTokens(
 }
 
 // parsePredicate parses a single field-operator-value predicate using Either composition
-func parsePredicate(tokens []Token) E.Either[error, FilterExpression] {
+func parsePredicate(tokens []Token) E.Either[error, Expression] {
 	return F.Pipe1(
 		validateTokenStructure(tokens),
 		E.Chain(buildPredicateFromTokens),

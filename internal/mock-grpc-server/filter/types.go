@@ -53,8 +53,8 @@ const (
 	ArrayNotEquals
 )
 
-// FilterExpression represents an evaluatable filter expression
-type FilterExpression interface {
+// Expression represents an evaluatable filter expression
+type Expression interface {
 	Evaluate(data map[string]any) bool
 }
 
@@ -69,8 +69,8 @@ type Predicate struct {
 
 // AndExpression represents a logical AND of two expressions
 type AndExpression struct {
-	Left  FilterExpression
-	Right FilterExpression
+	Left  Expression
+	Right Expression
 }
 
 // Evaluate evaluates the AND expression
@@ -80,8 +80,8 @@ func (expr AndExpression) Evaluate(data map[string]interface{}) bool {
 
 // OrExpression represents a logical OR of two expressions
 type OrExpression struct {
-	Left  FilterExpression
-	Right FilterExpression
+	Left  Expression
+	Right Expression
 }
 
 // Evaluate evaluates the OR expression

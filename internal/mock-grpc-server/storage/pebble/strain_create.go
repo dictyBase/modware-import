@@ -263,7 +263,7 @@ func extractCreatedStrain(ctx withStrainBatch) *stock.Strain {
 }
 
 // CreateStrain creates a new strain using the fp-go pipeline
-func (storage *pebbleStorage) CreateStrain(
+func (storage *Storage) CreateStrain(
 	req *stock.NewStrain,
 ) IOE.IOEither[error, *stock.Strain] {
 	return F.Pipe7(

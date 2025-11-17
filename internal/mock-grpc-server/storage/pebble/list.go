@@ -14,7 +14,7 @@ import (
 )
 
 // ListStrains lists strains with filtering and pagination
-func (storage *pebbleStorage) ListStrains(
+func (storage *Storage) ListStrains(
 	params *stock.StockParameters,
 ) IOE.IOEither[error, *stock.StrainCollection] {
 	return IOE.TryCatchError(func() (*stock.StrainCollection, error) {
@@ -36,8 +36,8 @@ func (storage *pebbleStorage) ListStrains(
 }
 
 // collectFilteredStrains collects all strains that match the filter expression
-func (storage *pebbleStorage) collectFilteredStrains(
-	filterExpr filter.FilterExpression,
+func (storage *Storage) collectFilteredStrains(
+	filterExpr filter.Expression,
 ) ([]*stock.Strain, error) {
 	iter, err := createIndexIterator(storage.db)
 	if err != nil {
@@ -61,9 +61,9 @@ func (storage *pebbleStorage) collectFilteredStrains(
 }
 
 // processStrainIndexEntry processes a single index entry and returns the strain if it matches the filter
-func (storage *pebbleStorage) processStrainIndexEntry(
+func (storage *Storage) processStrainIndexEntry(
 	iter *pebble.Iterator,
-	filterExpr filter.FilterExpression,
+	filterExpr filter.Expression,
 ) *stock.Strain {
 	indexMap, stockID := extractIndexData(iter, storage.db)
 	if indexMap == nil {
@@ -78,7 +78,7 @@ func (storage *pebbleStorage) processStrainIndexEntry(
 }
 
 // ListPlasmids lists plasmids with filtering and pagination
-func (storage *pebbleStorage) ListPlasmids(
+func (storage *Storage) ListPlasmids(
 	params *stock.StockParameters,
 ) IOE.IOEither[error, *stock.PlasmidCollection] {
 	return IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
@@ -100,8 +100,8 @@ func (storage *pebbleStorage) ListPlasmids(
 }
 
 // collectFilteredPlasmids collects all plasmids that match the filter expression
-func (storage *pebbleStorage) collectFilteredPlasmids(
-	filterExpr filter.FilterExpression,
+func (storage *Storage) collectFilteredPlasmids(
+	filterExpr filter.Expression,
 ) ([]*stock.Plasmid, error) {
 	iter, err := createIndexIterator(storage.db)
 	if err != nil {
@@ -125,9 +125,9 @@ func (storage *pebbleStorage) collectFilteredPlasmids(
 }
 
 // processPlasmidIndexEntry processes a single index entry and returns the plasmid if it matches the filter
-func (storage *pebbleStorage) processPlasmidIndexEntry(
+func (storage *Storage) processPlasmidIndexEntry(
 	iter *pebble.Iterator,
-	filterExpr filter.FilterExpression,
+	filterExpr filter.Expression,
 ) *stock.Plasmid {
 	indexMap, stockID := extractIndexData(iter, storage.db)
 	if indexMap == nil {
@@ -144,10 +144,10 @@ func (storage *pebbleStorage) processPlasmidIndexEntry(
 // Helper functions shared between ListStrains and ListPlasmids
 
 // parseFilterOrDefault parses the filter string or returns an always-true filter
-func parseFilterOrDefault(filterStr string) filter.FilterExpression {
+func parseFilterOrDefault(filterStr string) filter.Expression {
 	return F.Pipe1(
 		filter.ParseFilter(filterStr),
-		E.GetOrElse(func(error) filter.FilterExpression {
+		E.GetOrElse(func(error) filter.Expression {
 			return filter.AlwaysTrueFilter{}
 		}),
 	)

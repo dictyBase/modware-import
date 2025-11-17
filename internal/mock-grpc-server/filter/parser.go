@@ -34,10 +34,10 @@ var operatorMap = map[string]Operator{
 	"@!=": ArrayNotEquals,
 }
 
-// ParseFilter parses a filter string into a FilterExpression using Either composition
-func ParseFilter(filterStr string) E.Either[error, FilterExpression] {
+// ParseFilter parses a filter string into a Expression using Either composition
+func ParseFilter(filterStr string) E.Either[error, Expression] {
 	if filterStr == "" {
-		return E.Right[error](FilterExpression(AlwaysTrueFilter{}))
+		return E.Right[error](Expression(AlwaysTrueFilter{}))
 	}
 
 	return F.Pipe2(
@@ -47,11 +47,11 @@ func ParseFilter(filterStr string) E.Either[error, FilterExpression] {
 	)
 }
 
-// parseTokens converts tokens into FilterExpression using Either composition
-func parseTokens(tokens []Token) E.Either[error, FilterExpression] {
+// parseTokens converts tokens into Expression using Either composition
+func parseTokens(tokens []Token) E.Either[error, Expression] {
 	// Early return for empty tokens
 	if len(tokens) == 0 {
-		return E.Right[error](FilterExpression(AlwaysTrueFilter{}))
+		return E.Right[error](Expression(AlwaysTrueFilter{}))
 	}
 
 	// Try parsing as OR expression first (lowest precedence)

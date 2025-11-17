@@ -52,8 +52,8 @@ type DatabaseSetup struct {
 	tempDir string
 }
 
-// pebbleStorage implements the StockStorage interface using Pebble KV store
-type pebbleStorage struct {
+// Storage implements the StockStorage interface using Pebble KV store
+type Storage struct {
 	db      *pebble.DB
 	keys    keyBuilder
 	memFS   vfs.FS // Only used for in-memory mode
@@ -157,9 +157,9 @@ func openDatabase(fsSetup FilesystemSetup) IOE.IOEither[error, DatabaseSetup] {
 	})
 }
 
-// buildStorage constructs the final pebbleStorage from database setup
-func buildStorage(dbSetup DatabaseSetup) *pebbleStorage {
-	return &pebbleStorage{
+// buildStorage constructs the final Storage from database setup
+func buildStorage(dbSetup DatabaseSetup) *Storage {
+	return &Storage{
 		db:      dbSetup.db,
 		keys:    newKeyBuilder(),
 		memFS:   dbSetup.memFS,
@@ -190,30 +190,30 @@ func extractStorageMode(cfg ValidatedConfig) StorageMode {
 // executeStorageSetup executes the complete storage setup pipeline
 func executeStorageSetup(
 	mode StorageMode,
-) E.Either[error, *pebbleStorage] {
+) E.Either[error, *Storage] {
 	return F.Pipe3(
 		setupFilesystem(mode),
 		IOE.Chain(openDatabase),
 		IOE.Map[error](buildStorage),
-		fputil.ToEither[error, *pebbleStorage],
+		fputil.ToEither[error, *Storage],
 	)
 }
 
 // NewStockStorage creates a new Pebble-backed stock storage
-func NewStockStorage(config *Config) (*pebbleStorage, error) {
+func NewStockStorage(config *Config) (*Storage, error) {
 	result := F.Pipe4(
 		config,
 		validateConfig,
 		E.Map[error](extractStorageMode),
 		E.Chain(executeStorageSetup),
-		ToTuple[*pebbleStorage],
+		ToTuple[*Storage],
 	)
 
 	return result.F1, result.F2
 }
 
 // Close closes the Pebble database
-func (storage *pebbleStorage) Close() error {
+func (storage *Storage) Close() error {
 	if storage.db != nil {
 		if err := storage.db.Close(); err != nil {
 			return fmt.Errorf("failed to close pebble database: %w", err)

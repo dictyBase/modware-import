@@ -13,7 +13,7 @@ import (
 )
 
 // GetStrain retrieves a strain by ID
-func (storage *pebbleStorage) GetStrain(stockID string) IOE.IOEither[error, *stock.Strain] {
+func (storage *Storage) GetStrain(stockID string) IOE.IOEither[error, *stock.Strain] {
 	return F.Pipe1(
 		IOE.TryCatchError(func() (*stock.Strain, error) {
 			data, closer, err := storage.db.Get(storage.keys.stockKey(stockID))
@@ -43,7 +43,7 @@ func (storage *pebbleStorage) GetStrain(stockID string) IOE.IOEither[error, *sto
 }
 
 // GetPlasmid retrieves a plasmid by ID
-func (storage *pebbleStorage) GetPlasmid(stockID string) IOE.IOEither[error, *stock.Plasmid] {
+func (storage *Storage) GetPlasmid(stockID string) IOE.IOEither[error, *stock.Plasmid] {
 	return F.Pipe1(
 		IOE.TryCatchError(func() (*stock.Plasmid, error) {
 			data, closer, err := storage.db.Get(storage.keys.stockKey(stockID))
@@ -73,7 +73,7 @@ func (storage *pebbleStorage) GetPlasmid(stockID string) IOE.IOEither[error, *st
 }
 
 // ListStrainsByIDs retrieves multiple strains by their IDs
-func (storage *pebbleStorage) ListStrainsByIDs(
+func (storage *Storage) ListStrainsByIDs(
 	ids []string,
 ) IOE.IOEither[error, *stock.StrainList] {
 	return IOE.TryCatchError(func() (*stock.StrainList, error) {

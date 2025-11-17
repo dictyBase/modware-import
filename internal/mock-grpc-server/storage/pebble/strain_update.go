@@ -78,7 +78,7 @@ var (
 )
 
 // retrieveExistingStrain retrieves the existing strain to update
-func (storage *pebbleStorage) retrieveExistingStrain(
+func (storage *Storage) retrieveExistingStrain(
 	ctx updateStrainContext,
 ) IOE.IOEither[error, *stock.Strain] {
 	return storage.GetStrain(ctx.req.Data.Id)
@@ -174,7 +174,7 @@ func extractUpdatedStrain(ctx withUpdateStrainBatch) *stock.Strain {
 }
 
 // UpdateStrain updates an existing strain
-func (storage *pebbleStorage) UpdateStrain(
+func (storage *Storage) UpdateStrain(
 	req *stock.StrainUpdate,
 ) IOE.IOEither[error, *stock.Strain] {
 	return F.Pipe6(
@@ -189,7 +189,7 @@ func (storage *pebbleStorage) UpdateStrain(
 }
 
 // LoadStrain loads an existing strain with a specific ID
-func (storage *pebbleStorage) LoadStrain(
+func (storage *Storage) LoadStrain(
 	stockID string,
 	req *stock.ExistingStrain,
 ) IOE.IOEither[error, *stock.Strain] {

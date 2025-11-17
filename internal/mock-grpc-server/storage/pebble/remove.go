@@ -8,7 +8,7 @@ import (
 )
 
 // RemoveStock removes a stock by ID
-func (storage *pebbleStorage) RemoveStock(stockID string) IOE.IOEither[error, struct{}] {
+func (storage *Storage) RemoveStock(stockID string) IOE.IOEither[error, struct{}] {
 	return IOE.TryCatchError(func() (struct{}, error) {
 		batch := storage.db.NewBatch()
 		keys := storage.keys

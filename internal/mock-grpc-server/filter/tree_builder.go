@@ -9,9 +9,9 @@ import (
 
 // combineAsOr creates an OrExpression from left and right expressions
 func combineAsOr(
-	left FilterExpression,
-) func(FilterExpression) FilterExpression {
-	return func(right FilterExpression) FilterExpression {
+	left Expression,
+) func(Expression) Expression {
+	return func(right Expression) Expression {
 		return OrExpression{Left: left, Right: right}
 	}
 }
@@ -19,8 +19,8 @@ func combineAsOr(
 // buildOrTreeRight builds right side of OR tree and combines with left
 func buildOrTreeRight(
 	groups [][]Token,
-) func(FilterExpression) E.Either[error, FilterExpression] {
-	return func(left FilterExpression) E.Either[error, FilterExpression] {
+) func(Expression) E.Either[error, Expression] {
+	return func(left Expression) E.Either[error, Expression] {
 		return F.Pipe1(
 			buildOrTree(groups),
 			E.Map[error](combineAsOr(left)),
@@ -29,9 +29,9 @@ func buildOrTreeRight(
 }
 
 // buildOrTree builds an OR expression tree from token groups using Either composition
-func buildOrTree(groups [][]Token) E.Either[error, FilterExpression] {
+func buildOrTree(groups [][]Token) E.Either[error, Expression] {
 	if len(groups) == 0 {
-		return E.Left[FilterExpression](fmt.Errorf("empty OR groups"))
+		return E.Left[Expression](fmt.Errorf("empty OR groups"))
 	}
 
 	if len(groups) == 1 {
@@ -47,9 +47,9 @@ func buildOrTree(groups [][]Token) E.Either[error, FilterExpression] {
 
 // combineAsAnd creates an AndExpression from left and right expressions
 func combineAsAnd(
-	left FilterExpression,
-) func(FilterExpression) FilterExpression {
-	return func(right FilterExpression) FilterExpression {
+	left Expression,
+) func(Expression) Expression {
+	return func(right Expression) Expression {
 		return AndExpression{Left: left, Right: right}
 	}
 }
@@ -57,8 +57,8 @@ func combineAsAnd(
 // buildAndTreeRight builds right side of AND tree and combines with left
 func buildAndTreeRight(
 	groups [][]Token,
-) func(FilterExpression) E.Either[error, FilterExpression] {
-	return func(left FilterExpression) E.Either[error, FilterExpression] {
+) func(Expression) E.Either[error, Expression] {
+	return func(left Expression) E.Either[error, Expression] {
 		return F.Pipe1(
 			buildAndTree(groups),
 			E.Map[error](combineAsAnd(left)),
@@ -67,9 +67,9 @@ func buildAndTreeRight(
 }
 
 // buildAndTree builds an AND expression tree from token groups using Either composition
-func buildAndTree(groups [][]Token) E.Either[error, FilterExpression] {
+func buildAndTree(groups [][]Token) E.Either[error, Expression] {
 	if len(groups) == 0 {
-		return E.Left[FilterExpression](fmt.Errorf("empty AND groups"))
+		return E.Left[Expression](fmt.Errorf("empty AND groups"))
 	}
 
 	if len(groups) == 1 {

@@ -239,7 +239,7 @@ func extractCreatedPlasmid(ctx withPlasmidBatch) *stock.Plasmid {
 	return ctx.plasmid
 }
 
-func (storage *pebbleStorage) CreatePlasmid(
+func (storage *Storage) CreatePlasmid(
 	req *stock.NewPlasmid,
 ) IOE.IOEither[error, *stock.Plasmid] {
 	return F.Pipe7(
@@ -321,7 +321,7 @@ var (
 	)
 )
 
-func (storage *pebbleStorage) retrieveExistingPlasmid(
+func (storage *Storage) retrieveExistingPlasmid(
 	ctx updatePlasmidContext,
 ) IOE.IOEither[error, *stock.Plasmid] {
 	return storage.GetPlasmid(ctx.req.Data.Id)
@@ -408,7 +408,7 @@ func extractUpdatedPlasmid(ctx withUpdatePlasmidBatch) *stock.Plasmid {
 	return ctx.updated
 }
 
-func (storage *pebbleStorage) UpdatePlasmid(
+func (storage *Storage) UpdatePlasmid(
 	req *stock.PlasmidUpdate,
 ) IOE.IOEither[error, *stock.Plasmid] {
 	return F.Pipe6(
@@ -424,7 +424,7 @@ func (storage *pebbleStorage) UpdatePlasmid(
 
 // ==================== LOAD PLASMID ====================
 
-func (storage *pebbleStorage) LoadPlasmid(
+func (storage *Storage) LoadPlasmid(
 	stockID string,
 	req *stock.ExistingPlasmid,
 ) IOE.IOEither[error, *stock.Plasmid] {
