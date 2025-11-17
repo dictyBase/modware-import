@@ -48,6 +48,8 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - internal/baserow/
+      - internal/k8s/
 formatters:
   enable:
     - gofumpt
