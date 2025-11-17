@@ -140,15 +140,15 @@ func ImportUser(cltx *cli.Context) error {
 func addCustomUserInformation(
 	lclient *logto.Client,
 	token string,
-	userId string,
+	userID string,
 	record []string,
 ) error {
 	isSubscribed := record[15] == "Y"
 
-	// Call lclient.AddCustomUserInformation with provided token, userId, and custom data
+	// Call lclient.AddCustomUserInformation with provided token, userID, and custom data
 	err := lclient.AddCustomUserInformation(
 		token,
-		userId,
+		userID,
 		&logto.APIUsersPatchCustomData{
 			CustomData: logto.AdditionalUserInformation{
 				Profession:       record[5],
@@ -177,7 +177,7 @@ func createUser(
 	record []string,
 	normUser string,
 ) (string, error) {
-	userId, err := lclient.CreateUser(
+	userID, err := lclient.CreateUser(
 		token,
 		&logto.APIUsersPostReq{
 			PrimaryEmail: record[0],
@@ -188,7 +188,7 @@ func createUser(
 		},
 	)
 
-	return userId, err
+	return userID, err
 }
 
 func processCSVRecord(
@@ -237,19 +237,19 @@ func processCSVRecord(
 		return nil
 	}
 	logger.Debugf("username %s does not exist, going to create", record[0])
-	userId, err := createUser(lclient, token, record, normUser)
+	userID, err := createUser(lclient, token, record, normUser)
 	if err != nil {
 		return fmt.Errorf("error in creating user %s %s", record[0], err)
 	}
-	logger.Infof("created user with email %s id %s\n", record[0], userId)
-	err = addCustomUserInformation(lclient, token, userId, record)
+	logger.Infof("created user with email %s id %s\n", record[0], userID)
+	err = addCustomUserInformation(lclient, token, userID, record)
 	if err != nil {
 		return err
 	}
 	logger.Debugf(
 		"created custom data for user with email %s id %s\n",
 		record[0],
-		userId,
+		userID,
 	)
 
 	return nil

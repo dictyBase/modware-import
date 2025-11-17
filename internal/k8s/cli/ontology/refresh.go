@@ -12,7 +12,7 @@ var RefreshCmd = &cobra.Command{
 	Use:   "refresh-ontology",
 	Short: "run ontology refresh command as a kubernetes job in the cluster",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		labels := cliJob.MetaLabel()
 		labels["subcommand"] = "refresh-ontology"
 		job, err := cliJob.Run(cmd, labels, RefreshCommand())

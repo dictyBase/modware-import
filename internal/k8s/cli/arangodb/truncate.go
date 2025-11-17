@@ -13,7 +13,7 @@ var TruncateCmd = &cobra.Command{
 	Use:   "truncate-arangodb",
 	Short: "run arangodb delete command as a kubernetes job in the cluster",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		labels := cliJob.MetaLabel()
 		labels["subcommand"] = "truncate-arangodb"
 		database, _ := cmd.Flags().GetString("database")
