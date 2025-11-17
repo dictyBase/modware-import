@@ -13,6 +13,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	// stockIDPrefixLen is the length of stock ID prefixes (e.g., "DBP", "DBS")
+	stockIDPrefixLen = 3
+)
+
 // jsonIndex represents the JSON structure for filtering
 type jsonIndex map[string]interface{}
 

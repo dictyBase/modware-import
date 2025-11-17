@@ -57,8 +57,8 @@ type DatabaseSetup struct {
 type Storage struct {
 	db      *pebble.DB
 	keys    keyBuilder
-	memFS   vfs.FS // Only used for in-memory mode
-	tempDir string // Only used for in-memory mode
+	memFS   vfs.FS     // Only used for in-memory mode
+	tempDir string     // Only used for in-memory mode
 	mu      sync.Mutex // Protects ID generation
 }
 

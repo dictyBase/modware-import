@@ -212,7 +212,7 @@ func buildStrainBatchWrite(ctx withSerializedStrain) IOE.IOEither[error, *pebble
 		}
 
 		// Update counter with the numeric ID from generatedID
-		counterValue := parseStockIDNumber(ctx.generatedID, 3) // "DBS" = 3 chars
+		counterValue := parseStockIDNumber(ctx.generatedID, stockIDPrefixLen)
 		if err := batch.Set(
 			keys.strainCounterKey(),
 			encodeCounter(counterValue),

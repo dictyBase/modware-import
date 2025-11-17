@@ -202,7 +202,7 @@ func buildPlasmidBatchWrite(ctx withSerializedPlasmid) IOE.IOEither[error, *pebb
 		}
 
 		// Update counter with the numeric ID from generatedID
-		counterValue := parseStockIDNumber(ctx.generatedID, 3) // "DBP" = 3 chars
+		counterValue := parseStockIDNumber(ctx.generatedID, stockIDPrefixLen)
 		if err := batch.Set(
 			keys.plasmidCounterKey(),
 			encodeCounter(counterValue),
