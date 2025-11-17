@@ -67,7 +67,11 @@ func HasValidRecordLength(r []string) bool {
 
 // RecordLengthError creates error for invalid record length
 func RecordLengthError(r []string) error {
-	return fmt.Errorf("invalid CSV record: expected %d fields, got %d", GoldenBraidFieldCount, len(r))
+	return fmt.Errorf(
+		"invalid CSV record: expected %d fields, got %d",
+		GoldenBraidFieldCount,
+		len(r),
+	)
 }
 
 // BuildPlasmid constructs GoldenBraidPlasmid immutably from CSV record (curried)

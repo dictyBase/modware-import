@@ -13,11 +13,11 @@ import (
 
 type ListCacher interface {
 	StartBatch()
-	AppendToBatch([]byte, []byte)
+	AppendToBatch(key []byte, value []byte)
 	CommitBatch() error
-	Push([]byte, []byte) error
-	PushAll([]byte, ...[]byte) error
-	IterateByPrefix([]byte) iterator.Iterator
+	Push(key []byte, value []byte) error
+	PushAll(key []byte, values ...[]byte) error
+	IterateByPrefix(prefix []byte) iterator.Iterator
 	CommonPrefixes() ([][]byte, error)
 }
 
