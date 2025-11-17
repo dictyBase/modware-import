@@ -82,7 +82,7 @@ func processLegacyPoolResult(
 // updateGrpcMetrics updates metrics and logs for a gRPC result
 func updateGrpcMetrics(
 	result BatchGeneProductResult,
-	error error,
+	err error,
 	params *handleGeneProductGrpcResultsParams,
 ) {
 	params.metrics.mu.Lock()
@@ -90,13 +90,13 @@ func updateGrpcMetrics(
 	params.metrics.SkippedCount += int64(result.SkippedCount)
 	params.metrics.JobsCompletedFromGrpcPool++
 
-	if error != nil {
+	if err != nil {
 		params.metrics.ErrorCount++
 		params.metrics.mu.Unlock()
 		params.logger.Errorf(
 			"Error updating gene %s: %v",
 			result.GeneID,
-			error,
+			err,
 		)
 	} else {
 		params.metrics.SuccessCount++

@@ -33,12 +33,12 @@ type GeneDescriptionRequest struct {
 	User        string `validate:"required,email"`
 }
 
-// CLIValidationError wraps multiple validation errors from go-playground/validator
-type CLIValidationError struct {
+// ValidationError wraps multiple validation errors from go-playground/validator
+type ValidationError struct {
 	Errors validator.ValidationErrors
 }
 
-func (e *CLIValidationError) Error() string {
+func (e *ValidationError) Error() string {
 	var messages []string
 	for _, err := range e.Errors {
 		switch err.Tag() {
@@ -114,7 +114,7 @@ func (e *CLIValidationError) Error() string {
 func ValidateStruct(s any) error {
 	if err := validate.Struct(s); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
-			return &CLIValidationError{Errors: validationErrors}
+			return &ValidationError{Errors: validationErrors}
 		}
 		return fmt.Errorf("validation failed: %w", err)
 	}
