@@ -139,7 +139,7 @@ func createSuccessResult(strain *stock.Strain) StrainResult {
 	return T.MakeTuple2[*stock.Strain, error](strain, nil)
 }
 
-func errorToGRPCStatus(ctx context.Context) func(error) error {
+func errorToGRPCStatus(_ context.Context) func(error) error {
 	return func(err error) error {
 		if err == nil {
 			return nil

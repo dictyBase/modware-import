@@ -40,7 +40,7 @@ func NewFeatureAnnotationServer(
 
 // CreateFeatureAnnotation creates a new feature annotation
 func (s *FeatureAnnotationServer) CreateFeatureAnnotation(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.NewFeatureAnnotation,
 ) (*feature.FeatureAnnotation, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -73,7 +73,7 @@ func (s *FeatureAnnotationServer) CreateFeatureAnnotation(
 
 // GetFeatureAnnotation retrieves a feature annotation by ID
 func (s *FeatureAnnotationServer) GetFeatureAnnotation(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.FeatureAnnotationId,
 ) (*feature.FeatureAnnotation, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -93,7 +93,7 @@ func (s *FeatureAnnotationServer) GetFeatureAnnotation(
 
 // GetFeatureAnnotationByName retrieves a feature annotation by name
 func (s *FeatureAnnotationServer) GetFeatureAnnotationByName(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.FeatureName,
 ) (*feature.FeatureAnnotation, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -113,7 +113,7 @@ func (s *FeatureAnnotationServer) GetFeatureAnnotationByName(
 
 // UpdateFeatureAnnotation updates an existing feature annotation
 func (s *FeatureAnnotationServer) UpdateFeatureAnnotation(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.FeatureAnnotationUpdate,
 ) (*feature.FeatureAnnotation, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -171,7 +171,7 @@ func (s *FeatureAnnotationServer) UpdateFeatureAnnotation(
 
 // DeleteFeatureAnnotation deletes a feature annotation
 func (s *FeatureAnnotationServer) DeleteFeatureAnnotation(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.DeleteFeatureAnnotationRequest,
 ) (*emptypb.Empty, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -195,7 +195,7 @@ func (s *FeatureAnnotationServer) DeleteFeatureAnnotation(
 
 // AddTag adds a tag to a feature annotation
 func (s *FeatureAnnotationServer) AddTag(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.AddTagRequest,
 ) (*feature.FeatureAnnotation, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -236,7 +236,7 @@ func (s *FeatureAnnotationServer) AddTag(
 
 // AddTags adds multiple tags to a feature annotation
 func (s *FeatureAnnotationServer) AddTags(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.AddTagsRequest,
 ) (*feature.FeatureAnnotation, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -263,7 +263,7 @@ func (s *FeatureAnnotationServer) AddTags(
 
 // SetTags replaces all existing tags with the provided tags (idempotent full-update)
 func (s *FeatureAnnotationServer) SetTags(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.SetTagsRequest,
 ) (*feature.FeatureAnnotation, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -290,7 +290,7 @@ func (s *FeatureAnnotationServer) SetTags(
 
 // RemoveTags removes a tag from a feature annotation
 func (s *FeatureAnnotationServer) RemoveTags(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.RemoveTagsRequest,
 ) (*feature.FeatureAnnotation, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -321,8 +321,10 @@ func (s *FeatureAnnotationServer) RemoveTags(
 }
 
 // ListFeatureAnnotationsByPubmedId lists feature annotations by PubMed ID
+//
+//nolint:revive,stylecheck // Method name must match protobuf-generated interface
 func (s *FeatureAnnotationServer) ListFeatureAnnotationsByPubmedId(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.PubmedId,
 ) (*feature.FeatureAnnotationCollection, error) {
 	if err := protovalidate.Validate(req); err != nil {
@@ -347,7 +349,7 @@ func (s *FeatureAnnotationServer) ListFeatureAnnotationsByPubmedId(
 
 // ListFeatureAnnotationsByDOI lists feature annotations by DOI
 func (s *FeatureAnnotationServer) ListFeatureAnnotationsByDOI(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.DOI,
 ) (*feature.FeatureAnnotationCollection, error) {
 	// Existing protovalidate check for protobuf validation rules

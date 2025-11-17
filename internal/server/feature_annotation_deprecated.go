@@ -22,7 +22,7 @@ import (
 // UpdateTag updates an existing tag in a feature annotation
 // Deprecated: Use SetTags or AddTags instead
 func (s *FeatureAnnotationServer) UpdateTag(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.UpdateTagRequest, //nolint:staticcheck // SA1019: deprecated but maintained for backward compatibility
 ) (*feature.FeatureAnnotation, error) {
 	s.logger.WithFields(logrus.Fields{
@@ -73,7 +73,7 @@ func (s *FeatureAnnotationServer) UpdateTag(
 // RemoveTag removes a tag from a feature annotation
 // Deprecated: Use RemoveTags instead
 func (s *FeatureAnnotationServer) RemoveTag(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.RemoveTagRequest, //nolint:staticcheck // SA1019: deprecated but maintained for backward compatibility
 ) (*feature.FeatureAnnotation, error) {
 	s.logger.WithFields(logrus.Fields{
