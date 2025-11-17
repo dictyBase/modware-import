@@ -42,7 +42,7 @@ type PhenotypeLoader struct {
 	Payload          *PhenotypePayload
 	Logger           *logrus.Entry
 	TableManager     *database.TableManager
-	Annotation       *phenotype.PhenotypeAnnotation
+	Annotation       *phenotype.Annotation
 	WorkspaceManager *database.WorkspaceManager
 }
 
@@ -55,7 +55,7 @@ type PhenotypeLoaderProperties struct {
 	Payload          *PhenotypePayload
 	Logger           *logrus.Entry
 	TableManager     *database.TableManager
-	Annotation       *phenotype.PhenotypeAnnotation
+	Annotation       *phenotype.Annotation
 	WorkspaceManager *database.WorkspaceManager
 }
 
@@ -76,10 +76,10 @@ func NewPhenotypeLoader(props *PhenotypeLoaderProperties) *PhenotypeLoader {
 // Load processes the phenotype data from the given reader and loads them into the database.
 // It concurrently processes and loads data up to a set limit before waiting and continuing with the next batch.
 func (loader *PhenotypeLoader) Load(
-	reader *phenotype.PhenotypeAnnotationReader,
+	reader *phenotype.AnnotationReader,
 ) error {
 	tasks := make(
-		[]concurrent.TaskWrapper[*phenotype.PhenotypeAnnotation, string],
+		[]concurrent.TaskWrapper[*phenotype.Annotation, string],
 		0,
 		ConcurrentPhenoLoader,
 	)
@@ -93,7 +93,7 @@ func (loader *PhenotypeLoader) Load(
 		}
 		tasks = append(
 			tasks,
-			concurrent.TaskWrapper[*phenotype.PhenotypeAnnotation, string]{
+			concurrent.TaskWrapper[*phenotype.Annotation, string]{
 				TaskFunc: loader.addPhenotypeRow,
 				Input:    pheno,
 			},
@@ -115,7 +115,7 @@ func (loader *PhenotypeLoader) Load(
 }
 
 func (loader *PhenotypeLoader) addPheno(
-	pheno *phenotype.PhenotypeAnnotation,
+	pheno *phenotype.Annotation,
 ) E.Either[error, *PhenotypeLoader] {
 	newLoader := NewPhenotypeLoader(&PhenotypeLoaderProperties{
 		Host:             loader.Host,
@@ -132,7 +132,7 @@ func (loader *PhenotypeLoader) addPheno(
 }
 
 func (loader *PhenotypeLoader) addPhenotypeRow(
-	pheno *phenotype.PhenotypeAnnotation,
+	pheno *phenotype.Annotation,
 ) (string, error) {
 	var empty string
 	content := F.Pipe8(

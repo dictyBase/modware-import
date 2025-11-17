@@ -13,7 +13,7 @@ import (
 )
 
 var initialPayload = F.Curry2(
-	func(loader *PhenotypeLoader, pheno *phenotype.PhenotypeAnnotation) *PhenotypeLoader {
+	func(loader *PhenotypeLoader, pheno *phenotype.Annotation) *PhenotypeLoader {
 		payload := &PhenotypePayload{
 			Reference: pheno.Reference(),
 			CreatedOn: pheno.CreatedOn(),

@@ -14,7 +14,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func LoadStrainAnnotationFromFolderToTable(cltx *cli.Context) error {
+func LoadAnnotationFromFolderToTable(cltx *cli.Context) error {
 	files, err := listStrainFiles(cltx.String("folder"))
 	if err != nil {
 		return cli.Exit(err.Error(), exitCodeError)
@@ -27,7 +27,7 @@ func LoadStrainAnnotationFromFolderToTable(cltx *cli.Context) error {
 	return nil
 }
 
-func LoadStrainAnnotationToTable(cltx *cli.Context) error {
+func LoadAnnotationToTable(cltx *cli.Context) error {
 	err := processStrainFile(cltx.String("input"), cltx)
 	if err != nil {
 		return cli.Exit(err.Error(), exitCodeError)
@@ -41,7 +41,7 @@ func processStrainFile(filePath string, cltx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	reader, err := strainReader.NewStrainAnnotationReader(
+	reader, err := strainReader.NewAnnotationReader(
 		filePath,
 		cltx.String("sheet"),
 		createdOn,

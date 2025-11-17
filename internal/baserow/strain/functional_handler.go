@@ -50,7 +50,7 @@ var genModIDHandler = F.Curry2(
 	})
 
 var initialPayload = F.Curry2(
-	func(loader *StrainLoader, strn *strain.StrainAnnotation) *StrainLoader {
+	func(loader *StrainLoader, strn *strain.Annotation) *StrainLoader {
 		payload := &StrainPayload{
 			Descriptor: strn.Descriptor(),
 			Reference:  strn.Reference(),

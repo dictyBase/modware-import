@@ -104,7 +104,7 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	reader, err := phenoReader.NewPhenotypeAnnotationReader(
+	reader, err := phenoReader.NewAnnotationReader(
 		filePath,
 		cltx.String("sheet"),
 		createdOn,

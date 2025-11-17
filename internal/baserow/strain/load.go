@@ -40,8 +40,8 @@ type StrainPayload struct {
 }
 
 type fnRunnerProperties struct {
-	fn        func(*strain.StrainAnnotation, time.Time) (string, error)
-	props     *strain.StrainAnnotation
+	fn        func(*strain.Annotation, time.Time) (string, error)
+	props     *strain.Annotation
 	createdOn time.Time
 }
 
@@ -54,7 +54,7 @@ type StrainLoader struct {
 	OntologyTableMap map[string]int
 	TableManager     *database.TableManager
 	Payload          *StrainPayload
-	Annotation       *strain.StrainAnnotation
+	Annotation       *strain.Annotation
 	WorkspaceManager *database.WorkspaceManager
 }
 
@@ -78,7 +78,7 @@ func NewStrainLoader(
 	}
 }
 
-func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
+func (loader *StrainLoader) Load(reader *strain.AnnotationReader) error {
 	loaderSlice := make([]*fnRunnerProperties, 0, ConcurrentStrainLoader)
 	for reader.Next() {
 		strain, err := reader.Value()
@@ -116,7 +116,7 @@ func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
 }
 
 func (loader *StrainLoader) addStrain(
-	strn *strain.StrainAnnotation,
+	strn *strain.Annotation,
 ) E.Either[error, *StrainLoader] {
 	newLoader := NewStrainLoader(
 		loader.Host, loader.Token, loader.Workspace,
@@ -138,7 +138,7 @@ func (loader *StrainLoader) createStrainURL() string {
 }
 
 func (loader *StrainLoader) addStrainRow(
-	strn *strain.StrainAnnotation,
+	strn *strain.Annotation,
 	createdOn time.Time,
 ) (string, error) {
 	var empty string
