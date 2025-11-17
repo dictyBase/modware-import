@@ -80,12 +80,12 @@ func (phr *PhenotypeAnnotationReader) hanldeTwelveRows(
 	row []string,
 ) *PhenotypeAnnotation {
 	anno := &PhenotypeAnnotation{}
-	anno.strainId = strings.TrimSpace(row[0])
+	anno.strainID = strings.TrimSpace(row[0])
 	anno.strainDescriptor = strings.TrimSpace(row[1])
-	anno.phenotypeId = strings.TrimSpace(row[2])
+	anno.phenotypeID = strings.TrimSpace(row[2])
 	anno.notes = strings.TrimSpace(row[4])
-	anno.assayId = strings.TrimSpace(row[5])
-	anno.environmentId = strings.TrimSpace(row[7])
+	anno.assayID = strings.TrimSpace(row[5])
+	anno.environmentID = strings.TrimSpace(row[7])
 	anno.reference = strings.TrimSpace(row[9])
 	anno.assignedBy = strings.TrimSpace(row[11])
 	anno.deleted = false
@@ -97,11 +97,11 @@ func (phr *PhenotypeAnnotationReader) hanldeTenRows(
 	row []string,
 ) *PhenotypeAnnotation {
 	anno := &PhenotypeAnnotation{}
-	anno.strainId = strings.TrimSpace(row[0])
-	anno.phenotypeId = strings.TrimSpace(row[1])
+	anno.strainID = strings.TrimSpace(row[0])
+	anno.phenotypeID = strings.TrimSpace(row[1])
 	anno.notes = strings.TrimSpace(row[3])
-	anno.assayId = strings.TrimSpace(row[4])
-	anno.environmentId = strings.TrimSpace(row[6])
+	anno.assayID = strings.TrimSpace(row[4])
+	anno.environmentID = strings.TrimSpace(row[6])
 	anno.reference = strings.TrimSpace(row[8])
 	anno.assignedBy = strings.TrimSpace(row[9])
 	anno.deleted = false

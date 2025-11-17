@@ -10,7 +10,7 @@ import (
 
 // StockProp is the container for stock properties
 type StockProp struct {
-	Id       string
+	ID       string
 	Property string
 	Value    string
 }
@@ -37,7 +37,7 @@ func (spr *tsvStockPropReader) Value() (*StockProp, error) {
 	if spr.Err != nil {
 		return prop, spr.Err
 	}
-	prop.Id = spr.Record[0]
+	prop.ID = spr.Record[0]
 	prop.Property = spr.Record[1]
 	prop.Value = spr.Record[2]
 	return prop, nil

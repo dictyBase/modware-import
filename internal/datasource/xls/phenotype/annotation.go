@@ -14,14 +14,14 @@ var assayRgxp = regexp.MustCompile(`^DDASSAY_\d{6,}$`)
 
 // PhenotypeAnnotation represents annotations related to a phenotype.
 type PhenotypeAnnotation struct {
-	strainId         string
+	strainID         string
 	strainDescriptor string
-	phenotypeId      string `validate:"required"`
-	assayId          string
-	environmentId    string
+	phenotypeID      string `validate:"required"`
+	assayID          string
+	environmentID    string
 	notes            string
-	reference        string `validate:"required_with=phenotypeId"`
-	assignedBy       string `validate:"required_with=phenotypeId"`
+	reference        string `validate:"required_with=phenotypeID"`
+	assignedBy       string `validate:"required_with=phenotypeID"`
 	deleted          bool
 	empty            bool
 	createdOn        time.Time `validate:"required"`
@@ -33,27 +33,27 @@ func (pha *PhenotypeAnnotation) CreatedOn() time.Time {
 
 // AssayID returns the assay ID associated with the phenotype annotation.
 func (pha *PhenotypeAnnotation) AssayID() string {
-	return pha.assayId
+	return pha.assayID
 }
 
 // HasAssayID checks whether an assay ID is associated with the phenotype annotation.
 // It returns true if the assay ID is set.
 func (pha *PhenotypeAnnotation) HasAssayID() bool {
-	if len(pha.assayId) == 0 {
+	if len(pha.assayID) == 0 {
 		return false
 	}
-	return assayRgxp.MatchString(pha.assayId)
+	return assayRgxp.MatchString(pha.assayID)
 }
 
 // HasEnvironmentID checks whether an environment ID is associated with the phenotype annotation.
 // It returns true if the environment ID is set.
 func (pha *PhenotypeAnnotation) HasEnvironmentID() bool {
-	return len(pha.environmentId) > 0
+	return len(pha.environmentID) > 0
 }
 
 // EnvironmentID returns the environment ID associated with the phenotype annotation.
 func (pha *PhenotypeAnnotation) EnvironmentID() string {
-	return pha.environmentId
+	return pha.environmentID
 }
 
 func (pha *PhenotypeAnnotation) HasNotes() bool {
@@ -84,7 +84,7 @@ func (pha *PhenotypeAnnotation) IsEmpty() bool {
 // HasStrainID checks whether a strain ID is associated with the phenotype annotation.
 // It returns true if the strain ID is set.
 func (pha *PhenotypeAnnotation) HasStrainID() bool {
-	return len(pha.strainId) > 0
+	return len(pha.strainID) > 0
 }
 
 // HasStrainDescriptor checks if the PhenotypeAnnotation instance has a strainDescriptor defined.
@@ -100,10 +100,10 @@ func (pha *PhenotypeAnnotation) StrainDescriptor() string {
 
 // PhenotypeID returns the phenotype ID associated with the phenotype annotation.
 func (pha *PhenotypeAnnotation) PhenotypeID() string {
-	return pha.phenotypeId
+	return pha.phenotypeID
 }
 
 // StrainID returns the strain ID associated with the phenotype annotation.
 func (pha *PhenotypeAnnotation) StrainID() string {
-	return pha.strainId
+	return pha.strainID
 }

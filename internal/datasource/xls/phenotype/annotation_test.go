@@ -7,24 +7,24 @@ import (
 )
 
 func TestAssayID(t *testing.T) {
-	annotation := PhenotypeAnnotation{assayId: "A123"}
+	annotation := PhenotypeAnnotation{assayID: "A123"}
 	assert.Equal(t, "A123", annotation.AssayID())
 }
 
 func TestHasAssayID(t *testing.T) {
-	annotationWithID := PhenotypeAnnotation{assayId: "DDASSAY_4893439"}
+	annotationWithID := PhenotypeAnnotation{assayID: "DDASSAY_4893439"}
 	annotationWithoutID := PhenotypeAnnotation{}
 	assert.True(t, annotationWithID.HasAssayID())
 	assert.False(t, annotationWithoutID.HasAssayID())
 }
 
 func TestEnvironmentID(t *testing.T) {
-	annotation := PhenotypeAnnotation{environmentId: "E123"}
+	annotation := PhenotypeAnnotation{environmentID: "E123"}
 	assert.Equal(t, "E123", annotation.EnvironmentID())
 }
 
 func TestHasEnvironmentID(t *testing.T) {
-	annotationWithID := PhenotypeAnnotation{environmentId: "E123"}
+	annotationWithID := PhenotypeAnnotation{environmentID: "E123"}
 	annotationWithoutID := PhenotypeAnnotation{}
 	assert.True(t, annotationWithID.HasEnvironmentID())
 	assert.False(t, annotationWithoutID.HasEnvironmentID())
@@ -60,19 +60,19 @@ func TestIsEmpty(t *testing.T) {
 }
 
 func TestHasStrainID(t *testing.T) {
-	annotationWithID := PhenotypeAnnotation{strainId: "S123"}
+	annotationWithID := PhenotypeAnnotation{strainID: "S123"}
 	annotationWithoutID := PhenotypeAnnotation{}
 	assert.True(t, annotationWithID.HasStrainID())
 	assert.False(t, annotationWithoutID.HasStrainID())
 }
 
 func TestPhenotypeID(t *testing.T) {
-	annotation := PhenotypeAnnotation{phenotypeId: "P123"}
+	annotation := PhenotypeAnnotation{phenotypeID: "P123"}
 	assert.Equal(t, "P123", annotation.PhenotypeID())
 }
 
 func TestStrainID(t *testing.T) {
-	annotation := PhenotypeAnnotation{strainId: "S123"}
+	annotation := PhenotypeAnnotation{strainID: "S123"}
 	assert.Equal(t, "S123", annotation.StrainID())
 }
 

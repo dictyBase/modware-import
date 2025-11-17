@@ -10,7 +10,7 @@ import (
 
 // Characteristics is the container for strain characteristics
 type Characteristics struct {
-	Id        string
+	ID        string
 	Character string
 }
 
@@ -36,7 +36,7 @@ func (cr *tsvCharacterReader) Value() (*Characteristics, error) {
 	if cr.Err != nil {
 		return c, cr.Err
 	}
-	c.Id = cr.Record[0]
+	c.ID = cr.Record[0]
 	c.Character = cr.Record[1]
 	return c, nil
 }
