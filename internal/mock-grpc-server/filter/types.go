@@ -93,6 +93,6 @@ func (expr OrExpression) Evaluate(data map[string]interface{}) bool {
 type AlwaysTrueFilter struct{}
 
 // Evaluate always returns true
-func (AlwaysTrueFilter) Evaluate(data map[string]interface{}) bool {
+func (AlwaysTrueFilter) Evaluate(_ map[string]interface{}) bool {
 	return true
 }

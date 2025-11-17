@@ -117,7 +117,7 @@ func generatePlasmidID(ctx createPlasmidContext) IOE.IOEither[error, string] {
 }
 
 func generatePlasmidTimestamps(
-	ctx withGeneratedPlasmidID,
+	_ withGeneratedPlasmidID,
 ) IOE.IOEither[error, T.Tuple2[time.Time, time.Time]] {
 	return func() E.Either[error, T.Tuple2[time.Time, time.Time]] {
 		now := time.Now()
@@ -433,7 +433,7 @@ func (storage *pebbleStorage) LoadPlasmid(
 			req: convertExistingToNewPlasmid(req),
 			db:  storage.db,
 		}),
-		IOE.Let[error](setGeneratedPlasmidID, func(ctx createPlasmidContext) string {
+		IOE.Let[error](setGeneratedPlasmidID, func(_ createPlasmidContext) string {
 			return stockID
 		}),
 		IOE.Bind(setPlasmidTimestamps, generatePlasmidTimestamps),

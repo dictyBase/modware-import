@@ -19,7 +19,7 @@ func TestDecodeCursor(t *testing.T) {
 	result := DecodeCursor(cursor)
 
 	require.True(t, E.IsRight(result))
-	offset := E.GetOrElse(func(err error) int64 { return -1 })(result)
+	offset := E.GetOrElse(func(error) int64 { return -1 })(result)
 	require.Equal(t, int64(42), offset)
 }
 
@@ -35,7 +35,7 @@ func TestDecodeZeroCursor(t *testing.T) {
 	result := DecodeCursor(cursor)
 
 	require.True(t, E.IsRight(result))
-	offset := E.GetOrElse(func(err error) int64 { return -1 })(result)
+	offset := E.GetOrElse(func(error) int64 { return -1 })(result)
 	require.Equal(t, int64(0), offset)
 }
 
@@ -47,7 +47,7 @@ func TestEncodeDecodeRoundTrip(t *testing.T) {
 		result := DecodeCursor(cursor)
 
 		require.True(t, E.IsRight(result))
-		decoded := E.GetOrElse(func(err error) int64 { return -1 })(result)
+		decoded := E.GetOrElse(func(error) int64 { return -1 })(result)
 		require.Equal(t, original, decoded)
 	}
 }

@@ -13,7 +13,7 @@ func TestParseSimplePredicate(t *testing.T) {
 
 	require.True(t, E.IsRight(result))
 
-	expr := E.GetOrElse(func(_ error) FilterExpression { return AlwaysTrueFilter{} })(result)
+	expr := E.GetOrElse(func(error) FilterExpression { return AlwaysTrueFilter{} })(result)
 	pred, ok := expr.(Predicate)
 	require.True(t, ok, "expected Predicate type")
 	require.Equal(t, "depositor", pred.Field)
@@ -27,7 +27,7 @@ func TestParseAndExpression(t *testing.T) {
 
 	require.True(t, E.IsRight(result))
 
-	expr := E.GetOrElse(func(_ error) FilterExpression { return AlwaysTrueFilter{} })(result)
+	expr := E.GetOrElse(func(error) FilterExpression { return AlwaysTrueFilter{} })(result)
 	andExpr, ok := expr.(AndExpression)
 	require.True(t, ok, "expected AndExpression type")
 
@@ -52,7 +52,7 @@ func TestParseOrExpression(t *testing.T) {
 
 	require.True(t, E.IsRight(result))
 
-	expr := E.GetOrElse(func(_ error) FilterExpression { return AlwaysTrueFilter{} })(result)
+	expr := E.GetOrElse(func(error) FilterExpression { return AlwaysTrueFilter{} })(result)
 	orExpr, ok := expr.(OrExpression)
 	require.True(t, ok, "expected OrExpression type")
 
@@ -77,7 +77,7 @@ func TestParseComplexExpression(t *testing.T) {
 
 	require.True(t, E.IsRight(result))
 
-	expr := E.GetOrElse(func(_ error) FilterExpression { return AlwaysTrueFilter{} })(result)
+	expr := E.GetOrElse(func(error) FilterExpression { return AlwaysTrueFilter{} })(result)
 	orExpr, ok := expr.(OrExpression)
 	require.True(t, ok, "expected OrExpression at root")
 
@@ -123,7 +123,7 @@ func TestParseOperatorMapping(t *testing.T) {
 			require.True(t, E.IsRight(result))
 
 			expr := E.GetOrElse(
-				func(err error) FilterExpression { return AlwaysTrueFilter{} },
+				func(error) FilterExpression { return AlwaysTrueFilter{} },
 			)(
 				result,
 			)
@@ -138,7 +138,7 @@ func TestParseEmptyFilter(t *testing.T) {
 	result := ParseFilter("")
 	require.True(t, E.IsRight(result))
 
-	expr := E.GetOrElse(func(err error) FilterExpression { return nil })(result)
+	expr := E.GetOrElse(func(error) FilterExpression { return nil })(result)
 	_, ok := expr.(AlwaysTrueFilter)
 	require.True(t, ok, "empty filter should return AlwaysTrueFilter")
 }

@@ -198,7 +198,7 @@ func (storage *pebbleStorage) LoadStrain(
 			req: convertExistingToNewStrain(req),
 			db:  storage.db,
 		}),
-		IOE.Let[error](setGeneratedStrainID, func(ctx createStrainContext) string {
+		IOE.Let[error](setGeneratedStrainID, func(_ createStrainContext) string {
 			return stockID
 		}),
 		IOE.Bind(setStrainTimestamps, generateStrainTimestamps),

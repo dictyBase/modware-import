@@ -147,7 +147,7 @@ func (storage *pebbleStorage) processPlasmidIndexEntry(
 func parseFilterOrDefault(filterStr string) filter.FilterExpression {
 	return F.Pipe1(
 		filter.ParseFilter(filterStr),
-		E.GetOrElse(func(err error) filter.FilterExpression {
+		E.GetOrElse(func(error) filter.FilterExpression {
 			return filter.AlwaysTrueFilter{}
 		}),
 	)
@@ -177,7 +177,7 @@ func extractIndexData(iter *pebble.Iterator, db *pebble.DB) (map[string]interfac
 	defer closer.Close()
 
 	var indexMap map[string]interface{}
-	if err := json.Unmarshal(jsonData, &indexMap); err != nil {
+	if err = json.Unmarshal(jsonData, &indexMap); err != nil {
 		return nil, ""
 	}
 
@@ -189,7 +189,7 @@ func extractStrainFromResult(result E.Either[error, *stock.Strain]) *stock.Strai
 	return F.Pipe1(
 		result,
 		E.Fold(
-			func(err error) *stock.Strain {
+			func(error) *stock.Strain {
 				return nil
 			},
 			func(strain *stock.Strain) *stock.Strain {
@@ -204,7 +204,7 @@ func extractPlasmidFromResult(result E.Either[error, *stock.Plasmid]) *stock.Pla
 	return F.Pipe1(
 		result,
 		E.Fold(
-			func(err error) *stock.Plasmid {
+			func(error) *stock.Plasmid {
 				return nil
 			},
 			func(plasmid *stock.Plasmid) *stock.Plasmid {

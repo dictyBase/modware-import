@@ -119,7 +119,7 @@ func generateStrainID(ctx createStrainContext) IOE.IOEither[error, string] {
 
 // generateStrainTimestamps creates current timestamps
 func generateStrainTimestamps(
-	ctx withGeneratedStrainID,
+	_ withGeneratedStrainID,
 ) IOE.IOEither[error, T.Tuple2[time.Time, time.Time]] {
 	return func() E.Either[error, T.Tuple2[time.Time, time.Time]] {
 		now := time.Now()

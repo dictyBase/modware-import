@@ -85,7 +85,7 @@ func determineStorageMode(config *Config) E.Either[error, ValidatedConfig] {
 
 // setupInMemoryFilesystem creates virtual filesystem for in-memory mode
 func setupInMemoryFilesystem(
-	cfg InMemoryConfig,
+	_ InMemoryConfig,
 ) IOE.IOEither[error, FilesystemSetup] {
 	return func() E.Either[error, FilesystemSetup] {
 		memFS := vfs.NewMem()

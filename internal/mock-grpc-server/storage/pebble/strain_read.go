@@ -86,7 +86,7 @@ func (storage *pebbleStorage) ListStrainsByIDs(
 			F.Pipe1(
 				result,
 				E.Fold(
-					func(err error) *stock.Strain {
+					func(error) *stock.Strain {
 						// Skip errors silently
 						return nil
 					},
