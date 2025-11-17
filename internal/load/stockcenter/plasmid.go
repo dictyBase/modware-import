@@ -210,16 +210,16 @@ func hasValidPlasmidUser(plasmid *source.Plasmid) bool {
 func plasmidUserError(plasmid *source.Plasmid) error {
 	return fmt.Errorf(
 		"field User: user assignment required for plasmid %s",
-		plasmid.Id,
+		plasmid.ID,
 	)
 }
 
-func hasValidPlasmidId(plasmid *source.Plasmid) bool {
-	return notEmpty(plasmid.Id)
+func hasValidPlasmidID(plasmid *source.Plasmid) bool {
+	return notEmpty(plasmid.ID)
 }
 
-func plasmidIdError(plasmid *source.Plasmid) error {
-	return fmt.Errorf("field Id: required")
+func plasmidIDError(plasmid *source.Plasmid) error {
+	return fmt.Errorf("field ID: required")
 }
 
 func hasValidPlasmidName(plasmid *source.Plasmid) bool {
@@ -237,10 +237,10 @@ func validatePlasmid(
 	return F.Pipe4(
 		E.Of[error](plasmid),
 		E.Chain(E.FromPredicate(hasValidPlasmidUser, plasmidUserError)),
-		E.Chain(E.FromPredicate(hasValidPlasmidId, plasmidIdError)),
+		E.Chain(E.FromPredicate(hasValidPlasmidID, plasmidIDError)),
 		E.Chain(E.FromPredicate(hasValidPlasmidName, plasmidNameError)),
 		E.MapLeft[*source.Plasmid](func(err error) error {
-			return fmt.Errorf("plasmid %s: %w", plasmid.Id, err)
+			return fmt.Errorf("plasmid %s: %w", plasmid.ID, err)
 		}),
 	)
 }
@@ -277,7 +277,7 @@ func createPlasmidAPI(
 			&pb.ExistingPlasmid{
 				Data: &pb.ExistingPlasmid_Data{
 					Type:       "plasmid",
-					Id:         plasmid.Id,
+					Id:         plasmid.ID,
 					Attributes: attr,
 				},
 			},
@@ -285,12 +285,12 @@ func createPlasmidAPI(
 		if err != nil {
 			return "", fmt.Errorf(
 				"failed to create plasmid %s: %w",
-				plasmid.Id,
+				plasmid.ID,
 				err,
 			)
 		}
-		env.Logger.Debugf("created plasmid %s", plasmid.Id)
-		return plasmid.Id, nil
+		env.Logger.Debugf("created plasmid %s", plasmid.ID)
+		return plasmid.ID, nil
 	})
 }
 
@@ -306,7 +306,7 @@ func updatePlasmidAPI(
 			&pb.PlasmidUpdate{
 				Data: &pb.PlasmidUpdate_Data{
 					Type:       "plasmid",
-					Id:         plasmid.Id,
+					Id:         plasmid.ID,
 					Attributes: attr,
 				},
 			},
@@ -314,12 +314,12 @@ func updatePlasmidAPI(
 		if err != nil {
 			return "", fmt.Errorf(
 				"failed to update plasmid %s: %w",
-				plasmid.Id,
+				plasmid.ID,
 				err,
 			)
 		}
-		env.Logger.Debugf("updated plasmid %s", plasmid.Id)
-		return plasmid.Id, nil
+		env.Logger.Debugf("updated plasmid %s", plasmid.ID)
+		return plasmid.ID, nil
 	})
 }
 
@@ -351,7 +351,7 @@ func validateAndProcessPlasmid(
 			func(validPlasmid *source.Plasmid) ProcessingResult {
 				// Process the plasmid through API
 				processEither := F.Pipe2(
-					checkPlasmidExists(env, validPlasmid.Id),
+					checkPlasmidExists(env, validPlasmid.ID),
 					IOE.Chain(func(exists bool) IOE.IOEither[error, string] {
 						if exists {
 							return updatePlasmidAPI(env, validPlasmid)
@@ -372,14 +372,14 @@ func validateAndProcessPlasmid(
 				return E.GetOrElse(func(err error) ProcessingResult {
 					env.Logger.Errorf(
 						"error processing plasmid %s: %v",
-						validPlasmid.Id,
+						validPlasmid.ID,
 						err,
 					)
 					return ProcessingResult{
 						Successes: []string{},
 						Errors: fmt.Errorf(
 							"plasmid %s: %w",
-							validPlasmid.Id,
+							validPlasmid.ID,
 							err,
 						),
 						ErrorCount: 1,
@@ -566,7 +566,7 @@ func checkPublicationsAndGenes(
 		if len(plasmid.Publications) > 0 {
 			a.Publications = plasmid.Publications
 		} else {
-			logger.Warnf("plasmid %s has no publication entry", plasmid.Id)
+			logger.Warnf("plasmid %s has no publication entry", plasmid.ID)
 		}
 		if len(plasmid.Genes) > 0 {
 			a.Genes = plasmid.Genes
@@ -575,7 +575,7 @@ func checkPublicationsAndGenes(
 		if len(plasmid.Publications) > 0 {
 			a.Publications = plasmid.Publications
 		} else {
-			logger.Warnf("plasmid %s has no publication entry", plasmid.Id)
+			logger.Warnf("plasmid %s has no publication entry", plasmid.ID)
 		}
 		if len(plasmid.Genes) > 0 {
 			a.Genes = plasmid.Genes

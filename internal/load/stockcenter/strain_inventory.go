@@ -19,7 +19,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 		"type":  "inventory",
 		"stock": "strain",
 	})
-	invMap, err := cacheInvByStrainId(ir, logger)
+	invMap, err := cacheInvByStrainID(ir, logger)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func cacheInvByStrainId(
+func cacheInvByStrainID(
 	ir stockcenter.StrainInventoryReader,
 	logger *logrus.Entry,
 ) (map[string][]*stockcenter.StrainInventory, error) {

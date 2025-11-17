@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadStrainChar(cmd *cobra.Command, args []string) error {
+func LoadStrainChar(_ *cobra.Command, _ []string) error {
 	scr := stockcenter.NewTsvCharacterReader(registry.GetReader(regs.StraincharReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()

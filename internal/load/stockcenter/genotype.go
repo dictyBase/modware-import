@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadGeno(cmd *cobra.Command, args []string) error {
+func LoadGeno(_ *cobra.Command, _ []string) error {
 	gr := stockcenter.NewTsvGenotypeReader(registry.GetReader(regs.GenoReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
@@ -54,7 +54,7 @@ func LoadGeno(cmd *cobra.Command, args []string) error {
 			logger.Debugf("skipped genotype %s for strain %s", geno.Genotype, geno.StrainId)
 			rct++
 		}
-		count += 1
+		count++
 	}
 	logger.WithFields(
 		logrus.Fields{

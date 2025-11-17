@@ -101,7 +101,7 @@ func processStrains(
 		if err := processSingleStrain(strain, logger, client); err != nil {
 			return count
 		}
-		count += 1
+		count++
 	}
 	return count
 }
@@ -114,16 +114,16 @@ func processSingleStrain(
 	if len(strain.User) == 0 {
 		logger.Errorf(
 			"strain %s does not have a user assignment, skipping the load",
-			strain.Id,
+			strain.ID,
 		)
 		return nil
 	}
-	_, err := client.GetStrain(context.Background(), &pb.StockId{Id: strain.Id})
+	_, err := client.GetStrain(context.Background(), &pb.StockId{Id: strain.ID})
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return createStrain(strain, logger, client)
 		}
-		return fmt.Errorf("error in finding strain %s %s", strain.Id, err)
+		return fmt.Errorf("error in finding strain %s %s", strain.ID, err)
 	}
 	return updateStrain(strain, logger, client)
 }
@@ -139,12 +139,12 @@ func createStrain(
 		&pb.ExistingStrain{
 			Data: &pb.ExistingStrain_Data{
 				Type:       "strain",
-				Id:         strain.Id,
+				Id:         strain.ID,
 				Attributes: attr,
 			},
 		})
 	if err != nil {
-		return fmt.Errorf("error in creating strain %s %s", strain.Id, err)
+		return fmt.Errorf("error in creating strain %s %s", strain.ID, err)
 	}
 	logger.Debugf("created strain %s", nstr.Data.Id)
 	return nil
@@ -161,12 +161,12 @@ func updateStrain(
 		&pb.StrainUpdate{
 			Data: &pb.StrainUpdate_Data{
 				Type:       "strain",
-				Id:         strain.Id,
+				Id:         strain.ID,
 				Attributes: attr,
 			},
 		})
 	if err != nil {
-		return fmt.Errorf("error in updating strain %s %s", strain.Id, err)
+		return fmt.Errorf("error in updating strain %s %s", strain.ID, err)
 	}
 	logger.Debugf("updated strain %s", ustr.Data.Id)
 	return nil
@@ -188,7 +188,7 @@ func populateStrainAttributes(
 	if len(strain.Publications) > 0 {
 		attr.Publications = strain.Publications
 	} else {
-		logger.Warnf("strain %s has no publication entry", strain.Id)
+		logger.Warnf("strain %s has no publication entry", strain.ID)
 	}
 	if len(strain.Genes) > 0 {
 		attr.Genes = strain.Genes
@@ -208,7 +208,7 @@ func populateStrainUpdateAttributes(
 	if len(strain.Publications) > 0 {
 		attr.Publications = strain.Publications
 	} else {
-		logger.Warnf("strain %s has no publication entry", strain.Id)
+		logger.Warnf("strain %s has no publication entry", strain.ID)
 	}
 	if len(strain.Genes) > 0 {
 		attr.Genes = strain.Genes
