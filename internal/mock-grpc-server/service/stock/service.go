@@ -179,6 +179,8 @@ func (service *Service) LoadPlasmid(
 }
 
 // ListStrainsByIds retrieves multiple strains by their IDs
+//
+//nolint:revive // Method name must match protobuf interface
 func (service *Service) ListStrainsByIds(
 	ctx context.Context,
 	req *stock.StockIdList,
