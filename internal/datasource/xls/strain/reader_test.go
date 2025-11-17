@@ -41,7 +41,7 @@ func TestValue(t *testing.T) {
 	assert := require.New(t)
 	strainFile, err := strainTestFile()
 	assert.NoError(err)
-	t.Run("should have first row with expected values", func(t *testing.T) {
+	t.Run("should have first row with expected values", func(_ *testing.T) {
 		reader, err := NewStrainAnnotationReader(
 			strainFile,
 			TestSheet,
@@ -60,7 +60,7 @@ func TestValue(t *testing.T) {
 		)
 		assert.Equal("DDGENMOD:0000003", anno.GeneticModification())
 		assert.Equal("DDMUMET:0000010", anno.MutagenesisMethod())
-		assert.Equal("DBS0236486", anno.ParentId())
+		assert.Equal("DBS0236486", anno.ParentID())
 		assert.Equal("DDB_G0281211", anno.Genes())
 		assert.Equal("Dictyostelium discoideum", anno.Species())
 		assert.Equal("PMID:35916164", anno.Reference())
@@ -71,7 +71,7 @@ func TestValue(t *testing.T) {
 		assert.Equal("axeA1,axeB1,axeC1,far1-,[bsRcas],bsR", anno.Genotype())
 		assert.False(anno.HasDepositor())
 	})
-	t.Run("should detect empty rows", func(t *testing.T) {
+	t.Run("should detect empty rows", func(_ *testing.T) {
 		reader, err := NewStrainAnnotationReader(
 			strainFile,
 			TestSheet,

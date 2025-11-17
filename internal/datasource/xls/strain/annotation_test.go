@@ -6,20 +6,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHasId(t *testing.T) {
+func TestHasID(t *testing.T) {
 	s := StrainAnnotation{id: "123"}
-	assert.True(t, s.HasId(), "Expected HasId to return true when id is set")
+	assert.True(t, s.HasID(), "Expected HasID to return true when id is set")
 	s = StrainAnnotation{}
 	assert.False(
 		t,
-		s.HasId(),
-		"Expected HasId to return false when id is not set",
+		s.HasID(),
+		"Expected HasID to return false when id is not set",
 	)
 }
 
-func TestId(t *testing.T) {
+func TestID(t *testing.T) {
 	s := StrainAnnotation{id: "123"}
-	assert.Equal(t, "123", s.Id(), "Expected Id to return the correct id value")
+	assert.Equal(t, "123", s.ID(), "Expected ID to return the correct id value")
 }
 
 func TestHasName(t *testing.T) {
@@ -97,28 +97,28 @@ func TestPlasmid(t *testing.T) {
 	)
 }
 
-func TestHasParentId(t *testing.T) {
-	s := StrainAnnotation{parentId: "Parent123"}
+func TestHasParentID(t *testing.T) {
+	s := StrainAnnotation{parentID: "Parent123"}
 	assert.True(
 		t,
-		s.HasParentId(),
-		"Expected HasParentId to return true when parentId is set",
+		s.HasParentID(),
+		"Expected HasParentID to return true when parentID is set",
 	)
 	s = StrainAnnotation{}
 	assert.False(
 		t,
-		s.HasParentId(),
-		"Expected HasParentId to return false when parentId is not set",
+		s.HasParentID(),
+		"Expected HasParentID to return false when parentID is not set",
 	)
 }
 
-func TestParentId(t *testing.T) {
-	s := StrainAnnotation{parentId: "Parent123"}
+func TestParentID(t *testing.T) {
+	s := StrainAnnotation{parentID: "Parent123"}
 	assert.Equal(
 		t,
 		"Parent123",
-		s.ParentId(),
-		"Expected ParentId to return the correct parentId value",
+		s.ParentID(),
+		"Expected ParentID to return the correct parentID value",
 	)
 }
 

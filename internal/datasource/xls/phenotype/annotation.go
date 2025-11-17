@@ -31,28 +31,28 @@ func (pha *PhenotypeAnnotation) CreatedOn() time.Time {
 	return pha.createdOn
 }
 
-// AssayId returns the assay ID associated with the phenotype annotation.
-func (pha *PhenotypeAnnotation) AssayId() string {
+// AssayID returns the assay ID associated with the phenotype annotation.
+func (pha *PhenotypeAnnotation) AssayID() string {
 	return pha.assayId
 }
 
-// HasAssayId checks whether an assay ID is associated with the phenotype annotation.
+// HasAssayID checks whether an assay ID is associated with the phenotype annotation.
 // It returns true if the assay ID is set.
-func (pha *PhenotypeAnnotation) HasAssayId() bool {
+func (pha *PhenotypeAnnotation) HasAssayID() bool {
 	if len(pha.assayId) == 0 {
 		return false
 	}
 	return assayRgxp.MatchString(pha.assayId)
 }
 
-// HasEnvironmentId checks whether an environment ID is associated with the phenotype annotation.
+// HasEnvironmentID checks whether an environment ID is associated with the phenotype annotation.
 // It returns true if the environment ID is set.
-func (pha *PhenotypeAnnotation) HasEnvironmentId() bool {
+func (pha *PhenotypeAnnotation) HasEnvironmentID() bool {
 	return len(pha.environmentId) > 0
 }
 
-// EnvironmentId returns the environment ID associated with the phenotype annotation.
-func (pha *PhenotypeAnnotation) EnvironmentId() string {
+// EnvironmentID returns the environment ID associated with the phenotype annotation.
+func (pha *PhenotypeAnnotation) EnvironmentID() string {
 	return pha.environmentId
 }
 
@@ -81,9 +81,9 @@ func (pha *PhenotypeAnnotation) IsEmpty() bool {
 	return pha.empty
 }
 
-// HasStrainId checks whether a strain ID is associated with the phenotype annotation.
+// HasStrainID checks whether a strain ID is associated with the phenotype annotation.
 // It returns true if the strain ID is set.
-func (pha *PhenotypeAnnotation) HasStrainId() bool {
+func (pha *PhenotypeAnnotation) HasStrainID() bool {
 	return len(pha.strainId) > 0
 }
 
@@ -98,12 +98,12 @@ func (pha *PhenotypeAnnotation) StrainDescriptor() string {
 	return pha.strainDescriptor
 }
 
-// PhenotypeId returns the phenotype ID associated with the phenotype annotation.
-func (pha *PhenotypeAnnotation) PhenotypeId() string {
+// PhenotypeID returns the phenotype ID associated with the phenotype annotation.
+func (pha *PhenotypeAnnotation) PhenotypeID() string {
 	return pha.phenotypeId
 }
 
-// StrainId returns the strain ID associated with the phenotype annotation.
-func (pha *PhenotypeAnnotation) StrainId() string {
+// StrainID returns the strain ID associated with the phenotype annotation.
+func (pha *PhenotypeAnnotation) StrainID() string {
 	return pha.strainId
 }

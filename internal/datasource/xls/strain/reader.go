@@ -42,7 +42,7 @@ func (stnr *StrainAnnotationReader) Value() (*StrainAnnotation, error) {
 	anno.geneticModification = strings.TrimSpace(row[5])
 	anno.mutagenesisMethod = strings.TrimSpace(row[6])
 	anno.plasmid = strings.TrimSpace(row[7])
-	anno.parentId = strings.TrimSpace(row[8])
+	anno.parentID = strings.TrimSpace(row[8])
 	anno.genes = strings.TrimSpace(row[10])
 	anno.genotype = strings.TrimSpace(row[11])
 	anno.depositor = strings.TrimSpace(row[12])

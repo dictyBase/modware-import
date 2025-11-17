@@ -23,7 +23,7 @@ const (
 
 // PlasmidGenbank is the container for genbank link for plasmid
 type PlasmidGenbank struct {
-	Id      string
+	ID      string
 	Genbank string
 }
 
@@ -51,14 +51,14 @@ func (pgr *csvPlasmidGenbankReader) Value() (*PlasmidGenbank, error) {
 	if pgr.Err != nil {
 		return g, pgr.Err
 	}
-	g.Id = pgr.Record[0]
+	g.ID = pgr.Record[0]
 	g.Genbank = pgr.Record[1]
 	return g, nil
 }
 
 // Plasmid is the container for plasmid data
 type Plasmid struct {
-	Id           string
+	ID           string
 	Summary      string
 	User         string
 	CreatedOn    time.Time
@@ -123,8 +123,8 @@ func getRecordField(record []string, index int) O.Option[string] {
 	return O.Some(record[index])
 }
 
-// parseId extracts and sets the plasmid ID from record
-func parseId(ctx ParseContext) PlasmidParser {
+// parseID extracts and sets the plasmid ID from record
+func parseID(ctx ParseContext) PlasmidParser {
 	return RE.FromEither[Dependencies](
 		F.Pipe1(
 			getRecordField(ctx.Record, 0),
@@ -135,7 +135,7 @@ func parseId(ctx ParseContext) PlasmidParser {
 					)
 				},
 				func(id string) E.Either[error, ParseContext] {
-					ctx.Plasmid.Id = id
+					ctx.Plasmid.ID = id
 					return E.Right[error](ctx)
 				},
 			),
@@ -197,7 +197,7 @@ func parseSummary(ctx ParseContext) PlasmidParser {
 // applyAnnotator applies annotator lookup to plasmid context
 func applyAnnotator(ctx ParseContext, deps Dependencies) ParseContext {
 	user, createdOn, updatedOn, ok := deps.Alookup.StockAnnotator(
-		ctx.Plasmid.Id,
+		ctx.Plasmid.ID,
 	)
 	if ok {
 		ctx.Plasmid.User = user
@@ -210,7 +210,7 @@ func applyAnnotator(ctx ParseContext, deps Dependencies) ParseContext {
 // applyPublications applies publication lookup to plasmid context
 func applyPublications(ctx ParseContext, deps Dependencies) ParseContext {
 	return F.Pipe2(
-		deps.Plookup.StockPub(ctx.Plasmid.Id),
+		deps.Plookup.StockPub(ctx.Plasmid.ID),
 		O.FromPredicate(isNonEmptySlice),
 		O.Fold(
 			func() ParseContext { return ctx },
@@ -233,7 +233,7 @@ func applyPublications(ctx ParseContext, deps Dependencies) ParseContext {
 // applyGenes applies gene lookup to plasmid context
 func applyGenes(ctx ParseContext, deps Dependencies) ParseContext {
 	return F.Pipe2(
-		deps.Glookup.StockGene(ctx.Plasmid.Id),
+		deps.Glookup.StockGene(ctx.Plasmid.ID),
 		O.FromPredicate(isNonEmptySlice),
 		O.Fold(
 			func() ParseContext { return ctx },
@@ -293,7 +293,7 @@ func enrichWithGenes(ctx ParseContext) PlasmidParser {
 // parseAllFields composes all field parsing functions
 func parseAllFields(ctx ParseContext) PlasmidParser {
 	return F.Pipe2(
-		parseId(ctx),
+		parseID(ctx),
 		RE.Chain(parseName),
 		RE.Chain(parseSummary),
 	)

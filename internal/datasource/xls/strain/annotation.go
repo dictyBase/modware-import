@@ -19,7 +19,7 @@ type StrainAnnotation struct {
 	name                string
 	systematicName      string
 	plasmid             string
-	parentId            string
+	parentID            string
 	genes               string
 	genotype            string
 	depositor           string
@@ -30,11 +30,11 @@ func (strain *StrainAnnotation) IsEmpty() bool {
 	return strain.empty
 }
 
-func (strain *StrainAnnotation) HasId() bool {
+func (strain *StrainAnnotation) HasID() bool {
 	return len(strain.id) > 0
 }
 
-func (strain *StrainAnnotation) Id() string {
+func (strain *StrainAnnotation) ID() string {
 	return strain.id
 }
 
@@ -62,12 +62,12 @@ func (strain *StrainAnnotation) Plasmid() string {
 	return strain.plasmid
 }
 
-func (strain *StrainAnnotation) HasParentId() bool {
-	return len(strain.parentId) > 0
+func (strain *StrainAnnotation) HasParentID() bool {
+	return len(strain.parentID) > 0
 }
 
-func (strain *StrainAnnotation) ParentId() string {
-	return strain.parentId
+func (strain *StrainAnnotation) ParentID() string {
+	return strain.parentID
 }
 
 func (strain *StrainAnnotation) Descriptor() string {
