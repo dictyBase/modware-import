@@ -8,15 +8,14 @@ import (
 	"os"
 	"slices"
 
-	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	pb "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/concurrent"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	pb "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -27,7 +26,7 @@ type GeneProduct struct {
 
 type manageGeneProductParams struct {
 	ctx     context.Context
-	client  feature.FeatureAnnotationServiceClient
+	client  pb.FeatureAnnotationServiceClient
 	product GeneProduct
 	user    string
 	logger  *logrus.Entry
@@ -35,7 +34,7 @@ type manageGeneProductParams struct {
 
 type handleNewGenePdtFromCsvParams struct {
 	ctx     context.Context
-	client  feature.FeatureAnnotationServiceClient
+	client  pb.FeatureAnnotationServiceClient
 	product GeneProduct
 	user    string
 	grpcErr error
@@ -264,7 +263,7 @@ func isValidGeneProductRecord(
 	logger *logrus.Entry,
 	lineNumber int,
 ) bool {
-	if len(record) < 2 {
+	if len(record) < config.MinimumFieldCount {
 		logger.Warnf(
 			"skipping malformed record at line %d in file %s: %v",
 			lineNumber,

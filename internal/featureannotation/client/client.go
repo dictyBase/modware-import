@@ -6,7 +6,6 @@ import (
 
 	"github.com/arangodb/go-driver"
 	"github.com/dictyBase/arangomanager"
-	"github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
@@ -140,7 +139,7 @@ func commonCsvCliSetup(c *cli.Context) error {
 		)
 	}
 	registry.SetFeatureAnnotationAPIClient(
-		feature_annotation.NewFeatureAnnotationServiceClient(conn),
+		feature.NewFeatureAnnotationServiceClient(conn),
 	)
 	return nil
 }

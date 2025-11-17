@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/IBM/fp-go/either"
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
@@ -12,6 +11,7 @@ import (
 	T "github.com/IBM/fp-go/tuple"
 	"github.com/cockroachdb/pebble"
 	"github.com/cockroachdb/pebble/vfs"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/fputil"
 )
 
@@ -102,7 +102,7 @@ func setupPersistentFilesystem(
 	cfg PersistentConfig,
 ) IOE.IOEither[error, FilesystemSetup] {
 	return IOE.TryCatchError(func() (FilesystemSetup, error) {
-		if err := os.MkdirAll(cfg.dataDir, 0o755); err != nil {
+		if err := os.MkdirAll(cfg.dataDir, config.SharedDirectoryPermission); err != nil {
 			return FilesystemSetup{}, fmt.Errorf(
 				"failed to create data directory: %w",
 				err,
@@ -168,7 +168,7 @@ func buildStorage(dbSetup DatabaseSetup) *pebbleStorage {
 }
 
 // ToTuple converts Either to Go-style tuple (value, error)
-func ToTuple[A any](e either.Either[error, A]) T.Tuple2[A, error] {
+func ToTuple[A any](e E.Either[error, A]) T.Tuple2[A, error] {
 	return F.Pipe1(
 		e,
 		E.Fold(
@@ -190,7 +190,7 @@ func extractStorageMode(cfg ValidatedConfig) StorageMode {
 // executeStorageSetup executes the complete storage setup pipeline
 func executeStorageSetup(
 	mode StorageMode,
-) either.Either[error, *pebbleStorage] {
+) E.Either[error, *pebbleStorage] {
 	return F.Pipe3(
 		setupFilesystem(mode),
 		IOE.Chain(openDatabase),

@@ -134,7 +134,7 @@ func decodeUniprotResponse(resp *http.Response) (UniProtResponse, error) {
 	gzReader, err := gzip.NewReader(resp.Body)
 	if err != nil {
 		return UniProtResponse{}, fmt.Errorf(
-			"Error creating gzip reader: %v",
+			"error creating gzip reader: %v",
 			err,
 		)
 	}
@@ -142,7 +142,7 @@ func decodeUniprotResponse(resp *http.Response) (UniProtResponse, error) {
 
 	var uniProtResp UniProtResponse
 	if err := json.NewDecoder(gzReader).Decode(&uniProtResp); err != nil {
-		return UniProtResponse{}, fmt.Errorf("Error decoding JSON: %v", err)
+		return UniProtResponse{}, fmt.Errorf("error decoding JSON: %v", err)
 	}
 	return uniProtResp, nil
 }
@@ -179,12 +179,16 @@ func extractCrossReferenceInfo(entry UniProtEntry) (string, []string) {
 	return dictyID, geneNames
 }
 
+const (
+	expectedLinkHeaderParts = 2 // Expected number of parts in Link header
+)
+
 func extractNextPageURL(linkHeader string) string {
 	if len(linkHeader) == 0 {
 		return ""
 	}
 	parts := strings.Split(linkHeader, ";")
-	if len(parts) != 2 {
+	if len(parts) != expectedLinkHeaderParts {
 		return ""
 	}
 	if strings.Contains(parts[1], `rel="next"`) {

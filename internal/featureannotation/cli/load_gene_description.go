@@ -8,15 +8,14 @@ import (
 	"os"
 	"slices"
 
-	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	pb "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/concurrent"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	pb "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -34,7 +33,7 @@ type GeneDescription struct {
 // manageGeneDescriptionParams holds parameters for managing gene descriptions.
 type manageGeneDescriptionParams struct {
 	ctx         context.Context
-	client      feature.FeatureAnnotationServiceClient
+	client      pb.FeatureAnnotationServiceClient
 	description GeneDescription `validate:"required"`
 	user        string          `validate:"required,email"`
 	logger      *logrus.Entry   `validate:"required"`
@@ -43,7 +42,7 @@ type manageGeneDescriptionParams struct {
 // handleNewGeneDescFromCsvParams holds parameters for creating new gene descriptions.
 type handleNewGeneDescFromCsvParams struct {
 	ctx         context.Context
-	client      feature.FeatureAnnotationServiceClient
+	client      pb.FeatureAnnotationServiceClient
 	description GeneDescription `validate:"required"`
 	user        string          `validate:"required,email"`
 	grpcErr     error
@@ -231,7 +230,7 @@ func processRecord(
 
 // isValidRecord checks if the CSV record has the required format
 func isValidRecord(record []string, logger *logrus.Entry, lineNumber int) bool {
-	if len(record) < 2 {
+	if len(record) < config.MinimumFieldCount {
 		logger.Warnf(
 			"skipping malformed record at line %d: %v",
 			lineNumber,

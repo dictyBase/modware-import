@@ -17,7 +17,6 @@ import (
 	"github.com/IBM/fp-go/ioeither/file"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/string"
-	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	"github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -137,14 +136,14 @@ type GeneProcessingAction int
 // LoadHypotheticalGeneProductsParams holds parameters for loading hypothetical gene products
 type LoadHypotheticalGeneProductsParams struct {
 	User   string
-	Client feature.FeatureAnnotationServiceClient
+	Client pb.FeatureAnnotationServiceClient
 }
 
 // ProcessingConfig holds immutable configuration for processing gene IDs
 type ProcessingConfig struct {
 	GeneIDs []string
 	User    string
-	Client  feature.FeatureAnnotationServiceClient
+	Client  pb.FeatureAnnotationServiceClient
 }
 
 // GeneProcessingResult represents successful processing of a single gene
