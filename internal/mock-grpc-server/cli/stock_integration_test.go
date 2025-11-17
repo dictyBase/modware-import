@@ -41,7 +41,7 @@ func setupStockTest(t *testing.T) *stockTestFixture {
 	require.NoError(t, err)
 
 	// Create service with test config
-	service := stock.NewStockService(storage, &stock.ServiceConfig{
+	service := stock.NewService(storage, &stock.ServiceConfig{
 		StrainOntology:  "dicty_strain_property",
 		StrainTerm:      "general strain",
 		PlasmidOntology: "plasmid_keywords",

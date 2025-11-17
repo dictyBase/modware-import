@@ -49,8 +49,8 @@ func LoadGwdi(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func mutantGroups(r io.Reader) ([]stockcenter.GWDIMutantReader, error) {
-	var mr []stockcenter.GWDIMutantReader
+func mutantGroups(r io.Reader) ([]stockcenter.MutantReader, error) {
+	var mr []stockcenter.MutantReader
 	gw, err := stockcenter.NewGWDI(r)
 	if err != nil {
 		return mr, err
@@ -70,7 +70,7 @@ func mutantGroups(r io.Reader) ([]stockcenter.GWDIMutantReader, error) {
 
 func runConcurrentCreate(
 	logger *logrus.Entry,
-	gr stockcenter.GWDIMutantReader,
+	gr stockcenter.MutantReader,
 ) error {
 	stclient := regs.GetStockAPIClient()
 	annclient := regs.GetAnnotationAPIClient()
@@ -166,8 +166,8 @@ func syncLoader(wg *sync.WaitGroup, counter chan int, errc chan error) {
 
 func createProducer(
 	args *gwdiCreateProdArgs,
-) (chan *stockcenter.GWDIStrain, chan error) {
-	tasks := make(chan *stockcenter.GWDIStrain)
+) (chan *stockcenter.Strain, chan error) {
+	tasks := make(chan *stockcenter.Strain)
 	errc := make(chan error, 1)
 	go func(args *gwdiCreateProdArgs) {
 		defer close(tasks)
@@ -326,7 +326,7 @@ type gwdiCreate struct {
 	strainCharOnto string
 }
 
-func (gc *gwdiCreate) execute(gwdi *stockcenter.GWDIStrain) error {
+func (gc *gwdiCreate) execute(gwdi *stockcenter.Strain) error {
 	strain, err := gc.createGwdi(gwdi)
 	if err != nil {
 		return errors.Errorf(
@@ -361,7 +361,7 @@ func (gc *gwdiCreate) execute(gwdi *stockcenter.GWDIStrain) error {
 
 func (gc *gwdiCreate) createPropAndChar(
 	id string,
-	gwdi *stockcenter.GWDIStrain,
+	gwdi *stockcenter.Strain,
 ) error {
 	for _, char := range gwdi.Characters {
 		err := createAnno(&createAnnoArgs{
@@ -402,7 +402,7 @@ func (gc *gwdiCreate) createPropAndChar(
 	// create REMI-seq property for GWDI strain
 	err := createAnno(&createAnnoArgs{
 		client:   gc.aclient,
-		tag:      regs.GWDIStrainTag,
+		tag:      regs.StrainTag,
 		ontology: regs.StrainPropOnto,
 		value:    regs.ExistValue,
 		user:     regs.DefaultUser,
@@ -423,7 +423,7 @@ func (gc *gwdiCreate) createPropAndChar(
 }
 
 func (gc *gwdiCreate) createGwdi(
-	gwdi *stockcenter.GWDIStrain,
+	gwdi *stockcenter.Strain,
 ) (*pb.Strain, error) {
 	attr := &pb.NewStrainAttributes{
 		CreatedBy:           regs.DefaultUser,
@@ -437,7 +437,7 @@ func (gc *gwdiCreate) createGwdi(
 		Parent:              gwdi.Parent,
 		Publications:        []string{gwdi.Publication},
 		Names:               []string{gwdi.Name},
-		DictyStrainProperty: regs.GWDIStrainTag,
+		DictyStrainProperty: regs.StrainTag,
 	}
 	strain, err := gc.sclient.CreateStrain(
 		context.Background(),

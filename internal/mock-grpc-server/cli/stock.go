@@ -55,7 +55,7 @@ func RunStockServer(cliCtx *cli.Context) error {
 	grpcServer := grpc.NewServer()
 
 	// Register stock service
-	stockService := stocksvc.NewStockService(
+	stockService := stocksvc.NewService(
 		storageBackend,
 		&stocksvc.ServiceConfig{
 			StrainOntology:  cliCtx.String("strain-ontology"),

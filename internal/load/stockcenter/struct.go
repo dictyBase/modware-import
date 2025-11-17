@@ -91,14 +91,14 @@ type annoParams struct {
 }
 
 type gwdiCreateProdArgs struct {
-	gr       cstock.GWDIMutantReader
+	gr       cstock.MutantReader
 	cancelFn context.CancelFunc
 	ctx      context.Context
 }
 
 type gwdiCreateConsumerArgs struct {
 	concurrency int
-	tasks       chan *cstock.GWDIStrain
+	tasks       chan *cstock.Strain
 	runner      *gwdiCreate
 	ctx         context.Context
 	cancelFn    context.CancelFunc
