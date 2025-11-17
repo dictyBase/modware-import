@@ -9,7 +9,7 @@ import (
 )
 
 type StrainAnnotationReader struct {
-	*xls.XlsReader
+	*xls.Reader
 }
 
 func NewStrainAnnotationReader(
@@ -20,7 +20,7 @@ func NewStrainAnnotationReader(
 	if err != nil {
 		return strainReader, err
 	}
-	strainReader.XlsReader = rdr
+	strainReader.Reader = rdr
 	return strainReader, nil
 }
 

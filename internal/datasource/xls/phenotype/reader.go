@@ -19,7 +19,7 @@ import (
 // PhenotypeAnnotationReader is responsible for reading phenotype annotations
 // from an Excel file
 type PhenotypeAnnotationReader struct {
-	*xls.XlsReader
+	*xls.Reader
 }
 
 // NewPhenotypeAnnotationReader creates a new reader for phenotype annotations from an Excel file.
@@ -40,7 +40,7 @@ func NewPhenotypeAnnotationReader(
 	if err != nil {
 		return phenoReader, err
 	}
-	phenoReader.XlsReader = rdr
+	phenoReader.Reader = rdr
 	return phenoReader, nil
 }
 

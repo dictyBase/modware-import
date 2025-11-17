@@ -36,13 +36,13 @@ type StrainInventoryReader interface {
 }
 
 type tsvStrainInventoryReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewTsvStrainInventoryReader is to get an instance of StrainInventoryReader
 func NewTsvStrainInventoryReader(r io.Reader) StrainInventoryReader {
 	tr := bufio.NewScanner(r)
-	return &tsvStrainInventoryReader{&tsource.TsvReader{Reader: tr}}
+	return &tsvStrainInventoryReader{&tsource.Reader{Reader: tr}}
 }
 
 // Value gets a new StrainInventory instance

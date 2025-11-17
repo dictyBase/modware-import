@@ -22,13 +22,13 @@ type StockPropReader interface {
 }
 
 type tsvStockPropReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewTsvStockPropReader is to get an instance of StockPropReader
 func NewTsvStockPropReader(r io.Reader) StockPropReader {
 	tr := bufio.NewScanner(r)
-	return &tsvStockPropReader{&tsource.TsvReader{Reader: tr}}
+	return &tsvStockPropReader{&tsource.Reader{Reader: tr}}
 }
 
 // Value gets a new StockProp instance

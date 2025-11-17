@@ -27,14 +27,14 @@ type StockOrderReader interface {
 }
 
 type csvOrderReader struct {
-	*csource.CsvReader
+	*csource.Reader
 }
 
 // NewCsvStockOrderReader is to get an instance of order reader
 func NewCsvStockOrderReader(r io.Reader) StockOrderReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
-	return &csvOrderReader{&csource.CsvReader{Reader: cr}}
+	return &csvOrderReader{&csource.Reader{Reader: cr}}
 }
 
 // Value gets a new StockOrder instance

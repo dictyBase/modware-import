@@ -24,13 +24,13 @@ type GenotypeReader interface {
 }
 
 type tsvGenotypeReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewTsvGenotypeReader is to get an instance of GenotypeReader
 func NewTsvGenotypeReader(r io.Reader) GenotypeReader {
 	tr := bufio.NewScanner(r)
-	return &tsvGenotypeReader{&tsource.TsvReader{Reader: tr}}
+	return &tsvGenotypeReader{&tsource.Reader{Reader: tr}}
 }
 
 // Value gets a new StockOrder instance

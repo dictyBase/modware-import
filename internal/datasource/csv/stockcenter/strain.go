@@ -29,7 +29,7 @@ type StrainReader interface {
 }
 
 type csvStrainReader struct {
-	*csource.CsvReader
+	*csource.Reader
 	lookup  StockAnnotatorLookup
 	plookup StockPubLookup
 	glookup StockGeneLookup
@@ -46,10 +46,10 @@ func NewCsvStrainReader(
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
 	return &csvStrainReader{
-		CsvReader: &csource.CsvReader{Reader: cr},
-		lookup:    al,
-		plookup:   pl,
-		glookup:   gl,
+		Reader:  &csource.Reader{Reader: cr},
+		lookup:  al,
+		plookup: pl,
+		glookup: gl,
 	}
 }
 

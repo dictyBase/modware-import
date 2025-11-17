@@ -21,13 +21,13 @@ type CharacterReader interface {
 }
 
 type tsvCharacterReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewTsvCharacterReader is to get an instance of character reader
 func NewTsvCharacterReader(r io.Reader) CharacterReader {
 	tr := bufio.NewScanner(r)
-	return &tsvCharacterReader{&tsource.TsvReader{Reader: tr}}
+	return &tsvCharacterReader{&tsource.Reader{Reader: tr}}
 }
 
 // Value gets a new Characteristics instance

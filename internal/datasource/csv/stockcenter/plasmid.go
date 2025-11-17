@@ -34,7 +34,7 @@ type PlasmidGenbankReader interface {
 }
 
 type csvPlasmidGenbankReader struct {
-	*csource.CsvReader
+	*csource.Reader
 }
 
 // NewPlasmidGenbankReader is to get an instance of PlasmidGenbankReader
@@ -42,7 +42,7 @@ func NewPlasmidGenbankReader(r io.Reader) PlasmidGenbankReader {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
-	return &csvPlasmidGenbankReader{&csource.CsvReader{Reader: cr}}
+	return &csvPlasmidGenbankReader{&csource.Reader{Reader: cr}}
 }
 
 // Value gets a new PlasmidGenbank instance
@@ -91,7 +91,7 @@ type PlasmidReader interface {
 }
 
 type csvPlasmidReader struct {
-	*csource.CsvReader
+	*csource.Reader
 	alookup StockAnnotatorLookup
 	plookup StockPubLookup
 	glookup StockGeneLookup
@@ -108,10 +108,10 @@ func NewCsvPlasmidReader(
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
 	return &csvPlasmidReader{
-		CsvReader: &csource.CsvReader{Reader: cr},
-		alookup:   al,
-		plookup:   pl,
-		glookup:   gl,
+		Reader:  &csource.Reader{Reader: cr},
+		alookup: al,
+		plookup: pl,
+		glookup: gl,
 	}
 }
 
