@@ -12,6 +12,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	geneUpdaterProgressReportIntervalSeconds = 30 // Interval for progress reporting
+)
+
 // ProcessingMetrics holds counters for tracking progress.
 type ProcessingMetrics struct {
 	TotalProcessed int64
@@ -94,7 +98,7 @@ func reportProgress(
 	logger *logrus.Entry,
 ) {
 	defer wg.Done()
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(geneUpdaterProgressReportIntervalSeconds * time.Second)
 	defer ticker.Stop()
 
 	// Helper function to log metrics
@@ -174,7 +178,7 @@ func RunGeneUpdater(cltx *cli.Context) error {
 		),
 		concurrent.WithContext[ArangoResultDoc, ProcessedGeneData](mainCtx),
 		concurrent.WithBufferSize[ArangoResultDoc, ProcessedGeneData](
-			config.NumProcessingWorkers*2,
+			config.NumProcessingWorkers*bufferSizeMultiplier,
 		),
 	)
 	htmlProcessingPool.Start()
@@ -187,7 +191,7 @@ func RunGeneUpdater(cltx *cli.Context) error {
 		),
 		concurrent.WithContext[ProcessedGeneData, GrpcUpdateResult](mainCtx),
 		concurrent.WithBufferSize[ProcessedGeneData, GrpcUpdateResult](
-			config.NumGrpcWorkers*2,
+			config.NumGrpcWorkers*bufferSizeMultiplier,
 		),
 	)
 	grpcUpdatePool.Start()

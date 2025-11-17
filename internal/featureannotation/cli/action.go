@@ -8,6 +8,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	exitCodeError = 2 // Standard CLI error exit code
+)
+
 func LoadCSVToArangodb(cltx *cli.Context) error {
 	logger := registry.GetLogger()
 	result := collection.Pipe4(
@@ -27,7 +31,7 @@ func LoadCSVToArangodb(cltx *cli.Context) error {
 		logger.Errorf("Pipeline failed: %s", result.Error)
 		return cli.Exit(
 			fmt.Sprintf("Pipeline execution failed: %s", result.Error.Error()),
-			2,
+			exitCodeError,
 		)
 	}
 

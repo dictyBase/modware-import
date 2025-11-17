@@ -61,12 +61,18 @@ func WithSkipEmptyDescription(skip bool) ParsingOption {
 	}
 }
 
+const (
+	defaultGeneProductStartColumn = 1 // Start column for gene product search
+	defaultGeneProductEndColumn   = 7 // End column for gene product search
+	minCellCountForProcessing     = 3 // Minimum cells required in a table row
+)
+
 // NewParsingConfig creates a new ParsingConfig with default values and applies options
 func NewParsingConfig(opts ...ParsingOption) *ParsingConfig {
 	config := &ParsingConfig{
 		ddbGeneRegex:           regexp.MustCompile(`^DDB_G\d+`),
-		geneProductStartColumn: 1,
-		geneProductEndColumn:   7,
+		geneProductStartColumn: defaultGeneProductStartColumn,
+		geneProductEndColumn:   defaultGeneProductEndColumn,
 		skipEmptyProduct:       true,
 		skipEmptyDescription:   true,
 	}
@@ -368,8 +374,8 @@ func processTableRow(
 	cells := row.Find("td")
 	cellCount := cells.Length()
 
-	// Skip rows that don't have at least 3 cells
-	if cellCount < 3 {
+	// Skip rows that don't have minimum required cells
+	if cellCount < minCellCountForProcessing {
 		return GeneDataRecord{}, false
 	}
 

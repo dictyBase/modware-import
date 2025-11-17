@@ -137,9 +137,24 @@ func TestMergeGeneDataRecords(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := mergeGeneDataRecords(tt.existing, tt.newRec)
 
-			require.Equal(t, tt.expected.GeneID, result.GeneID, "GeneID should match expected value")
-			require.Equal(t, tt.expected.GeneProduct, result.GeneProduct, "GeneProduct should match expected value")
-			require.Equal(t, tt.expected.Description, result.Description, "Description should match expected value")
+			require.Equal(
+				t,
+				tt.expected.GeneID,
+				result.GeneID,
+				"GeneID should match expected value",
+			)
+			require.Equal(
+				t,
+				tt.expected.GeneProduct,
+				result.GeneProduct,
+				"GeneProduct should match expected value",
+			)
+			require.Equal(
+				t,
+				tt.expected.Description,
+				result.Description,
+				"Description should match expected value",
+			)
 		})
 	}
 }

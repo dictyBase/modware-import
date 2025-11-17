@@ -241,8 +241,8 @@ func processSingleRecordAndValidate(
 
 // Stage 4: Process CSV records sequentially in batches.
 func processCSVRecords(procCtx ProcessingContext) PipelineResult {
-	currentFile := procCtx.FileContext.File
-	currentSetup := procCtx.FileContext.Setup
+	currentFile := procCtx.File
+	currentSetup := procCtx.Setup
 	logger := currentSetup.Logger
 	if procCtx.Error != nil { // Error from a previous stage
 		return PipelineResult{

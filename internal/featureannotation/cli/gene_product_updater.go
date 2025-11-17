@@ -233,7 +233,7 @@ func setupLegacyQueryPool(
 		),
 		concurrent.WithContext[GeneInfo, []ProcessedGeneProduct](mainCtx),
 		concurrent.WithBufferSize[GeneInfo, []ProcessedGeneProduct](
-			config.NumLegacyWorkers*2,
+			config.NumLegacyWorkers*bufferSizeMultiplier,
 		),
 	)
 	pool.Start()
@@ -257,7 +257,7 @@ func setupBatchGrpcUpdatePool(
 			mainCtx,
 		),
 		concurrent.WithBufferSize[BatchGeneProductJob, BatchGeneProductResult](
-			config.NumGrpcWorkers*2,
+			config.NumGrpcWorkers*bufferSizeMultiplier,
 		),
 	)
 	pool.Start()

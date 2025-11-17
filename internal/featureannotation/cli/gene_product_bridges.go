@@ -7,6 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	geneProductBridgeTimeoutSeconds = 10 // Timeout for gene product bridge operations
+	progressReportIntervalSeconds   = 30 // Interval for progress reporting
+)
+
 // handleLegacyResultsChannelClosure handles the closure of the legacy pool results channel
 func handleLegacyResultsChannelClosure(errorsChan <-chan error, logger *logrus.Entry) {
 	logger.Debug("Legacy query pool results channel closed.")
@@ -75,7 +80,11 @@ func processLegacyPoolResult(
 }
 
 // updateGrpcMetrics updates metrics and logs for a gRPC result
-func updateGrpcMetrics(result BatchGeneProductResult, error error, params *handleGeneProductGrpcResultsParams) {
+func updateGrpcMetrics(
+	result BatchGeneProductResult,
+	error error,
+	params *handleGeneProductGrpcResultsParams,
+) {
 	params.metrics.mu.Lock()
 	params.metrics.TotalProcessed += int64(result.ProcessedCount)
 	params.metrics.SkippedCount += int64(result.SkippedCount)
@@ -164,9 +173,11 @@ func bridgeLegacyToGrpcPool(params *bridgeLegacyToGrpcPoolParams) {
 				}
 			}
 			params.logger.Errorf("Async error from legacy query pool: %v", err)
-		case <-time.After(10 * time.Second):
+		case <-time.After(geneProductBridgeTimeoutSeconds * time.Second):
 			// Longer timeout with completion check
-			params.logger.Debug("Timeout waiting for legacy query result - checking completion status")
+			params.logger.Debug(
+				"Timeout waiting for legacy query result - checking completion status",
+			)
 			if params.metrics.IsComplete() {
 				params.logger.Debug("Metrics indicate completion, exiting legacy-to-gRPC bridge")
 				return
@@ -242,7 +253,7 @@ func handleGeneProductGrpcResults(params *handleGeneProductGrpcResultsParams) {
 					err,
 				)
 			}
-		case <-time.After(10 * time.Second):
+		case <-time.After(geneProductBridgeTimeoutSeconds * time.Second):
 			// Check completion status during timeout
 			params.logger.Debug("Timeout waiting for gRPC results - checking completion status")
 			if params.metrics.IsComplete() {
@@ -257,7 +268,7 @@ func handleGeneProductGrpcResults(params *handleGeneProductGrpcResultsParams) {
 // reportGeneProductProgress reports processing progress
 func reportGeneProductProgress(params *reportGeneProductProgressParams) {
 	defer params.wg.Done()
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(progressReportIntervalSeconds * time.Second)
 	defer ticker.Stop()
 
 	logCurrentMetrics := func(message string) {

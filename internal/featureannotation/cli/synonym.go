@@ -17,6 +17,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	synonymProgressReportIntervalSeconds = 30 // Interval for synonym progress reporting
+	synonymCheckIntervalSeconds          = 5  // Interval for synonym completion checks
+)
+
 // SynonymData holds gene synonym information from ArangoDB
 type SynonymData struct {
 	Name     string   `json:"name"`
@@ -217,7 +222,7 @@ func setupSynonymGrpcUpdatePool(
 		),
 		concurrent.WithContext[SynonymData, GrpcSynonymResult](mainCtx),
 		concurrent.WithBufferSize[SynonymData, GrpcSynonymResult](
-			config.NumGrpcWorkers*2,
+			config.NumGrpcWorkers*bufferSizeMultiplier,
 		),
 	)
 	pool.Start()
@@ -375,7 +380,7 @@ func handleSynonymGrpcResults(params *handleSynonymGrpcResultsParams) {
 // reportSynonymProgress reports processing progress for synonyms.
 func reportSynonymProgress(params *reportSynonymProgressParams) {
 	defer params.wg.Done()
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(synonymProgressReportIntervalSeconds * time.Second)
 	defer ticker.Stop()
 
 	logCurrentMetrics := func(message string) {
@@ -413,7 +418,7 @@ func reportSynonymProgress(params *reportSynonymProgressParams) {
 				)
 				return
 			}
-			time.Sleep(5 * time.Second)
+			time.Sleep(synonymCheckIntervalSeconds * time.Second)
 		}
 	}
 }

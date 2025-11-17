@@ -9,6 +9,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	bridgeTimeoutSeconds = 5 // Timeout for bridge operations
+)
+
 // ArangoResultDoc represents the structure of a document from ArangoDB.
 type ArangoResultDoc struct {
 	ID    string           `json:"id"` // This is dbx.accession, likely the feature_id
@@ -95,7 +99,9 @@ func bridgeHTMLToGrpcPool(
 			return
 		case result, ok := <-htmlProcessingPool.Results():
 			if !ok {
-				logger.Debug("HTML-Pool-to-gRPC-Pool bridge: HTML processing results channel closed.")
+				logger.Debug(
+					"HTML-Pool-to-gRPC-Pool bridge: HTML processing results channel closed.",
+				)
 				return
 			}
 			metrics.mu.Lock()
@@ -128,11 +134,13 @@ func bridgeHTMLToGrpcPool(
 			}).Debug("Job submitted for gRPC update")
 		case err, ok := <-htmlProcessingPool.Errors():
 			if !ok {
-				logger.Debug("HTML-Pool-to-gRPC-Pool bridge: HTML processing errors channel closed.")
+				logger.Debug(
+					"HTML-Pool-to-gRPC-Pool bridge: HTML processing errors channel closed.",
+				)
 				return
 			}
 			logger.Errorf("Async error from HTML processing pool: %v", err)
-		case <-time.After(5 * time.Second):
+		case <-time.After(bridgeTimeoutSeconds * time.Second):
 			logger.Debug("Timeout waiting for HTML processing result - continuing")
 			continue
 		}

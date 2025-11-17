@@ -16,6 +16,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	bufferSizeMultiplier = 2 // Multiplier for buffer size
+)
+
 type Gene struct {
 	FeatureID int    `json:"feature_id"`
 	GeneID    string `json:"gene_id"`
@@ -242,7 +246,7 @@ func setupPubmedFetchPool(
 		concurrent.WithWorkers[Gene, GeneWithPubmed](config.NumPubmedWorkers),
 		concurrent.WithContext[Gene, GeneWithPubmed](mainCtx),
 		concurrent.WithBufferSize[Gene, GeneWithPubmed](
-			config.NumPubmedWorkers*2,
+			config.NumPubmedWorkers*bufferSizeMultiplier,
 		),
 	)
 	pool.Start()
@@ -261,7 +265,7 @@ func setupAnnotationCreatePool(
 		),
 		concurrent.WithContext[GeneWithPubmed, GrpcAnnotationResult](mainCtx),
 		concurrent.WithBufferSize[GeneWithPubmed, GrpcAnnotationResult](
-			config.NumGrpcWorkers*2,
+			config.NumGrpcWorkers*bufferSizeMultiplier,
 		),
 	)
 	pool.Start()
