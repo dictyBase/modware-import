@@ -1,6 +1,7 @@
 package ontology
 
 import (
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -47,7 +48,7 @@ func ontologyStorageFlags() {
 	)
 	OntologyCmd.PersistentFlags().Int(
 		"arangodb-port",
-		8529,
+		config.DefaultArangoDBPort,
 		"arangodb database port",
 	)
 	OntologyCmd.PersistentFlags().Bool(

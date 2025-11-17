@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	mockcli "github.com/dictyBase/modware-import/internal/mock-grpc-server/cli"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -54,7 +55,7 @@ func buildAnnotationFlags() []cli.Flag {
 		&cli.IntFlag{
 			Name:    "port",
 			Aliases: []string{"p"},
-			Value:   9000,
+			Value:   config.DefaultGRPCPort,
 			Usage:   "Server port",
 			EnvVars: []string{"GRPC_PORT"},
 		},
@@ -99,7 +100,7 @@ func buildCommonLoggingFlags() []cli.Flag {
 		&cli.IntFlag{
 			Name:    "port",
 			Aliases: []string{"p"},
-			Value:   9560,
+			Value:   config.DefaultMetricsPort,
 			Usage:   "Server port",
 			EnvVars: []string{"STOCK_GRPC_PORT"},
 		},
