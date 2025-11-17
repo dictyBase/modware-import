@@ -37,6 +37,10 @@ linters:
     - unparam
     - unused
     - whitespace
+  settings:
+    funlen:
+      lines: 80
+      statements: 50
   exclusions:
     generated: lax
     presets:
