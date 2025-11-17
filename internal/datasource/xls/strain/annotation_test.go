@@ -7,9 +7,9 @@ import (
 )
 
 func TestHasID(t *testing.T) {
-	s := StrainAnnotation{id: "123"}
+	s := Annotation{id: "123"}
 	assert.True(t, s.HasID(), "Expected HasID to return true when id is set")
-	s = StrainAnnotation{}
+	s = Annotation{}
 	assert.False(
 		t,
 		s.HasID(),
@@ -18,18 +18,18 @@ func TestHasID(t *testing.T) {
 }
 
 func TestID(t *testing.T) {
-	s := StrainAnnotation{id: "123"}
+	s := Annotation{id: "123"}
 	assert.Equal(t, "123", s.ID(), "Expected ID to return the correct id value")
 }
 
 func TestHasName(t *testing.T) {
-	s := StrainAnnotation{name: "Strain Name"}
+	s := Annotation{name: "Strain Name"}
 	assert.True(
 		t,
 		s.HasName(),
 		"Expected HasName to return true when name is set",
 	)
-	s = StrainAnnotation{}
+	s = Annotation{}
 	assert.False(
 		t,
 		s.HasName(),
@@ -38,7 +38,7 @@ func TestHasName(t *testing.T) {
 }
 
 func TestName(t *testing.T) {
-	s := StrainAnnotation{name: "Name"}
+	s := Annotation{name: "Name"}
 	assert.Equal(
 		t,
 		"Name",
@@ -48,13 +48,13 @@ func TestName(t *testing.T) {
 }
 
 func TestHasSystematicName(t *testing.T) {
-	s := StrainAnnotation{systematicName: "Sys Name"}
+	s := Annotation{systematicName: "Sys Name"}
 	assert.True(
 		t,
 		s.HasSystematicName(),
 		"Expected HasSystematicName to return true when systematicName is set",
 	)
-	s = StrainAnnotation{}
+	s = Annotation{}
 	assert.False(
 		t,
 		s.HasSystematicName(),
@@ -63,7 +63,7 @@ func TestHasSystematicName(t *testing.T) {
 }
 
 func TestSystematicName(t *testing.T) {
-	s := StrainAnnotation{systematicName: "SysName"}
+	s := Annotation{systematicName: "SysName"}
 	assert.Equal(
 		t,
 		"SysName",
@@ -73,13 +73,13 @@ func TestSystematicName(t *testing.T) {
 }
 
 func TestHasPlasmid(t *testing.T) {
-	s := StrainAnnotation{plasmid: "Plasmid Info"}
+	s := Annotation{plasmid: "Plasmid Info"}
 	assert.True(
 		t,
 		s.HasPlasmid(),
 		"Expected HasPlasmid to return true when plasmid is set",
 	)
-	s = StrainAnnotation{}
+	s = Annotation{}
 	assert.False(
 		t,
 		s.HasPlasmid(),
@@ -88,7 +88,7 @@ func TestHasPlasmid(t *testing.T) {
 }
 
 func TestPlasmid(t *testing.T) {
-	s := StrainAnnotation{plasmid: "Plasmid Info"}
+	s := Annotation{plasmid: "Plasmid Info"}
 	assert.Equal(
 		t,
 		"Plasmid Info",
@@ -98,13 +98,13 @@ func TestPlasmid(t *testing.T) {
 }
 
 func TestHasParentID(t *testing.T) {
-	s := StrainAnnotation{parentID: "Parent123"}
+	s := Annotation{parentID: "Parent123"}
 	assert.True(
 		t,
 		s.HasParentID(),
 		"Expected HasParentID to return true when parentID is set",
 	)
-	s = StrainAnnotation{}
+	s = Annotation{}
 	assert.False(
 		t,
 		s.HasParentID(),
@@ -113,7 +113,7 @@ func TestHasParentID(t *testing.T) {
 }
 
 func TestParentID(t *testing.T) {
-	s := StrainAnnotation{parentID: "Parent123"}
+	s := Annotation{parentID: "Parent123"}
 	assert.Equal(
 		t,
 		"Parent123",
@@ -123,7 +123,7 @@ func TestParentID(t *testing.T) {
 }
 
 func TestDescriptor(t *testing.T) {
-	s := StrainAnnotation{descriptor: "Descriptor Info"}
+	s := Annotation{descriptor: "Descriptor Info"}
 	assert.Equal(
 		t,
 		"Descriptor Info",
@@ -133,7 +133,7 @@ func TestDescriptor(t *testing.T) {
 }
 
 func TestSpecies(t *testing.T) {
-	s := StrainAnnotation{species: "Species Name"}
+	s := Annotation{species: "Species Name"}
 	assert.Equal(
 		t,
 		"Species Name",
@@ -143,7 +143,7 @@ func TestSpecies(t *testing.T) {
 }
 
 func TestAssignedBy(t *testing.T) {
-	s := StrainAnnotation{assignedBy: "Assigned By Entity"}
+	s := Annotation{assignedBy: "Assigned By Entity"}
 	assert.Equal(
 		t,
 		"Assigned By Entity",
@@ -153,7 +153,7 @@ func TestAssignedBy(t *testing.T) {
 }
 
 func TestReference(t *testing.T) {
-	s := StrainAnnotation{reference: "Reference Info"}
+	s := Annotation{reference: "Reference Info"}
 	assert.Equal(
 		t,
 		"Reference Info",
@@ -163,7 +163,7 @@ func TestReference(t *testing.T) {
 }
 
 func TestSummary(t *testing.T) {
-	s := StrainAnnotation{summary: "Summary Info"}
+	s := Annotation{summary: "Summary Info"}
 	assert.Equal(
 		t,
 		"Summary Info",
@@ -173,7 +173,7 @@ func TestSummary(t *testing.T) {
 }
 
 func TestCharacteristic(t *testing.T) {
-	s := StrainAnnotation{characteristic: "Characteristic Info"}
+	s := Annotation{characteristic: "Characteristic Info"}
 	assert.Equal(
 		t,
 		"Characteristic Info",
@@ -183,7 +183,7 @@ func TestCharacteristic(t *testing.T) {
 }
 
 func TestGeneticModification(t *testing.T) {
-	s := StrainAnnotation{
+	s := Annotation{
 		geneticModification: "Genetic Modification Info",
 	}
 	assert.Equal(
@@ -195,7 +195,7 @@ func TestGeneticModification(t *testing.T) {
 }
 
 func TestMutagenesisMethod(t *testing.T) {
-	s := StrainAnnotation{mutagenesisMethod: "Mutagenesis Method Info"}
+	s := Annotation{mutagenesisMethod: "Mutagenesis Method Info"}
 	assert.Equal(
 		t,
 		"Mutagenesis Method Info",
@@ -205,13 +205,13 @@ func TestMutagenesisMethod(t *testing.T) {
 }
 
 func TestHasGenes(t *testing.T) {
-	s := StrainAnnotation{genes: "Gene1, Gene2"}
+	s := Annotation{genes: "Gene1, Gene2"}
 	assert.True(
 		t,
 		s.HasGenes(),
 		"Expected HasGenes to return true when genes are set",
 	)
-	s = StrainAnnotation{}
+	s = Annotation{}
 	assert.False(
 		t,
 		s.HasGenes(),
@@ -220,7 +220,7 @@ func TestHasGenes(t *testing.T) {
 }
 
 func TestGenes(t *testing.T) {
-	s := StrainAnnotation{genes: "Gene1, Gene2"}
+	s := Annotation{genes: "Gene1, Gene2"}
 	assert.Equal(
 		t,
 		"Gene1, Gene2",
@@ -230,13 +230,13 @@ func TestGenes(t *testing.T) {
 }
 
 func TestHasGenotype(t *testing.T) {
-	s := StrainAnnotation{genotype: "Genotype Info"}
+	s := Annotation{genotype: "Genotype Info"}
 	assert.True(
 		t,
 		s.HasGenotype(),
 		"Expected HasGenotype to return true when genotype is set",
 	)
-	s = StrainAnnotation{}
+	s = Annotation{}
 	assert.False(
 		t,
 		s.HasGenotype(),
@@ -245,7 +245,7 @@ func TestHasGenotype(t *testing.T) {
 }
 
 func TestGenotype(t *testing.T) {
-	s := StrainAnnotation{genotype: "Genotype Info"}
+	s := Annotation{genotype: "Genotype Info"}
 	assert.Equal(
 		t,
 		"Genotype Info",
@@ -255,13 +255,13 @@ func TestGenotype(t *testing.T) {
 }
 
 func TestHasDepositor(t *testing.T) {
-	s := StrainAnnotation{depositor: "Depositor Info"}
+	s := Annotation{depositor: "Depositor Info"}
 	assert.True(
 		t,
 		s.HasDepositor(),
 		"Expected HasDepositor to return true when depositor is set",
 	)
-	s = StrainAnnotation{}
+	s = Annotation{}
 	assert.False(
 		t,
 		s.HasDepositor(),
@@ -270,7 +270,7 @@ func TestHasDepositor(t *testing.T) {
 }
 
 func TestDepositor(t *testing.T) {
-	s := StrainAnnotation{depositor: "Depositor Info"}
+	s := Annotation{depositor: "Depositor Info"}
 	assert.Equal(
 		t,
 		"Depositor Info",

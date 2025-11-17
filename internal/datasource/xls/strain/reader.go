@@ -8,14 +8,14 @@ import (
 	"github.com/dictyBase/modware-import/internal/datasource/xls"
 )
 
-type StrainAnnotationReader struct {
+type AnnotationReader struct {
 	*xls.Reader
 }
 
-func NewStrainAnnotationReader(
+func NewAnnotationReader(
 	file, sheet string, date time.Time,
-) (*StrainAnnotationReader, error) {
-	strainReader := &StrainAnnotationReader{}
+) (*AnnotationReader, error) {
+	strainReader := &AnnotationReader{}
 	rdr, err := xls.NewReader(file, sheet, date, true)
 	if err != nil {
 		return strainReader, err
@@ -24,8 +24,8 @@ func NewStrainAnnotationReader(
 	return strainReader, nil
 }
 
-func (stnr *StrainAnnotationReader) Value() (*StrainAnnotation, error) {
-	anno := &StrainAnnotation{}
+func (stnr *AnnotationReader) Value() (*Annotation, error) {
+	anno := &Annotation{}
 	row, err := stnr.Rows.Columns()
 	if err != nil {
 		return anno, fmt.Errorf("error in reading column %s", err)

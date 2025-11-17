@@ -1,5 +1,5 @@
 // Package phenotype provides functionality to read phenotype annotations
-// from an Excel file. It defines the PhenotypeAnnotationReader struct with methods
+// from an Excel file. It defines the AnnotationReader struct with methods
 // to create a new reader, iterate over rows of data, and retrieve phenotype annotations
 // as structured data with validation. The reader is initialized with a file path,
 // a specific sheet name, and a creation date, and it includes error handling for
@@ -16,13 +16,13 @@ import (
 	"github.com/dictyBase/modware-import/internal/datasource/xls"
 )
 
-// PhenotypeAnnotationReader is responsible for reading phenotype annotations
+// AnnotationReader is responsible for reading phenotype annotations
 // from an Excel file
-type PhenotypeAnnotationReader struct {
+type AnnotationReader struct {
 	*xls.Reader
 }
 
-// NewPhenotypeAnnotationReader creates a new reader for phenotype annotations from an Excel file.
+// NewAnnotationReader creates a new reader for phenotype annotations from an Excel file.
 // It initializes the reader for the specified sheet in the file and sets the creation date for the annotations.
 // The function also sets up a data validator for structural validation of the annotations.
 // If the function encounters an error while opening the file or reading the rows, it returns the reader object
@@ -32,10 +32,10 @@ type PhenotypeAnnotationReader struct {
 // - file: The path to the Excel file to be read.
 // - sheet: The name of the sheet within the Excel file which contains the phenotype annotations.
 // - date: The creation date to be associated with the annotations being read.
-func NewPhenotypeAnnotationReader(
+func NewAnnotationReader(
 	file, sheet string, date time.Time,
-) (*PhenotypeAnnotationReader, error) {
-	phenoReader := &PhenotypeAnnotationReader{}
+) (*AnnotationReader, error) {
+	phenoReader := &AnnotationReader{}
 	rdr, err := xls.NewReader(file, sheet, date, true)
 	if err != nil {
 		return phenoReader, err
@@ -46,10 +46,10 @@ func NewPhenotypeAnnotationReader(
 
 // Value retrieves the current phenotype annotation from the reader.
 // Before calling Value, Next should be used to advance the reader to the desired row.
-// Value decodes the current row into a PhenotypeAnnotation struct and performs data validation.
+// Value decodes the current row into a Annotation struct and performs data validation.
 // If the validation fails or an error occurs while reading the columns, it returns an error.
-func (phr *PhenotypeAnnotationReader) Value() (*PhenotypeAnnotation, error) {
-	anno := &PhenotypeAnnotation{}
+func (phr *AnnotationReader) Value() (*Annotation, error) {
+	anno := &Annotation{}
 	row, err := phr.Rows.Columns()
 	if err != nil {
 		return anno, fmt.Errorf("error in reading column %s", err)
@@ -76,10 +76,10 @@ func (phr *PhenotypeAnnotationReader) Value() (*PhenotypeAnnotation, error) {
 	return anno, nil
 }
 
-func (phr *PhenotypeAnnotationReader) hanldeTwelveRows(
+func (phr *AnnotationReader) hanldeTwelveRows(
 	row []string,
-) *PhenotypeAnnotation {
-	anno := &PhenotypeAnnotation{}
+) *Annotation {
+	anno := &Annotation{}
 	anno.strainID = strings.TrimSpace(row[0])
 	anno.strainDescriptor = strings.TrimSpace(row[1])
 	anno.phenotypeID = strings.TrimSpace(row[2])
@@ -93,10 +93,10 @@ func (phr *PhenotypeAnnotationReader) hanldeTwelveRows(
 	return anno
 }
 
-func (phr *PhenotypeAnnotationReader) hanldeTenRows(
+func (phr *AnnotationReader) hanldeTenRows(
 	row []string,
-) *PhenotypeAnnotation {
-	anno := &PhenotypeAnnotation{}
+) *Annotation {
+	anno := &Annotation{}
 	anno.strainID = strings.TrimSpace(row[0])
 	anno.phenotypeID = strings.TrimSpace(row[1])
 	anno.notes = strings.TrimSpace(row[3])

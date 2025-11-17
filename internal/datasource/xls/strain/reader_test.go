@@ -28,11 +28,11 @@ func strainTestFile() (string, error) {
 	return filepath.Join(dir, "../../../../testdata/", TestFile), nil
 }
 
-func TestNewStrainAnnotationReader(t *testing.T) {
+func TestNewAnnotationReader(t *testing.T) {
 	assert := require.New(t)
 	strainFile, err := strainTestFile()
 	assert.NoError(err)
-	reader, err := NewStrainAnnotationReader(strainFile, TestSheet, time.Now())
+	reader, err := NewAnnotationReader(strainFile, TestSheet, time.Now())
 	assert.NoError(err)
 	assert.NotNil(reader)
 }
@@ -42,7 +42,7 @@ func TestValue(t *testing.T) {
 	strainFile, err := strainTestFile()
 	assert.NoError(err)
 	t.Run("should have first row with expected values", func(_ *testing.T) {
-		reader, err := NewStrainAnnotationReader(
+		reader, err := NewAnnotationReader(
 			strainFile,
 			TestSheet,
 			time.Now(),
@@ -72,7 +72,7 @@ func TestValue(t *testing.T) {
 		assert.False(anno.HasDepositor())
 	})
 	t.Run("should detect empty rows", func(_ *testing.T) {
-		reader, err := NewStrainAnnotationReader(
+		reader, err := NewAnnotationReader(
 			strainFile,
 			TestSheet,
 			time.Now(),
