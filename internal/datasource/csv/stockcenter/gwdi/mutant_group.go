@@ -10,16 +10,16 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/iterator"
 )
 
-type GWDIMutantReader interface {
+type MutantReader interface {
 	Next() bool
-	Value() (*GWDIStrain, error)
+	Value() (*Strain, error)
 }
 
 type groupItr struct {
 	itr iterator.Iterator
 }
 
-func NewGWDIMutantIterator(itr iterator.Iterator) GWDIMutantReader {
+func NewGWDIMutantIterator(itr iterator.Iterator) MutantReader {
 	return &groupItr{itr: itr}
 }
 
@@ -27,15 +27,15 @@ func (g *groupItr) Next() bool {
 	return g.itr.Next()
 }
 
-func (g *groupItr) Value() (*GWDIStrain, error) {
-	strain := &GWDIStrain{}
+func (g *groupItr) Value() (*Strain, error) {
+	strain := &Strain{}
 	if err := json.Unmarshal(g.itr.Value(), strain); err != nil {
 		return strain, fmt.Errorf("error in decoding value for strain group %s", err)
 	}
 	return strain, nil
 }
 
-type annoFn func(r []string) *GWDIStrain
+type annoFn func(r []string) *Strain
 
 // GWDI is for managing gwdi data
 type GWDI struct {
@@ -75,7 +75,7 @@ func NewGWDI(r io.Reader) (*GWDI, error) {
 	return g, nil
 }
 
-func (g *GWDI) MutantReader(group string) GWDIMutantReader {
+func (g *GWDI) MutantReader(group string) MutantReader {
 	return NewGWDIMutantIterator(g.listCache.IterateByPrefix([]byte(group)))
 }
 
