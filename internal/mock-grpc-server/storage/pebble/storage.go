@@ -3,6 +3,7 @@ package pebble
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
@@ -58,6 +59,7 @@ type Storage struct {
 	keys    keyBuilder
 	memFS   vfs.FS // Only used for in-memory mode
 	tempDir string // Only used for in-memory mode
+	mu      sync.Mutex // Protects ID generation
 }
 
 // validateConfig converts optional config into validated config

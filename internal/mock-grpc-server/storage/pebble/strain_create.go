@@ -211,8 +211,8 @@ func buildStrainBatchWrite(ctx withSerializedStrain) IOE.IOEither[error, *pebble
 			return nil, fmt.Errorf("failed to set type: %w", err)
 		}
 
-		// Update counter
-		counterValue := decodeCounter([]byte{}) + 1
+		// Update counter with the numeric ID from generatedID
+		counterValue := parseStockIDNumber(ctx.generatedID, 3) // "DBS" = 3 chars
 		if err := batch.Set(
 			keys.strainCounterKey(),
 			encodeCounter(counterValue),
@@ -266,14 +266,20 @@ func extractCreatedStrain(ctx withStrainBatch) *stock.Strain {
 func (storage *Storage) CreateStrain(
 	req *stock.NewStrain,
 ) IOE.IOEither[error, *stock.Strain] {
-	return F.Pipe7(
-		IOE.Of[error](createStrainContext{req: req, db: storage.db}),
-		IOE.Bind(setGeneratedStrainID, generateStrainID),
-		IOE.Bind(setStrainTimestamps, generateStrainTimestamps),
-		IOE.Let[error](setBuiltStrain, buildStrainFromRequest),
-		IOE.Bind(setSerializedStrain, serializeStrainData),
-		IOE.Bind(setStrainBatch, buildStrainBatchWrite),
-		IOE.Chain(commitStrainBatch),
-		IOE.Map[error](extractCreatedStrain),
-	)
+	return func() E.Either[error, *stock.Strain] {
+		// Lock for atomic ID generation
+		storage.mu.Lock()
+		defer storage.mu.Unlock()
+
+		return F.Pipe7(
+			IOE.Of[error](createStrainContext{req: req, db: storage.db}),
+			IOE.Bind(setGeneratedStrainID, generateStrainID),
+			IOE.Bind(setStrainTimestamps, generateStrainTimestamps),
+			IOE.Let[error](setBuiltStrain, buildStrainFromRequest),
+			IOE.Bind(setSerializedStrain, serializeStrainData),
+			IOE.Bind(setStrainBatch, buildStrainBatchWrite),
+			IOE.Chain(commitStrainBatch),
+			IOE.Map[error](extractCreatedStrain),
+		)()
+	}
 }

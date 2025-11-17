@@ -95,6 +95,9 @@ func applyStrainUpdate(ctx withExistingStrain) *stock.Strain {
 	}
 	updated.Data.Attributes.UpdatedAt = nowTimestamp()
 
+	if updateAttrs.Label != "" {
+		updated.Data.Attributes.Label = updateAttrs.Label
+	}
 	if updateAttrs.Summary != "" {
 		updated.Data.Attributes.Summary = updateAttrs.Summary
 	}

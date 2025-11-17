@@ -58,7 +58,7 @@ func setupRealServer(t *testing.T, persistent bool) *realServerFixture {
 	serverErr := make(chan error, 1)
 
 	go func() {
-		if nerr := RunStockServer(cliCtx); err != nil {
+		if nerr := RunStockServer(cliCtx); nerr != nil {
 			serverErr <- nerr
 		}
 	}()
@@ -183,7 +183,7 @@ func setupServerWithDataDir(
 	serverErr := make(chan error, 1)
 
 	go func() {
-		if gerr := RunStockServer(cliCtx); err != nil {
+		if gerr := RunStockServer(cliCtx); gerr != nil {
 			serverErr <- gerr
 		}
 	}()

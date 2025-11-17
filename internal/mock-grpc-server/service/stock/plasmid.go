@@ -173,6 +173,11 @@ func validateNewPlasmidRequest(params createPlasmidParams) IOE.IOEither[error, *
 			return E.Left[*stock.NewPlasmid](fmt.Errorf("request cannot be nil"))
 		}
 
+		// Validate using protobuf validation rules
+		if err := params.request.Validate(); err != nil {
+			return E.Left[*stock.NewPlasmid](fmt.Errorf("validation failed: %w", err))
+		}
+
 		// Apply default ontology term if not provided
 		if params.request.Data != nil && params.request.Data.Attributes != nil {
 			attrs := params.request.Data.Attributes

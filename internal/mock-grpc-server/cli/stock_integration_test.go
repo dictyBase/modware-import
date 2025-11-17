@@ -60,8 +60,10 @@ func setupStockTest(t *testing.T) *stockTestFixture {
 		}
 	}()
 
-	// Create client
-	conn, err := grpc.NewClient(
+	// Create client with deprecated DialContext for bufconn compatibility
+	//nolint:staticcheck // bufconn requires DialContext
+	conn, err := grpc.DialContext(
+		context.Background(),
 		"bufnet",
 		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
 			return lis.Dial()

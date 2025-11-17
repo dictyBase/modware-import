@@ -179,7 +179,10 @@ func loadPlasmidToAPI(
 			},
 		}
 
-		response, err := client.CreatePlasmid(context.Background(), plasmidData)
+		response, err := client.CreatePlasmid(
+			context.Background(),
+			plasmidData,
+		)
 		if err != nil {
 			return "", fmt.Errorf(
 				"failed to create plasmid %s: %w",

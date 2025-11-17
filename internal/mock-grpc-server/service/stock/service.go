@@ -178,8 +178,8 @@ func (service *Service) LoadPlasmid(
 	return result.F1, result.F2
 }
 
-// ListStrainsByIDs retrieves multiple strains by their IDs
-func (service *Service) ListStrainsByIDs(
+// ListStrainsByIds retrieves multiple strains by their IDs
+func (service *Service) ListStrainsByIds(
 	ctx context.Context,
 	req *stock.StockIdList,
 ) (*stock.StrainList, error) {

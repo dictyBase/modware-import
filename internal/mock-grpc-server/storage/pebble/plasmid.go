@@ -201,8 +201,8 @@ func buildPlasmidBatchWrite(ctx withSerializedPlasmid) IOE.IOEither[error, *pebb
 			return nil, fmt.Errorf("failed to set type: %w", err)
 		}
 
-		// Update counter
-		counterValue := decodeCounter([]byte{}) + 1
+		// Update counter with the numeric ID from generatedID
+		counterValue := parseStockIDNumber(ctx.generatedID, 3) // "DBP" = 3 chars
 		if err := batch.Set(
 			keys.plasmidCounterKey(),
 			encodeCounter(counterValue),
@@ -242,16 +242,22 @@ func extractCreatedPlasmid(ctx withPlasmidBatch) *stock.Plasmid {
 func (storage *Storage) CreatePlasmid(
 	req *stock.NewPlasmid,
 ) IOE.IOEither[error, *stock.Plasmid] {
-	return F.Pipe7(
-		IOE.Of[error](createPlasmidContext{req: req, db: storage.db}),
-		IOE.Bind(setGeneratedPlasmidID, generatePlasmidID),
-		IOE.Bind(setPlasmidTimestamps, generatePlasmidTimestamps),
-		IOE.Let[error](setBuiltPlasmid, buildPlasmidFromRequest),
-		IOE.Bind(setSerializedPlasmid, serializePlasmidData),
-		IOE.Bind(setPlasmidBatch, buildPlasmidBatchWrite),
-		IOE.Chain(commitPlasmidBatch),
-		IOE.Map[error](extractCreatedPlasmid),
-	)
+	return func() E.Either[error, *stock.Plasmid] {
+		// Lock for atomic ID generation
+		storage.mu.Lock()
+		defer storage.mu.Unlock()
+
+		return F.Pipe7(
+			IOE.Of[error](createPlasmidContext{req: req, db: storage.db}),
+			IOE.Bind(setGeneratedPlasmidID, generatePlasmidID),
+			IOE.Bind(setPlasmidTimestamps, generatePlasmidTimestamps),
+			IOE.Let[error](setBuiltPlasmid, buildPlasmidFromRequest),
+			IOE.Bind(setSerializedPlasmid, serializePlasmidData),
+			IOE.Bind(setPlasmidBatch, buildPlasmidBatchWrite),
+			IOE.Chain(commitPlasmidBatch),
+			IOE.Map[error](extractCreatedPlasmid),
+		)()
+	}
 }
 
 // ==================== UPDATE PLASMID ====================
@@ -336,6 +342,9 @@ func applyPlasmidUpdate(ctx withExistingPlasmid) *stock.Plasmid {
 	}
 	updated.Data.Attributes.UpdatedAt = nowTimestamp()
 
+	if updateAttrs.Name != "" {
+		updated.Data.Attributes.Name = updateAttrs.Name
+	}
 	if updateAttrs.Summary != "" {
 		updated.Data.Attributes.Summary = updateAttrs.Summary
 	}

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
@@ -150,4 +151,17 @@ func nowTimestamp() *timestamppb.Timestamp {
 // formatStockID formats a stock ID with the given prefix and number
 func formatStockID(prefix string, number int64) string {
 	return fmt.Sprintf("%s%07d", prefix, number)
+}
+
+// parseStockIDNumber extracts the numeric part from a stock ID (e.g., "DBS0000002" → 2)
+func parseStockIDNumber(stockID string, prefixLen int) int64 {
+	if len(stockID) <= prefixLen {
+		return 0
+	}
+	numStr := stockID[prefixLen:]
+	num, err := strconv.ParseInt(numStr, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return num
 }
