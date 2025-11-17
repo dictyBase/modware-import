@@ -46,6 +46,13 @@ func createErrorResult(e error) PlasmidProcessingResult {
 	}
 }
 
+func createProcessingResult(id string) PlasmidProcessingResult {
+	return PlasmidProcessingResult{
+		PlasmidID: id,
+		Error:     O.None[error](),
+	}
+}
+
 // GoldenBraidProcessingResult holds aggregate processing statistics
 type GoldenBraidProcessingResult struct {
 	Successes  []string
@@ -99,7 +106,7 @@ func streamAndProcessRecords(
 			}
 
 			// Process single record (pure Either pipeline - integrated)
-			result := F.Pipe6(
+			result := F.Pipe7(
 				record,
 				E.FromPredicate(
 					source.HasValidRecordLength,
@@ -123,7 +130,11 @@ func streamAndProcessRecords(
 					source.HasValidUser,
 					source.UserError,
 				)),
-				E.Fold(createErrorResult, processPlasmid),
+				E.Chain(processPlasmid),
+				E.Fold(
+					createErrorResult,
+					createProcessingResult,
+				),
 			)
 
 			results = append(results, result)
@@ -134,24 +145,8 @@ func streamAndProcessRecords(
 }
 
 // processPlasmid processes a single validated plasmid by loading it to the API
-func processPlasmid(p *source.GoldenBraidPlasmid) PlasmidProcessingResult {
-	// Execute IOEither to load plasmid to API
-	result := loadPlasmidToAPI(p)()
-
-	return E.Fold(
-		func(err error) PlasmidProcessingResult {
-			return PlasmidProcessingResult{
-				PlasmidID: p.Name,
-				Error:     O.Some(err),
-			}
-		},
-		func(id string) PlasmidProcessingResult {
-			return PlasmidProcessingResult{
-				PlasmidID: id,
-				Error:     O.None[error](),
-			}
-		},
-	)(result)
+func processPlasmid(p *source.GoldenBraidPlasmid) E.Either[error, string] {
+	return F.Pipe2(p, loadPlasmidToAPI, ToEither)
 }
 
 // loadPlasmidToAPI loads a plasmid to the stock center API
@@ -169,7 +164,11 @@ func loadPlasmidToAPI(
 					Summary:   p.Summary,
 					CreatedBy: p.User,
 					UpdatedBy: p.User,
-					Genes:     O.GetOrElse(F.Constant([]string{}))(p.Genes),
+					Genes: O.GetOrElse(
+						F.Constant([]string{}),
+					)(
+						p.Genes,
+					),
 					Publications: O.GetOrElse(
 						F.Constant([]string{}),
 					)(
@@ -283,4 +282,8 @@ func LoadGoldenBraid(cmd *cobra.Command, args []string) error {
 			func(_ GoldenBraidProcessingResult) error { return nil },
 		),
 	)
+}
+
+func ToEither[ER, A any](ioe IOE.IOEither[ER, A]) E.Either[ER, A] {
+	return ioe()
 }
