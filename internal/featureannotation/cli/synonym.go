@@ -51,19 +51,19 @@ type SynonymMetrics struct {
 	JobsCompletedFromGrpcPool int64
 }
 
-// gRPCJobsCompleted returns the number of jobs completed by the gRPC pool.
-func (m *SynonymMetrics) gRPCJobsCompleted() int64 {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.JobsCompletedFromGrpcPool
-}
-
 // IsComplete checks if all processing is finished.
 func (m *SynonymMetrics) IsComplete() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	return m.isPrimaryComplete() || m.isFallbackComplete()
+}
+
+// gRPCJobsCompleted returns the number of jobs completed by the gRPC pool.
+func (m *SynonymMetrics) gRPCJobsCompleted() int64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.JobsCompletedFromGrpcPool
 }
 
 func (m *SynonymMetrics) isPrimaryComplete() bool {

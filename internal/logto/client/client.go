@@ -96,29 +96,6 @@ func (clnt *Client) AccessToken(
 	return acresp, nil
 }
 
-func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
-	uresp, err := clnt.httpClient.Do(creq)
-	if err != nil {
-		return uresp, fmt.Errorf("error in making request %s", err)
-	}
-	if uresp.StatusCode != http.StatusOK {
-		cnt, err := io.ReadAll(uresp.Body)
-		if err != nil {
-			return uresp, fmt.Errorf(
-				"error in response and the reading the body %d %s",
-				uresp.StatusCode,
-				err,
-			)
-		}
-		return uresp, fmt.Errorf(
-			"unexpected error response %d %s",
-			uresp.StatusCode,
-			string(cnt),
-		)
-	}
-	return uresp, nil
-}
-
 func (clnt *Client) CheckUserWithUserName(
 	token, username string,
 ) (bool, string, error) {
@@ -258,6 +235,29 @@ func (clnt *Client) CreateUser(
 		return userID, fmt.Errorf("error in decoding json response %s", err)
 	}
 	return usr.ID, nil
+}
+
+func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
+	uresp, err := clnt.httpClient.Do(creq)
+	if err != nil {
+		return uresp, fmt.Errorf("error in making request %s", err)
+	}
+	if uresp.StatusCode != http.StatusOK {
+		cnt, err := io.ReadAll(uresp.Body)
+		if err != nil {
+			return uresp, fmt.Errorf(
+				"error in response and the reading the body %d %s",
+				uresp.StatusCode,
+				err,
+			)
+		}
+		return uresp, fmt.Errorf(
+			"unexpected error response %d %s",
+			uresp.StatusCode,
+			string(cnt),
+		)
+	}
+	return uresp, nil
 }
 
 func commonHeader(lreq *http.Request, token string) {

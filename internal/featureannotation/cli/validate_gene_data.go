@@ -21,15 +21,15 @@ import (
 )
 
 const (
-	defaultHTTPTimeoutSeconds  = 30       // Default HTTP client timeout
-	maxIdleConns               = 10       // Maximum idle connections
-	maxIdleConnsPerHost        = 10       // Maximum idle connections per host
-	idleConnTimeoutSeconds     = 30       // Idle connection timeout
-	maxMismatchExamples        = 3        // Maximum mismatch examples to display
-	fullValidationPercentage   = 100      // Full validation percentage
-	bytesPerKilobyte           = 1024     // Bytes per kilobyte
-	maxFileSizeBytes           = 50       // Maximum file size in MB
-	maxRecordCount             = 100000   // Maximum number of records allowed
+	defaultHTTPTimeoutSeconds = 30     // Default HTTP client timeout
+	maxIdleConns              = 10     // Maximum idle connections
+	maxIdleConnsPerHost       = 10     // Maximum idle connections per host
+	idleConnTimeoutSeconds    = 30     // Idle connection timeout
+	maxMismatchExamples       = 3      // Maximum mismatch examples to display
+	fullValidationPercentage  = 100    // Full validation percentage
+	bytesPerKilobyte          = 1024   // Bytes per kilobyte
+	maxFileSizeBytes          = 50     // Maximum file size in MB
+	maxRecordCount            = 100000 // Maximum number of records allowed
 )
 
 // ValidationResult represents the result of validating a single gene
@@ -82,7 +82,7 @@ type CSVFileConstraints struct {
 
 var csvConstraints = CSVFileConstraints{
 	MaxFileSizeBytes: maxFileSizeBytes * bytesPerKilobyte * bytesPerKilobyte, // 50MB
-	MaxRecords:       maxRecordCount,                                          // 100k records
+	MaxRecords:       maxRecordCount,                                         // 100k records
 }
 
 // GeneGeneralInformationQuery represents the GraphQL query structure for retrieving
@@ -337,7 +337,6 @@ func processRecordsConcurrently(
 	sharedClient := graphql.NewClient(params.GraphQLURL, nil)
 
 	for i, record := range records {
-		i, record := i, record // Capture loop variables
 		g.Go(func() error {
 			select {
 			case <-gctx.Done():
