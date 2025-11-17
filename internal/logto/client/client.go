@@ -76,7 +76,7 @@ func (clnt *Client) AccessToken(
 	params.Set("resource", resource)
 	params.Set("scope", "all")
 	req, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		fmt.Sprintf("%s/oidc/token", clnt.baseURL),
 		strings.NewReader(params.Encode()),
 	)
@@ -101,7 +101,7 @@ func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
 	if err != nil {
 		return uresp, fmt.Errorf("error in making request %s", err)
 	}
-	if uresp.StatusCode != 200 {
+	if uresp.StatusCode != http.StatusOK {
 		cnt, err := io.ReadAll(uresp.Body)
 		if err != nil {
 			return uresp, fmt.Errorf(
@@ -134,7 +134,7 @@ func (clnt *Client) CheckUserWithUserName(
 		)
 	}
 	parsedURL.RawQuery = params.Encode()
-	ureq, err := http.NewRequest("GET", parsedURL.String(), nil)
+	ureq, err := http.NewRequest(http.MethodGet, parsedURL.String(), nil)
 	if err != nil {
 		return false, userId, fmt.Errorf("error in making new request %s", err)
 	}
@@ -175,7 +175,7 @@ func (clnt *Client) CheckUser(
 		)
 	}
 	parsedURL.RawQuery = params.Encode()
-	ureq, err := http.NewRequest("GET", parsedURL.String(), nil)
+	ureq, err := http.NewRequest(http.MethodGet, parsedURL.String(), nil)
 	if err != nil {
 		return false, userId, fmt.Errorf("error in making new request %s", err)
 	}
@@ -211,7 +211,7 @@ func (clnt *Client) AddCustomUserInformation(
 		return fmt.Errorf("error in converting to json %s", err)
 	}
 	ureq, err := http.NewRequest(
-		"PATCH",
+		http.MethodPatch,
 		fmt.Sprintf("%s/api/users/%s/custom-data", clnt.baseURL, userId),
 		bytes.NewBuffer(content),
 	)
@@ -240,7 +240,7 @@ func (clnt *Client) CreateUser(
 		return userId, fmt.Errorf("error in converting to json %s", err)
 	}
 	ureq, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		fmt.Sprintf("%s/api/users", clnt.baseURL),
 		bytes.NewBuffer(content),
 	)

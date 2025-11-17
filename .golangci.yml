@@ -12,18 +12,28 @@ linters:
     - decorder
     - dogsled
     - funlen
+    - funcorder
     - goconst
     - gocritic
     - gocyclo
     - gosec
     - govet
+    - gocognit
     - ineffassign
+    - importas
+    - inamedparam
+    - interfacebloat
     - lll
+    - loggercheck
     - misspell
+    - mnd
     - nakedret
+    - nestif
     - revive
+    - recvcheck
     - staticcheck
     - unconvert
+    - usestdlibvars
     - unparam
     - unused
     - whitespace
