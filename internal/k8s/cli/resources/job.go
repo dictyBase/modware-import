@@ -27,7 +27,7 @@ var ListJobCmd = &cobra.Command{
 		}
 		tbl := createTable()
 		for _, job := range jobList.Items {
-			tbl.AppendRow(table.Row{job.ObjectMeta.Name, status(job)})
+			tbl.AppendRow(table.Row{job.Name, status(job)})
 		}
 		tbl.SetStyle(table.StyleColoredYellowWhiteOnBlack)
 		tbl.Render()

@@ -242,7 +242,9 @@ var (
 	)
 )
 
-func validatePlasmidUpdateRequest(params updatePlasmidParams) IOE.IOEither[error, *stock.PlasmidUpdate] {
+func validatePlasmidUpdateRequest(
+	params updatePlasmidParams,
+) IOE.IOEither[error, *stock.PlasmidUpdate] {
 	return func() E.Either[error, *stock.PlasmidUpdate] {
 		if params.request == nil {
 			return E.Left[*stock.PlasmidUpdate](fmt.Errorf("request cannot be nil"))
@@ -328,7 +330,9 @@ func validateExistingPlasmidRequest(
 	}
 }
 
-func loadPlasmidIntoStorage(params withValidatedExistingPlasmid) IOE.IOEither[error, *stock.Plasmid] {
+func loadPlasmidIntoStorage(
+	params withValidatedExistingPlasmid,
+) IOE.IOEither[error, *stock.Plasmid] {
 	return params.storage.LoadPlasmid(params.stockID, params.validated)
 }
 
@@ -362,7 +366,9 @@ type (
 	PlasmidCollectionConverter = func(PlasmidCollectionIO) PlasmidCollectionResult
 )
 
-func retrievePlasmidCollection(params listPlasmidsParams) IOE.IOEither[error, *stock.PlasmidCollection] {
+func retrievePlasmidCollection(
+	params listPlasmidsParams,
+) IOE.IOEither[error, *stock.PlasmidCollection] {
 	return params.storage.ListPlasmids(params.params)
 }
 
@@ -419,7 +425,10 @@ func validateRemoveStockRequest(params removeStockParams) IOE.IOEither[error, st
 	}
 }
 
-func removeStockFromStorage(stockID string, params removeStockParams) IOE.IOEither[error, *emptypb.Empty] {
+func removeStockFromStorage(
+	stockID string,
+	params removeStockParams,
+) IOE.IOEither[error, *emptypb.Empty] {
 	return F.Pipe1(
 		params.storage.RemoveStock(stockID),
 		IOE.Map[error](func(struct{}) *emptypb.Empty {

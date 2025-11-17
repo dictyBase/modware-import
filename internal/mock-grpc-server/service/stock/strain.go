@@ -298,7 +298,9 @@ var (
 	)
 )
 
-func validateStrainUpdateRequest(params updateStrainParams) IOE.IOEither[error, *stock.StrainUpdate] {
+func validateStrainUpdateRequest(
+	params updateStrainParams,
+) IOE.IOEither[error, *stock.StrainUpdate] {
 	return func() E.Either[error, *stock.StrainUpdate] {
 		if params.request == nil {
 			return E.Left[*stock.StrainUpdate](fmt.Errorf("request cannot be nil"))
@@ -418,7 +420,9 @@ type (
 	StrainCollectionConverter = func(StrainCollectionIO) StrainCollectionResult
 )
 
-func retrieveStrainCollection(params listStrainsParams) IOE.IOEither[error, *stock.StrainCollection] {
+func retrieveStrainCollection(
+	params listStrainsParams,
+) IOE.IOEither[error, *stock.StrainCollection] {
 	return params.storage.ListStrains(params.params)
 }
 

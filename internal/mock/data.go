@@ -8,6 +8,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	randomGeneIDModulo  = 10000000 // Modulo value for generating random gene IDs
+	journalIDModulo     = 100000   // Modulo value for journal IDs
+	basePubmedID        = 10000000 // Base value for PubMed IDs
+	pubmedIDModulo      = 90000000 // Modulo value for PubMed IDs
+)
+
 // GenerateFeatureAnnotations creates a set of realistic mock feature annotations
 func GenerateFeatureAnnotations() []*feature.FeatureAnnotation {
 	now := timestamppb.New(time.Now())
@@ -206,9 +213,14 @@ func createDiscoidin1Annotation(now *timestamppb.Timestamp) *feature.FeatureAnno
 
 // GenerateRandomFeatureAnnotation creates a single random feature annotation for testing
 func GenerateRandomFeatureAnnotation() *feature.FeatureAnnotation {
-	id := fmt.Sprintf("DDB_G%07d", time.Now().UnixNano()%10000000)
+	id := fmt.Sprintf("DDB_G%07d", time.Now().UnixNano()%randomGeneIDModulo)
 	geneNames := []string{"geneA", "geneB", "geneC", "testGene", "mockGene"}
-	functions := []string{"protein binding", "catalytic activity", "transcription factor", "enzyme activity"}
+	functions := []string{
+		"protein binding",
+		"catalytic activity",
+		"transcription factor",
+		"enzyme activity",
+	}
 
 	now := timestamppb.New(time.Now())
 
@@ -218,10 +230,10 @@ func GenerateRandomFeatureAnnotation() *feature.FeatureAnnotation {
 		Attributes: &feature.FeatureAnnotationAttributes{
 			Name: geneNames[time.Now().UnixNano()%int64(len(geneNames))],
 			Publications: []string{
-				fmt.Sprintf("10.1000/journal.%d", time.Now().UnixNano()%100000),
+				fmt.Sprintf("10.1000/journal.%d", time.Now().UnixNano()%journalIDModulo),
 			},
 			Pubmed: []string{
-				fmt.Sprintf("%d", 10000000+time.Now().UnixNano()%90000000),
+				fmt.Sprintf("%d", basePubmedID+time.Now().UnixNano()%pubmedIDModulo),
 			},
 			Properties: []*feature.TagProperty{
 				{

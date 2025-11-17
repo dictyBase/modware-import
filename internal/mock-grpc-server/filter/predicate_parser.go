@@ -5,19 +5,21 @@ import (
 
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
+	"github.com/dictyBase/modware-import/internal/config"
 )
 
 // Predicates for token validation
 
 // hasLengthThree checks if token slice has exactly 3 elements
 func hasLengthThree(t []Token) bool {
-	return len(t) == 3
+	return len(t) == config.MinimumTokenCount
 }
 
 // lengthError creates an error for invalid token length
 func lengthError(t []Token) error {
 	return fmt.Errorf(
-		"invalid predicate: expected 3 tokens, got %d",
+		"invalid predicate: expected %d tokens, got %d",
+		config.MinimumTokenCount,
 		len(t),
 	)
 }

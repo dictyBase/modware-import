@@ -55,7 +55,9 @@ func (s *FeatureAnnotationServer) UpdateTag(
 	}
 
 	// Return updated annotation
-	annotation, err := s.storage.GetByID(req.Id) //nolint:staticcheck // SA1019: deprecated field access
+	annotation, err := s.storage.GetByID(
+		req.Id,
+	) //nolint:staticcheck // SA1019: deprecated field access
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +98,9 @@ func (s *FeatureAnnotationServer) RemoveTag(
 	}
 
 	// Return updated annotation
-	annotation, err := s.storage.GetByID(req.Id) //nolint:staticcheck // SA1019: deprecated field access
+	annotation, err := s.storage.GetByID(
+		req.Id,
+	) //nolint:staticcheck // SA1019: deprecated field access
 	if err != nil {
 		return nil, err
 	}

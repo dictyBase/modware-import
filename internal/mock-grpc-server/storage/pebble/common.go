@@ -7,6 +7,7 @@ import (
 	"time"
 
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
+	"github.com/dictyBase/modware-import/internal/config"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -123,14 +124,14 @@ func encodeCounter(value int64) []byte {
 	if value < 0 {
 		value = 0
 	}
-	buf := make([]byte, 8)
+	buf := make([]byte, config.DefaultBufferSize)
 	binary.BigEndian.PutUint64(buf, uint64(value)) // #nosec G115 -- validated non-negative
 	return buf
 }
 
 // decodeCounter decodes bytes to an int64 counter value
 func decodeCounter(data []byte) int64 {
-	if len(data) != 8 {
+	if len(data) != config.DefaultBufferSize {
 		return 0
 	}
 	uValue := binary.BigEndian.Uint64(data)

@@ -122,7 +122,11 @@ func TestParseOperatorMapping(t *testing.T) {
 			result := ParseFilter(tt.filter)
 			require.True(t, E.IsRight(result))
 
-			expr := E.GetOrElse(func(err error) FilterExpression { return AlwaysTrueFilter{} })(result)
+			expr := E.GetOrElse(
+				func(err error) FilterExpression { return AlwaysTrueFilter{} },
+			)(
+				result,
+			)
 			pred, ok := expr.(Predicate)
 			require.True(t, ok)
 			require.Equal(t, tt.expectedOperator, pred.Operator)
@@ -172,14 +176,26 @@ func TestSplitByOperator_EdgeCases(t *testing.T) {
 	}{
 		{"empty input", []Token{}, TokenOr, [][]Token{}},
 		{"no separators", []Token{fieldA, fieldB}, TokenOr, [][]Token{{fieldA, fieldB}}},
-		{"consecutive separators", []Token{fieldA, orToken, orToken, fieldB}, TokenOr,
-			[][]Token{{fieldA}, {fieldB}}},
+		{
+			"consecutive separators",
+			[]Token{fieldA, orToken, orToken, fieldB},
+			TokenOr,
+			[][]Token{{fieldA}, {fieldB}},
+		},
 		{"trailing separator", []Token{fieldA, orToken}, TokenOr, [][]Token{{fieldA}}},
 		{"leading separator", []Token{orToken, fieldA}, TokenOr, [][]Token{{fieldA}}},
-		{"multiple consecutive separators", []Token{fieldA, orToken, orToken, orToken, fieldB},
-			TokenOr, [][]Token{{fieldA}, {fieldB}}},
-		{"normal case with single separators", []Token{fieldA, orToken, fieldB, orToken, fieldC},
-			TokenOr, [][]Token{{fieldA}, {fieldB}, {fieldC}}},
+		{
+			"multiple consecutive separators",
+			[]Token{fieldA, orToken, orToken, orToken, fieldB},
+			TokenOr,
+			[][]Token{{fieldA}, {fieldB}},
+		},
+		{
+			"normal case with single separators",
+			[]Token{fieldA, orToken, fieldB, orToken, fieldC},
+			TokenOr,
+			[][]Token{{fieldA}, {fieldB}, {fieldC}},
+		},
 	}
 
 	for _, tt := range tests {
