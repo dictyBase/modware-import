@@ -273,63 +273,9 @@ func (s *LevelDBStorage) Delete(id string, purge bool) error {
 	}
 	key := fmt.Sprintf("annotation:%s", id)
 	if purge {
-		// Hard delete - use transaction for atomicity
-		txn, err := s.db.OpenTransaction()
-		if err != nil {
-			return status.Errorf(
-				codes.Internal,
-				"failed to start transaction: %v",
-				err,
-			)
-		}
-
-		// Delete annotation
-		if err := txn.Delete([]byte(key), nil); err != nil {
-			txn.Discard()
-			return status.Errorf(
-				codes.Internal,
-				"failed to delete annotation: %v",
-				err,
-			)
-		}
-
-		// Remove from indexes
-		if err := s.updateIndexes(txn, annotation, false); err != nil {
-			txn.Discard()
-			return status.Errorf(
-				codes.Internal,
-				"failed to remove indexes: %v",
-				err,
-			)
-		}
-
-		// Commit transaction
-		if err := txn.Commit(); err != nil {
-			return status.Errorf(
-				codes.Internal,
-				"failed to commit transaction: %v",
-				err,
-			)
-		}
-
-		s.logger.WithField("annotation_id", id).
-			Debug("Purged annotation from LevelDB")
-	} else {
-		// Soft delete - simple single operation
-		annotation.IsObsolete = true
-		data, err := proto.Marshal(annotation)
-		if err != nil {
-			return status.Errorf(codes.Internal, "failed to serialize annotation: %v", err)
-		}
-
-		if err := s.db.Put([]byte(key), data, nil); err != nil {
-			return status.Errorf(codes.Internal, "failed to update annotation: %v", err)
-		}
-
-		s.logger.WithField("annotation_id", id).Debug("Marked annotation as obsolete in LevelDB")
+		return s.hardDeleteAnnotation(id, key, annotation)
 	}
-
-	return nil
+	return s.softDeleteAnnotation(id, key, annotation)
 }
 
 func (s *LevelDBStorage) AddTag(id string, tag *feature.TagProperty) error {
@@ -650,6 +596,51 @@ func (s *LevelDBStorage) getByIDInternal(
 	}
 
 	return annotation, nil
+}
+
+func (s *LevelDBStorage) hardDeleteAnnotation(
+	id, key string,
+	annotation *feature.FeatureAnnotation,
+) error {
+	txn, err := s.db.OpenTransaction()
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to start transaction: %v", err)
+	}
+
+	if err := txn.Delete([]byte(key), nil); err != nil {
+		txn.Discard()
+		return status.Errorf(codes.Internal, "failed to delete annotation: %v", err)
+	}
+
+	if err := s.updateIndexes(txn, annotation, false); err != nil {
+		txn.Discard()
+		return status.Errorf(codes.Internal, "failed to remove indexes: %v", err)
+	}
+
+	if err := txn.Commit(); err != nil {
+		return status.Errorf(codes.Internal, "failed to commit transaction: %v", err)
+	}
+
+	s.logger.WithField("annotation_id", id).Debug("Purged annotation from LevelDB")
+	return nil
+}
+
+func (s *LevelDBStorage) softDeleteAnnotation(
+	id, key string,
+	annotation *feature.FeatureAnnotation,
+) error {
+	annotation.IsObsolete = true
+	data, err := proto.Marshal(annotation)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to serialize annotation: %v", err)
+	}
+
+	if err := s.db.Put([]byte(key), data, nil); err != nil {
+		return status.Errorf(codes.Internal, "failed to update annotation: %v", err)
+	}
+
+	s.logger.WithField("annotation_id", id).Debug("Marked annotation as obsolete in LevelDB")
+	return nil
 }
 
 func (s *LevelDBStorage) updateAnnotation(

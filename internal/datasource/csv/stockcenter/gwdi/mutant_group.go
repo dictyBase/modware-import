@@ -180,26 +180,28 @@ func (g *GWDI) selectID(r string) (string, error) {
 }
 
 func inferGroup(r []string) string {
-	var group string
-	if r[6] == "intragenic" || r[6] == "NA" {
-		if r[4] == "1" {
-			group = fmt.Sprintf("%s_single", r[6])
-		} else {
-			group = fmt.Sprintf("%s_multiple", r[6])
+	mutationType := r[6]
+	isSingle := r[4] == "1"
+	isNone := r[7] == "none"
+
+	// Handle intragenic or NA mutations
+	if mutationType == "intragenic" || mutationType == "NA" {
+		if isSingle {
+			return fmt.Sprintf("%s_single", mutationType)
 		}
-	} else {
-		switch {
-		case r[7] == "none":
-			if r[4] == "1" {
-				group = fmt.Sprintf("%s_none_single", r[6])
-			} else {
-				group = fmt.Sprintf("%s_none_multiple", r[6])
-			}
-		case r[4] == "1":
-			group = fmt.Sprintf("%s_single", r[6])
-		default:
-			group = fmt.Sprintf("%s_multiple", r[6])
-		}
+		return fmt.Sprintf("%s_multiple", mutationType)
 	}
-	return group
+
+	// Handle other mutation types
+	if isNone {
+		if isSingle {
+			return fmt.Sprintf("%s_none_single", mutationType)
+		}
+		return fmt.Sprintf("%s_none_multiple", mutationType)
+	}
+
+	if isSingle {
+		return fmt.Sprintf("%s_single", mutationType)
+	}
+	return fmt.Sprintf("%s_multiple", mutationType)
 }
