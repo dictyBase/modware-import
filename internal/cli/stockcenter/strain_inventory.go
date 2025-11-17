@@ -13,7 +13,7 @@ var StrainInvCmd = &cobra.Command{
 	Short: "load strain inventory data",
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadStrainInv,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PreRunE: func(_ *cobra.Command, _ []string) error {
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}

@@ -17,7 +17,7 @@ var DeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete all data from all the collections",
 	Args:  cobra.NoArgs,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		tls, _ := cmd.Flags().GetBool("is-secure")
 		session, db, err := arangomanager.NewSessionDb(
 			&arangomanager.ConnectParams{
@@ -36,7 +36,7 @@ var DeleteCmd = &cobra.Command{
 		registry.SetArangodbConnection(db)
 		return nil
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		db := registry.GetArangodbConnection()
 		colls, err := db.Handler().Collections(context.Background())
 		if err != nil {

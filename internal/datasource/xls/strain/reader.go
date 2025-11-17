@@ -8,24 +8,24 @@ import (
 	"github.com/dictyBase/modware-import/internal/datasource/xls"
 )
 
-type StrainAnnotationReader struct {
-	*xls.XlsReader
+type AnnotationReader struct {
+	*xls.Reader
 }
 
-func NewStrainAnnotationReader(
+func NewAnnotationReader(
 	file, sheet string, date time.Time,
-) (*StrainAnnotationReader, error) {
-	strainReader := &StrainAnnotationReader{}
+) (*AnnotationReader, error) {
+	strainReader := &AnnotationReader{}
 	rdr, err := xls.NewReader(file, sheet, date, true)
 	if err != nil {
 		return strainReader, err
 	}
-	strainReader.XlsReader = rdr
+	strainReader.Reader = rdr
 	return strainReader, nil
 }
 
-func (stnr *StrainAnnotationReader) Value() (*StrainAnnotation, error) {
-	anno := &StrainAnnotation{}
+func (stnr *AnnotationReader) Value() (*Annotation, error) {
+	anno := &Annotation{}
 	row, err := stnr.Rows.Columns()
 	if err != nil {
 		return anno, fmt.Errorf("error in reading column %s", err)
@@ -42,7 +42,7 @@ func (stnr *StrainAnnotationReader) Value() (*StrainAnnotation, error) {
 	anno.geneticModification = strings.TrimSpace(row[5])
 	anno.mutagenesisMethod = strings.TrimSpace(row[6])
 	anno.plasmid = strings.TrimSpace(row[7])
-	anno.parentId = strings.TrimSpace(row[8])
+	anno.parentID = strings.TrimSpace(row[8])
 	anno.genes = strings.TrimSpace(row[10])
 	anno.genotype = strings.TrimSpace(row[11])
 	anno.depositor = strings.TrimSpace(row[12])

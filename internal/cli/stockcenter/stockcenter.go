@@ -36,6 +36,7 @@ func init() {
 		StrainCmd,
 		StrainCharCmd,
 		PlasmidCmd,
+		GoldenbraidCmd,
 		StrainSynCmd,
 		StrainInvCmd,
 		PlasmidInvCmd,

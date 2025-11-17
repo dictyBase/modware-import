@@ -13,7 +13,7 @@ var StrainSynCmd = &cobra.Command{
 	Short: "load stockcenter strain synonyms",
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadStrainSynProp,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PreRunE: func(_ *cobra.Command, _ []string) error {
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}

@@ -12,7 +12,7 @@ var LoadStockCmd = &cobra.Command{
 	Use:   "load-stock",
 	Short: "run stock load command as a kubernetes job in the cluster",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		labels := cliJob.MetaLabel()
 		labels["subcommand"] = "load-stock"
 		for _, target := range viper.GetStringSlice("targets") {

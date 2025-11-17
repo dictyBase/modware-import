@@ -12,6 +12,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	geneUpdaterProgressReportIntervalSeconds = 30 // Interval for progress reporting
+)
+
 // ProcessingMetrics holds counters for tracking progress.
 type ProcessingMetrics struct {
 	TotalProcessed int64
@@ -88,13 +92,13 @@ func newAppConfigFromCliContext(
 
 // reportProgress periodically logs processing metrics.
 func reportProgress(
-	wg *sync.WaitGroup,
 	ctx context.Context,
+	wg *sync.WaitGroup,
 	metrics *ProcessingMetrics,
 	logger *logrus.Entry,
 ) {
 	defer wg.Done()
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(geneUpdaterProgressReportIntervalSeconds * time.Second)
 	defer ticker.Stop()
 
 	// Helper function to log metrics
@@ -174,7 +178,7 @@ func RunGeneUpdater(cltx *cli.Context) error {
 		),
 		concurrent.WithContext[ArangoResultDoc, ProcessedGeneData](mainCtx),
 		concurrent.WithBufferSize[ArangoResultDoc, ProcessedGeneData](
-			config.NumProcessingWorkers*2,
+			config.NumProcessingWorkers*bufferSizeMultiplier,
 		),
 	)
 	htmlProcessingPool.Start()
@@ -187,15 +191,15 @@ func RunGeneUpdater(cltx *cli.Context) error {
 		),
 		concurrent.WithContext[ProcessedGeneData, GrpcUpdateResult](mainCtx),
 		concurrent.WithBufferSize[ProcessedGeneData, GrpcUpdateResult](
-			config.NumGrpcWorkers*2,
+			config.NumGrpcWorkers*bufferSizeMultiplier,
 		),
 	)
 	grpcUpdatePool.Start()
 	// Start bridge from Arango Docs to HTML Processing Pool goroutine
 	wg.Add(1)
 	go bridgeArangoToHTMLPool(
-		&wg,
 		mainCtx,
+		&wg,
 		arangoDocsFromQueryChan,
 		htmlProcessingPool,
 		config.Metrics,
@@ -204,8 +208,8 @@ func RunGeneUpdater(cltx *cli.Context) error {
 	// Start bridge from HTML Processing Results to gRPC Update Pool goroutine
 	wg.Add(1)
 	go bridgeHTMLToGrpcPool(
-		&wg,
 		mainCtx,
+		&wg,
 		htmlProcessingPool,
 		grpcUpdatePool,
 		config.Metrics,
@@ -213,11 +217,11 @@ func RunGeneUpdater(cltx *cli.Context) error {
 	)
 	// Start gRPC Update Results Handler goroutine
 	wg.Add(1)
-	go handleGrpcResults(&wg, mainCtx, grpcUpdatePool, config.Metrics, logger)
+	go handleGrpcResults(mainCtx, &wg, grpcUpdatePool, config.Metrics, logger)
 
 	// Start Progress Reporter goroutine
 	wg.Add(1)
-	go reportProgress(&wg, mainCtx, config.Metrics, logger)
+	go reportProgress(mainCtx, &wg, config.Metrics, logger)
 
 	logger.Debug("Waiting for all main goroutines to complete...")
 	wg.Wait()

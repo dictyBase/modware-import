@@ -35,17 +35,17 @@ type TableManager struct {
 	Client     *client.APIClient
 	Ctx        context.Context
 	Token      string
-	DatabaseId int32
+	DatabaseID int32
 }
 
 func (tbm *TableManager) ListRowsWithSearchURL(
 	param string,
-	tableId int,
+	tableID int,
 ) string {
 	return fmt.Sprintf(
 		"https://%s/api/database/rows/table/%d/?user_field_names=true&size=1&search=%s&search_mode=compat",
 		tbm.Client.GetConfig().Host,
-		tableId,
+		tableID,
 		param,
 	)
 }
@@ -56,7 +56,7 @@ func (tbm *TableManager) TableFieldsChangeURL(
 	return fmt.Sprintf(
 		"https://%s/api/database/fields/%d/",
 		tbm.Client.GetConfig().Host,
-		req.Id,
+		req.ID,
 	)
 }
 
@@ -72,13 +72,13 @@ func (tbm *TableManager) TablesURL() string {
 	return fmt.Sprintf(
 		"https://%s/api/database/tables/database/%d/",
 		tbm.Client.GetConfig().Host,
-		tbm.DatabaseId,
+		tbm.DatabaseID,
 	)
 }
 
-func (tbm *TableManager) SearchRows(param string, tableId int) (int, error) {
+func (tbm *TableManager) SearchRows(param string, tableID int) (int, error) {
 	resp := F.Pipe3(
-		tbm.ListRowsWithSearchURL(param, tableId),
+		tbm.ListRowsWithSearchURL(param, tableID),
 		H.MakeGetRequest,
 		R.Map(httpapi.SetHeaderWithJWT(tbm.Token)),
 		readListRowsResp,
@@ -91,10 +91,10 @@ func (tbm *TableManager) SearchRows(param string, tableId int) (int, error) {
 		),
 	)
 
-	return output.Id, output.Error
+	return output.ID, output.Error
 }
 
-func (tbm *TableManager) TableNameToId(name string) (int, error) {
+func (tbm *TableManager) TableNameToID(name string) (int, error) {
 	resp := F.Pipe3(
 		tbm.TablesURL(),
 		H.MakeGetRequest,
@@ -109,14 +109,14 @@ func (tbm *TableManager) TableNameToId(name string) (int, error) {
 		),
 	)
 
-	return output.Id, output.Error
+	return output.ID, output.Error
 }
 
 func (tbm *TableManager) CreateTableURL() string {
 	return fmt.Sprintf(
 		"https://%s/api/database/tables/database/%d/",
 		tbm.Client.GetConfig().Host,
-		tbm.DatabaseId,
+		tbm.DatabaseID,
 	)
 }
 
@@ -162,7 +162,7 @@ func (tbm *TableManager) TableFieldsResp(
 		tbm.Client.GetConfig().Host,
 		tbl.GetId(),
 	)
-	req, err := http.NewRequest("GET", reqURL, nil)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error in creating request %s ", err)
 	}
@@ -200,7 +200,7 @@ func (tbm *OntologyTableManager) CreateFields(tbl *client.Table) error {
 		if err != nil {
 			return fmt.Errorf("error in encoding body %s", err)
 		}
-		req, err := http.NewRequest("POST", reqURL, bytes.NewBuffer(jsonData))
+		req, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			return fmt.Errorf("error in creating request %s ", err)
 		}
@@ -312,13 +312,13 @@ func (tbm *TableManager) onFieldUpdateReqFeedbackSome(
 	)
 }
 
-func (ont *TableManager) onFieldDelReqFeedbackSome(
+func (tbm *TableManager) onFieldDelReqFeedbackSome(
 	req tableFieldReq,
 ) fieldsReqFeedback {
 	resp := F.Pipe3(
-		ont.TableFieldsChangeURL(req),
+		tbm.TableFieldsChangeURL(req),
 		makeHTTPRequest("DELETE", nil),
-		R.Map(httpapi.SetHeaderWithJWT(ont.Token)),
+		R.Map(httpapi.SetHeaderWithJWT(tbm.Token)),
 		readFieldDelResp,
 	)(context.Background())
 

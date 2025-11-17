@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/google/uuid"
 )
 
@@ -111,8 +112,8 @@ func NewPool[I, O any](workerFunc WorkerFunc[I, O], options ...PoolOption[I, O])
 	ctx, cancel := context.WithCancel(context.Background())
 
 	pool := &Pool[I, O]{
-		Workers:    4,   // Default number of workers
-		BufferSize: 100, // Default buffer size
+		Workers:    config.DefaultWorkerPoolSize,
+		BufferSize: config.DefaultBatchSize,
 		workerFunc: workerFunc,
 		ctx:        ctx,
 		cancelFunc: cancel,

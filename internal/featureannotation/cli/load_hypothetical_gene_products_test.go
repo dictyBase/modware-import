@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	E "github.com/IBM/fp-go/either"
+	"github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -92,7 +93,7 @@ DDB_G0276393`,
 			require.NoError(t, err)
 
 			// Execute using the IOEither pipeline and convert to tuple
-			result := toEither(readGeneIDsFromFile(tmpFile))
+			result := fputil.ToEither(readGeneIDsFromFile(tmpFile))
 			geneIDs, err := eitherToTuple(result)
 
 			// Assert

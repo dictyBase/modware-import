@@ -30,7 +30,7 @@ func plasmidInputMap() map[string]string {
 	}
 }
 
-func setPlasmidPreRun(cmd *cobra.Command, args []string) error {
+func setPlasmidPreRun(_ *cobra.Command, _ []string) error {
 	for _, fn := range []func() error{SetStrainAPIClient, setPlasmidInputReader} {
 		if err := fn(); err != nil {
 			return err
@@ -59,10 +59,16 @@ func setPlasmidInputReader() error {
 				minio.GetObjectOptions{},
 			)
 			if err != nil {
+				objectPath := fmt.Sprintf(
+					"%s/%s",
+					viper.GetString("s3-bucket-path"),
+					viper.GetString(k),
+				)
 				return fmt.Errorf(
-					"error in getting file %s from bucket %s %s",
-					viper.GetString("plasmid-annotator-input"),
-					viper.GetString(k), err,
+					"error in getting file %s from bucket %s: %w",
+					objectPath,
+					viper.GetString("s3-bucket"),
+					err,
 				)
 			}
 			registry.SetReader(v, reader)

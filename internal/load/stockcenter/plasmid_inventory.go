@@ -13,12 +13,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
+func LoadPlasmidInv(_ *cobra.Command, _ []string) error {
 	ir := stockcenter.NewTsvPlasmidInventoryReader(
 		registry.GetReader(regs.InvReader),
 	)
 	logger := registry.GetLogger()
-	invMap, err := cacheInvByPlasmidId(ir, logger)
+	invMap, err := cacheInvByPlasmidID(ir, logger)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func LoadPlasmidInv(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func cacheInvByPlasmidId(
+func cacheInvByPlasmidID(
 	ir stockcenter.PlasmidInventoryReader,
 	logger *logrus.Entry,
 ) (map[string][]*stockcenter.PlasmidInventory, error) {

@@ -25,14 +25,14 @@ type StrainPayload struct {
 	Species                 string              `json:"species"`
 	Reference               string              `json:"reference"`
 	Summary                 string              `json:"strain_summary,omitempty"`
-	GeneticModificationId   []int               `json:"genetic_modification_id,omitempty"`
-	StrainCharacteristicsId []int               `json:"strain_characteristics_id"`
-	MutagenesisMethodId     []int               `json:"mutagenesis_method_id,omitempty"`
+	GeneticModificationID   []int               `json:"genetic_modification_id,omitempty"`
+	StrainCharacteristicsID []int               `json:"strain_characteristics_id"`
+	MutagenesisMethodID     []int               `json:"mutagenesis_method_id,omitempty"`
 	AssignedBy              []common.AssignedBy `json:"assigned_by,omitempty"`
 	Names                   string              `json:"strain_names,omitempty"`
 	SystematicName          string              `json:"systematic_name,omitempty"`
 	Plasmid                 string              `json:"plasmid,omitempty"`
-	ParentId                string              `json:"parent_strain_id,omitempty"`
+	ParentID                string              `json:"parent_strain_id,omitempty"`
 	Genes                   string              `json:"associated_genes,omitempty"`
 	Genotype                string              `json:"genotype,omitempty"`
 	Depositor               string              `json:"depositor,omitempty"`
@@ -40,8 +40,8 @@ type StrainPayload struct {
 }
 
 type fnRunnerProperties struct {
-	fn        func(*strain.StrainAnnotation, time.Time) (string, error)
-	props     *strain.StrainAnnotation
+	fn        func(*strain.Annotation, time.Time) (string, error)
+	props     *strain.Annotation
 	createdOn time.Time
 }
 
@@ -49,18 +49,18 @@ type StrainLoader struct {
 	Workspace        string
 	Host             string
 	Token            string
-	TableId          int
+	TableID          int
 	Logger           *logrus.Entry
 	OntologyTableMap map[string]int
 	TableManager     *database.TableManager
 	Payload          *StrainPayload
-	Annotation       *strain.StrainAnnotation
+	Annotation       *strain.Annotation
 	WorkspaceManager *database.WorkspaceManager
 }
 
 func NewStrainLoader(
 	host, token, wspace string,
-	tableId int,
+	tableID int,
 	logger *logrus.Entry,
 	tblMap map[string]int,
 	manager *database.TableManager,
@@ -70,7 +70,7 @@ func NewStrainLoader(
 		Workspace:        wspace,
 		Host:             host,
 		Token:            token,
-		TableId:          tableId,
+		TableID:          tableID,
 		Logger:           logger,
 		OntologyTableMap: tblMap,
 		TableManager:     manager,
@@ -78,7 +78,7 @@ func NewStrainLoader(
 	}
 }
 
-func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
+func (loader *StrainLoader) Load(reader *strain.AnnotationReader) error {
 	loaderSlice := make([]*fnRunnerProperties, 0, ConcurrentStrainLoader)
 	for reader.Next() {
 		strain, err := reader.Value()
@@ -116,11 +116,11 @@ func (loader *StrainLoader) Load(reader *strain.StrainAnnotationReader) error {
 }
 
 func (loader *StrainLoader) addStrain(
-	strn *strain.StrainAnnotation,
+	strn *strain.Annotation,
 ) E.Either[error, *StrainLoader] {
 	newLoader := NewStrainLoader(
 		loader.Host, loader.Token, loader.Workspace,
-		loader.TableId, loader.Logger,
+		loader.TableID, loader.Logger,
 		loader.OntologyTableMap,
 		loader.TableManager,
 		loader.WorkspaceManager,
@@ -133,12 +133,12 @@ func (loader *StrainLoader) createStrainURL() string {
 	return fmt.Sprintf(
 		"https://%s/api/database/rows/table/%d/?user_field_names=true",
 		loader.Host,
-		loader.TableId,
+		loader.TableID,
 	)
 }
 
 func (loader *StrainLoader) addStrainRow(
-	strn *strain.StrainAnnotation,
+	strn *strain.Annotation,
 	createdOn time.Time,
 ) (string, error) {
 	var empty string
@@ -146,11 +146,11 @@ func (loader *StrainLoader) addStrainRow(
 		E.Do[error](strn),
 		E.Bind(initialPayload, loader.addStrain),
 		E.Bind(charIDsHandler, characteristicIDs),
-		E.Bind(mutagenesisIdHandler, mutagenesisId),
-		E.Bind(genModIdHandler, genmodId),
-		E.Bind(assignedByIdHandler, assignedById),
+		E.Bind(mutagenesisIDHandler, mutagenesisID),
+		E.Bind(genModIDHandler, genmodID),
+		E.Bind(assignedByIDHandler, assignedByID),
 		E.Bind(creationTimeHandler, creationTime(createdOn)),
-		E.Map[error, *StrainLoader](loaderToPayload),
+		E.Map[error](loaderToPayload),
 		E.Chain[error, *StrainPayload](common.MarshalPayload),
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
 	)

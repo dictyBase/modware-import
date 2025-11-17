@@ -16,6 +16,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	htmlProcessingTimeoutSeconds = 30 // Timeout for HTML processing jobs
+)
+
 // HTML Stripping Utilities
 var (
 	spaceNormalizerRegexp = regexp.MustCompile(`\s+`)
@@ -92,7 +96,7 @@ func htmlProcessingWorkerFunc(
 		job concurrent.Job[ArangoResultDoc],
 	) (ProcessedGeneData, error) {
 		// Add job-level timeout
-		jobCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		jobCtx, cancel := context.WithTimeout(ctx, htmlProcessingTimeoutSeconds*time.Second)
 		defer cancel()
 		arangoDoc := job.Payload
 		var strippedProps []StrippedProperty

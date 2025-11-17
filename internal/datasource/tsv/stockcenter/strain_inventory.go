@@ -10,6 +10,7 @@ import (
 
 	registry "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/datasource"
 	tsource "github.com/dictyBase/modware-import/internal/datasource/tsv"
 	"github.com/dictyBase/modware-import/internal/regexp"
@@ -35,13 +36,13 @@ type StrainInventoryReader interface {
 }
 
 type tsvStrainInventoryReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewTsvStrainInventoryReader is to get an instance of StrainInventoryReader
 func NewTsvStrainInventoryReader(r io.Reader) StrainInventoryReader {
 	tr := bufio.NewScanner(r)
-	return &tsvStrainInventoryReader{&tsource.TsvReader{Reader: tr}}
+	return &tsvStrainInventoryReader{&tsource.Reader{Reader: tr}}
 }
 
 // Value gets a new StrainInventory instance
@@ -65,7 +66,7 @@ func (sir *tsvStrainInventoryReader) Value() (*StrainInventory, error) {
 		inv.StoredOn = storedOn
 	}
 	inv.PrivateComment = sir.Record[7]
-	if len(sir.Record) >= 9 {
+	if len(sir.Record) >= config.InventoryFieldCount {
 		inv.PublicComment = sir.Record[8]
 	}
 	inv.RecordLine = strings.Join(sir.Record, "\t")

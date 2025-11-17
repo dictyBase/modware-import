@@ -12,8 +12,8 @@ import (
 
 // Genotype is the container for strain genotype
 type Genotype struct {
-	Id       string
-	StrainId string
+	ID       string
+	StrainID string
 	Genotype string
 }
 
@@ -24,13 +24,13 @@ type GenotypeReader interface {
 }
 
 type tsvGenotypeReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewTsvGenotypeReader is to get an instance of GenotypeReader
 func NewTsvGenotypeReader(r io.Reader) GenotypeReader {
 	tr := bufio.NewScanner(r)
-	return &tsvGenotypeReader{&tsource.TsvReader{Reader: tr}}
+	return &tsvGenotypeReader{&tsource.Reader{Reader: tr}}
 }
 
 // Value gets a new StockOrder instance
@@ -39,8 +39,8 @@ func (gr *tsvGenotypeReader) Value() (*Genotype, error) {
 	if gr.Err != nil {
 		return g, gr.Err
 	}
-	g.Id = gr.Record[1]
-	g.StrainId = gr.Record[0]
+	g.ID = gr.Record[1]
+	g.StrainID = gr.Record[0]
 	g.Genotype = strings.ReplaceAll(gr.Record[2], ", ", ",")
 	return g, nil
 }

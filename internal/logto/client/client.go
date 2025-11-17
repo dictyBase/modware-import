@@ -32,12 +32,12 @@ type APIUsersPostReq struct {
 }
 
 type APIUsersPostRes struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 type APIUsersSearchRes struct {
 	Email    string `json:"primaryEmail"`
-	Id       string `json:"id"`
+	ID       string `json:"id"`
 	UserName string `json:"username"`
 }
 
@@ -76,7 +76,7 @@ func (clnt *Client) AccessToken(
 	params.Set("resource", resource)
 	params.Set("scope", "all")
 	req, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		fmt.Sprintf("%s/oidc/token", clnt.baseURL),
 		strings.NewReader(params.Encode()),
 	)
@@ -96,57 +96,34 @@ func (clnt *Client) AccessToken(
 	return acresp, nil
 }
 
-func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
-	uresp, err := clnt.httpClient.Do(creq)
-	if err != nil {
-		return uresp, fmt.Errorf("error in making request %s", err)
-	}
-	if uresp.StatusCode != 200 {
-		cnt, err := io.ReadAll(uresp.Body)
-		if err != nil {
-			return uresp, fmt.Errorf(
-				"error in response and the reading the body %d %s",
-				uresp.StatusCode,
-				err,
-			)
-		}
-		return uresp, fmt.Errorf(
-			"unexpected error response %d %s",
-			uresp.StatusCode,
-			string(cnt),
-		)
-	}
-	return uresp, nil
-}
-
 func (clnt *Client) CheckUserWithUserName(
 	token, username string,
 ) (bool, string, error) {
-	var userId string
+	var userID string
 	params := url.Values{}
 	params.Set("search.username", username)
 	params.Set("mode.name", "exact")
 	parsedURL, err := url.Parse(fmt.Sprintf("%s/api/users", clnt.baseURL))
 	if err != nil {
-		return false, userId, fmt.Errorf(
+		return false, userID, fmt.Errorf(
 			"error in parsing url for query %s",
 			err,
 		)
 	}
 	parsedURL.RawQuery = params.Encode()
-	ureq, err := http.NewRequest("GET", parsedURL.String(), nil)
+	ureq, err := http.NewRequest(http.MethodGet, parsedURL.String(), nil)
 	if err != nil {
-		return false, userId, fmt.Errorf("error in making new request %s", err)
+		return false, userID, fmt.Errorf("error in making new request %s", err)
 	}
 	commonHeader(ureq, token)
 	uresp, err := clnt.reqToResponse(ureq)
 	if err != nil {
-		return false, userId, err
+		return false, userID, err
 	}
 	defer uresp.Body.Close()
 	usrs := make([]*APIUsersSearchRes, 0)
 	if err := json.NewDecoder(uresp.Body).Decode(&usrs); err != nil {
-		return false, userId, fmt.Errorf(
+		return false, userID, fmt.Errorf(
 			"error in decoding json response %s",
 			err,
 		)
@@ -155,39 +132,39 @@ func (clnt *Client) CheckUserWithUserName(
 		return usr.UserName == username
 	})
 	if index == -1 {
-		return false, userId, nil
+		return false, userID, nil
 	}
-	return true, usrs[index].Id, nil
+	return true, usrs[index].ID, nil
 }
 
 func (clnt *Client) CheckUser(
 	token string, email string,
 ) (bool, string, error) {
-	var userId string
+	var userID string
 	params := url.Values{}
 	params.Set("search.primaryEmail", email)
 	params.Set("mode.name", "exact")
 	parsedURL, err := url.Parse(fmt.Sprintf("%s/api/users", clnt.baseURL))
 	if err != nil {
-		return false, userId, fmt.Errorf(
+		return false, userID, fmt.Errorf(
 			"error in parsing url for query %s",
 			err,
 		)
 	}
 	parsedURL.RawQuery = params.Encode()
-	ureq, err := http.NewRequest("GET", parsedURL.String(), nil)
+	ureq, err := http.NewRequest(http.MethodGet, parsedURL.String(), nil)
 	if err != nil {
-		return false, userId, fmt.Errorf("error in making new request %s", err)
+		return false, userID, fmt.Errorf("error in making new request %s", err)
 	}
 	commonHeader(ureq, token)
 	uresp, err := clnt.reqToResponse(ureq)
 	if err != nil {
-		return false, userId, err
+		return false, userID, err
 	}
 	defer uresp.Body.Close()
 	usrs := make([]*APIUsersSearchRes, 0)
 	if err := json.NewDecoder(uresp.Body).Decode(&usrs); err != nil {
-		return false, userId, fmt.Errorf(
+		return false, userID, fmt.Errorf(
 			"error in decoding json response %s",
 			err,
 		)
@@ -196,14 +173,14 @@ func (clnt *Client) CheckUser(
 		return usr.Email == email
 	})
 	if index == -1 {
-		return false, userId, nil
+		return false, userID, nil
 	}
-	return true, usrs[index].Id, nil
+	return true, usrs[index].ID, nil
 }
 
 func (clnt *Client) AddCustomUserInformation(
 	token,
-	userId string,
+	userID string,
 	user *APIUsersPatchCustomData,
 ) error {
 	content, err := json.Marshal(user)
@@ -211,8 +188,8 @@ func (clnt *Client) AddCustomUserInformation(
 		return fmt.Errorf("error in converting to json %s", err)
 	}
 	ureq, err := http.NewRequest(
-		"PATCH",
-		fmt.Sprintf("%s/api/users/%s/custom-data", clnt.baseURL, userId),
+		http.MethodPatch,
+		fmt.Sprintf("%s/api/users/%s/custom-data", clnt.baseURL, userID),
 		bytes.NewBuffer(content),
 	)
 	if err != nil {
@@ -234,30 +211,53 @@ func (clnt *Client) CreateUser(
 	token string,
 	user *APIUsersPostReq,
 ) (string, error) {
-	var userId string
+	var userID string
 	content, err := json.Marshal(user)
 	if err != nil {
-		return userId, fmt.Errorf("error in converting to json %s", err)
+		return userID, fmt.Errorf("error in converting to json %s", err)
 	}
 	ureq, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		fmt.Sprintf("%s/api/users", clnt.baseURL),
 		bytes.NewBuffer(content),
 	)
 	if err != nil {
-		return userId, fmt.Errorf("error in making new request %s", err)
+		return userID, fmt.Errorf("error in making new request %s", err)
 	}
 	commonHeader(ureq, token)
 	uresp, err := clnt.reqToResponse(ureq)
 	if err != nil {
-		return userId, err
+		return userID, err
 	}
 	defer uresp.Body.Close()
 	usr := &APIUsersPostRes{}
 	if err := json.NewDecoder(uresp.Body).Decode(usr); err != nil {
-		return userId, fmt.Errorf("error in decoding json response %s", err)
+		return userID, fmt.Errorf("error in decoding json response %s", err)
 	}
-	return usr.Id, nil
+	return usr.ID, nil
+}
+
+func (clnt *Client) reqToResponse(creq *http.Request) (*http.Response, error) {
+	uresp, err := clnt.httpClient.Do(creq)
+	if err != nil {
+		return uresp, fmt.Errorf("error in making request %s", err)
+	}
+	if uresp.StatusCode != http.StatusOK {
+		cnt, err := io.ReadAll(uresp.Body)
+		if err != nil {
+			return uresp, fmt.Errorf(
+				"error in response and the reading the body %d %s",
+				uresp.StatusCode,
+				err,
+			)
+		}
+		return uresp, fmt.Errorf(
+			"unexpected error response %d %s",
+			uresp.StatusCode,
+			string(cnt),
+		)
+	}
+	return uresp, nil
 }
 
 func commonHeader(lreq *http.Request, token string) {

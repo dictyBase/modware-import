@@ -416,12 +416,12 @@ func (m *MemoryStorage) RemoveTags(id string, tag string, value string) error {
 
 // ListByPubmedID retrieves feature annotations by PubMed ID
 func (m *MemoryStorage) ListByPubmedID(
-	pubmedId string,
+	pubmedID string,
 ) ([]*feature.FeatureAnnotation, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	ids, exists := m.pubmedIndex[pubmedId]
+	ids, exists := m.pubmedIndex[pubmedID]
 	if !exists {
 		return []*feature.FeatureAnnotation{}, nil
 	}
@@ -469,10 +469,10 @@ func (m *MemoryStorage) updateIndexes(annotation *feature.FeatureAnnotation) {
 
 	// PubMed index
 	if annotation.Attributes != nil {
-		for _, pubmedId := range annotation.Attributes.Pubmed {
-			if !m.containsString(m.pubmedIndex[pubmedId], annotation.Id) {
-				m.pubmedIndex[pubmedId] = append(
-					m.pubmedIndex[pubmedId],
+		for _, pubmedID := range annotation.Attributes.Pubmed {
+			if !m.containsString(m.pubmedIndex[pubmedID], annotation.Id) {
+				m.pubmedIndex[pubmedID] = append(
+					m.pubmedIndex[pubmedID],
 					annotation.Id,
 				)
 			}
@@ -503,13 +503,13 @@ func (m *MemoryStorage) removeIndexes(annotation *feature.FeatureAnnotation) {
 
 	// PubMed index
 	if annotation.Attributes != nil {
-		for _, pubmedId := range annotation.Attributes.Pubmed {
-			m.pubmedIndex[pubmedId] = m.removeString(
-				m.pubmedIndex[pubmedId],
+		for _, pubmedID := range annotation.Attributes.Pubmed {
+			m.pubmedIndex[pubmedID] = m.removeString(
+				m.pubmedIndex[pubmedID],
 				annotation.Id,
 			)
-			if len(m.pubmedIndex[pubmedId]) == 0 {
-				delete(m.pubmedIndex, pubmedId)
+			if len(m.pubmedIndex[pubmedID]) == 0 {
+				delete(m.pubmedIndex, pubmedID)
 			}
 		}
 	}

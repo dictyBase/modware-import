@@ -28,13 +28,13 @@ type PlasmidInventoryReader interface {
 }
 
 type tsvPlasmidInventoryReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewTsvPlasmidInventoryReader is to get an instance of PlasmidInventoryReader
 func NewTsvPlasmidInventoryReader(r io.Reader) PlasmidInventoryReader {
 	tr := bufio.NewScanner(r)
-	return &tsvPlasmidInventoryReader{&tsource.TsvReader{Reader: tr}}
+	return &tsvPlasmidInventoryReader{&tsource.Reader{Reader: tr}}
 }
 
 // Value gets a new StrainInventory instance

@@ -13,10 +13,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/go-playground/validator/v10"
 	"github.com/hasura/go-graphql-client"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	defaultHTTPTimeoutSeconds = 30     // Default HTTP client timeout
+	maxIdleConns              = 10     // Maximum idle connections
+	maxIdleConnsPerHost       = 10     // Maximum idle connections per host
+	idleConnTimeoutSeconds    = 30     // Idle connection timeout
+	maxMismatchExamples       = 3      // Maximum mismatch examples to display
+	fullValidationPercentage  = 100    // Full validation percentage
+	bytesPerKilobyte          = 1024   // Bytes per kilobyte
+	maxFileSizeBytes          = 50     // Maximum file size in MB
+	maxRecordCount            = 100000 // Maximum number of records allowed
 )
 
 // ValidationResult represents the result of validating a single gene
@@ -68,8 +81,8 @@ type CSVFileConstraints struct {
 }
 
 var csvConstraints = CSVFileConstraints{
-	MaxFileSizeBytes: 50 * 1024 * 1024, // 50MB
-	MaxRecords:       100000,           // 100k records
+	MaxFileSizeBytes: maxFileSizeBytes * bytesPerKilobyte * bytesPerKilobyte, // 50MB
+	MaxRecords:       maxRecordCount,                                         // 100k records
 }
 
 // GeneGeneralInformationQuery represents the GraphQL query structure for retrieving
@@ -324,7 +337,6 @@ func processRecordsConcurrently(
 	sharedClient := graphql.NewClient(params.GraphQLURL, nil)
 
 	for i, record := range records {
-		i, record := i, record // Capture loop variables
 		g.Go(func() error {
 			select {
 			case <-gctx.Done():
@@ -366,11 +378,11 @@ func NewGraphQLClient(
 	// Set default HTTP client if none provided
 	if cfg.HTTPClient == nil {
 		cfg.HTTPClient = &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: defaultHTTPTimeoutSeconds * time.Second,
 			Transport: &http.Transport{
-				MaxIdleConns:        10,
-				MaxIdleConnsPerHost: 10,
-				IdleConnTimeout:     30 * time.Second,
+				MaxIdleConns:        maxIdleConns,
+				MaxIdleConnsPerHost: maxIdleConnsPerHost,
+				IdleConnTimeout:     idleConnTimeoutSeconds * time.Second,
 			},
 		}
 	}
@@ -391,7 +403,7 @@ func NewGraphQLClient(
 
 // validateSingleGene validates a single gene record against GraphQL endpoint
 func validateSingleGene(params SingleGeneValidationParams) ValidationResult {
-	if len(params.Record) < 2 {
+	if len(params.Record) < config.MinimumFieldCount {
 		geneID := ""
 		if len(params.Record) > 0 {
 			geneID = params.Record[0]
@@ -475,8 +487,8 @@ func saveReport(outputPath string, report ValidationReport) error {
 		return fmt.Errorf("failed to marshal report: %w", err)
 	}
 
-	// Fix security issue: use 0600 for secure file permissions
-	err = os.WriteFile(outputPath, jsonData, 0o600)
+	// Use secure file permissions (owner read/write only)
+	err = os.WriteFile(outputPath, jsonData, config.DefaultFilePermission)
 	if err != nil {
 		return fmt.Errorf("failed to save report to %s: %w", outputPath, err)
 	}
@@ -514,7 +526,7 @@ func calculatePercentage(numerator, denominator int) float64 {
 	if denominator == 0 {
 		return 0.0
 	}
-	return float64(numerator) / float64(denominator) * 100
+	return float64(numerator) / float64(denominator) * fullValidationPercentage
 }
 
 // printMismatchExamples prints the first few mismatches
@@ -526,7 +538,7 @@ func printMismatchExamples(results []ValidationResult) {
 		}
 	}
 
-	maxExamples := min(len(mismatches), 3)
+	maxExamples := min(len(mismatches), maxMismatchExamples)
 	if maxExamples == 0 {
 		return
 	}
@@ -538,11 +550,11 @@ func printMismatchExamples(results []ValidationResult) {
 			fmt.Printf("  Gene: %s\n", result.GeneID)
 			fmt.Printf(
 				"    CSV: %s\n",
-				truncateString(result.CSVDescription, 80),
+				truncateString(result.CSVDescription, config.DefaultLineWidth),
 			)
 			fmt.Printf(
 				"    GQL: %s\n\n",
-				truncateString(result.GQLDescription, 80),
+				truncateString(result.GQLDescription, config.DefaultLineWidth),
 			)
 		}
 	}

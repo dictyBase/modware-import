@@ -11,7 +11,7 @@ import (
 
 // Strain is the container for strain data
 type Strain struct {
-	Id           string
+	ID           string
 	Descriptor   string
 	Summary      string
 	Species      string
@@ -29,7 +29,7 @@ type StrainReader interface {
 }
 
 type csvStrainReader struct {
-	*csource.CsvReader
+	*csource.Reader
 	lookup  StockAnnotatorLookup
 	plookup StockPubLookup
 	glookup StockGeneLookup
@@ -46,10 +46,10 @@ func NewCsvStrainReader(
 	cr.FieldsPerRecord = -1
 	cr.Comma = '\t'
 	return &csvStrainReader{
-		CsvReader: &csource.CsvReader{Reader: cr},
-		lookup:    al,
-		plookup:   pl,
-		glookup:   gl,
+		Reader:  &csource.Reader{Reader: cr},
+		lookup:  al,
+		plookup: pl,
+		glookup: gl,
 	}
 }
 
@@ -59,7 +59,7 @@ func (sr *csvStrainReader) Value() (*Strain, error) {
 	if sr.Err != nil {
 		return s, sr.Err
 	}
-	s.Id = sr.Record[0]
+	s.ID = sr.Record[0]
 	s.Descriptor = sr.Record[1]
 	s.Species = sr.Record[2]
 	s.Summary = sr.Record[3]
@@ -69,7 +69,7 @@ func (sr *csvStrainReader) Value() (*Strain, error) {
 		s.CreatedOn = c
 		s.UpdatedOn = u
 	}
-	s.Publications = append(s.Publications, sr.plookup.StockPub(s.Id)...)
-	s.Genes = append(s.Genes, sr.glookup.StockGene(s.Id)...)
+	s.Publications = append(s.Publications, sr.plookup.StockPub(s.ID)...)
+	s.Genes = append(s.Genes, sr.glookup.StockGene(s.ID)...)
 	return s, nil
 }

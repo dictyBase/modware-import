@@ -17,5 +17,5 @@ const (
 	InvObtainedAsTag  = "clear"
 	PlasmidInvTag     = "plasmid inventory"
 	StrainInvTag      = "strain_inventory"
-	GWDIStrainTag     = "REMI-seq"
+	StrainTag         = "REMI-seq"
 )

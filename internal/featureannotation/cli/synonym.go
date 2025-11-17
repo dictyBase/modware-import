@@ -17,6 +17,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	synonymProgressReportIntervalSeconds = 30 // Interval for synonym progress reporting
+	synonymCheckIntervalSeconds          = 5  // Interval for synonym completion checks
+)
+
 // SynonymData holds gene synonym information from ArangoDB
 type SynonymData struct {
 	Name     string   `json:"name"`
@@ -46,19 +51,19 @@ type SynonymMetrics struct {
 	JobsCompletedFromGrpcPool int64
 }
 
-// gRPCJobsCompleted returns the number of jobs completed by the gRPC pool.
-func (m *SynonymMetrics) gRPCJobsCompleted() int64 {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.JobsCompletedFromGrpcPool
-}
-
 // IsComplete checks if all processing is finished.
 func (m *SynonymMetrics) IsComplete() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	return m.isPrimaryComplete() || m.isFallbackComplete()
+}
+
+// gRPCJobsCompleted returns the number of jobs completed by the gRPC pool.
+func (m *SynonymMetrics) gRPCJobsCompleted() int64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.JobsCompletedFromGrpcPool
 }
 
 func (m *SynonymMetrics) isPrimaryComplete() bool {
@@ -92,8 +97,8 @@ type SynonymAppConfig struct {
 }
 
 type bridgeSynonymsToGrpcPoolParams struct {
-	wg       *sync.WaitGroup
 	ctx      context.Context
+	wg       *sync.WaitGroup
 	synsChan <-chan SynonymData
 	grpcPool *concurrent.Pool[SynonymData, GrpcSynonymResult]
 	metrics  *SynonymMetrics
@@ -101,16 +106,16 @@ type bridgeSynonymsToGrpcPoolParams struct {
 }
 
 type handleSynonymGrpcResultsParams struct {
-	wg       *sync.WaitGroup
 	ctx      context.Context
+	wg       *sync.WaitGroup
 	grpcPool *concurrent.Pool[SynonymData, GrpcSynonymResult]
 	metrics  *SynonymMetrics
 	logger   *logrus.Entry
 }
 
 type reportSynonymProgressParams struct {
-	wg      *sync.WaitGroup
 	ctx     context.Context
+	wg      *sync.WaitGroup
 	metrics *SynonymMetrics
 	logger  *logrus.Entry
 }
@@ -150,13 +155,13 @@ func RunSynonymLoader(cltx *cli.Context) error {
 	})
 
 	// Setup Pool
-	grpcUpdatePool := setupSynonymGrpcUpdatePool(config, mainCtx)
+	grpcUpdatePool := setupSynonymGrpcUpdatePool(mainCtx, config)
 
 	// Bridge from ArangoDB to gRPC Pool
 	wg.Add(1)
 	go bridgeSynonymsToGrpcPool(&bridgeSynonymsToGrpcPoolParams{
-		wg:       &wg,
 		ctx:      mainCtx,
+		wg:       &wg,
 		synsChan: synonymsFromQueryChan,
 		grpcPool: grpcUpdatePool,
 		metrics:  config.Metrics,
@@ -166,8 +171,8 @@ func RunSynonymLoader(cltx *cli.Context) error {
 	// Handle gRPC Results
 	wg.Add(1)
 	go handleSynonymGrpcResults(&handleSynonymGrpcResultsParams{
-		wg:       &wg,
 		ctx:      mainCtx,
+		wg:       &wg,
 		grpcPool: grpcUpdatePool,
 		metrics:  config.Metrics,
 		logger:   logger,
@@ -176,8 +181,8 @@ func RunSynonymLoader(cltx *cli.Context) error {
 	// Progress Reporter
 	wg.Add(1)
 	go reportSynonymProgress(&reportSynonymProgressParams{
-		wg:      &wg,
 		ctx:     mainCtx,
+		wg:      &wg,
 		metrics: config.Metrics,
 		logger:  logger,
 	})
@@ -204,8 +209,8 @@ func newSynonymConfigFromCliContext(
 
 // setupSynonymGrpcUpdatePool sets up gRPC update pool for synonyms.
 func setupSynonymGrpcUpdatePool(
-	config SynonymAppConfig,
 	mainCtx context.Context,
+	config SynonymAppConfig,
 ) *concurrent.Pool[SynonymData, GrpcSynonymResult] {
 	pool := concurrent.NewPool(
 		grpcSynonymWorkerFunc(
@@ -217,7 +222,7 @@ func setupSynonymGrpcUpdatePool(
 		),
 		concurrent.WithContext[SynonymData, GrpcSynonymResult](mainCtx),
 		concurrent.WithBufferSize[SynonymData, GrpcSynonymResult](
-			config.NumGrpcWorkers*2,
+			config.NumGrpcWorkers*bufferSizeMultiplier,
 		),
 	)
 	pool.Start()
@@ -375,7 +380,7 @@ func handleSynonymGrpcResults(params *handleSynonymGrpcResultsParams) {
 // reportSynonymProgress reports processing progress for synonyms.
 func reportSynonymProgress(params *reportSynonymProgressParams) {
 	defer params.wg.Done()
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(synonymProgressReportIntervalSeconds * time.Second)
 	defer ticker.Stop()
 
 	logCurrentMetrics := func(message string) {
@@ -413,7 +418,7 @@ func reportSynonymProgress(params *reportSynonymProgressParams) {
 				)
 				return
 			}
-			time.Sleep(5 * time.Second)
+			time.Sleep(synonymCheckIntervalSeconds * time.Second)
 		}
 	}
 }

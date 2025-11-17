@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadGeno(cmd *cobra.Command, args []string) error {
+func LoadGeno(_ *cobra.Command, _ []string) error {
 	gr := stockcenter.NewTsvGenotypeReader(registry.GetReader(regs.GenoReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
@@ -35,7 +35,7 @@ func LoadGeno(cmd *cobra.Command, args []string) error {
 			client,
 			&genoArgs{
 				tag:      genoTag,
-				id:       geno.StrainId,
+				id:       geno.StrainID,
 				user:     regs.DefaultUser,
 				ontology: regs.DictyAnnoOntology,
 				value:    geno.Genotype,
@@ -45,16 +45,16 @@ func LoadGeno(cmd *cobra.Command, args []string) error {
 		}
 		switch st {
 		case Created:
-			logger.Debugf("created genotype %s for strain %s", geno.Genotype, geno.StrainId)
+			logger.Debugf("created genotype %s for strain %s", geno.Genotype, geno.StrainID)
 			nct++
 		case Updated:
-			logger.Debugf("updated genotype %s for strain %s", geno.Genotype, geno.StrainId)
+			logger.Debugf("updated genotype %s for strain %s", geno.Genotype, geno.StrainID)
 			uct++
 		case Read:
-			logger.Debugf("skipped genotype %s for strain %s", geno.Genotype, geno.StrainId)
+			logger.Debugf("skipped genotype %s for strain %s", geno.Genotype, geno.StrainID)
 			rct++
 		}
-		count += 1
+		count++
 	}
 	logger.WithFields(
 		logrus.Fields{

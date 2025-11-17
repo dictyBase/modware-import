@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/emirpasic/gods/maps/hashmap"
 )
 
@@ -28,7 +29,7 @@ func NewStockPubLookup(r io.Reader) (StockPubLookup, error) {
 	spr := bufio.NewScanner(r)
 	for spr.Scan() {
 		record := strings.Split(spr.Text(), "\t")
-		if len(record) != 2 {
+		if len(record) != config.MinimumFieldCount {
 			return l, fmt.Errorf("does not expected record in line %s", spr.Text())
 		}
 		if strings.HasPrefix(record[1], "d") {

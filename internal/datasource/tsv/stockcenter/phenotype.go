@@ -26,13 +26,13 @@ type PhenotypeReader interface {
 }
 
 type tsvPhenotypeReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewPhenotypeReader is to get an instance of PhenotypeReader
 func NewPhenotypeReader(r io.Reader) PhenotypeReader {
 	cr := bufio.NewScanner(r)
-	return &tsvPhenotypeReader{&tsource.TsvReader{Reader: cr}}
+	return &tsvPhenotypeReader{&tsource.Reader{Reader: cr}}
 }
 
 // Value gets a new Phenotype instance

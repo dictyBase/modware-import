@@ -10,7 +10,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type XlsReader struct {
+type Reader struct {
 	Rows          *excelize.Rows
 	CreatedOn     time.Time
 	DataValidator *validator.Validate
@@ -18,8 +18,8 @@ type XlsReader struct {
 
 func NewReaderFromStream(
 	fdr io.Reader, sheet string, date time.Time, skipHeader bool,
-) (*XlsReader, error) {
-	xlsr := &XlsReader{CreatedOn: date}
+) (*Reader, error) {
+	xlsr := &Reader{CreatedOn: date}
 	reader, err := excelize.OpenReader(fdr)
 	if err != nil {
 		return xlsr, fmt.Errorf("error in reading %s", err)
@@ -46,8 +46,8 @@ func NewReaderFromStream(
 
 func NewReader(
 	file, sheet string, date time.Time, skipHeader bool,
-) (*XlsReader, error) {
-	xlsr := &XlsReader{CreatedOn: date}
+) (*Reader, error) {
+	xlsr := &Reader{CreatedOn: date}
 	reader, err := os.Open(file)
 	if err != nil {
 		return xlsr, fmt.Errorf(
@@ -59,7 +59,7 @@ func NewReader(
 	return NewReaderFromStream(reader, sheet, date, skipHeader)
 }
 
-func (xlsr *XlsReader) Next() bool {
+func (xlsr *Reader) Next() bool {
 	if xlsr.Rows.Next() {
 		return true
 	}

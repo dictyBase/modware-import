@@ -10,7 +10,7 @@ import (
 
 // StockProp is the container for stock properties
 type StockProp struct {
-	Id       string
+	ID       string
 	Property string
 	Value    string
 }
@@ -22,13 +22,13 @@ type StockPropReader interface {
 }
 
 type tsvStockPropReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewTsvStockPropReader is to get an instance of StockPropReader
 func NewTsvStockPropReader(r io.Reader) StockPropReader {
 	tr := bufio.NewScanner(r)
-	return &tsvStockPropReader{&tsource.TsvReader{Reader: tr}}
+	return &tsvStockPropReader{&tsource.Reader{Reader: tr}}
 }
 
 // Value gets a new StockProp instance
@@ -37,7 +37,7 @@ func (spr *tsvStockPropReader) Value() (*StockProp, error) {
 	if spr.Err != nil {
 		return prop, spr.Err
 	}
-	prop.Id = spr.Record[0]
+	prop.ID = spr.Record[0]
 	prop.Property = spr.Record[1]
 	prop.Value = spr.Record[2]
 	return prop, nil

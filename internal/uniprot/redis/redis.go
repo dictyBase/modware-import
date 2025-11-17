@@ -27,16 +27,16 @@ type UniprotLoader interface {
 	Load(maps []UniprotMap) error
 }
 
-// RedisUniprotLoader implements UniprotLoader for Redis
-type RedisUniprotLoader struct {
+// redisUniprotLoader implements UniprotLoader for Redis
+type redisUniprotLoader struct {
 	client *rds.Client
 }
 
 func NewRedisUniprotLoader(client *rds.Client) UniprotLoader {
-	return &RedisUniprotLoader{client: client}
+	return &redisUniprotLoader{client: client}
 }
 
-func (r *RedisUniprotLoader) Load(maps []UniprotMap) error {
+func (r *redisUniprotLoader) Load(maps []UniprotMap) error {
 	ctx := context.Background()
 	pipe := r.client.Pipeline()
 	for _, umap := range maps {

@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/kubernetes"
+	// Register all cloud provider authentication plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -18,7 +19,7 @@ import (
 var RootCmd = &cobra.Command{
 	Use:   "k8s",
 	Short: "cli for deploying and running import commands in kubernetes cluster",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := cli.PreRunLogger(cmd); err != nil {
 			return errors.Errorf("error in executing pre run %s", err)
 		}
@@ -34,7 +35,7 @@ var RootCmd = &cobra.Command{
 
 		return nil
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		if err := cli.RunDoc(cmd); err != nil {
 			return errors.Errorf("error in generating docs %s", err)
 		}

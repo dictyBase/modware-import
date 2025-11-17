@@ -10,7 +10,7 @@ import (
 
 // Characteristics is the container for strain characteristics
 type Characteristics struct {
-	Id        string
+	ID        string
 	Character string
 }
 
@@ -21,13 +21,13 @@ type CharacterReader interface {
 }
 
 type tsvCharacterReader struct {
-	*tsource.TsvReader
+	*tsource.Reader
 }
 
 // NewTsvCharacterReader is to get an instance of character reader
 func NewTsvCharacterReader(r io.Reader) CharacterReader {
 	tr := bufio.NewScanner(r)
-	return &tsvCharacterReader{&tsource.TsvReader{Reader: tr}}
+	return &tsvCharacterReader{&tsource.Reader{Reader: tr}}
 }
 
 // Value gets a new Characteristics instance
@@ -36,7 +36,7 @@ func (cr *tsvCharacterReader) Value() (*Characteristics, error) {
 	if cr.Err != nil {
 		return c, cr.Err
 	}
-	c.Id = cr.Record[0]
+	c.ID = cr.Record[0]
 	c.Character = cr.Record[1]
 	return c, nil
 }

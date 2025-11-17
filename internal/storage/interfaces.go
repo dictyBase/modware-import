@@ -5,6 +5,8 @@ import (
 )
 
 // FeatureAnnotationStorage defines the interface for feature annotation storage operations
+//
+//nolint:interfacebloat // Comprehensive storage interface by design
 type FeatureAnnotationStorage interface {
 	// Create stores a new feature annotation
 	Create(annotation *feature.FeatureAnnotation) error
@@ -40,7 +42,7 @@ type FeatureAnnotationStorage interface {
 	RemoveTags(id string, tag string, value string) error
 
 	// ListByPubmedID retrieves feature annotations by PubMed ID
-	ListByPubmedID(pubmedId string) ([]*feature.FeatureAnnotation, error)
+	ListByPubmedID(pubmedID string) ([]*feature.FeatureAnnotation, error)
 
 	// ListByDOI retrieves feature annotations by DOI
 	ListByDOI(doi string) ([]*feature.FeatureAnnotation, error)

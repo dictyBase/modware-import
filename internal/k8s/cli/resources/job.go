@@ -16,7 +16,7 @@ var ListJobCmd = &cobra.Command{
 	Use:   "list-jobs",
 	Short: "prints list of jobs in a cluster under the given namespace",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		namespace, _ := cmd.Flags().GetString("namespace")
 		client := registry.GetKubeClient(registry.KubeClientKey)
 		jobList, err := client.BatchV1().
@@ -27,7 +27,7 @@ var ListJobCmd = &cobra.Command{
 		}
 		tbl := createTable()
 		for _, job := range jobList.Items {
-			tbl.AppendRow(table.Row{job.ObjectMeta.Name, status(job)})
+			tbl.AppendRow(table.Row{job.Name, status(job)})
 		}
 		tbl.SetStyle(table.StyleColoredYellowWhiteOnBlack)
 		tbl.Render()

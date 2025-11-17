@@ -14,18 +14,18 @@ import (
 	"github.com/dictyBase/modware-import/internal/datasource/xls/strain"
 )
 
-var assignedByIdHandler = F.Curry2(
+var assignedByIDHandler = F.Curry2(
 	func(aid int, loader *StrainLoader) *StrainLoader {
 		if aid != 0 {
-			loader.Payload.AssignedBy = []common.AssignedBy{{Id: aid}}
+			loader.Payload.AssignedBy = []common.AssignedBy{{ID: aid}}
 		}
 		return loader
 	})
 
-var mutagenesisIdHandler = F.Curry2(
-	func(mutId int, loader *StrainLoader) *StrainLoader {
-		if mutId != 0 {
-			loader.Payload.MutagenesisMethodId = []int{mutId}
+var mutagenesisIDHandler = F.Curry2(
+	func(mutID int, loader *StrainLoader) *StrainLoader {
+		if mutID != 0 {
+			loader.Payload.MutagenesisMethodID = []int{mutID}
 		}
 
 		return loader
@@ -34,23 +34,23 @@ var mutagenesisIdHandler = F.Curry2(
 var charIDsHandler = F.Curry2(
 	func(charIDs []int, loader *StrainLoader) *StrainLoader {
 		if len(charIDs) != 0 {
-			loader.Payload.StrainCharacteristicsId = charIDs
+			loader.Payload.StrainCharacteristicsID = charIDs
 		}
 
 		return loader
 	})
 
-var genModIdHandler = F.Curry2(
-	func(genmodId int, loader *StrainLoader) *StrainLoader {
-		if genmodId != 0 {
-			loader.Payload.GeneticModificationId = []int{genmodId}
+var genModIDHandler = F.Curry2(
+	func(genmodID int, loader *StrainLoader) *StrainLoader {
+		if genmodID != 0 {
+			loader.Payload.GeneticModificationID = []int{genmodID}
 		}
 
 		return loader
 	})
 
 var initialPayload = F.Curry2(
-	func(loader *StrainLoader, strn *strain.StrainAnnotation) *StrainLoader {
+	func(loader *StrainLoader, strn *strain.Annotation) *StrainLoader {
 		payload := &StrainPayload{
 			Descriptor: strn.Descriptor(),
 			Reference:  strn.Reference(),
@@ -66,8 +66,8 @@ var initialPayload = F.Curry2(
 		if strn.HasPlasmid() {
 			payload.Plasmid = strn.Plasmid()
 		}
-		if strn.HasParentId() {
-			payload.ParentId = strn.ParentId()
+		if strn.HasParentID() {
+			payload.ParentID = strn.ParentID()
 		}
 		if strn.HasGenes() {
 			payload.Genes = strn.Genes()
@@ -90,7 +90,7 @@ var creationTimeHandler = F.Curry2(
 	})
 
 var creationTime = F.Curry2(
-	func(createdOn time.Time, loader *StrainLoader) E.Either[error, time.Time] {
+	func(createdOn time.Time, _ *StrainLoader) E.Either[error, time.Time] {
 		return E.Right[error](createdOn)
 	})
 
@@ -98,11 +98,11 @@ func onStrainCreateFeedbackSuccess(
 	res common.CreateResp,
 ) httpapi.ResponseFeedback {
 	return httpapi.ResponseFeedback{
-		Msg: fmt.Sprintf("created strain with annotation id %s", res.AnnoId),
+		Msg: fmt.Sprintf("created strain with annotation id %s", res.AnnoID),
 	}
 }
 
-func assignedById(loader *StrainLoader) E.Either[error, int] {
+func assignedByID(loader *StrainLoader) E.Either[error, int] {
 	ok, aid, err := loader.WorkspaceManager.SearchWorkspaceUser(
 		loader.Workspace, loader.Annotation.AssignedBy(),
 	)
@@ -116,35 +116,35 @@ func assignedById(loader *StrainLoader) E.Either[error, int] {
 	return E.Right[error](aid)
 }
 
-func mutagenesisId(loader *StrainLoader) E.Either[error, int] {
-	mutId, err := loader.TableManager.SearchRows(
-		common.ProcessOntologyTermId(loader.Annotation.MutagenesisMethod()),
+func mutagenesisID(loader *StrainLoader) E.Either[error, int] {
+	mutID, err := loader.TableManager.SearchRows(
+		common.ProcessOntologyTermID(loader.Annotation.MutagenesisMethod()),
 		loader.OntologyTableMap["mutagenesis-method-ontology-table"],
 	)
 	if err != nil {
 		return E.Left[int](err)
 	}
 
-	return E.Right[error](mutId)
+	return E.Right[error](mutID)
 }
 
-func genmodId(loader *StrainLoader) E.Either[error, int] {
-	mutId, err := loader.TableManager.SearchRows(
-		common.ProcessOntologyTermId(loader.Annotation.GeneticModification()),
+func genmodID(loader *StrainLoader) E.Either[error, int] {
+	mutID, err := loader.TableManager.SearchRows(
+		common.ProcessOntologyTermID(loader.Annotation.GeneticModification()),
 		loader.OntologyTableMap["genetic-mod-ontology-table"],
 	)
 	if err != nil {
 		return E.Left[int](err)
 	}
 
-	return E.Right[error](mutId)
+	return E.Right[error](mutID)
 }
 
 func characteristicIDs(loader *StrainLoader) E.Either[error, []int] {
 	charIDs := make([]int, 0)
 	for _, charac := range strings.Split(loader.Annotation.Characteristic(), ",") {
 		cid, err := loader.TableManager.SearchRows(
-			common.ProcessOntologyTermId(charac),
+			common.ProcessOntologyTermID(charac),
 			loader.OntologyTableMap["strainchar-ontology-table"],
 		)
 		if err != nil {

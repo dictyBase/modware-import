@@ -17,7 +17,7 @@ var reqFlags = []string{
 	"s3-server-port",
 }
 
-func NewS3Client(cmd *cobra.Command) (*minio.Client, error) {
+func NewS3Client(_ *cobra.Command) (*minio.Client, error) {
 	for _, flag := range reqFlags {
 		if len(viper.GetString(flag)) == 0 {
 			return &minio.Client{}, fmt.Errorf(

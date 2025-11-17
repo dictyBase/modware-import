@@ -16,6 +16,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	bufferSizeMultiplier = 2 // Multiplier for buffer size
+)
+
 type Gene struct {
 	FeatureID int    `json:"feature_id"`
 	GeneID    string `json:"gene_id"`
@@ -109,8 +113,8 @@ func RunFeatureAnnotationLoader(cltx *cli.Context) error {
 	})
 
 	client := registry.GetFeatureAnnotationAPIClient()
-	pubmedFetchPool := setupPubmedFetchPool(config, mainCtx, client)
-	annotationCreatePool := setupAnnotationCreatePool(config, mainCtx, client)
+	pubmedFetchPool := setupPubmedFetchPool(mainCtx, config, client)
+	annotationCreatePool := setupAnnotationCreatePool(mainCtx, config, client)
 
 	wg.Add(1)
 	go func() {
@@ -233,8 +237,8 @@ func queryActiveGenesForAnnotation(
 }
 
 func setupPubmedFetchPool(
-	config FeatureAnnotationAppConfig,
 	mainCtx context.Context,
+	config FeatureAnnotationAppConfig,
 	grpcClient fanno.FeatureAnnotationServiceClient,
 ) *concurrent.Pool[Gene, GeneWithPubmed] {
 	pool := concurrent.NewPool(
@@ -242,7 +246,7 @@ func setupPubmedFetchPool(
 		concurrent.WithWorkers[Gene, GeneWithPubmed](config.NumPubmedWorkers),
 		concurrent.WithContext[Gene, GeneWithPubmed](mainCtx),
 		concurrent.WithBufferSize[Gene, GeneWithPubmed](
-			config.NumPubmedWorkers*2,
+			config.NumPubmedWorkers*bufferSizeMultiplier,
 		),
 	)
 	pool.Start()
@@ -250,8 +254,8 @@ func setupPubmedFetchPool(
 }
 
 func setupAnnotationCreatePool(
-	config FeatureAnnotationAppConfig,
 	mainCtx context.Context,
+	config FeatureAnnotationAppConfig,
 	grpcClient fanno.FeatureAnnotationServiceClient,
 ) *concurrent.Pool[GeneWithPubmed, GrpcAnnotationResult] {
 	pool := concurrent.NewPool(
@@ -261,7 +265,7 @@ func setupAnnotationCreatePool(
 		),
 		concurrent.WithContext[GeneWithPubmed, GrpcAnnotationResult](mainCtx),
 		concurrent.WithBufferSize[GeneWithPubmed, GrpcAnnotationResult](
-			config.NumGrpcWorkers*2,
+			config.NumGrpcWorkers*bufferSizeMultiplier,
 		),
 	)
 	pool.Start()

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/datasource/s3"
 	"github.com/dictyBase/modware-import/internal/logger"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -55,7 +56,7 @@ func RunDoc(cmd *cobra.Command) error {
 			return err
 		}
 		docDir := filepath.Join(dir, "docs")
-		if err := os.MkdirAll(docDir, 0o700); err != nil {
+		if err := os.MkdirAll(docDir, config.DefaultDirectoryPermission); err != nil {
 			return err
 		}
 		if err := doc.GenMarkdownTree(cmd, docDir); err != nil {

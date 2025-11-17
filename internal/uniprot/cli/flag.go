@@ -3,13 +3,24 @@ package cli
 import (
 	"fmt"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/urfave/cli/v2"
+)
+
+const (
+	uniprotBaseURL  = "https://rest.uniprot.org/uniprotkb/search?query="
+	uniprotFields   = "id,xref_dictybase"
+	uniprotFormat   = "json"
+	uniprotPageSize = 500
 )
 
 var uniprotURL = fmt.Sprintf(
 	"%sorganism_id:%d&fields=%s&format=%s&size=%d",
-	"https://rest.uniprot.org/uniprotkb/search?query=",
-	44689, "id,xref_dictybase", "json", 500,
+	uniprotBaseURL,
+	config.UniProtPort,
+	uniprotFields,
+	uniprotFormat,
+	uniprotPageSize,
 )
 
 func UniprotFlags() []cli.Flag {

@@ -13,7 +13,7 @@ var PhenoCmd = &cobra.Command{
 	Short: "load stockcenter phenotype data",
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadPheno,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PreRunE: func(_ *cobra.Command, _ []string) error {
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}

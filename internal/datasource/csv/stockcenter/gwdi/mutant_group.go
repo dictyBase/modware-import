@@ -10,16 +10,16 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/iterator"
 )
 
-type GWDIMutantReader interface {
+type MutantReader interface {
 	Next() bool
-	Value() (*GWDIStrain, error)
+	Value() (*Strain, error)
 }
 
 type groupItr struct {
 	itr iterator.Iterator
 }
 
-func NewGWDIMutantIterator(itr iterator.Iterator) GWDIMutantReader {
+func NewGWDIMutantIterator(itr iterator.Iterator) MutantReader {
 	return &groupItr{itr: itr}
 }
 
@@ -27,15 +27,15 @@ func (g *groupItr) Next() bool {
 	return g.itr.Next()
 }
 
-func (g *groupItr) Value() (*GWDIStrain, error) {
-	strain := &GWDIStrain{}
+func (g *groupItr) Value() (*Strain, error) {
+	strain := &Strain{}
 	if err := json.Unmarshal(g.itr.Value(), strain); err != nil {
 		return strain, fmt.Errorf("error in decoding value for strain group %s", err)
 	}
 	return strain, nil
 }
 
-type annoFn func(r []string) *GWDIStrain
+type annoFn func(r []string) *Strain
 
 // GWDI is for managing gwdi data
 type GWDI struct {
@@ -75,7 +75,7 @@ func NewGWDI(r io.Reader) (*GWDI, error) {
 	return g, nil
 }
 
-func (g *GWDI) MutantReader(group string) GWDIMutantReader {
+func (g *GWDI) MutantReader(group string) MutantReader {
 	return NewGWDIMutantIterator(g.listCache.IterateByPrefix([]byte(group)))
 }
 
@@ -180,26 +180,28 @@ func (g *GWDI) selectID(r string) (string, error) {
 }
 
 func inferGroup(r []string) string {
-	var group string
-	if r[6] == "intragenic" || r[6] == "NA" {
-		if r[4] == "1" {
-			group = fmt.Sprintf("%s_single", r[6])
-		} else {
-			group = fmt.Sprintf("%s_multiple", r[6])
+	mutationType := r[6]
+	isSingle := r[4] == "1"
+	isNone := r[7] == "none"
+
+	// Handle intragenic or NA mutations
+	if mutationType == "intragenic" || mutationType == "NA" {
+		if isSingle {
+			return fmt.Sprintf("%s_single", mutationType)
 		}
-	} else {
-		switch {
-		case r[7] == "none":
-			if r[4] == "1" {
-				group = fmt.Sprintf("%s_none_single", r[6])
-			} else {
-				group = fmt.Sprintf("%s_none_multiple", r[6])
-			}
-		case r[4] == "1":
-			group = fmt.Sprintf("%s_single", r[6])
-		default:
-			group = fmt.Sprintf("%s_multiple", r[6])
-		}
+		return fmt.Sprintf("%s_multiple", mutationType)
 	}
-	return group
+
+	// Handle other mutation types
+	if isNone {
+		if isSingle {
+			return fmt.Sprintf("%s_none_single", mutationType)
+		}
+		return fmt.Sprintf("%s_none_multiple", mutationType)
+	}
+
+	if isSingle {
+		return fmt.Sprintf("%s_single", mutationType)
+	}
+	return fmt.Sprintf("%s_multiple", mutationType)
 }

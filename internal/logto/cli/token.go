@@ -7,6 +7,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	exitCodeError = 2 // Standard CLI error exit code
+)
+
 func CreateAccessToken(cltx *cli.Context) error {
 	lclient := logto.NewClient(cltx.String("endpoint"))
 	aresp, err := lclient.AccessToken(
@@ -15,7 +19,7 @@ func CreateAccessToken(cltx *cli.Context) error {
 		cltx.String("api-resource"),
 	)
 	if err != nil {
-		return cli.Exit(err, 2)
+		return cli.Exit(err, exitCodeError)
 	}
 	fmt.Printf("access token %s\n", aresp.AccessToken)
 	return nil

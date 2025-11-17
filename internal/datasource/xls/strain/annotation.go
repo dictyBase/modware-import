@@ -1,12 +1,12 @@
 // Package strain provides structures and functions to work with
-// biological strain annotations. It defines the StrainAnnotation
+// biological strain annotations. It defines the Annotation
 // type which encapsulates various attributes related to a strain
 // such as its descriptor, species, genetic modifications, and
 // other metadata. The package allows checking the presence of
 // specific attributes and retrieving their values.
 package strain
 
-type StrainAnnotation struct {
+type Annotation struct {
 	descriptor          string `validate:"required"`
 	species             string `validate:"required"`
 	assignedBy          string `validate:"required"`
@@ -19,109 +19,109 @@ type StrainAnnotation struct {
 	name                string
 	systematicName      string
 	plasmid             string
-	parentId            string
+	parentID            string
 	genes               string
 	genotype            string
 	depositor           string
 	empty               bool
 }
 
-func (strain *StrainAnnotation) IsEmpty() bool {
+func (strain *Annotation) IsEmpty() bool {
 	return strain.empty
 }
 
-func (strain *StrainAnnotation) HasId() bool {
+func (strain *Annotation) HasID() bool {
 	return len(strain.id) > 0
 }
 
-func (strain *StrainAnnotation) Id() string {
+func (strain *Annotation) ID() string {
 	return strain.id
 }
 
-func (strain *StrainAnnotation) HasName() bool {
+func (strain *Annotation) HasName() bool {
 	return len(strain.name) > 0
 }
 
-func (strain *StrainAnnotation) Name() string {
+func (strain *Annotation) Name() string {
 	return strain.name
 }
 
-func (strain *StrainAnnotation) HasSystematicName() bool {
+func (strain *Annotation) HasSystematicName() bool {
 	return len(strain.systematicName) > 0
 }
 
-func (strain *StrainAnnotation) SystematicName() string {
+func (strain *Annotation) SystematicName() string {
 	return strain.systematicName
 }
 
-func (strain *StrainAnnotation) HasPlasmid() bool {
+func (strain *Annotation) HasPlasmid() bool {
 	return len(strain.plasmid) > 0
 }
 
-func (strain *StrainAnnotation) Plasmid() string {
+func (strain *Annotation) Plasmid() string {
 	return strain.plasmid
 }
 
-func (strain *StrainAnnotation) HasParentId() bool {
-	return len(strain.parentId) > 0
+func (strain *Annotation) HasParentID() bool {
+	return len(strain.parentID) > 0
 }
 
-func (strain *StrainAnnotation) ParentId() string {
-	return strain.parentId
+func (strain *Annotation) ParentID() string {
+	return strain.parentID
 }
 
-func (strain *StrainAnnotation) Descriptor() string {
+func (strain *Annotation) Descriptor() string {
 	return strain.descriptor
 }
 
-func (strain *StrainAnnotation) Species() string {
+func (strain *Annotation) Species() string {
 	return strain.species
 }
 
-func (strain *StrainAnnotation) AssignedBy() string {
+func (strain *Annotation) AssignedBy() string {
 	return strain.assignedBy
 }
 
-func (strain *StrainAnnotation) Reference() string {
+func (strain *Annotation) Reference() string {
 	return strain.reference
 }
 
-func (strain *StrainAnnotation) Summary() string {
+func (strain *Annotation) Summary() string {
 	return strain.summary
 }
 
-func (strain *StrainAnnotation) Characteristic() string {
+func (strain *Annotation) Characteristic() string {
 	return strain.characteristic
 }
 
-func (strain *StrainAnnotation) GeneticModification() string {
+func (strain *Annotation) GeneticModification() string {
 	return strain.geneticModification
 }
 
-func (strain *StrainAnnotation) MutagenesisMethod() string {
+func (strain *Annotation) MutagenesisMethod() string {
 	return strain.mutagenesisMethod
 }
 
-func (strain *StrainAnnotation) HasGenes() bool {
+func (strain *Annotation) HasGenes() bool {
 	return len(strain.genes) > 0
 }
 
-func (strain *StrainAnnotation) Genes() string {
+func (strain *Annotation) Genes() string {
 	return strain.genes
 }
 
-func (strain *StrainAnnotation) HasGenotype() bool {
+func (strain *Annotation) HasGenotype() bool {
 	return len(strain.genotype) > 0
 }
 
-func (strain *StrainAnnotation) Genotype() string {
+func (strain *Annotation) Genotype() string {
 	return strain.genotype
 }
 
-func (strain *StrainAnnotation) HasDepositor() bool {
+func (strain *Annotation) HasDepositor() bool {
 	return len(strain.depositor) > 0
 }
 
-func (strain *StrainAnnotation) Depositor() string {
+func (strain *Annotation) Depositor() string {
 	return strain.depositor
 }

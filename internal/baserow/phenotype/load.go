@@ -22,14 +22,14 @@ import (
 const ConcurrentPhenoLoader = 10
 
 type PhenotypePayload struct {
-	Id               []int               `json:"phenotype_id"`
+	ID               []int               `json:"phenotype_id"`
 	Reference        string              `json:"reference"`
 	CreatedOn        time.Time           `json:"created_on"`
 	AssignedBy       []common.AssignedBy `json:"assigned_by"`
-	StrainId         string              `json:"strain_id,omitempty"`
+	StrainID         string              `json:"strain_id,omitempty"`
 	StrainDescriptor string              `json:"strain_descriptor,omitempty"`
-	AssayId          []int               `json:"assay_id,omitempty"`
-	EnvironmentId    []int               `json:"environment_id,omitempty"`
+	AssayID          []int               `json:"assay_id,omitempty"`
+	EnvironmentID    []int               `json:"environment_id,omitempty"`
 	Deleted          bool                `json:"deleted,omitempty"`
 }
 
@@ -37,12 +37,12 @@ type PhenotypeLoader struct {
 	Workspace        string
 	Host             string
 	Token            string
-	TableId          int
+	TableID          int
 	OntologyTableMap map[string]int
 	Payload          *PhenotypePayload
 	Logger           *logrus.Entry
 	TableManager     *database.TableManager
-	Annotation       *phenotype.PhenotypeAnnotation
+	Annotation       *phenotype.Annotation
 	WorkspaceManager *database.WorkspaceManager
 }
 
@@ -50,12 +50,12 @@ type PhenotypeLoaderProperties struct {
 	Workspace        string
 	Host             string
 	Token            string
-	TableId          int
+	TableID          int
 	OntologyTableMap map[string]int
 	Payload          *PhenotypePayload
 	Logger           *logrus.Entry
 	TableManager     *database.TableManager
-	Annotation       *phenotype.PhenotypeAnnotation
+	Annotation       *phenotype.Annotation
 	WorkspaceManager *database.WorkspaceManager
 }
 
@@ -65,7 +65,7 @@ func NewPhenotypeLoader(props *PhenotypeLoaderProperties) *PhenotypeLoader {
 		Workspace:        props.Workspace,
 		Host:             props.Host,
 		Token:            props.Token,
-		TableId:          props.TableId,
+		TableID:          props.TableID,
 		Logger:           props.Logger,
 		OntologyTableMap: props.OntologyTableMap,
 		TableManager:     props.TableManager,
@@ -76,10 +76,10 @@ func NewPhenotypeLoader(props *PhenotypeLoaderProperties) *PhenotypeLoader {
 // Load processes the phenotype data from the given reader and loads them into the database.
 // It concurrently processes and loads data up to a set limit before waiting and continuing with the next batch.
 func (loader *PhenotypeLoader) Load(
-	reader *phenotype.PhenotypeAnnotationReader,
+	reader *phenotype.AnnotationReader,
 ) error {
 	tasks := make(
-		[]concurrent.TaskWrapper[*phenotype.PhenotypeAnnotation, string],
+		[]concurrent.TaskWrapper[*phenotype.Annotation, string],
 		0,
 		ConcurrentPhenoLoader,
 	)
@@ -93,7 +93,7 @@ func (loader *PhenotypeLoader) Load(
 		}
 		tasks = append(
 			tasks,
-			concurrent.TaskWrapper[*phenotype.PhenotypeAnnotation, string]{
+			concurrent.TaskWrapper[*phenotype.Annotation, string]{
 				TaskFunc: loader.addPhenotypeRow,
 				Input:    pheno,
 			},
@@ -115,13 +115,13 @@ func (loader *PhenotypeLoader) Load(
 }
 
 func (loader *PhenotypeLoader) addPheno(
-	pheno *phenotype.PhenotypeAnnotation,
+	pheno *phenotype.Annotation,
 ) E.Either[error, *PhenotypeLoader] {
 	newLoader := NewPhenotypeLoader(&PhenotypeLoaderProperties{
 		Host:             loader.Host,
 		Token:            loader.Token,
 		Workspace:        loader.Workspace,
-		TableId:          loader.TableId,
+		TableID:          loader.TableID,
 		Logger:           loader.Logger,
 		OntologyTableMap: loader.OntologyTableMap,
 		TableManager:     loader.TableManager,
@@ -132,17 +132,17 @@ func (loader *PhenotypeLoader) addPheno(
 }
 
 func (loader *PhenotypeLoader) addPhenotypeRow(
-	pheno *phenotype.PhenotypeAnnotation,
+	pheno *phenotype.Annotation,
 ) (string, error) {
 	var empty string
 	content := F.Pipe8(
 		E.Do[error](pheno),
 		E.Bind(initialPayload, loader.addPheno),
-		E.Bind(phenoIdHandler, phenotypeId),
-		E.Bind(assayIdHandler, assayId),
-		E.Bind(envIdHandler, environmentId),
-		E.Bind(assignedByIdHandler, assignedById),
-		E.Map[error, *PhenotypeLoader](loaderToPayload),
+		E.Bind(phenoIDHandler, phenotypeID),
+		E.Bind(assayIDHandler, assayID),
+		E.Bind(envIDHandler, environmentID),
+		E.Bind(assignedByIDHandler, assignedByID),
+		E.Map[error](loaderToPayload),
 		E.Chain[error, *PhenotypePayload](common.MarshalPayload),
 		E.Fold(httpapi.OnJSONPayloadError, httpapi.OnJSONPayloadSuccess),
 	)
@@ -170,6 +170,6 @@ func (loader *PhenotypeLoader) createPhenotypeURL() string {
 	return fmt.Sprintf(
 		"https://%s/api/database/rows/table/%d/?user_field_names=true",
 		loader.Host,
-		loader.TableId,
+		loader.TableID,
 	)
 }

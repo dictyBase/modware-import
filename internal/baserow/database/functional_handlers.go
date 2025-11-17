@@ -45,7 +45,7 @@ var (
 )
 
 type rowResp struct {
-	Id int32 `json:"id"`
+	ID int32 `json:"id"`
 }
 
 type listRowsResp struct {
@@ -56,8 +56,8 @@ type listRowsResp struct {
 }
 
 type tableFieldUpdateResponse struct {
-	Id      int `json:"id"`
-	TableId int `json:"table_id"`
+	ID      int `json:"id"`
+	TableID int `json:"table_id"`
 }
 
 type jsonPayload struct {
@@ -77,22 +77,22 @@ type fieldsReqFeedback struct {
 	Fields []tableFieldRes
 	Msg    string
 	Table  *client.Table
-	Id     int
+	ID     int
 }
 
 type tableFieldRes struct {
 	Name string `json:"name"`
-	Id   int    `json:"id"`
+	ID   int    `json:"id"`
 }
 
 type WorkspaceResp struct {
 	Name  string              `json:"name"`
-	Id    int                 `json:"id"`
+	ID    int                 `json:"id"`
 	Users []WorkspaceUserResp `json:"users"`
 }
 
 type WorkspaceUserResp struct {
-	Id    int    `json:"user_id"`
+	ID    int    `json:"user_id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
@@ -112,7 +112,7 @@ func uncurriedSearchUser(email string, wrsp WorkspaceResp) int {
 	return F.Pipe3(
 		wrsp.Users,
 		A.FindFirst(HasUser(email)),
-		O.Map(func(user WorkspaceUserResp) int { return user.Id }),
+		O.Map(func(user WorkspaceUserResp) int { return user.ID }),
 		O.GetOrElse(F.Constant(0)),
 	)
 }
@@ -130,14 +130,14 @@ func uncurriedHasUser(email string, ursp WorkspaceUserResp) bool {
 }
 
 func onTableCreateFeedbackSuccess(res tableFieldRes) fieldsReqFeedback {
-	if res.Id < math.MinInt32 || res.Id > math.MaxInt32 {
+	if res.ID < math.MinInt32 || res.ID > math.MaxInt32 {
 		return fieldsReqFeedback{
-			Error: fmt.Errorf("table ID %d from response is out of int32 range", res.Id),
+			Error: fmt.Errorf("table ID %d from response is out of int32 range", res.ID),
 		}
 	}
 	return fieldsReqFeedback{
 		Table: &client.Table{
-			Id:   int32(res.Id),
+			Id:   int32(res.ID),
 			Name: res.Name,
 		},
 	}
@@ -152,17 +152,17 @@ func onFieldsReqFeedbackSuccess(resp []tableFieldRes) fieldsReqFeedback {
 }
 
 func onListRowsReqFeedbackSuccess(resp listRowsResp) fieldsReqFeedback {
-	return fieldsReqFeedback{Id: int(resp.Results[0].Id)}
+	return fieldsReqFeedback{ID: int(resp.Results[0].ID)}
 }
 
 func onFieldDelReqFeedbackSuccess(
-	resp tableFieldDelResponse,
+	_ tableFieldDelResponse,
 ) fieldsReqFeedback {
 	return fieldsReqFeedback{Msg: "deleted field"}
 }
 
 func onFieldUpdateReqFeedbackSuccess(
-	resp tableFieldUpdateResponse,
+	_ tableFieldUpdateResponse,
 ) fieldsReqFeedback {
 	return fieldsReqFeedback{Msg: "updated field"}
 }
@@ -194,7 +194,7 @@ func uncurriedResToReqTableWithParams(
 	return tableFieldReq{
 		tableFieldRes: tableFieldRes{
 			Name: req.Name,
-			Id:   req.Id,
+			ID:   req.ID,
 		},
 		Params: params,
 	}
@@ -204,7 +204,7 @@ func ResToReqTable(req tableFieldRes) tableFieldReq {
 	return tableFieldReq{
 		tableFieldRes: tableFieldRes{
 			Name: req.Name,
-			Id:   req.Id,
+			ID:   req.ID,
 		},
 	}
 }
@@ -226,7 +226,7 @@ func uncurriedOnTablesReqFeedbackSuccess(
 				}
 			},
 			func(ores tableFieldRes) fieldsReqFeedback {
-				return fieldsReqFeedback{Id: ores.Id}
+				return fieldsReqFeedback{ID: ores.ID}
 			},
 		),
 	)

@@ -22,7 +22,7 @@ var StrainCmd = &cobra.Command{
 	PreRunE: setStrainPreRun,
 }
 
-func setStrainPreRun(cmd *cobra.Command, args []string) error {
+func setStrainPreRun(_ *cobra.Command, _ []string) error {
 	if err := SetStrainAPIClient(); err != nil {
 		return err
 	}

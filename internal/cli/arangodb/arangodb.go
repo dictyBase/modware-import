@@ -1,6 +1,7 @@
 package arangodb
 
 import (
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,7 +39,7 @@ func arangodbFlags() {
 	)
 	ArangodbCmd.PersistentFlags().Int(
 		"arangodb-port",
-		8529,
+		config.DefaultArangoDBPort,
 		"arangodb database port",
 	)
 	ArangodbCmd.PersistentFlags().Bool(

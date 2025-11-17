@@ -4,7 +4,7 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 )
 
-func ArangoSecManifest(namespace string) []apiv1.EnvVar {
+func ArangoSecManifest(_ string) []apiv1.EnvVar {
 	return []apiv1.EnvVar{
 		{
 			Name: "ARANGODB_PASS",
@@ -20,7 +20,7 @@ func ArangoSecManifest(namespace string) []apiv1.EnvVar {
 	}
 }
 
-func ArangoConfigManifest(namespace string) []apiv1.EnvVar {
+func ArangoConfigManifest(_ string) []apiv1.EnvVar {
 	return []apiv1.EnvVar{
 		{
 			Name: "ARANGODB_USER",

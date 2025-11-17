@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	logto "github.com/dictyBase/modware-import/internal/logto/client"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/jellydator/ttlcache/v3"
@@ -40,7 +41,7 @@ func FixedLenRandomInt(length int) string {
 	num := []byte("123456789")
 	byt := make([]byte, 0)
 	alen := len(num)
-	for i := 0; i < length; i++ {
+	for idx := 0; idx < length; idx++ {
 		pos, _ := RandomInt(alen)
 		byt = append(byt, num[pos])
 	}
@@ -55,7 +56,7 @@ func FixedLenRandomString(length int) string {
 	)
 	byt := make([]byte, 0)
 	alen := len(alphanum)
-	for i := 0; i < length; i++ {
+	for idx := 0; idx < length; idx++ {
 		pos, _ := RandomInt(alen)
 		byt = append(byt, alphanum[pos])
 	}
@@ -88,7 +89,7 @@ func retrieveToken(args *retrieveTokenProperties) (string, error) {
 	if err != nil {
 		return item.Value(), err
 	}
-	dur, err := time.ParseDuration(fmt.Sprintf("%ds", aresp.ExpiresIn-1000))
+	dur, err := time.ParseDuration(fmt.Sprintf("%ds", aresp.ExpiresIn-config.DefaultMaxResults))
 	if err != nil {
 		return item.Value(), fmt.Errorf(
 			"error in parsing duration %d",
@@ -116,7 +117,7 @@ func ImportUser(cltx *cli.Context) error {
 			}
 			return cli.Exit(
 				fmt.Sprintf("error in reading csv record %s", err),
-				2,
+				config.DefaultRetryBackoffFactor,
 			)
 		}
 		if !header {
@@ -129,7 +130,7 @@ func ImportUser(cltx *cli.Context) error {
 		}
 		err = processCSVRecord(record, lclient, logger, cltx, tcache)
 		if err != nil {
-			return cli.Exit(err.Error(), 2)
+			return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 		}
 	}
 
@@ -139,17 +140,15 @@ func ImportUser(cltx *cli.Context) error {
 func addCustomUserInformation(
 	lclient *logto.Client,
 	token string,
-	userId string,
+	userID string,
 	record []string,
 ) error {
-	isSubscribed := false
-	if record[15] == "Y" {
-		isSubscribed = true
-	}
-	// Call lclient.AddCustomUserInformation with provided token, userId, and custom data
+	isSubscribed := record[15] == "Y"
+
+	// Call lclient.AddCustomUserInformation with provided token, userID, and custom data
 	err := lclient.AddCustomUserInformation(
 		token,
-		userId,
+		userID,
 		&logto.APIUsersPatchCustomData{
 			CustomData: logto.AdditionalUserInformation{
 				Profession:       record[5],
@@ -178,18 +177,18 @@ func createUser(
 	record []string,
 	normUser string,
 ) (string, error) {
-	userId, err := lclient.CreateUser(
+	userID, err := lclient.CreateUser(
 		token,
 		&logto.APIUsersPostReq{
 			PrimaryEmail: record[0],
 			Username:     normUser,
 			Name:         fmt.Sprintf("%s %s", record[2], record[3]),
-			PrimaryPhone: FixedLenRandomInt(10),
-			Password:     FixedLenRandomString(80),
+			PrimaryPhone: FixedLenRandomInt(config.DefaultPageSize),
+			Password:     FixedLenRandomString(config.DefaultLineWidth),
 		},
 	)
 
-	return userId, err
+	return userID, err
 }
 
 func processCSVRecord(
@@ -238,19 +237,19 @@ func processCSVRecord(
 		return nil
 	}
 	logger.Debugf("username %s does not exist, going to create", record[0])
-	userId, err := createUser(lclient, token, record, normUser)
+	userID, err := createUser(lclient, token, record, normUser)
 	if err != nil {
 		return fmt.Errorf("error in creating user %s %s", record[0], err)
 	}
-	logger.Infof("created user with email %s id %s\n", record[0], userId)
-	err = addCustomUserInformation(lclient, token, userId, record)
+	logger.Infof("created user with email %s id %s\n", record[0], userID)
+	err = addCustomUserInformation(lclient, token, userID, record)
 	if err != nil {
 		return err
 	}
 	logger.Debugf(
 		"created custom data for user with email %s id %s\n",
 		record[0],
-		userId,
+		userID,
 	)
 
 	return nil

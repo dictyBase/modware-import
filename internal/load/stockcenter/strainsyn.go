@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
@@ -15,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
+func LoadStrainSynProp(_ *cobra.Command, _ []string) error {
 	pr := stockcenter.NewTsvStockPropReader(
 		registry.GetReader(regs.StrainSynReader),
 	)
@@ -49,7 +50,7 @@ func readStrainSynonyms(
 		if prop.Property != synTag {
 			continue
 		}
-		synMap[prop.Id] = append(synMap[prop.Id], prop)
+		synMap[prop.ID] = append(synMap[prop.ID], prop)
 	}
 	return synMap, nil
 }
@@ -60,11 +61,11 @@ func processSynonyms(
 	logger *logrus.Entry,
 ) (int, error) {
 	pcount := 0
-	for entryId, props := range synMap {
-		if err := removeExistingSynonyms(entryId, client, logger); err != nil {
+	for entryID, props := range synMap {
+		if err := removeExistingSynonyms(entryID, client, logger); err != nil {
 			return pcount, err
 		}
-		if err := reloadSynonyms(entryId, props, client, logger); err != nil {
+		if err := reloadSynonyms(entryID, props, client, logger); err != nil {
 			return pcount, err
 		}
 		pcount++
@@ -73,42 +74,42 @@ func processSynonyms(
 }
 
 func removeExistingSynonyms(
-	entryId string,
+	entryID string,
 	client annotation.TaggedAnnotationServiceClient,
 	logger *logrus.Entry,
 ) error {
 	tac, err := client.ListAnnotations(getContext(), &annotation.ListParameters{
-		Limit:  20,
-		Filter: buildFilter(entryId),
+		Limit:  config.DefaultCSVWorkerPoolSize,
+		Filter: buildFilter(entryID),
 	})
 	if err != nil && status.Code(err) != codes.NotFound {
-		return fmt.Errorf("error in listing synonyms for %s %s", entryId, err)
+		return fmt.Errorf("error in listing synonyms for %s %s", entryID, err)
 	}
 	if tac == nil {
-		logger.Debugf("synonym %s is absent, no need to remove it", entryId)
+		logger.Debugf("synonym %s is absent, no need to remove it", entryID)
 		return nil
 	}
 	for _, ta := range tac.Data {
 		if err := deleteAnnotation(ta.Id, client); err != nil {
 			return fmt.Errorf(
 				"unable to remove synonyms for %s %s",
-				entryId,
+				entryID,
 				err,
 			)
 		}
 	}
-	logger.Debugf("removed %d synonyms for id %s", len(tac.Data), entryId)
+	logger.Debugf("removed %d synonyms for id %s", len(tac.Data), entryID)
 	return nil
 }
 
 func deleteAnnotation(
-	annotationId string,
+	annotationID string,
 	client annotation.TaggedAnnotationServiceClient,
 ) error {
 	_, err := client.DeleteAnnotation(
 		getContext(),
 		&annotation.DeleteAnnotationRequest{
-			Id:    annotationId,
+			Id:    annotationID,
 			Purge: true,
 		},
 	)
@@ -116,27 +117,27 @@ func deleteAnnotation(
 }
 
 func reloadSynonyms(
-	entryId string,
+	entryID string,
 	props []*stockcenter.StockProp,
 	client annotation.TaggedAnnotationServiceClient,
 	logger *logrus.Entry,
 ) error {
 	for i, p := range props {
-		if err := createAnnotation(entryId, i, p, client); err != nil {
+		if err := createAnnotation(entryID, i, p, client); err != nil {
 			return fmt.Errorf(
 				"unable to load synonym %s for %s %s",
 				p.Value,
-				entryId,
+				entryID,
 				err,
 			)
 		}
 	}
-	logger.Debugf("loaded all %d synonyms for %s", len(props), entryId)
+	logger.Debugf("loaded all %d synonyms for %s", len(props), entryID)
 	return nil
 }
 
 func createAnnotation(
-	entryId string,
+	entryID string,
 	index int,
 	prop *stockcenter.StockProp,
 	client annotation.TaggedAnnotationServiceClient,
@@ -149,7 +150,7 @@ func createAnnotation(
 					Value:     prop.Value,
 					CreatedBy: regs.DefaultUser,
 					Tag:       synTag,
-					EntryId:   entryId,
+					EntryId:   entryID,
 					Ontology:  regs.DictyAnnoOntology,
 					Rank:      int64(index),
 				},
@@ -159,10 +160,10 @@ func createAnnotation(
 	return err
 }
 
-func buildFilter(entryId string) string {
+func buildFilter(entryID string) string {
 	return fmt.Sprintf(
 		"entry_id===%s;tag===%s;ontology===%s",
-		entryId, synTag, regs.DictyAnnoOntology,
+		entryID, synTag, regs.DictyAnnoOntology,
 	)
 }
 

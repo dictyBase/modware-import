@@ -20,6 +20,12 @@ import (
 	F "github.com/IBM/fp-go/function"
 )
 
+const (
+	// File name parsing constants
+	phenoFileNameDateFieldCount  = 2 // Number of date fields in phenotype file names
+	strainFileNameDateFieldCount = 3 // Number of date fields in strain file names
+)
+
 var (
 	Split = F.Curry2(
 		F.Bind2nd[string, string, []string],
@@ -52,7 +58,7 @@ func parsePhenoFileName(file string) (time.Time, error) {
 		A.Head,
 		O.GetOrElse(F.Constant("")),
 		Split("_"),
-		A.SliceRight[string](2),
+		A.SliceRight[string](phenoFileNameDateFieldCount),
 		S.Join(":"),
 	)
 	if len(output) == 0 {
@@ -91,7 +97,7 @@ func parseStrainFileName(file string) (time.Time, error) {
 		A.Head,
 		O.GetOrElse(F.Constant("")),
 		Split("-"),
-		A.SliceRight[string](3),
+		A.SliceRight[string](strainFileNameDateFieldCount),
 		S.Join(":"),
 	)
 	if len(output) == 0 {

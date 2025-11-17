@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/minio/minio-go/v6"
@@ -21,8 +22,8 @@ var ReadFileCmd = &cobra.Command{
 	PreRunE: setReadFilePreRun,
 }
 
-// LoadReadFile reads at least first 10 lines of the file
-func LoadReadFile(cmd *cobra.Command, args []string) error {
+// LoadReadFile reads at least first config.DefaultPageSize lines of the file
+func LoadReadFile(_ *cobra.Command, _ []string) error {
 	r := registry.GetReader(regsc.ReadfileReader)
 	logger := registry.GetLogger()
 	scanner := bufio.NewScanner(r)
@@ -30,7 +31,7 @@ func LoadReadFile(cmd *cobra.Command, args []string) error {
 	for scanner.Scan() {
 		logger.Info(scanner.Text())
 		count++
-		if count > 10 {
+		if count > config.DefaultPageSize {
 			break
 		}
 	}
@@ -40,7 +41,7 @@ func LoadReadFile(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func setReadFilePreRun(cmd *cobra.Command, args []string) error {
+func setReadFilePreRun(_ *cobra.Command, _ []string) error {
 	if err := setReadFileInputReader(); err != nil {
 		return err
 	}

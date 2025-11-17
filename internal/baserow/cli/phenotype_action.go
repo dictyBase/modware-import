@@ -14,12 +14,16 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	exitCodeError = 2 // Standard CLI error exit code
+)
+
 func CreatePhenoTableHandler(cltx *cli.Context) error {
 	token := cltx.String("token")
 	if len(token) == 0 {
 		rtoken, err := refreshToken(cltx)
 		if err != nil {
-			return cli.Exit(err.Error(), 2)
+			return cli.Exit(err.Error(), exitCodeError)
 		}
 		token = rtoken
 	}
@@ -31,7 +35,10 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 	logger := registry.GetLogger()
 	databaseIDVal := cltx.Int("database-id")
 	if databaseIDVal > math.MaxInt32 || databaseIDVal < math.MinInt32 {
-		return cli.Exit(fmt.Sprintf("value %d for --database-id is out of int32 range", databaseIDVal), 2)
+		return cli.Exit(
+			fmt.Sprintf("value %d for --database-id is out of int32 range", databaseIDVal),
+			exitCodeError,
+		)
 	}
 	phenoTbl := &database.PhenotypeTableManager{
 		TableManager: &database.TableManager{
@@ -39,13 +46,13 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 			Logger:     logger,
 			Ctx:        authCtx,
 			Token:      token,
-			DatabaseId: int32(databaseIDVal),
+			DatabaseID: int32(databaseIDVal),
 		},
 	}
 	name := cltx.String("table")
 	tbl, err := phenoTbl.CreateTable(name, phenoTbl.FieldNames())
 	if err != nil {
-		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+		return cli.Exit(fmt.Sprintf("error in creating table %s", err), exitCodeError)
 	}
 	logger.Infof("created table with fields %s", tbl.GetName())
 	flagNames := []string{
@@ -53,18 +60,18 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 		"phenotype-ontology-table",
 		"env-ontology-table",
 	}
-	tableIdMaps, err := allTableIDs(phenoTbl.TableManager, flagNames, cltx)
+	tableIDMaps, err := allTableIDs(phenoTbl.TableManager, flagNames, cltx)
 	if err != nil {
-		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
+		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), exitCodeError)
 	}
 	fieldDefs := []map[string]map[string]interface{}{
-		phenoTbl.LinkFieldChangeSpecs(tableIdMaps),
+		phenoTbl.LinkFieldChangeSpecs(tableIDMaps),
 		phenoTbl.FieldChangeSpecs(),
 	}
 	for _, def := range fieldDefs {
 		err := updateFieldDefs(phenoTbl.TableManager, def, tbl, logger)
 		if err != nil {
-			cli.Exit(err.Error(), 2)
+			cli.Exit(err.Error(), exitCodeError)
 		}
 	}
 	return nil
@@ -73,7 +80,7 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 func LoadPhenoAnnotationToTable(cltx *cli.Context) error {
 	err := processPhenoFile(cltx.String("input"), cltx)
 	if err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), exitCodeError)
 	}
 	return nil
 }
@@ -81,11 +88,11 @@ func LoadPhenoAnnotationToTable(cltx *cli.Context) error {
 func LoadPhenoAnnotationFromFolderToTable(cltx *cli.Context) error {
 	files, err := listPhenoFiles(cltx.String("folder"))
 	if err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), exitCodeError)
 	}
 	for _, rec := range files {
 		if err := processPhenoFile(rec, cltx); err != nil {
-			return cli.Exit(err.Error(), 2)
+			return cli.Exit(err.Error(), exitCodeError)
 		}
 	}
 	return nil
@@ -97,7 +104,7 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	reader, err := phenoReader.NewPhenotypeAnnotationReader(
+	reader, err := phenoReader.NewAnnotationReader(
 		filePath,
 		cltx.String("sheet"),
 		createdOn,
@@ -120,16 +127,20 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 	client := database.BaserowClient(cltx.String("server"))
 	databaseIDVal := cltx.Int("database-id")
 	if databaseIDVal > math.MaxInt32 || databaseIDVal < math.MinInt32 {
-		return fmt.Errorf("value %d for --database-id is out of int32 range: %d", databaseIDVal, databaseIDVal)
+		return fmt.Errorf(
+			"value %d for --database-id is out of int32 range: %d",
+			databaseIDVal,
+			databaseIDVal,
+		)
 	}
 	tbm := &database.TableManager{
 		Client:     client,
-		DatabaseId: int32(databaseIDVal),
+		DatabaseID: int32(databaseIDVal),
 		Logger:     logger,
 		Ctx:        authCtx,
 		Token:      token,
 	}
-	tableIdMaps, err := allTableIDs(
+	tableIDMaps, err := allTableIDs(
 		tbm,
 		flagNamesHandler(phenoOntologyTableFlags()),
 		cltx,
@@ -145,10 +156,10 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 	loader := phenotype.NewPhenotypeLoader(&phenotype.PhenotypeLoaderProperties{
 		Host:             cltx.String("server"),
 		Workspace:        cltx.String("workspace"),
-		TableId:          cltx.Int("table-id"),
+		TableID:          cltx.Int("table-id"),
 		Token:            token,
 		Logger:           logger,
-		OntologyTableMap: tableIdMaps,
+		OntologyTableMap: tableIDMaps,
 		TableManager:     tbm,
 		WorkspaceManager: wkm,
 	})

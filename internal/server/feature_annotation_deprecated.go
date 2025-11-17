@@ -20,9 +20,10 @@ import (
 // - Instead of RemoveTag, use RemoveTags
 
 // UpdateTag updates an existing tag in a feature annotation
+//
 // Deprecated: Use SetTags or AddTags instead
 func (s *FeatureAnnotationServer) UpdateTag(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.UpdateTagRequest, //nolint:staticcheck // SA1019: deprecated but maintained for backward compatibility
 ) (*feature.FeatureAnnotation, error) {
 	s.logger.WithFields(logrus.Fields{
@@ -55,7 +56,9 @@ func (s *FeatureAnnotationServer) UpdateTag(
 	}
 
 	// Return updated annotation
-	annotation, err := s.storage.GetByID(req.Id) //nolint:staticcheck // SA1019: deprecated field access
+	annotation, err := s.storage.GetByID(
+		req.Id,
+	) //nolint:staticcheck // SA1019: deprecated field access
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +72,10 @@ func (s *FeatureAnnotationServer) UpdateTag(
 }
 
 // RemoveTag removes a tag from a feature annotation
+//
 // Deprecated: Use RemoveTags instead
 func (s *FeatureAnnotationServer) RemoveTag(
-	ctx context.Context,
+	_ context.Context,
 	req *feature.RemoveTagRequest, //nolint:staticcheck // SA1019: deprecated but maintained for backward compatibility
 ) (*feature.FeatureAnnotation, error) {
 	s.logger.WithFields(logrus.Fields{
@@ -96,7 +100,9 @@ func (s *FeatureAnnotationServer) RemoveTag(
 	}
 
 	// Return updated annotation
-	annotation, err := s.storage.GetByID(req.Id) //nolint:staticcheck // SA1019: deprecated field access
+	annotation, err := s.storage.GetByID(
+		req.Id,
+	) //nolint:staticcheck // SA1019: deprecated field access
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +116,7 @@ func (s *FeatureAnnotationServer) RemoveTag(
 }
 
 // validateUpdateTagRequest validates the deprecated UpdateTagRequest
+//
 // Deprecated: Used only by the deprecated UpdateTag method
 //
 //nolint:staticcheck // SA1019: deprecated but maintained for backward compatibility
@@ -142,6 +149,7 @@ func (s *FeatureAnnotationServer) validateUpdateTagRequest(req *feature.UpdateTa
 }
 
 // isValidEmail validates email format for deprecated methods
+//
 // Deprecated: Used only by deprecated validation functions
 func isValidEmail(email string) bool {
 	emailRegex := regexp.MustCompile(

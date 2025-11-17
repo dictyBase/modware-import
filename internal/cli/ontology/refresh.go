@@ -19,7 +19,7 @@ var RefreshCmd = &cobra.Command{
 	Use:   "refresh",
 	Short: "updates ontologies in S3 storage",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		dir, err := git.CloneRepo(
 			viper.GetString("repository"),
 			viper.GetString("branch"),

@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadStrainProp(cmd *cobra.Command, args []string) error {
+func LoadStrainProp(_ *cobra.Command, _ []string) error {
 	pr := stockcenter.NewTsvStockPropReader(registry.GetReader(regs.StrainpropReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger()
@@ -40,7 +40,7 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 		_, err = findOrCreateAnno(&createAnnoArgs{
 			client:   client,
 			ontology: onto,
-			id:       prop.Id,
+			id:       prop.ID,
 			value:    prop.Value,
 			tag:      prop.Property,
 		})
@@ -48,7 +48,7 @@ func LoadStrainProp(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		logger.Debugf("loaded strain %s property with prop %s and value %s",
-			prop.Id, prop.Property, prop.Value,
+			prop.ID, prop.Property, prop.Value,
 		)
 		pcount++
 	}

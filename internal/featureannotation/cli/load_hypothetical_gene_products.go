@@ -17,8 +17,8 @@ import (
 	"github.com/IBM/fp-go/ioeither/file"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/string"
-	feature "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/feature_annotation"
+	"github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc/codes"
@@ -136,14 +136,14 @@ type GeneProcessingAction int
 // LoadHypotheticalGeneProductsParams holds parameters for loading hypothetical gene products
 type LoadHypotheticalGeneProductsParams struct {
 	User   string
-	Client feature.FeatureAnnotationServiceClient
+	Client pb.FeatureAnnotationServiceClient
 }
 
 // ProcessingConfig holds immutable configuration for processing gene IDs
 type ProcessingConfig struct {
 	GeneIDs []string
 	User    string
-	Client  feature.FeatureAnnotationServiceClient
+	Client  pb.FeatureAnnotationServiceClient
 }
 
 // GeneProcessingResult represents successful processing of a single gene
@@ -429,7 +429,7 @@ func LoadHypotheticalGeneProducts(c *cli.Context) error {
 			),
 			IOE.Map[error](aggregateResults),
 		),
-		toEither[ProcessingStats],
+		fputil.ToEither[error, ProcessingStats],
 		elog("Hypothetical gene products loading result"),
 		E.Fold(
 			fperrors.IdentityError,
@@ -454,11 +454,4 @@ func returnSkippedAction(
 	*pb.TagProperty,
 ) IOE.IOEither[error, GeneProcessingAction] {
 	return IOE.Of[error](GeneSkipped)
-}
-
-// toEither executes an IOEither to get an Either result
-func toEither[A any](
-	ioe IOE.IOEither[error, A],
-) E.Either[error, A] {
-	return ioe()
 }

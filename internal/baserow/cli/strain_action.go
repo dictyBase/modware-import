@@ -14,23 +14,23 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func LoadStrainAnnotationFromFolderToTable(cltx *cli.Context) error {
+func LoadAnnotationFromFolderToTable(cltx *cli.Context) error {
 	files, err := listStrainFiles(cltx.String("folder"))
 	if err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), exitCodeError)
 	}
 	for _, rec := range files {
 		if err := processStrainFile(rec, cltx); err != nil {
-			return cli.Exit(err.Error(), 2)
+			return cli.Exit(err.Error(), exitCodeError)
 		}
 	}
 	return nil
 }
 
-func LoadStrainAnnotationToTable(cltx *cli.Context) error {
+func LoadAnnotationToTable(cltx *cli.Context) error {
 	err := processStrainFile(cltx.String("input"), cltx)
 	if err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), exitCodeError)
 	}
 	return nil
 }
@@ -41,7 +41,7 @@ func processStrainFile(filePath string, cltx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	reader, err := strainReader.NewStrainAnnotationReader(
+	reader, err := strainReader.NewAnnotationReader(
 		filePath,
 		cltx.String("sheet"),
 		createdOn,
@@ -71,12 +71,12 @@ func processStrainFile(filePath string, cltx *cli.Context) error {
 	}
 	tbm := &database.TableManager{
 		Client:     client,
-		DatabaseId: int32(databaseIDVal),
+		DatabaseID: int32(databaseIDVal),
 		Logger:     logger,
 		Ctx:        authCtx,
 		Token:      token,
 	}
-	tableIdMaps, err := allTableIDs(
+	tableIDMaps, err := allTableIDs(
 		tbm,
 		flagNamesHandler(strainOntologyTableFlags()),
 		cltx,
@@ -95,7 +95,7 @@ func processStrainFile(filePath string, cltx *cli.Context) error {
 		cltx.String("workspace"),
 		cltx.Int("table-id"),
 		logger,
-		tableIdMaps,
+		tableIDMaps,
 		tbm,
 		wkm,
 	)
@@ -112,7 +112,7 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 	if len(token) == 0 {
 		rtoken, err := refreshToken(cltx)
 		if err != nil {
-			return cli.Exit(err.Error(), 2)
+			return cli.Exit(err.Error(), exitCodeError)
 		}
 		token = rtoken
 	}
@@ -136,32 +136,32 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 				"value %d for --database-id is out of int32 range",
 				databaseIDVal,
 			),
-			2,
+			exitCodeError,
 		)
 	}
-	strainTbl.TableManager.DatabaseId = int32(databaseIDVal)
+	strainTbl.DatabaseID = int32(databaseIDVal)
 	name := cltx.String("table")
 	tbl, err := strainTbl.CreateTable(name, strainTbl.FieldNames())
 	if err != nil {
-		return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+		return cli.Exit(fmt.Sprintf("error in creating table %s", err), exitCodeError)
 	}
 	logger.Infof("created table with fields %s", tbl.GetName())
-	tableIdMaps, err := allTableIDs(
+	tableIDMaps, err := allTableIDs(
 		strainTbl.TableManager,
 		flagNamesHandler(strainOntologyTableFlags()),
 		cltx,
 	)
 	if err != nil {
-		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), 2)
+		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), exitCodeError)
 	}
 	fieldDefs := []map[string]map[string]interface{}{
-		strainTbl.LinkFieldChangeSpecs(tableIdMaps),
+		strainTbl.LinkFieldChangeSpecs(tableIDMaps),
 		strainTbl.FieldChangeSpecs(),
 	}
 	for _, def := range fieldDefs {
 		err := updateFieldDefs(strainTbl.TableManager, def, tbl, logger)
 		if err != nil {
-			cli.Exit(err.Error(), 2)
+			cli.Exit(err.Error(), exitCodeError)
 		}
 	}
 	return nil

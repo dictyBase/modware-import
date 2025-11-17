@@ -24,10 +24,10 @@ var LoadCmd = &cobra.Command{
 	Use:   "load",
 	Short: "load obojson formatted ontologies to arangodb",
 	Args:  cobra.NoArgs,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		return setOboReaders(cmd)
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		dsa, err := araobo.NewDataSource(ConnectParams(), CollectParams())
 		if err != nil {
 			return errors.Errorf("error in connecting to arangodb %s", err)

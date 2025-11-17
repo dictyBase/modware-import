@@ -6,74 +6,74 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAssayId(t *testing.T) {
-	annotation := PhenotypeAnnotation{assayId: "A123"}
-	assert.Equal(t, "A123", annotation.AssayId())
+func TestAssayID(t *testing.T) {
+	annotation := Annotation{assayID: "A123"}
+	assert.Equal(t, "A123", annotation.AssayID())
 }
 
-func TestHasAssayId(t *testing.T) {
-	annotationWithId := PhenotypeAnnotation{assayId: "DDASSAY_4893439"}
-	annotationWithoutId := PhenotypeAnnotation{}
-	assert.True(t, annotationWithId.HasAssayId())
-	assert.False(t, annotationWithoutId.HasAssayId())
+func TestHasAssayID(t *testing.T) {
+	annotationWithID := Annotation{assayID: "DDASSAY_4893439"}
+	annotationWithoutID := Annotation{}
+	assert.True(t, annotationWithID.HasAssayID())
+	assert.False(t, annotationWithoutID.HasAssayID())
 }
 
-func TestEnvironmentId(t *testing.T) {
-	annotation := PhenotypeAnnotation{environmentId: "E123"}
-	assert.Equal(t, "E123", annotation.EnvironmentId())
+func TestEnvironmentID(t *testing.T) {
+	annotation := Annotation{environmentID: "E123"}
+	assert.Equal(t, "E123", annotation.EnvironmentID())
 }
 
-func TestHasEnvironmentId(t *testing.T) {
-	annotationWithId := PhenotypeAnnotation{environmentId: "E123"}
-	annotationWithoutId := PhenotypeAnnotation{}
-	assert.True(t, annotationWithId.HasEnvironmentId())
-	assert.False(t, annotationWithoutId.HasEnvironmentId())
+func TestHasEnvironmentID(t *testing.T) {
+	annotationWithID := Annotation{environmentID: "E123"}
+	annotationWithoutID := Annotation{}
+	assert.True(t, annotationWithID.HasEnvironmentID())
+	assert.False(t, annotationWithoutID.HasEnvironmentID())
 }
 
 func TestNotes(t *testing.T) {
-	annotation := PhenotypeAnnotation{notes: "This is a note."}
+	annotation := Annotation{notes: "This is a note."}
 	assert.Equal(t, "This is a note.", annotation.Notes())
 }
 
 func TestHasNotes(t *testing.T) {
-	annotationWithNotes := PhenotypeAnnotation{notes: "This is a note."}
-	annotationWithoutNotes := PhenotypeAnnotation{}
+	annotationWithNotes := Annotation{notes: "This is a note."}
+	annotationWithoutNotes := Annotation{}
 	assert.True(t, annotationWithNotes.HasNotes())
 	assert.False(t, annotationWithoutNotes.HasNotes())
 }
 
 func TestReference(t *testing.T) {
-	annotation := PhenotypeAnnotation{reference: "Ref123"}
+	annotation := Annotation{reference: "Ref123"}
 	assert.Equal(t, "Ref123", annotation.Reference())
 }
 
 func TestAssignedBy(t *testing.T) {
-	annotation := PhenotypeAnnotation{assignedBy: "User123"}
+	annotation := Annotation{assignedBy: "User123"}
 	assert.Equal(t, "User123", annotation.AssignedBy())
 }
 
 func TestIsEmpty(t *testing.T) {
-	emptyAnnotation := PhenotypeAnnotation{empty: true}
-	nonEmptyAnnotation := PhenotypeAnnotation{empty: false}
+	emptyAnnotation := Annotation{empty: true}
+	nonEmptyAnnotation := Annotation{empty: false}
 	assert.True(t, emptyAnnotation.IsEmpty())
 	assert.False(t, nonEmptyAnnotation.IsEmpty())
 }
 
-func TestHasStrainId(t *testing.T) {
-	annotationWithId := PhenotypeAnnotation{strainId: "S123"}
-	annotationWithoutId := PhenotypeAnnotation{}
-	assert.True(t, annotationWithId.HasStrainId())
-	assert.False(t, annotationWithoutId.HasStrainId())
+func TestHasStrainID(t *testing.T) {
+	annotationWithID := Annotation{strainID: "S123"}
+	annotationWithoutID := Annotation{}
+	assert.True(t, annotationWithID.HasStrainID())
+	assert.False(t, annotationWithoutID.HasStrainID())
 }
 
-func TestPhenotypeId(t *testing.T) {
-	annotation := PhenotypeAnnotation{phenotypeId: "P123"}
-	assert.Equal(t, "P123", annotation.PhenotypeId())
+func TestPhenotypeID(t *testing.T) {
+	annotation := Annotation{phenotypeID: "P123"}
+	assert.Equal(t, "P123", annotation.PhenotypeID())
 }
 
-func TestStrainId(t *testing.T) {
-	annotation := PhenotypeAnnotation{strainId: "S123"}
-	assert.Equal(t, "S123", annotation.StrainId())
+func TestStrainID(t *testing.T) {
+	annotation := Annotation{strainID: "S123"}
+	assert.Equal(t, "S123", annotation.StrainID())
 }
 
 func TestStrainDescriptor(t *testing.T) {
@@ -88,7 +88,7 @@ func TestStrainDescriptor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pha := PhenotypeAnnotation{
+			pha := Annotation{
 				strainDescriptor: tt.strainDescriptor,
 			}
 			assert.Equal(t, tt.want, pha.StrainDescriptor())
@@ -97,8 +97,8 @@ func TestStrainDescriptor(t *testing.T) {
 }
 
 func TestHasStrainDescriptor(t *testing.T) {
-	annotationWithDescriptor := PhenotypeAnnotation{strainDescriptor: "ABC123"}
-	annotationWithoutDescriptor := PhenotypeAnnotation{}
+	annotationWithDescriptor := Annotation{strainDescriptor: "ABC123"}
+	annotationWithoutDescriptor := Annotation{}
 	assert.True(t, annotationWithDescriptor.HasStrainDescriptor())
 	assert.False(t, annotationWithoutDescriptor.HasStrainDescriptor())
 }

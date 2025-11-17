@@ -14,7 +14,7 @@ var LoadOntoCmd = &cobra.Command{
 	Use:   "load-ontology",
 	Short: "run ontology load command as a kubernetes job in the cluster",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		labels := cliJob.MetaLabel()
 		labels["subcommand"] = "load-ontology"
 		bucketPath, _ := cmd.Flags().GetString("s3-bucket-path-prefix")

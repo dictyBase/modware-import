@@ -13,13 +13,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadStrainInv(cmd *cobra.Command, args []string) error {
+func LoadStrainInv(_ *cobra.Command, _ []string) error {
 	ir := stockcenter.NewTsvStrainInventoryReader(registry.GetReader(regs.InvReader))
 	logger := registry.GetLogger().WithFields(logrus.Fields{
 		"type":  "inventory",
 		"stock": "strain",
 	})
-	invMap, err := cacheInvByStrainId(ir, logger)
+	invMap, err := cacheInvByStrainID(ir, logger)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func LoadStrainInv(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func cacheInvByStrainId(
+func cacheInvByStrainID(
 	ir stockcenter.StrainInventoryReader,
 	logger *logrus.Entry,
 ) (map[string][]*stockcenter.StrainInventory, error) {
@@ -88,7 +88,7 @@ func cacheInvByStrainId(
 		} else {
 			invMap[inv.StrainID] = []*stockcenter.StrainInventory{inv}
 		}
-		readCount += 1
+		readCount++
 	}
 	logger.WithFields(logrus.Fields{
 		"event": "read",

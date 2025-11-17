@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/runner/env"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -39,7 +40,7 @@ func ConsoleLog(msg string) {
 func TermSpinnerWithPrefixColor(prefix, color string) *spinner.Spinner {
 	s := spinner.New(
 		spinner.CharSets[33],
-		300*time.Millisecond,
+		config.DefaultTimeoutSeconds*time.Millisecond,
 	)
 	_ = s.Color("bgHiBlack", "bold", color)
 	s.Prefix = fmt.Sprintf("%s  ", prefix)

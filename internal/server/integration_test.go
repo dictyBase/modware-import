@@ -170,7 +170,7 @@ func TestListFeatureAnnotationsByPubmedId(t *testing.T) {
 	now := timestamppb.New(time.Now())
 
 	// Create annotations with the same PubMed ID
-	pubmedId := "99999999"
+	pubmedID := "99999999"
 
 	for i := 0; i < 3; i++ {
 		createReq := &feature.NewFeatureAnnotation{
@@ -178,7 +178,7 @@ func TestListFeatureAnnotationsByPubmedId(t *testing.T) {
 			Id:   fmt.Sprintf("TEST_PUBMED_%d", i),
 			Attributes: &feature.FeatureAnnotationAttributes{
 				Name:   fmt.Sprintf("testGene%d", i),
-				Pubmed: []string{pubmedId},
+				Pubmed: []string{pubmedID},
 			},
 			CreatedBy: "test@dictybase.org",
 			CreatedAt: now,
@@ -190,7 +190,7 @@ func TestListFeatureAnnotationsByPubmedId(t *testing.T) {
 	}
 
 	// Query by PubMed ID
-	listReq := &feature.PubmedId{Id: pubmedId}
+	listReq := &feature.PubmedId{Id: pubmedID}
 	resp, err := client.ListFeatureAnnotationsByPubmedId(ctx, listReq)
 	require.NoError(t, err)
 	assert.Len(t, resp.Data, 3)

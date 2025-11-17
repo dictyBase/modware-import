@@ -1,6 +1,7 @@
 package stockcenter
 
 import (
+	"github.com/dictyBase/modware-import/internal/config"
 	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/spf13/cobra"
@@ -13,7 +14,7 @@ var GwdiCmd = &cobra.Command{
 	Short: "load gwdi strains",
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadGwdi,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PreRunE: func(_ *cobra.Command, _ []string) error {
 		if err := SetStrainAPIClient(); err != nil {
 			return err
 		}
@@ -42,7 +43,7 @@ func init() {
 	GwdiCmd.Flags().IntP(
 		"concurrency",
 		"c",
-		15,
+		config.DefaultLineLimit,
 		"No of concurrent workers",
 	)
 	viper.BindPFlags(GwdiCmd.Flags())

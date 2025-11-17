@@ -3,7 +3,23 @@ package cli
 import (
 	"slices"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/urfave/cli/v2"
+)
+
+const (
+	// Default worker pool sizes for concurrent processing
+	DefaultWorkers               = 4
+	DefaultBatchSize             = 100
+	DefaultPubmedWorkers         = 4
+	DefaultGRPCWorkers           = 8
+	DefaultProcessingWorkers     = 4
+	DefaultLegacyWorkers         = 4
+	DefaultSynonymGRPCWorkers    = 4
+	DefaultValidationWorkers     = 5
+	DefaultCSVBatchSize          = 40
+	DefaultCSVWorkers            = 4
+	DefaultValidationTimeoutSecs = 30
 )
 
 // GeneProductFromCsvFlag returns all flags required for loading gene products from CSV files.
@@ -38,12 +54,12 @@ func LoadGeneProductFlag() []cli.Flag {
 		&cli.IntFlag{
 			Name:  "workers",
 			Usage: "number of concurrent workers for loading (1-50)",
-			Value: 4,
+			Value: DefaultWorkers,
 		},
 		&cli.IntFlag{
 			Name:  "batch-size",
 			Usage: "batch size for loading (1-1000)",
-			Value: 100,
+			Value: DefaultBatchSize,
 		},
 		&cli.StringFlag{
 			Name:     "user",
@@ -67,12 +83,12 @@ func LoadGeneDescriptionFlag() []cli.Flag {
 		&cli.IntFlag{
 			Name:  "workers",
 			Usage: "number of concurrent workers for loading (1-50)",
-			Value: 4,
+			Value: DefaultWorkers,
 		},
 		&cli.IntFlag{
 			Name:  "batch-size",
 			Usage: "batch size for loading (1-1000)",
-			Value: 100,
+			Value: DefaultBatchSize,
 		},
 		&cli.StringFlag{
 			Name:     "user",
@@ -114,7 +130,7 @@ func arangoDBConnectionFlags() []cli.Flag {
 			Name:    "arangodb-port",
 			Usage:   "ArangoDB port",
 			EnvVars: []string{"ARANGODB_SERVICE_PORT"},
-			Value:   8529,
+			Value:   config.DefaultArangoDBPort,
 		},
 		&cli.BoolFlag{
 			Name:    "is-secure",
@@ -153,13 +169,13 @@ func LoadFeatureAnnotationFlag() []cli.Flag {
 		[]cli.Flag{
 			&cli.IntFlag{
 				Name:    "pubmed-workers",
-				Value:   4,
+				Value:   DefaultPubmedWorkers,
 				Usage:   "Number of pubmed fetcher workers",
 				EnvVars: []string{"PUBMED_WORKERS"},
 			},
 			&cli.IntFlag{
 				Name:    "grpc-workers",
-				Value:   8,
+				Value:   DefaultGRPCWorkers,
 				Usage:   "Number of gRPC create workers",
 				EnvVars: []string{"GRPC_WORKERS"},
 			},
@@ -189,12 +205,12 @@ func LoadCSVToArangodbFlag() []cli.Flag {
 		&cli.IntFlag{
 			Name:  "batch-size",
 			Usage: "Number of documents to update in a single batch",
-			Value: 40,
+			Value: DefaultCSVBatchSize,
 		},
 		&cli.IntFlag{
 			Name:  "workers",
 			Usage: "Number of concurrent workers for batch processing",
-			Value: 4,
+			Value: DefaultCSVWorkers,
 		},
 	}
 	return slices.Concat(arangoDBConnectionFlags(), csvFlags)
@@ -212,13 +228,13 @@ func GeneUpdaterFlags() []cli.Flag {
 		// Worker and timeout flags
 		&cli.IntFlag{
 			Name:    "processing-workers",
-			Value:   4,
+			Value:   DefaultProcessingWorkers,
 			Usage:   "Number of HTML processing workers",
 			EnvVars: []string{"PROCESSING_WORKERS"},
 		},
 		&cli.IntFlag{
 			Name:    "grpc-workers",
-			Value:   8,
+			Value:   DefaultGRPCWorkers,
 			Usage:   "Number of gRPC update workers",
 			EnvVars: []string{"GRPC_WORKERS"},
 		},
@@ -241,13 +257,13 @@ func GeneProductUpdaterFlags() []cli.Flag {
 		},
 		&cli.IntFlag{
 			Name:    "legacy-workers",
-			Value:   4,
+			Value:   DefaultLegacyWorkers,
 			Usage:   "Number of legacy database query workers",
 			EnvVars: []string{"LEGACY_WORKERS"},
 		},
 		&cli.IntFlag{
 			Name:    "grpc-workers", // This flag was already in GeneUpdaterFlags, ensure consistency or rename if needed
-			Value:   8,
+			Value:   DefaultGRPCWorkers,
 			Usage:   "Number of gRPC update workers",
 			EnvVars: []string{"GRPC_WORKERS"},
 		},
@@ -268,7 +284,7 @@ func SynonymLoaderFlags() []cli.Flag {
 		[]cli.Flag{
 			&cli.IntFlag{
 				Name:    "grpc-workers",
-				Value:   4,
+				Value:   DefaultSynonymGRPCWorkers,
 				Usage:   "Number of gRPC update workers",
 				EnvVars: []string{"GRPC_WORKERS"},
 			},
@@ -325,12 +341,12 @@ func ValidateGeneDataFlags() []cli.Flag {
 		&cli.IntFlag{
 			Name:  "timeout",
 			Usage: "timeout in seconds for GraphQL requests (10-300 seconds)",
-			Value: 30,
+			Value: DefaultValidationTimeoutSecs,
 		},
 		&cli.IntFlag{
 			Name:  "workers",
 			Usage: "number of concurrent workers for validation (1-20 workers)",
-			Value: 5,
+			Value: DefaultValidationWorkers,
 		},
 	}
 }
