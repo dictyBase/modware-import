@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	uniprotBaseURL   = "https://rest.uniprot.org/uniprotkb/search?query="
-	uniprotFields    = "id,xref_dictybase"
-	uniprotFormat    = "json"
-	uniprotPageSize  = 500
+	uniprotBaseURL  = "https://rest.uniprot.org/uniprotkb/search?query="
+	uniprotFields   = "id,xref_dictybase"
+	uniprotFormat   = "json"
+	uniprotPageSize = 500
 )
 
 var uniprotURL = fmt.Sprintf(

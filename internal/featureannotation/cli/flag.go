@@ -9,17 +9,17 @@ import (
 
 const (
 	// Default worker pool sizes for concurrent processing
-	DefaultWorkers                = 4
-	DefaultBatchSize              = 100
-	DefaultPubmedWorkers          = 4
-	DefaultGRPCWorkers            = 8
-	DefaultProcessingWorkers      = 4
-	DefaultLegacyWorkers          = 4
-	DefaultSynonymGRPCWorkers     = 4
-	DefaultValidationWorkers      = 5
-	DefaultCSVBatchSize           = 40
-	DefaultCSVWorkers             = 4
-	DefaultValidationTimeoutSecs  = 30
+	DefaultWorkers               = 4
+	DefaultBatchSize             = 100
+	DefaultPubmedWorkers         = 4
+	DefaultGRPCWorkers           = 8
+	DefaultProcessingWorkers     = 4
+	DefaultLegacyWorkers         = 4
+	DefaultSynonymGRPCWorkers    = 4
+	DefaultValidationWorkers     = 5
+	DefaultCSVBatchSize          = 40
+	DefaultCSVWorkers            = 4
+	DefaultValidationTimeoutSecs = 30
 )
 
 // GeneProductFromCsvFlag returns all flags required for loading gene products from CSV files.

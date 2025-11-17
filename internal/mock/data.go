@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	randomGeneIDModulo  = 10000000 // Modulo value for generating random gene IDs
-	journalIDModulo     = 100000   // Modulo value for journal IDs
-	basePubmedID        = 10000000 // Base value for PubMed IDs
-	pubmedIDModulo      = 90000000 // Modulo value for PubMed IDs
+	randomGeneIDModulo = 10000000 // Modulo value for generating random gene IDs
+	journalIDModulo    = 100000   // Modulo value for journal IDs
+	basePubmedID       = 10000000 // Base value for PubMed IDs
+	pubmedIDModulo     = 90000000 // Modulo value for PubMed IDs
 )
 
 // GenerateFeatureAnnotations creates a set of realistic mock feature annotations
