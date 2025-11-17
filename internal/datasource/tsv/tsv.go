@@ -5,15 +5,15 @@ import (
 	"strings"
 )
 
-// TsvReader is to manage record from tsv file
-type TsvReader struct {
+// Reader is to manage record from tsv file
+type Reader struct {
 	Reader *bufio.Scanner
 	Record []string
 	Err    error
 }
 
 // Next read the next tsv record
-func (r *TsvReader) Next() bool {
+func (r *Reader) Next() bool {
 	resp := r.Reader.Scan()
 	if err := r.Reader.Err(); err != nil {
 		r.Err = err

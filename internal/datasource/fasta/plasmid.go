@@ -12,7 +12,7 @@ import (
 )
 
 type PlasmidSeq struct {
-	Id  string
+	ID  string
 	Seq string
 }
 
@@ -58,7 +58,7 @@ func (seqr *dirSeqReader) Next() bool {
 		return false
 	}
 	seqr.currFile = filepath.Join(seqr.dir, seqr.fasFiles[seqr.idx].Name())
-	seqr.idx += 1
+	seqr.idx++
 	return true
 }
 
@@ -77,7 +77,7 @@ func (seqr *dirSeqReader) Value() (*PlasmidSeq, error) {
 			seqr.currFile,
 		)
 	}
-	pseq.Id = strings.Split(filepath.Base(seqr.currFile), ".")[0]
+	pseq.ID = strings.Split(filepath.Base(seqr.currFile), ".")[0]
 	pseq.Seq = string(reader.NextEntry().Sequence)
 	return pseq, nil
 }

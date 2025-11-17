@@ -7,15 +7,15 @@ import (
 	"io"
 )
 
-// CsvReader is to manage record from csv file
-type CsvReader struct {
+// Reader is to manage record from csv file
+type Reader struct {
 	Reader *csv.Reader
 	Record []string
 	Err    error
 }
 
 // Next read the next csv record
-func (r *CsvReader) Next() bool {
+func (r *Reader) Next() bool {
 	r.Err = nil
 	record, err := r.Reader.Read()
 	if err == io.EOF {
