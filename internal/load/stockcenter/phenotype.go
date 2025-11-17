@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
@@ -216,6 +217,6 @@ func getPhenotype(args *getPhenoArgs) (*pb.TaggedAnnotationGroupCollection, erro
 		context.Background(),
 		&pb.ListGroupParameters{
 			Filter: fmt.Sprintf("entry_id==%s;ontology==%s", args.id, args.ontology),
-			Limit:  100,
+			Limit:  config.DefaultBatchSize,
 		})
 }

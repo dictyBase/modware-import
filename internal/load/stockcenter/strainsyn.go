@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/datasource/tsv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
@@ -78,7 +79,7 @@ func removeExistingSynonyms(
 	logger *logrus.Entry,
 ) error {
 	tac, err := client.ListAnnotations(getContext(), &annotation.ListParameters{
-		Limit:  20,
+		Limit:  config.DefaultCSVWorkerPoolSize,
 		Filter: buildFilter(entryId),
 	})
 	if err != nil && status.Code(err) != codes.NotFound {

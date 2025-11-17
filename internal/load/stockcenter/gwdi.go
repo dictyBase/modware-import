@@ -10,6 +10,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
+	"github.com/dictyBase/modware-import/internal/config"
 	stockcenter "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter/gwdi"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regs "github.com/dictyBase/modware-import/internal/registry/stockcenter"
@@ -217,7 +218,7 @@ func (gd *gwdiDel) strainsForDeletion() ([]string, error) {
 			context.Background(),
 			&pb.StockParameters{
 				Cursor: cursor,
-				Limit:  20,
+				Limit:  config.DefaultCSVWorkerPoolSize,
 				Filter: "name=~GWDI_",
 			})
 		if err != nil {
@@ -252,7 +253,7 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 	tac, err := gd.aclient.ListAnnotations(
 		context.Background(),
 		&annotation.ListParameters{
-			Limit:  20,
+			Limit:  config.DefaultCSVWorkerPoolSize,
 			Filter: fmt.Sprintf("entry_id===%s", id),
 		})
 	if err != nil {

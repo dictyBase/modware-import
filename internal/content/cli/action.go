@@ -14,6 +14,7 @@ import (
 	Fn "github.com/IBM/fp-go/function"
 	O "github.com/IBM/fp-go/option"
 	"github.com/dictyBase/go-genproto/dictybaseapis/content"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/minio/minio-go/v6"
@@ -42,7 +43,7 @@ func LoadContent(cltx *cli.Context) error {
 	for cinfo := range s3Objects {
 		err := processS3Object(cltx, logger, s3Client, client, cinfo)
 		if err != nil {
-			return cli.Exit(err.Error(), 2)
+			return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 		}
 	}
 

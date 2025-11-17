@@ -75,7 +75,7 @@ func openCSVReader(config LoaderConfig) IOE.IOEither[error, *csv.Reader] {
 		}
 
 		reader := csv.NewReader(file)
-		reader.FieldsPerRecord = 7
+		reader.FieldsPerRecord = source.GoldenBraidFieldCount
 		reader.TrimLeadingSpace = true
 
 		// Skip header row

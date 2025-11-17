@@ -12,12 +12,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const (
+	exitCodeError = 2 // Standard CLI error exit code
+)
+
 func CliSetup(cltx *cli.Context) error {
 	if err := SetS3Client(cltx); err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), exitCodeError)
 	}
 	if err := SetContentAPIClient(cltx); err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), exitCodeError)
 	}
 
 	return nil
