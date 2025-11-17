@@ -178,9 +178,17 @@ func validateNewPlasmidRequest(params createPlasmidParams) IOE.IOEither[error, *
 			return E.Left[*stock.NewPlasmid](fmt.Errorf("validation failed: %w", err))
 		}
 
-		// Apply default ontology term if not provided
+		// Additional email validation
 		if params.request.Data != nil && params.request.Data.Attributes != nil {
 			attrs := params.request.Data.Attributes
+			if !isValidEmail(attrs.CreatedBy) {
+				return E.Left[*stock.NewPlasmid](fmt.Errorf("invalid email format for created_by"))
+			}
+			if !isValidEmail(attrs.UpdatedBy) {
+				return E.Left[*stock.NewPlasmid](fmt.Errorf("invalid email format for updated_by"))
+			}
+
+			// Apply default ontology term if not provided
 			if attrs.DictyPlasmidProperty == "" {
 				attrs.DictyPlasmidProperty = params.config.PlasmidTerm
 			}

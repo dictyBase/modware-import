@@ -3,6 +3,7 @@ package stock
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
@@ -13,6 +14,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// ==================== HELPER FUNCTIONS ====================
+
+// isValidEmail checks if a string is a valid email format
+func isValidEmail(email string) bool {
+	return strings.Contains(email, "@") && strings.Contains(email, ".")
+}
 
 // ==================== TYPE DEFINITIONS ====================
 
@@ -234,9 +242,17 @@ func validateNewStrainRequest(params createStrainParams) IOE.IOEither[error, *st
 			return E.Left[*stock.NewStrain](fmt.Errorf("validation failed: %w", err))
 		}
 
-		// Apply default ontology term if not provided
+		// Additional email validation
 		if params.request.Data != nil && params.request.Data.Attributes != nil {
 			attrs := params.request.Data.Attributes
+			if !isValidEmail(attrs.CreatedBy) {
+				return E.Left[*stock.NewStrain](fmt.Errorf("invalid email format for created_by"))
+			}
+			if !isValidEmail(attrs.UpdatedBy) {
+				return E.Left[*stock.NewStrain](fmt.Errorf("invalid email format for updated_by"))
+			}
+
+			// Apply default ontology term if not provided
 			if attrs.DictyStrainProperty == "" {
 				attrs.DictyStrainProperty = params.config.StrainTerm
 			}

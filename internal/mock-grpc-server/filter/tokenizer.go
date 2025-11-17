@@ -20,7 +20,7 @@ var (
 // operatorSymbols defines all valid operator symbols in order of precedence (longest first)
 var operatorSymbols = []string{
 	// Three character operators
-	"===", "!==", "@=~", "@!~", "@==", "@!=",
+	"===", "!==", "@=~", "@!~", "@==", "@!=", "=@=",
 	// Two character operators
 	"$>=", "$<=", "$>", "$<", "$=",
 	"#>=", "#<=", "#>", "#<", "#=",

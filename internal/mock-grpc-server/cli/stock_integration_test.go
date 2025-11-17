@@ -99,6 +99,7 @@ func NewStrainBuilder() *StrainBuilder {
 					UpdatedBy: "test@dictybase.org",
 					Depositor: "Test Depositor",
 					Species:   "Dictyostelium discoideum",
+					Label:     "default-label", // Add default label for validation
 				},
 			},
 		},
@@ -728,14 +729,14 @@ func TestCreateStrain_ValidationErrors(t *testing.T) {
 			mutate: func(req *stockpb.NewStrain) {
 				req.Data.Attributes.Depositor = ""
 			},
-			errString: "required",
+			errString: "empty string",
 		},
 		{
 			name: "missing required field - species",
 			mutate: func(req *stockpb.NewStrain) {
 				req.Data.Attributes.Species = ""
 			},
-			errString: "required",
+			errString: "empty string",
 		},
 	}
 
@@ -775,7 +776,7 @@ func TestCreatePlasmid_ValidationErrors(t *testing.T) {
 			mutate: func(req *stockpb.NewPlasmid) {
 				req.Data.Attributes.Depositor = ""
 			},
-			errString: "required",
+			errString: "empty string",
 		},
 	}
 

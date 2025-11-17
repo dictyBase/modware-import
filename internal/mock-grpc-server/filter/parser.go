@@ -12,6 +12,7 @@ var operatorMap = map[string]Operator{
 	"!==": NotEquals,
 	"=~":  Contains,
 	"!~":  NotContains,
+	"=@=": Contains, // Alternative syntax for contains
 
 	// Numeric operators
 	"#=":  NumEquals,

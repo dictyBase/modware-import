@@ -34,6 +34,7 @@ func buildStrainJSONIndex(strain *stock.Strain) jsonIndex {
 		"summary":   attrs.Summary,
 		"species":   attrs.Species,
 		"names":     attrs.Names,
+		"label":     attrs.Label,
 	}
 
 	if attrs.CreatedAt != nil {
