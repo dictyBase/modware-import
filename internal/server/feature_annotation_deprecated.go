@@ -20,6 +20,7 @@ import (
 // - Instead of RemoveTag, use RemoveTags
 
 // UpdateTag updates an existing tag in a feature annotation
+//
 // Deprecated: Use SetTags or AddTags instead
 func (s *FeatureAnnotationServer) UpdateTag(
 	_ context.Context,
@@ -71,6 +72,7 @@ func (s *FeatureAnnotationServer) UpdateTag(
 }
 
 // RemoveTag removes a tag from a feature annotation
+//
 // Deprecated: Use RemoveTags instead
 func (s *FeatureAnnotationServer) RemoveTag(
 	_ context.Context,
@@ -114,6 +116,7 @@ func (s *FeatureAnnotationServer) RemoveTag(
 }
 
 // validateUpdateTagRequest validates the deprecated UpdateTagRequest
+//
 // Deprecated: Used only by the deprecated UpdateTag method
 //
 //nolint:staticcheck // SA1019: deprecated but maintained for backward compatibility
@@ -146,6 +149,7 @@ func (s *FeatureAnnotationServer) validateUpdateTagRequest(req *feature.UpdateTa
 }
 
 // isValidEmail validates email format for deprecated methods
+//
 // Deprecated: Used only by deprecated validation functions
 func isValidEmail(email string) bool {
 	emailRegex := regexp.MustCompile(

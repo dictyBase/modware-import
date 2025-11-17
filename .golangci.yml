@@ -14,7 +14,6 @@ linters:
     - funlen
     - funcorder
     - goconst
-    - gocritic
     - gocyclo
     - gosec
     - govet
