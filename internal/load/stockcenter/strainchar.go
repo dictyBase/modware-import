@@ -27,7 +27,7 @@ func LoadStrainChar(_ *cobra.Command, _ []string) error {
 		created, err := findOrCreateAnnoWithStatus(&createAnnoArgs{
 			client:   client,
 			tag:      chs.Character,
-			id:       chs.Id,
+			id:       chs.ID,
 			value:    val,
 			ontology: regs.DictyStraincharOntology,
 		})
@@ -40,7 +40,7 @@ func LoadStrainChar(_ *cobra.Command, _ []string) error {
 		found++
 		logger.Debugf(
 			"loaded strain %s characteristics with prop %s and value %s",
-			chs.Id, chs.Character, val,
+			chs.ID, chs.Character, val,
 		)
 	}
 	logger.WithFields(logrus.Fields{

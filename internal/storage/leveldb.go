@@ -525,15 +525,15 @@ func (s *LevelDBStorage) RemoveTags(id string, tag string, value string) error {
 }
 
 func (s *LevelDBStorage) ListByPubmedID(
-	pubmedId string,
+	pubmedID string,
 ) ([]*feature.FeatureAnnotation, error) {
-	if err := s.validator.Var(pubmedId, "required"); err != nil {
+	if err := s.validator.Var(pubmedID, "required"); err != nil {
 		return nil, status.Error(
 			codes.InvalidArgument,
-			fmt.Sprintf("invalid pubmedId: %v", err),
+			fmt.Sprintf("invalid pubmedID: %v", err),
 		)
 	}
-	indexKey := fmt.Sprintf("pubmed_index:%s", pubmedId)
+	indexKey := fmt.Sprintf("pubmed_index:%s", pubmedID)
 	idsData, err := s.db.Get([]byte(indexKey), nil)
 	if err != nil {
 		if err == leveldb.ErrNotFound {
@@ -706,8 +706,8 @@ func (s *LevelDBStorage) updatePubmedIndexes(
 	annotation *feature.FeatureAnnotation,
 	add bool,
 ) error {
-	for _, pubmedId := range annotation.Attributes.Pubmed {
-		if err := s.updateListIndexWithTxn(txn, "pubmed_index", pubmedId, annotation.Id, add); err != nil {
+	for _, pubmedID := range annotation.Attributes.Pubmed {
+		if err := s.updateListIndexWithTxn(txn, "pubmed_index", pubmedID, annotation.Id, add); err != nil {
 			return err
 		}
 	}

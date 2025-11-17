@@ -8,7 +8,7 @@ const (
 	AnnotationClient         = "annotation"
 	ContentClientKey         = "content-client"
 	ContentClient            = "content"
-	PlasmidIdMapReader       = "plasmid-id-map-input"
+	PlasmidIDMapReader       = "plasmid-id-map-input"
 	PlasmidAnnotatorReader   = "plasmid-annotator-input"
 	PlasmidPubReader         = "plasmid-pub-input"
 	PlasmidGeneReader        = "plasmid-gene-input"

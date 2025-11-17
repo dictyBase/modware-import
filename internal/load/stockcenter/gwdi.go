@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func LoadGwdi(cmd *cobra.Command, args []string) error {
+func LoadGwdi(_ *cobra.Command, _ []string) error {
 	logger := registry.GetLogger().WithFields(logrus.Fields{
 		"type":  "gwdi",
 		"stock": "strain",

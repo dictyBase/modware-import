@@ -107,7 +107,7 @@ var (
 
 // initAnnotatorLookup creates annotator lookup as IOEither
 func initAnnotatorLookup(
-	ctx LookupContext,
+	_ LookupContext,
 ) IOE.IOEither[error, source.StockAnnotatorLookup] {
 	return IOE.TryCatchError(func() (source.StockAnnotatorLookup, error) {
 		lookup, err := source.NewStockAnnotatorLookup(
@@ -125,7 +125,7 @@ func initAnnotatorLookup(
 
 // initPubLookup creates publication lookup as IOEither
 func initPubLookup(
-	ctx WithAnnotator,
+	_ WithAnnotator,
 ) IOE.IOEither[error, source.StockPubLookup] {
 	return IOE.TryCatchError(func() (source.StockPubLookup, error) {
 		lookup, err := source.NewStockPubLookup(
@@ -143,7 +143,7 @@ func initPubLookup(
 
 // initGeneLookup creates gene lookup as IOEither
 func initGeneLookup(
-	ctx WithPubLookup,
+	_ WithPubLookup,
 ) IOE.IOEither[error, source.StockGeneLookup] {
 	return IOE.TryCatchError(func() (source.StockGeneLookup, error) {
 		lookup, err := source.NewStockGeneLookp(
@@ -207,18 +207,15 @@ func hasValidPlasmidUser(plasmid *source.Plasmid) bool {
 	return len(plasmid.User) == 0
 }
 
-func plasmidUserError(plasmid *source.Plasmid) error {
-	return fmt.Errorf(
-		"field User: user assignment required for plasmid %s",
-		plasmid.ID,
-	)
+func plasmidUserError(_ *source.Plasmid) error {
+	return fmt.Errorf("field User: user assignment required")
 }
 
 func hasValidPlasmidID(plasmid *source.Plasmid) bool {
 	return notEmpty(plasmid.ID)
 }
 
-func plasmidIDError(plasmid *source.Plasmid) error {
+func plasmidIDError(_ *source.Plasmid) error {
 	return fmt.Errorf("field ID: required")
 }
 
@@ -226,7 +223,7 @@ func hasValidPlasmidName(plasmid *source.Plasmid) bool {
 	return notEmpty(plasmid.Name)
 }
 
-func plasmidNameError(plasmid *source.Plasmid) error {
+func plasmidNameError(_ *source.Plasmid) error {
 	return fmt.Errorf("field Name: required")
 }
 
@@ -498,7 +495,7 @@ func logFinalStats(logger *logrus.Entry, result ProcessingResult) {
 }
 
 // LoadPlasmid is the main entry point for plasmid loading
-func LoadPlasmid(cmd *cobra.Command, args []string) error {
+func LoadPlasmid(_ *cobra.Command, _ []string) error {
 	env := buildPlasmidEnv()
 
 	// Execute the workflow

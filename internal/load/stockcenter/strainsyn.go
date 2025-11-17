@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadStrainSynProp(cmd *cobra.Command, args []string) error {
+func LoadStrainSynProp(_ *cobra.Command, _ []string) error {
 	pr := stockcenter.NewTsvStockPropReader(
 		registry.GetReader(regs.StrainSynReader),
 	)
@@ -50,7 +50,7 @@ func readStrainSynonyms(
 		if prop.Property != synTag {
 			continue
 		}
-		synMap[prop.Id] = append(synMap[prop.Id], prop)
+		synMap[prop.ID] = append(synMap[prop.ID], prop)
 	}
 	return synMap, nil
 }

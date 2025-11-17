@@ -42,8 +42,8 @@ func (pm *plasmidIDMap) name2Id(name string) (string, bool) {
 	return id, true
 }
 
-func LoadOrder(cmd *cobra.Command, args []string) error {
-	m, err := newPlasmidMap(registry.GetReader(regs.PlasmidIdMapReader))
+func LoadOrder(_ *cobra.Command, _ []string) error {
+	m, err := newPlasmidMap(registry.GetReader(regs.PlasmidIDMapReader))
 	if err != nil {
 		return fmt.Errorf("error in making plasmid map %s", err)
 	}

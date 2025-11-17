@@ -4,7 +4,7 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 )
 
-func MinioEnv(namespace string) []apiv1.EnvVar {
+func MinioEnv(_ string) []apiv1.EnvVar {
 	return []apiv1.EnvVar{
 		{
 			Name: "ACCESS_KEY",

@@ -40,7 +40,7 @@ func LoadStrainProp(_ *cobra.Command, _ []string) error {
 		_, err = findOrCreateAnno(&createAnnoArgs{
 			client:   client,
 			ontology: onto,
-			id:       prop.Id,
+			id:       prop.ID,
 			value:    prop.Value,
 			tag:      prop.Property,
 		})
@@ -48,7 +48,7 @@ func LoadStrainProp(_ *cobra.Command, _ []string) error {
 			return err
 		}
 		logger.Debugf("loaded strain %s property with prop %s and value %s",
-			prop.Id, prop.Property, prop.Value,
+			prop.ID, prop.Property, prop.Value,
 		)
 		pcount++
 	}

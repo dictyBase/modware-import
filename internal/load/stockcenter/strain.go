@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadStrain(cmd *cobra.Command, args []string) error {
+func LoadStrain(_ *cobra.Command, _ []string) error {
 	pl, err := initializePublicationSource()
 	if err != nil {
 		return err

@@ -239,7 +239,7 @@ var SetReader = F.Curry2(
 )
 
 // LoadGoldenBraid is the main entry point for loading GoldenBraid CSV data
-func LoadGoldenBraid(cmd *cobra.Command, args []string) error {
+func LoadGoldenBraid(_ *cobra.Command, _ []string) error {
 	errLogger := log.New(
 		os.Stderr,
 		"[ERROR] ",

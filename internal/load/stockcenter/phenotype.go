@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func LoadPheno(cmd *cobra.Command, args []string) error {
+func LoadPheno(_ *cobra.Command, _ []string) error {
 	pr := stockcenter.NewPhenotypeReader(registry.GetReader(regs.PhenoReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger().WithFields(logrus.Fields{

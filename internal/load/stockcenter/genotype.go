@@ -35,7 +35,7 @@ func LoadGeno(_ *cobra.Command, _ []string) error {
 			client,
 			&genoArgs{
 				tag:      genoTag,
-				id:       geno.StrainId,
+				id:       geno.StrainID,
 				user:     regs.DefaultUser,
 				ontology: regs.DictyAnnoOntology,
 				value:    geno.Genotype,
@@ -45,13 +45,13 @@ func LoadGeno(_ *cobra.Command, _ []string) error {
 		}
 		switch st {
 		case Created:
-			logger.Debugf("created genotype %s for strain %s", geno.Genotype, geno.StrainId)
+			logger.Debugf("created genotype %s for strain %s", geno.Genotype, geno.StrainID)
 			nct++
 		case Updated:
-			logger.Debugf("updated genotype %s for strain %s", geno.Genotype, geno.StrainId)
+			logger.Debugf("updated genotype %s for strain %s", geno.Genotype, geno.StrainID)
 			uct++
 		case Read:
-			logger.Debugf("skipped genotype %s for strain %s", geno.Genotype, geno.StrainId)
+			logger.Debugf("skipped genotype %s for strain %s", geno.Genotype, geno.StrainID)
 			rct++
 		}
 		count++
