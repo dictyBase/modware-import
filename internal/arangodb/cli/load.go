@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
@@ -70,7 +71,7 @@ func runArangoImport(cmd *exec.Cmd) error {
 }
 
 func createOutputDirectory(outputDir string) error {
-	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+	if err := os.MkdirAll(outputDir, config.SharedDirectoryPermission); err != nil {
 		return fmt.Errorf("error creating output directory: %w", err)
 	}
 	return nil
@@ -182,7 +183,7 @@ func LoadArangodb(cltx *cli.Context) error {
 	outputDir := cltx.String("output-dir")
 
 	if err := createOutputDirectory(outputDir); err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 	}
 
 	log.WithFields(logrus.Fields{
@@ -198,7 +199,7 @@ func LoadArangodb(cltx *cli.Context) error {
 		if object.Err != nil {
 			return cli.Exit(
 				fmt.Sprintf("error listing objects: %s", object.Err),
-				2,
+				config.DefaultRetryBackoffFactor,
 			)
 		}
 
@@ -209,7 +210,7 @@ func LoadArangodb(cltx *cli.Context) error {
 			OutputDir: outputDir,
 			Log:       log,
 		}); err != nil {
-			return cli.Exit(err.Error(), 2)
+			return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 		}
 	}
 

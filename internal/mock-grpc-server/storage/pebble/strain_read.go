@@ -73,7 +73,9 @@ func (storage *pebbleStorage) GetPlasmid(stockID string) IOE.IOEither[error, *st
 }
 
 // ListStrainsByIDs retrieves multiple strains by their IDs
-func (storage *pebbleStorage) ListStrainsByIDs(ids []string) IOE.IOEither[error, *stock.StrainList] {
+func (storage *pebbleStorage) ListStrainsByIDs(
+	ids []string,
+) IOE.IOEither[error, *stock.StrainList] {
 	return IOE.TryCatchError(func() (*stock.StrainList, error) {
 		strains := make([]*stock.StrainList_Data, 0, len(ids))
 
