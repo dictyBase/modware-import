@@ -71,12 +71,12 @@ func processStrainFile(filePath string, cltx *cli.Context) error {
 	}
 	tbm := &database.TableManager{
 		Client:     client,
-		DatabaseId: int32(databaseIDVal),
+		DatabaseID: int32(databaseIDVal),
 		Logger:     logger,
 		Ctx:        authCtx,
 		Token:      token,
 	}
-	tableIdMaps, err := allTableIDs(
+	tableIDMaps, err := allTableIDs(
 		tbm,
 		flagNamesHandler(strainOntologyTableFlags()),
 		cltx,
@@ -95,7 +95,7 @@ func processStrainFile(filePath string, cltx *cli.Context) error {
 		cltx.String("workspace"),
 		cltx.Int("table-id"),
 		logger,
-		tableIdMaps,
+		tableIDMaps,
 		tbm,
 		wkm,
 	)
@@ -139,14 +139,14 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 			exitCodeError,
 		)
 	}
-	strainTbl.DatabaseId = int32(databaseIDVal)
+	strainTbl.DatabaseID = int32(databaseIDVal)
 	name := cltx.String("table")
 	tbl, err := strainTbl.CreateTable(name, strainTbl.FieldNames())
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in creating table %s", err), exitCodeError)
 	}
 	logger.Infof("created table with fields %s", tbl.GetName())
-	tableIdMaps, err := allTableIDs(
+	tableIDMaps, err := allTableIDs(
 		strainTbl.TableManager,
 		flagNamesHandler(strainOntologyTableFlags()),
 		cltx,
@@ -155,7 +155,7 @@ func CreateStrainTableHandler(cltx *cli.Context) error {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), exitCodeError)
 	}
 	fieldDefs := []map[string]map[string]interface{}{
-		strainTbl.LinkFieldChangeSpecs(tableIdMaps),
+		strainTbl.LinkFieldChangeSpecs(tableIDMaps),
 		strainTbl.FieldChangeSpecs(),
 	}
 	for _, def := range fieldDefs {

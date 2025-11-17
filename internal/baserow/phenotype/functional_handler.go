@@ -18,8 +18,8 @@ var initialPayload = F.Curry2(
 			Reference: pheno.Reference(),
 			CreatedOn: pheno.CreatedOn(),
 		}
-		if pheno.HasStrainId() {
-			payload.StrainId = pheno.StrainId()
+		if pheno.HasStrainID() {
+			payload.StrainID = pheno.StrainID()
 		}
 		if pheno.HasStrainDescriptor() {
 			payload.StrainDescriptor = pheno.StrainDescriptor()
@@ -29,44 +29,44 @@ var initialPayload = F.Curry2(
 	},
 )
 
-var assayIdHandler = F.Curry2(
-	func(assayId int, loader *PhenotypeLoader) *PhenotypeLoader {
-		if assayId != 0 {
-			loader.Payload.AssayId = []int{assayId}
+var assayIDHandler = F.Curry2(
+	func(assayID int, loader *PhenotypeLoader) *PhenotypeLoader {
+		if assayID != 0 {
+			loader.Payload.AssayID = []int{assayID}
 		}
 		return loader
 	})
 
-var envIdHandler = F.Curry2(
-	func(envId int, loader *PhenotypeLoader) *PhenotypeLoader {
-		if envId != 0 {
-			loader.Payload.EnvironmentId = []int{envId}
+var envIDHandler = F.Curry2(
+	func(envID int, loader *PhenotypeLoader) *PhenotypeLoader {
+		if envID != 0 {
+			loader.Payload.EnvironmentID = []int{envID}
 		}
 		return loader
 	})
 
-var phenoIdHandler = F.Curry2(
-	func(phenoId int, loader *PhenotypeLoader) *PhenotypeLoader {
-		loader.Payload.Id = []int{phenoId}
+var phenoIDHandler = F.Curry2(
+	func(phenoID int, loader *PhenotypeLoader) *PhenotypeLoader {
+		loader.Payload.ID = []int{phenoID}
 		return loader
 	})
 
-var assignedByIdHandler = F.Curry2(
+var assignedByIDHandler = F.Curry2(
 	func(aid int, loader *PhenotypeLoader) *PhenotypeLoader {
 		if aid != 0 {
-			loader.Payload.AssignedBy = []common.AssignedBy{{Id: aid}}
+			loader.Payload.AssignedBy = []common.AssignedBy{{ID: aid}}
 		}
 		return loader
 	})
 
-func environmentId(loader *PhenotypeLoader) E.Either[error, int] {
-	if !loader.Annotation.HasEnvironmentId() {
+func environmentID(loader *PhenotypeLoader) E.Either[error, int] {
+	if !loader.Annotation.HasEnvironmentID() {
 		return E.Right[error](0)
 	}
 	envid, err := loader.TableManager.SearchRows(
 		F.Pipe2(
-			loader.Annotation.EnvironmentId(),
-			common.ProcessOntologyTermId,
+			loader.Annotation.EnvironmentID(),
+			common.ProcessOntologyTermID,
 			common.ProcessEnvOntologyTerm,
 		),
 		loader.OntologyTableMap["env-ontology-table"],
@@ -77,12 +77,12 @@ func environmentId(loader *PhenotypeLoader) E.Either[error, int] {
 	return E.Right[error](envid)
 }
 
-func assayId(loader *PhenotypeLoader) E.Either[error, int] {
-	if !loader.Annotation.HasAssayId() {
+func assayID(loader *PhenotypeLoader) E.Either[error, int] {
+	if !loader.Annotation.HasAssayID() {
 		return E.Right[error](0)
 	}
 	asid, err := loader.TableManager.SearchRows(
-		common.ProcessOntologyTermId(loader.Annotation.AssayId()),
+		common.ProcessOntologyTermID(loader.Annotation.AssayID()),
 		loader.OntologyTableMap["assay-ontology-table"],
 	)
 	if err != nil {
@@ -91,7 +91,7 @@ func assayId(loader *PhenotypeLoader) E.Either[error, int] {
 	return E.Right[error](asid)
 }
 
-func assignedById(loader *PhenotypeLoader) E.Either[error, int] {
+func assignedByID(loader *PhenotypeLoader) E.Either[error, int] {
 	ok, aid, err := loader.WorkspaceManager.SearchWorkspaceUser(
 		loader.Workspace, loader.Annotation.AssignedBy(),
 	)
@@ -105,9 +105,9 @@ func assignedById(loader *PhenotypeLoader) E.Either[error, int] {
 	return E.Right[error](aid)
 }
 
-func phenotypeId(loader *PhenotypeLoader) E.Either[error, int] {
+func phenotypeID(loader *PhenotypeLoader) E.Either[error, int] {
 	phid, err := loader.TableManager.SearchRows(
-		common.ProcessOntologyTermId(loader.Annotation.PhenotypeId()),
+		common.ProcessOntologyTermID(loader.Annotation.PhenotypeID()),
 		loader.OntologyTableMap["phenotype-ontology-table"],
 	)
 	if err != nil {
@@ -120,6 +120,6 @@ func onPhenoCreateFeedbackSuccess(
 	res common.CreateResp,
 ) httpapi.ResponseFeedback {
 	return httpapi.ResponseFeedback{
-		Msg: fmt.Sprintf("created phenotype with annotation id %s", res.AnnoId),
+		Msg: fmt.Sprintf("created phenotype with annotation id %s", res.AnnoID),
 	}
 }

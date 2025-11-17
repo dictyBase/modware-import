@@ -46,7 +46,7 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 			Logger:     logger,
 			Ctx:        authCtx,
 			Token:      token,
-			DatabaseId: int32(databaseIDVal),
+			DatabaseID: int32(databaseIDVal),
 		},
 	}
 	name := cltx.String("table")
@@ -60,12 +60,12 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 		"phenotype-ontology-table",
 		"env-ontology-table",
 	}
-	tableIdMaps, err := allTableIDs(phenoTbl.TableManager, flagNames, cltx)
+	tableIDMaps, err := allTableIDs(phenoTbl.TableManager, flagNames, cltx)
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), exitCodeError)
 	}
 	fieldDefs := []map[string]map[string]interface{}{
-		phenoTbl.LinkFieldChangeSpecs(tableIdMaps),
+		phenoTbl.LinkFieldChangeSpecs(tableIDMaps),
 		phenoTbl.FieldChangeSpecs(),
 	}
 	for _, def := range fieldDefs {
@@ -135,12 +135,12 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 	}
 	tbm := &database.TableManager{
 		Client:     client,
-		DatabaseId: int32(databaseIDVal),
+		DatabaseID: int32(databaseIDVal),
 		Logger:     logger,
 		Ctx:        authCtx,
 		Token:      token,
 	}
-	tableIdMaps, err := allTableIDs(
+	tableIDMaps, err := allTableIDs(
 		tbm,
 		flagNamesHandler(phenoOntologyTableFlags()),
 		cltx,
@@ -156,10 +156,10 @@ func processPhenoFile(filePath string, cltx *cli.Context) error {
 	loader := phenotype.NewPhenotypeLoader(&phenotype.PhenotypeLoaderProperties{
 		Host:             cltx.String("server"),
 		Workspace:        cltx.String("workspace"),
-		TableId:          cltx.Int("table-id"),
+		TableID:          cltx.Int("table-id"),
 		Token:            token,
 		Logger:           logger,
-		OntologyTableMap: tableIdMaps,
+		OntologyTableMap: tableIDMaps,
 		TableManager:     tbm,
 		WorkspaceManager: wkm,
 	})

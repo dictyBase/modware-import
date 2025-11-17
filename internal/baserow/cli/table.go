@@ -12,7 +12,7 @@ func allTableIDs(
 ) (map[string]int, error) {
 	idMaps := make(map[string]int)
 	for _, name := range flagNames {
-		id, err := tbm.TableNameToId(cltx.String(name))
+		id, err := tbm.TableNameToID(cltx.String(name))
 		if err != nil {
 			return idMaps, err
 		}

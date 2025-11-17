@@ -43,7 +43,7 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 			Logger:     logger,
 			Ctx:        authCtx,
 			Token:      cltx.String("token"),
-			DatabaseId: dbID,
+			DatabaseID: dbID,
 		},
 	}
 	ok, err := ontTbl.CheckAllTableFields(
@@ -97,7 +97,7 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 			Logger:     logger,
 			Ctx:        authCtx,
 			Token:      token,
-			DatabaseId: dbID,
+			DatabaseID: dbID,
 		},
 	}
 	for _, name := range cltx.StringSlice("table") {

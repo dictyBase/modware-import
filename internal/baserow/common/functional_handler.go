@@ -16,14 +16,14 @@ import (
 var CreateHTTP = H.ReadJSON[CreateResp](H.MakeClient(http.DefaultClient))
 
 type CreateResp struct {
-	AnnoId string `json:"annotation_id"`
+	AnnoID string `json:"annotation_id"`
 }
 
 type AssignedBy struct {
-	Id int `json:"id"`
+	ID int `json:"id"`
 }
 
-func ProcessOntologyTermId(val string) string {
+func ProcessOntologyTermID(val string) string {
 	return strings.Replace(val, ":", "_", 1)
 }
 
@@ -39,14 +39,14 @@ func MarshalPayload[T any](payload *T) E.Either[error, []byte] {
 }
 
 func OnCreateFeedbackSuccess(
-	annoId string,
+	annoID string,
 	entityType string,
 ) httpapi.ResponseFeedback {
 	return httpapi.ResponseFeedback{
 		Msg: fmt.Sprintf(
 			"created %s with annotation id %s",
 			entityType,
-			annoId,
+			annoID,
 		),
 	}
 }
