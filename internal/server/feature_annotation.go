@@ -322,7 +322,7 @@ func (s *FeatureAnnotationServer) RemoveTags(
 
 // ListFeatureAnnotationsByPubmedId lists feature annotations by PubMed ID
 //
-//nolint:revive,stylecheck // Method name must match protobuf-generated interface
+//nolint:revive // Method name must match protobuf-generated interface
 func (s *FeatureAnnotationServer) ListFeatureAnnotationsByPubmedId(
 	_ context.Context,
 	req *feature.PubmedId,
