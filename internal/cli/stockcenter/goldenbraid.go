@@ -19,7 +19,7 @@ and loads it directly to the stock center without requiring intermediate files.`
 	PreRunE: setGoldenbraidPreRun,
 }
 
-func setGoldenbraidPreRun(cmd *cobra.Command, args []string) error {
+func setGoldenbraidPreRun(_ *cobra.Command, _ []string) error {
 	// Set up API client (reuse existing strain API client setup)
 	return SetStrainAPIClient()
 }

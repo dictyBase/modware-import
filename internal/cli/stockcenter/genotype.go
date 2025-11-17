@@ -13,7 +13,7 @@ var GenoCmd = &cobra.Command{
 	Short: "load stockcenter genotype data",
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadGeno,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PreRunE: func(_ *cobra.Command, _ []string) error {
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}

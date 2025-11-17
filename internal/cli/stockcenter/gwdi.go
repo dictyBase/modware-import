@@ -14,7 +14,7 @@ var GwdiCmd = &cobra.Command{
 	Short: "load gwdi strains",
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadGwdi,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PreRunE: func(_ *cobra.Command, _ []string) error {
 		if err := SetStrainAPIClient(); err != nil {
 			return err
 		}

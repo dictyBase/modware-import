@@ -23,7 +23,7 @@ var ReadFileCmd = &cobra.Command{
 }
 
 // LoadReadFile reads at least first config.DefaultPageSize lines of the file
-func LoadReadFile(cmd *cobra.Command, args []string) error {
+func LoadReadFile(_ *cobra.Command, _ []string) error {
 	r := registry.GetReader(regsc.ReadfileReader)
 	logger := registry.GetLogger()
 	scanner := bufio.NewScanner(r)
@@ -41,7 +41,7 @@ func LoadReadFile(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func setReadFilePreRun(cmd *cobra.Command, args []string) error {
+func setReadFilePreRun(_ *cobra.Command, _ []string) error {
 	if err := setReadFileInputReader(); err != nil {
 		return err
 	}

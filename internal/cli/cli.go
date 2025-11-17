@@ -22,19 +22,19 @@ The application is organized into subcommands which in turn has their
 own subcommands for importing different kind of data. Each loading sub-subcommand
 is generally expected to consume csv formatted data either directly from a source file
 or through a file that is kept in a particular bucket of a S3 server.`,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := PersistentPreRun(cmd); err != nil {
 			return errors.Errorf("error in executing pre run %s", err)
 		}
 		return nil
 	},
-	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := PersistentPostRun(cmd); err != nil {
 			return errors.Errorf("error in executing post-run %s", err)
 		}
 		return nil
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		if err := RunDoc(cmd); err != nil {
 			return errors.Errorf("error in generating docs %s", err)
 		}

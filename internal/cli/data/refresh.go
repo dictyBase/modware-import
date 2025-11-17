@@ -23,7 +23,7 @@ var RefreshCmd = &cobra.Command{
 	Use:   "refresh",
 	Short: "updates data files in S3 storage",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		repo, _ := cmd.Flags().GetString("repository")
 		branch, _ := cmd.Flags().GetString("branch")
 		subf, _ := cmd.Flags().GetString("subfolder")

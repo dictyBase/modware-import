@@ -25,7 +25,7 @@ var OrderCmd = &cobra.Command{
 	PreRunE: setOrderPreRun,
 }
 
-func setOrderPreRun(cmd *cobra.Command, args []string) error {
+func setOrderPreRun(_ *cobra.Command, _ []string) error {
 	if err := setOrderAPIClient(); err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func setOrderInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.PlasmidIdMapReader, pr)
+		registry.SetReader(regsc.PlasmidIDMapReader, pr)
 		or, err := os.Open(viper.GetString("order-input"))
 		if err != nil {
 			return fmt.Errorf(
@@ -91,7 +91,7 @@ func setOrderInputReader() error {
 				err,
 			)
 		}
-		registry.SetReader(regsc.PlasmidIdMapReader, pr)
+		registry.SetReader(regsc.PlasmidIDMapReader, pr)
 		or, err := registry.GetS3Client().GetObject(
 			viper.GetString("s3-bucket-path"),
 			viper.GetString("order-input"),
