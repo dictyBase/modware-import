@@ -97,8 +97,8 @@ type SynonymAppConfig struct {
 }
 
 type bridgeSynonymsToGrpcPoolParams struct {
-	wg       *sync.WaitGroup
 	ctx      context.Context
+	wg       *sync.WaitGroup
 	synsChan <-chan SynonymData
 	grpcPool *concurrent.Pool[SynonymData, GrpcSynonymResult]
 	metrics  *SynonymMetrics
@@ -106,16 +106,16 @@ type bridgeSynonymsToGrpcPoolParams struct {
 }
 
 type handleSynonymGrpcResultsParams struct {
-	wg       *sync.WaitGroup
 	ctx      context.Context
+	wg       *sync.WaitGroup
 	grpcPool *concurrent.Pool[SynonymData, GrpcSynonymResult]
 	metrics  *SynonymMetrics
 	logger   *logrus.Entry
 }
 
 type reportSynonymProgressParams struct {
-	wg      *sync.WaitGroup
 	ctx     context.Context
+	wg      *sync.WaitGroup
 	metrics *SynonymMetrics
 	logger  *logrus.Entry
 }
@@ -155,13 +155,13 @@ func RunSynonymLoader(cltx *cli.Context) error {
 	})
 
 	// Setup Pool
-	grpcUpdatePool := setupSynonymGrpcUpdatePool(config, mainCtx)
+	grpcUpdatePool := setupSynonymGrpcUpdatePool(mainCtx, config)
 
 	// Bridge from ArangoDB to gRPC Pool
 	wg.Add(1)
 	go bridgeSynonymsToGrpcPool(&bridgeSynonymsToGrpcPoolParams{
-		wg:       &wg,
 		ctx:      mainCtx,
+		wg:       &wg,
 		synsChan: synonymsFromQueryChan,
 		grpcPool: grpcUpdatePool,
 		metrics:  config.Metrics,
@@ -171,8 +171,8 @@ func RunSynonymLoader(cltx *cli.Context) error {
 	// Handle gRPC Results
 	wg.Add(1)
 	go handleSynonymGrpcResults(&handleSynonymGrpcResultsParams{
-		wg:       &wg,
 		ctx:      mainCtx,
+		wg:       &wg,
 		grpcPool: grpcUpdatePool,
 		metrics:  config.Metrics,
 		logger:   logger,
@@ -181,8 +181,8 @@ func RunSynonymLoader(cltx *cli.Context) error {
 	// Progress Reporter
 	wg.Add(1)
 	go reportSynonymProgress(&reportSynonymProgressParams{
-		wg:      &wg,
 		ctx:     mainCtx,
+		wg:      &wg,
 		metrics: config.Metrics,
 		logger:  logger,
 	})
@@ -209,8 +209,8 @@ func newSynonymConfigFromCliContext(
 
 // setupSynonymGrpcUpdatePool sets up gRPC update pool for synonyms.
 func setupSynonymGrpcUpdatePool(
-	config SynonymAppConfig,
 	mainCtx context.Context,
+	config SynonymAppConfig,
 ) *concurrent.Pool[SynonymData, GrpcSynonymResult] {
 	pool := concurrent.NewPool(
 		grpcSynonymWorkerFunc(

@@ -113,8 +113,8 @@ func RunFeatureAnnotationLoader(cltx *cli.Context) error {
 	})
 
 	client := registry.GetFeatureAnnotationAPIClient()
-	pubmedFetchPool := setupPubmedFetchPool(config, mainCtx, client)
-	annotationCreatePool := setupAnnotationCreatePool(config, mainCtx, client)
+	pubmedFetchPool := setupPubmedFetchPool(mainCtx, config, client)
+	annotationCreatePool := setupAnnotationCreatePool(mainCtx, config, client)
 
 	wg.Add(1)
 	go func() {
@@ -237,8 +237,8 @@ func queryActiveGenesForAnnotation(
 }
 
 func setupPubmedFetchPool(
-	config FeatureAnnotationAppConfig,
 	mainCtx context.Context,
+	config FeatureAnnotationAppConfig,
 	grpcClient fanno.FeatureAnnotationServiceClient,
 ) *concurrent.Pool[Gene, GeneWithPubmed] {
 	pool := concurrent.NewPool(
@@ -254,8 +254,8 @@ func setupPubmedFetchPool(
 }
 
 func setupAnnotationCreatePool(
-	config FeatureAnnotationAppConfig,
 	mainCtx context.Context,
+	config FeatureAnnotationAppConfig,
 	grpcClient fanno.FeatureAnnotationServiceClient,
 ) *concurrent.Pool[GeneWithPubmed, GrpcAnnotationResult] {
 	pool := concurrent.NewPool(

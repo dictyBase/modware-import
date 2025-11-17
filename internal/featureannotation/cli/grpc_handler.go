@@ -10,8 +10,8 @@ import (
 
 // handleGrpcResults processes the results from the gRPC update pool and updates metrics.
 func handleGrpcResults(
-	wg *sync.WaitGroup,
 	mainCtx context.Context,
+	wg *sync.WaitGroup,
 	grpcUpdatePool *concurrent.Pool[ProcessedGeneData, GrpcUpdateResult],
 	metrics *ProcessingMetrics, // Add this parameter
 	logger *logrus.Entry,

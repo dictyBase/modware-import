@@ -92,8 +92,8 @@ func newAppConfigFromCliContext(
 
 // reportProgress periodically logs processing metrics.
 func reportProgress(
-	wg *sync.WaitGroup,
 	ctx context.Context,
+	wg *sync.WaitGroup,
 	metrics *ProcessingMetrics,
 	logger *logrus.Entry,
 ) {
@@ -198,8 +198,8 @@ func RunGeneUpdater(cltx *cli.Context) error {
 	// Start bridge from Arango Docs to HTML Processing Pool goroutine
 	wg.Add(1)
 	go bridgeArangoToHTMLPool(
-		&wg,
 		mainCtx,
+		&wg,
 		arangoDocsFromQueryChan,
 		htmlProcessingPool,
 		config.Metrics,
@@ -208,8 +208,8 @@ func RunGeneUpdater(cltx *cli.Context) error {
 	// Start bridge from HTML Processing Results to gRPC Update Pool goroutine
 	wg.Add(1)
 	go bridgeHTMLToGrpcPool(
-		&wg,
 		mainCtx,
+		&wg,
 		htmlProcessingPool,
 		grpcUpdatePool,
 		config.Metrics,
@@ -217,11 +217,11 @@ func RunGeneUpdater(cltx *cli.Context) error {
 	)
 	// Start gRPC Update Results Handler goroutine
 	wg.Add(1)
-	go handleGrpcResults(&wg, mainCtx, grpcUpdatePool, config.Metrics, logger)
+	go handleGrpcResults(mainCtx, &wg, grpcUpdatePool, config.Metrics, logger)
 
 	// Start Progress Reporter goroutine
 	wg.Add(1)
-	go reportProgress(&wg, mainCtx, config.Metrics, logger)
+	go reportProgress(mainCtx, &wg, config.Metrics, logger)
 
 	logger.Debug("Waiting for all main goroutines to complete...")
 	wg.Wait()

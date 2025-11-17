@@ -223,8 +223,8 @@ func newGeneProductConfigFromCliContext(
 }
 
 func setupLegacyQueryPool(
-	config GeneProductAppConfig,
 	mainCtx context.Context,
+	config GeneProductAppConfig,
 ) *concurrent.Pool[GeneInfo, []ProcessedGeneProduct] {
 	pool := concurrent.NewPool(
 		legacyDBQueryWorkerFunc(config),
@@ -242,8 +242,8 @@ func setupLegacyQueryPool(
 
 // setupBatchGrpcUpdatePool sets up batch gRPC update pool for gene products
 func setupBatchGrpcUpdatePool(
-	config GeneProductAppConfig,
 	mainCtx context.Context,
+	config GeneProductAppConfig,
 ) *concurrent.Pool[BatchGeneProductJob, BatchGeneProductResult] {
 	pool := concurrent.NewPool(
 		batchGeneProductGrpcWorkerFunc(
@@ -294,8 +294,8 @@ func RunGeneProductUpdater(cltx *cli.Context) error {
 	})
 
 	// Setup Pools
-	legacyQueryPool := setupLegacyQueryPool(config, mainCtx)
-	batchGrpcPool := setupBatchGrpcUpdatePool(config, mainCtx)
+	legacyQueryPool := setupLegacyQueryPool(mainCtx, config)
+	batchGrpcPool := setupBatchGrpcUpdatePool(mainCtx, config)
 
 	// Bridge from ArangoDB to Legacy Query Pool
 	wg.Add(1)

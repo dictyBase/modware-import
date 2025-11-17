@@ -48,8 +48,8 @@ type GrpcUpdateResult struct {
 // bridgeArangoToHTMLPool transfers documents from the ArangoDB channel to the
 // HTML processing pool.
 func bridgeArangoToHTMLPool(
-	wg *sync.WaitGroup,
 	mainCtx context.Context,
+	wg *sync.WaitGroup,
 	arangoDocsFromQueryChan <-chan ArangoResultDoc,
 	htmlProcessingPool *concurrent.Pool[ArangoResultDoc, ProcessedGeneData],
 	metrics *ProcessingMetrics,
@@ -82,8 +82,8 @@ func bridgeArangoToHTMLPool(
 // bridgeHTMLToGrpcPool transfers processed data from the HTML pool to the gRPC
 // update pool.
 func bridgeHTMLToGrpcPool(
-	wg *sync.WaitGroup,
 	mainCtx context.Context,
+	wg *sync.WaitGroup,
 	htmlProcessingPool *concurrent.Pool[ArangoResultDoc, ProcessedGeneData],
 	grpcUpdatePool *concurrent.Pool[ProcessedGeneData, GrpcUpdateResult],
 	metrics *ProcessingMetrics,

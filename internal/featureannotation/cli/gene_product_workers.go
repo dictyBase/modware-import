@@ -19,7 +19,7 @@ func legacyDBQueryWorkerFunc(
 	config GeneProductAppConfig,
 ) concurrent.WorkerFunc[GeneInfo, []ProcessedGeneProduct] {
 	return func(
-		ctx context.Context,
+		_ context.Context,
 		job concurrent.Job[GeneInfo],
 	) ([]ProcessedGeneProduct, error) {
 		gene := job.Payload

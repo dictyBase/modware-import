@@ -187,7 +187,7 @@ func createIteratorFromMultipleDocuments(
 	return func(yield func(GeneDataRecord) bool) {
 		for _, htmlDocument := range htmlDocuments {
 			htmlDocument.Find("table tr").
-				Each(func(i int, row *goquery.Selection) {
+				Each(func(_ int, row *goquery.Selection) {
 					record, shouldProcess := processTableRow(row, config)
 					if shouldProcess {
 						if !yield(record) {
@@ -313,12 +313,11 @@ func processRecordWithWriters(
 	writers []CSVRecordWriter,
 	result *ProcessingResult,
 ) error {
-	for i, writer := range writers {
+	for _, writer := range writers {
 		if !writer.ShouldSkip(record) {
 			if err := writer.WriteRecord(record); err != nil {
 				return fmt.Errorf(
-					"failed to write record with writer %d: %w",
-					i,
+					"failed to write record: %w",
 					err,
 				)
 			}
