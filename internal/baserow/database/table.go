@@ -162,7 +162,7 @@ func (tbm *TableManager) TableFieldsResp(
 		tbm.Client.GetConfig().Host,
 		tbl.GetId(),
 	)
-	req, err := http.NewRequest("GET", reqURL, nil)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error in creating request %s ", err)
 	}
@@ -200,7 +200,7 @@ func (tbm *OntologyTableManager) CreateFields(tbl *client.Table) error {
 		if err != nil {
 			return fmt.Errorf("error in encoding body %s", err)
 		}
-		req, err := http.NewRequest("POST", reqURL, bytes.NewBuffer(jsonData))
+		req, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewBuffer(jsonData))
 		if err != nil {
 			return fmt.Errorf("error in creating request %s ", err)
 		}

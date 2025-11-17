@@ -8,6 +8,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/dictyBase/modware-import/internal/baserow/ontology"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
 )
@@ -29,11 +30,11 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 	)
 	dbID, err := safeInt32(cltx.Int("database-id"), "database-id")
 	if err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 	}
 	tblID, err := safeInt32(cltx.Int("table-id"), "table-id")
 	if err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 	}
 
 	ontTbl := &database.OntologyTableManager{
@@ -49,12 +50,12 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		&client.Table{Id: tblID},
 	)
 	if err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 	}
 	if !ok {
 		return cli.Exit(
 			fmt.Sprintf("table with id %d does not have the required fields", tblID),
-			2,
+			config.DefaultRetryBackoffFactor,
 		)
 	}
 	props := &ontology.LoadProperties{
@@ -65,7 +66,7 @@ func LoadOntologyToTable(cltx *cli.Context) error {
 		Logger:  logger,
 	}
 	if err := ontology.LoadNewOrUpdate(props); err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 	}
 
 	return nil
@@ -76,7 +77,7 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 	if len(token) == 0 {
 		rtoken, err := refreshToken(cltx)
 		if err != nil {
-			return cli.Exit(err.Error(), 2)
+			return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 		}
 		token = rtoken
 	}
@@ -87,7 +88,7 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 	)
 	dbID, err := safeInt32(cltx.Int("database-id"), "database-id")
 	if err != nil {
-		return cli.Exit(err.Error(), 2)
+		return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 	}
 	logger := registry.GetLogger()
 	ontTbl := &database.OntologyTableManager{
@@ -102,7 +103,7 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 	for _, name := range cltx.StringSlice("table") {
 		tbl, err := ontTbl.CreateTable(name, ontTbl.FieldNames())
 		if err != nil {
-			return cli.Exit(fmt.Sprintf("error in creating table %s", err), 2)
+			return cli.Exit(fmt.Sprintf("error in creating table %s", err), config.DefaultRetryBackoffFactor)
 		}
 		logger.Infof("created table with fields %s", tbl.GetName())
 		for fieldName, spec := range ontTbl.FieldChangeSpecs() {
@@ -114,7 +115,7 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 						fieldName,
 						err,
 					),
-					2,
+					config.DefaultRetryBackoffFactor,
 				)
 			}
 			logger.Info(msg)

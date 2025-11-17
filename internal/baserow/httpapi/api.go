@@ -73,7 +73,7 @@ func ReqToResponse(creq *http.Request) (*http.Response, error) {
 	if err != nil {
 		return uresp, fmt.Errorf("error in making request %s", err)
 	}
-	if uresp.StatusCode != 200 {
+	if uresp.StatusCode != http.StatusOK {
 		cnt, err := io.ReadAll(uresp.Body)
 		if err != nil {
 			return uresp, fmt.Errorf(

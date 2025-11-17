@@ -10,6 +10,7 @@ import (
 	F "github.com/IBM/fp-go/function"
 	J "github.com/IBM/fp-go/json"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
+	"github.com/dictyBase/modware-import/internal/config"
 )
 
 var CreateHTTP = H.ReadJSON[CreateResp](H.MakeClient(http.DefaultClient))
@@ -27,7 +28,7 @@ func ProcessOntologyTermId(val string) string {
 }
 
 func ProcessEnvOntologyTerm(input string) string {
-	if strings.Count(input, "D") >= 3 {
+	if strings.Count(input, "D") >= config.MinimumTokenCount {
 		return strings.Replace(input, "D", "", 1)
 	}
 	return input

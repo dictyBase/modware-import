@@ -164,7 +164,7 @@ func updateTermRow(args *updateTermRowProperties) error {
 		return fmt.Errorf("error in encoding body %s", err)
 	}
 	req, err := http.NewRequest(
-		"PATCH",
+		http.MethodPatch,
 		fmt.Sprintf(
 			"https://%s/api/database/rows/table/%d/%d/?user_field_names=true",
 			args.Host,
@@ -189,7 +189,7 @@ func updateTermRow(args *updateTermRowProperties) error {
 func existTermRow(args *termRowProperties) (*exisTermRowResp, error) {
 	term := string(args.Term.ID())
 	req, err := http.NewRequest(
-		"GET",
+		http.MethodGet,
 		fmt.Sprintf(
 			"https://%s/api/database/rows/table/%d/?user_field_names=true&size=1&search=%s",
 			args.Host,
@@ -231,7 +231,7 @@ func addTermRow(args *termRowProperties) error {
 		return fmt.Errorf("error in encoding body %s", err)
 	}
 	req, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		fmt.Sprintf(
 			"https://%s/api/database/rows/table/%d/?user_field_names=true",
 			args.Host,

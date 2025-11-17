@@ -9,6 +9,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/database"
 	"github.com/dictyBase/modware-import/internal/collection"
+	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/urfave/cli/v2"
 )
@@ -20,7 +21,7 @@ func CreateDatabaseToken(cltx *cli.Context) error {
 		Server:   cltx.String("server"),
 	})
 	if err != nil {
-		return cli.Exit(fmt.Errorf("error in creating access token %s", err), 2)
+		return cli.Exit(fmt.Errorf("error in creating access token %s", err), config.DefaultRetryBackoffFactor)
 	}
 	bclient := database.BaserowClient(cltx.String("server"))
 	authCtx := context.WithValue(
@@ -34,7 +35,7 @@ func CreateDatabaseToken(cltx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(
 			fmt.Errorf("error in executing list workspaces API call %s", err),
-			2,
+			config.DefaultRetryBackoffFactor,
 		)
 	}
 	wnames := collection.Map(
@@ -48,7 +49,7 @@ func CreateDatabaseToken(cltx *cli.Context) error {
 				"workspace %s cannot be found",
 				cltx.String("workspace"),
 			),
-			2,
+			config.DefaultRetryBackoffFactor,
 		)
 	}
 	tok, r, err := bclient.DatabaseTokensApi.CreateDatabaseToken(authCtx).
@@ -61,7 +62,7 @@ func CreateDatabaseToken(cltx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(
 			fmt.Errorf("error in creating token %s", err),
-			2,
+			config.DefaultRetryBackoffFactor,
 		)
 	}
 	fmt.Printf("database token %s\n", tok.GetKey())
@@ -75,19 +76,19 @@ func CreateAccessToken(cltx *cli.Context) error {
 		Server:   cltx.String("server"),
 	})
 	if err != nil {
-		return cli.Exit(err, 2)
+		return cli.Exit(err, config.DefaultRetryBackoffFactor)
 	}
 	fmt.Println(resp.GetToken())
 	if cltx.Bool("save-refresh-token") {
 		err := os.WriteFile(
 			cltx.String("refresh-token-path"),
 			[]byte(resp.GetRefreshToken()),
-			0o600,
+			config.DefaultFilePermission,
 		)
 		if err != nil {
 			return cli.Exit(
 				fmt.Sprintf("error in writing refresh token to file %s", err),
-				2,
+				config.DefaultRetryBackoffFactor,
 			)
 		}
 		registry.GetLogger().
