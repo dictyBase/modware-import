@@ -5,6 +5,8 @@ import (
 )
 
 // FeatureAnnotationStorage defines the interface for feature annotation storage operations
+//
+//nolint:interfacebloat // Comprehensive storage interface by design
 type FeatureAnnotationStorage interface {
 	// Create stores a new feature annotation
 	Create(annotation *feature.FeatureAnnotation) error

@@ -7,6 +7,8 @@ import (
 
 // StockStorage defines the interface for stock data persistence operations.
 // All methods return IOEither to represent side effects with error handling.
+//
+//nolint:interfacebloat // Comprehensive CRUD interface for stock operations
 type StockStorage interface {
 	// GetStrain retrieves a strain by ID
 	GetStrain(stockID string) IOE.IOEither[error, *stock.Strain]
