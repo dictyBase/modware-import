@@ -21,7 +21,10 @@ func CreateDatabaseToken(cltx *cli.Context) error {
 		Server:   cltx.String("server"),
 	})
 	if err != nil {
-		return cli.Exit(fmt.Errorf("error in creating access token %s", err), config.DefaultRetryBackoffFactor)
+		return cli.Exit(
+			fmt.Errorf("error in creating access token %s", err),
+			config.DefaultRetryBackoffFactor,
+		)
 	}
 	bclient := database.BaserowClient(cltx.String("server"))
 	authCtx := context.WithValue(
