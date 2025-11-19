@@ -153,15 +153,17 @@ func streamKeywordRecords(
 				return nil, fmt.Errorf("tsv read error: %w", err)
 			}
 
-			if keywordIsBlankRecord(record) {
-				continue
-			}
-
-			result := F.Pipe5(
+			result := F.Pipe6(
 				record,
 				E.FromPredicate(
-					keywordHasValidRecordLength,
-					keywordRecordLengthError,
+					keywordIsNotBlankRecord,
+					keywordSkipRecordError,
+				),
+				E.Chain(
+					E.FromPredicate(
+						keywordHasValidRecordLength,
+						keywordRecordLengthError,
+					),
 				),
 				E.Map[error](parseKeywordRecord),
 				E.Chain(keywordFilterProperty(keyword)),
@@ -349,13 +351,17 @@ func keywordFormatAssociation(result KeywordProcessingResult) string {
 	return fmt.Sprintf("%s:%s", result.PlasmidID, result.Term)
 }
 
-func keywordIsBlankRecord(record []string) bool {
+func keywordIsNotBlankRecord(record []string) bool {
 	for _, field := range record {
 		if strings.TrimSpace(field) != "" {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
+}
+
+func keywordSkipRecordError(_ []string) error {
+	return errSkipRecord
 }
 
 func mergeKeywordProperty(existing, term string) string {
