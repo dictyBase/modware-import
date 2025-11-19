@@ -143,15 +143,6 @@ func streamKeywordRecords(
 		}
 
 		keyword := viper.GetString("property")
-		filterProperty := E.FromPredicate(
-			func(r KeywordRecord) bool {
-				return strings.EqualFold(r.Property, keyword)
-			},
-			func(r KeywordRecord) error {
-				return errSkipRecord
-			},
-		)
-
 		results := []KeywordProcessingResult{}
 		for {
 			record, err := config.Reader.Read()
@@ -173,7 +164,7 @@ func streamKeywordRecords(
 					keywordRecordLengthError,
 				),
 				E.Map[error](parseKeywordRecord),
-				E.Chain(filterProperty),
+				E.Chain(keywordFilterProperty(keyword)),
 				E.Chain(processKeywordRecord),
 				E.Fold(
 					handleKeywordPipelineError,
@@ -186,6 +177,19 @@ func streamKeywordRecords(
 
 		return results, nil
 	})
+}
+
+func keywordFilterProperty(
+	target string,
+) func(KeywordRecord) E.Either[error, KeywordRecord] {
+	return E.FromPredicate(
+		func(r KeywordRecord) bool {
+			return strings.EqualFold(r.Property, target)
+		},
+		func(r KeywordRecord) error {
+			return errSkipRecord
+		},
+	)
 }
 
 func handleKeywordPipelineError(err error) KeywordProcessingResult {
