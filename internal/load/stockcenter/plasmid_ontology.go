@@ -166,7 +166,7 @@ func streamKeywordRecords(
 				continue
 			}
 
-			result := F.Pipe6(
+			result := F.Pipe5(
 				record,
 				E.FromPredicate(
 					keywordHasValidRecordLength,
@@ -174,19 +174,10 @@ func streamKeywordRecords(
 				),
 				E.Map[error](parseKeywordRecord),
 				E.Chain(filterProperty),
-				E.Chain(validateKeywordTerm),
 				E.Chain(processKeywordRecord),
 				E.Fold(
-					func(err error) KeywordProcessingResult {
-						if errors.Is(err, errSkipRecord) {
-							return KeywordProcessingResult{
-								Processed: false,
-								Error:     O.None[error](),
-							}
-						}
-						return keywordCreateErrorResult(err)
-					},
-					keywordIdentityResult,
+					handleKeywordPipelineError,
+					F.Identity[KeywordProcessingResult],
 				),
 			)
 
@@ -195,6 +186,19 @@ func streamKeywordRecords(
 
 		return results, nil
 	})
+}
+
+func handleKeywordPipelineError(err error) KeywordProcessingResult {
+	if errors.Is(err, errSkipRecord) {
+		return KeywordProcessingResult{
+			Processed: false,
+			Error:     O.None[error](),
+		}
+	}
+	return KeywordProcessingResult{
+		Processed: false,
+		Error:     O.Some(err),
+	}
 }
 
 func keywordHasValidRecordLength(record []string) bool {
@@ -215,20 +219,6 @@ func parseKeywordRecord(record []string) KeywordRecord {
 		Property:  strings.ToLower(strings.TrimSpace(record[1])),
 		Term:      strings.TrimSpace(record[2]),
 	}
-}
-
-func validateKeywordTerm(
-	record KeywordRecord,
-) E.Either[error, KeywordRecord] {
-	if record.Term == "" {
-		return E.Left[KeywordRecord](
-			fmt.Errorf(
-				"empty keyword value for plasmid %s",
-				record.PlasmidID,
-			),
-		)
-	}
-	return E.Of[error](record)
 }
 
 func processKeywordRecord(
@@ -309,19 +299,6 @@ func keywordCreateSuccessResult(
 		Processed: true,
 		Error:     O.None[error](),
 	}
-}
-
-func keywordCreateErrorResult(err error) KeywordProcessingResult {
-	return KeywordProcessingResult{
-		Processed: false,
-		Error:     O.Some(err),
-	}
-}
-
-func keywordIdentityResult(
-	result KeywordProcessingResult,
-) KeywordProcessingResult {
-	return result
 }
 
 func aggregateKeywordResults(
