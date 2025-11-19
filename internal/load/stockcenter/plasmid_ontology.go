@@ -241,11 +241,6 @@ func associateKeywordTerm(
 ) IOE.IOEither[error, KeywordProcessingResult] {
 	return IOE.TryCatchError(func() (KeywordProcessingResult, error) {
 		client := regsc.GetStockAPIClient()
-		if client == nil {
-			return KeywordProcessingResult{}, fmt.Errorf(
-				"stock API client is not initialized",
-			)
-		}
 		plasmid, err := client.GetPlasmid(
 			context.Background(),
 			&stockpb.StockId{Id: record.PlasmidID},
@@ -257,10 +252,8 @@ func associateKeywordTerm(
 				err,
 			)
 		}
-
-		existing := plasmid.GetData().GetAttributes().GetDictyPlasmidProperty()
-		newValue := mergeKeywordProperty(existing, record.Term)
-		if newValue == existing {
+		existing := plasmid.Data.Attributes.DictyPlasmidProperty
+		if strings.EqualFold(existing, record.Term) {
 			return keywordCreateSuccessResult(
 				record.PlasmidID,
 				record.Term,
@@ -276,7 +269,7 @@ func associateKeywordTerm(
 					Id:   record.PlasmidID,
 					Attributes: &stockpb.PlasmidUpdateAttributes{
 						UpdatedBy:            regsc.DefaultUser,
-						DictyPlasmidProperty: newValue,
+						DictyPlasmidProperty: record.Term,
 					},
 				},
 			},
@@ -365,21 +358,4 @@ func keywordIsNotBlankRecord(record []string) bool {
 
 func keywordSkipRecordError(_ []string) error {
 	return errSkipRecord
-}
-
-func mergeKeywordProperty(existing, term string) string {
-	cleanTerm := strings.TrimSpace(term)
-	if cleanTerm == "" {
-		return existing
-	}
-	if existing == "" {
-		return cleanTerm
-	}
-	parts := strings.SplitSeq(existing, ";")
-	for p := range parts {
-		if strings.EqualFold(strings.TrimSpace(p), cleanTerm) {
-			return existing
-		}
-	}
-	return existing + "; " + cleanTerm
 }
