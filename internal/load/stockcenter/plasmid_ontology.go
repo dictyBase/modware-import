@@ -72,6 +72,8 @@ var (
 	errSkipRecord = errors.New("skip record")
 )
 
+const keywordRecordLength = 3
+
 func LoadPlasmidOntology(_ *cobra.Command, _ []string) error {
 	errLogger := log.New(
 		os.Stderr,
@@ -188,7 +190,7 @@ func keywordFilterProperty(
 		func(r KeywordRecord) bool {
 			return strings.EqualFold(r.Property, target)
 		},
-		func(r KeywordRecord) error {
+		func(_ KeywordRecord) error {
 			return errSkipRecord
 		},
 	)
@@ -208,12 +210,13 @@ func handleKeywordPipelineError(err error) KeywordProcessingResult {
 }
 
 func keywordHasValidRecordLength(record []string) bool {
-	return len(record) == 3
+	return len(record) == keywordRecordLength
 }
 
 func keywordRecordLengthError(record []string) error {
 	return fmt.Errorf(
-		"invalid record: expected at least 3 columns, got %d (%s)",
+		"invalid record: expected at least %d columns, got %d (%s)",
+		keywordRecordLength,
 		len(record),
 		strings.Join(record, "\t"),
 	)

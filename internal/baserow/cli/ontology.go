@@ -103,7 +103,10 @@ func CreateOntologyTableHandler(cltx *cli.Context) error {
 	for _, name := range cltx.StringSlice("table") {
 		tbl, err := ontTbl.CreateTable(name, ontTbl.FieldNames())
 		if err != nil {
-			return cli.Exit(fmt.Sprintf("error in creating table %s", err), config.DefaultRetryBackoffFactor)
+			return cli.Exit(
+				fmt.Sprintf("error in creating table %s", err),
+				config.DefaultRetryBackoffFactor,
+			)
 		}
 		logger.Infof("created table with fields %s", tbl.GetName())
 		for fieldName, spec := range ontTbl.FieldChangeSpecs() {
