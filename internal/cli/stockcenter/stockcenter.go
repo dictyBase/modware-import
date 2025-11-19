@@ -40,6 +40,7 @@ func init() {
 		StrainSynCmd,
 		StrainInvCmd,
 		PlasmidInvCmd,
+		PlasmidOntologyCmd,
 		ReadFileCmd,
 		GwdiCmd,
 	)
