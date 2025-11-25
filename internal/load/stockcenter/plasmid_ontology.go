@@ -84,10 +84,7 @@ func LoadPlasmidOntology(_ *cobra.Command, _ []string) error {
 	elog := E.Logger[error, KeywordProcessingSummary](errLogger, infoLogger)
 
 	return F.Pipe8(
-		IOE.Do[error](KeywordLoaderConfig{
-			Viper:  viper.GetViper(),
-			Reader: nil,
-		}),
+		IOE.Do[error](KeywordLoaderConfig{Viper: viper.GetViper()}),
 		IOE.ChainFirst(
 			IOE.LogJSON[KeywordLoaderConfig](
 				"Starting plasmid ontology association:\n%s",
@@ -144,7 +141,7 @@ func streamKeywordRecords(
 			defer config.Closer.Close()
 		}
 
-		keyword := viper.GetString("property")
+		keywordFn := keywordFilterProperty(viper.GetString("property"))
 		results := []KeywordProcessingResult{}
 		for {
 			record, err := config.Reader.Read()
@@ -168,8 +165,8 @@ func streamKeywordRecords(
 					),
 				),
 				E.Map[error](parseKeywordRecord),
-				E.Chain(keywordFilterProperty(keyword)),
-				E.Chain(processKeywordRecord),
+				E.Chain(keywordFn),
+				E.Chain(associateKeywordTerm),
 				E.Fold(
 					handleKeywordPipelineError,
 					F.Identity[KeywordProcessingResult],
@@ -230,16 +227,10 @@ func parseKeywordRecord(record []string) KeywordRecord {
 	}
 }
 
-func processKeywordRecord(
-	record KeywordRecord,
-) E.Either[error, KeywordProcessingResult] {
-	return fputil.ToEither(associateKeywordTerm(record))
-}
-
 func associateKeywordTerm(
 	record KeywordRecord,
-) IOE.IOEither[error, KeywordProcessingResult] {
-	return IOE.TryCatchError(func() (KeywordProcessingResult, error) {
+) E.Either[error, KeywordProcessingResult] {
+	fn := IOE.TryCatchError(func() (KeywordProcessingResult, error) {
 		client := regsc.GetStockAPIClient()
 		plasmid, err := client.GetPlasmid(
 			context.Background(),
@@ -288,6 +279,7 @@ func associateKeywordTerm(
 			true,
 		), nil
 	})
+	return fputil.ToEither(fn)
 }
 
 func keywordCreateSuccessResult(
