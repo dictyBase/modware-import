@@ -11,7 +11,6 @@ import (
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 )
 
@@ -126,14 +125,19 @@ func getLogFmt(format string) (logrus.Formatter, error) {
 	return lfmt, nil
 }
 
-func GetSlogHandler() slog.Handler {
+func GetSlogHandler(cmd *cobra.Command) slog.Handler {
 	return F.Pipe4(
-		"log-level",
-		viper.GetString,
+		cmd,
+		getLogLevelFromCmd,
 		toSlogLevel,
 		toHandlerOptions,
-		toSlogHandler,
+		toSlogHandler(cmd),
 	)
+}
+
+func getLogLevelFromCmd(cmd *cobra.Command) string {
+	s, _ := cmd.Flags().GetString("log-level")
+	return s
 }
 
 func toSlogLevel(s string) slog.Level {
@@ -147,9 +151,12 @@ func toHandlerOptions(l slog.Level) *slog.HandlerOptions {
 	return &slog.HandlerOptions{Level: l}
 }
 
-func toSlogHandler(opts *slog.HandlerOptions) slog.Handler {
-	if viper.GetString("log-format") == "text" {
-		return slog.NewTextHandler(os.Stderr, opts)
+func toSlogHandler(cmd *cobra.Command) func(*slog.HandlerOptions) slog.Handler {
+	return func(opts *slog.HandlerOptions) slog.Handler {
+		fmt, _ := cmd.Flags().GetString("log-format")
+		if fmt == "text" {
+			return slog.NewTextHandler(os.Stderr, opts)
+		}
+		return slog.NewJSONHandler(os.Stderr, opts)
 	}
-	return slog.NewJSONHandler(os.Stderr, opts)
 }

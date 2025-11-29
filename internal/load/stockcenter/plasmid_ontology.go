@@ -22,7 +22,6 @@ import (
 	"github.com/dictyBase/modware-import/internal/logger"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 type KeywordLoaderContext struct{}
@@ -34,7 +33,7 @@ type KeywordReaderResource struct {
 
 type KeywordLoaderConfig struct {
 	KeywordLoaderContext
-	Viper  *viper.Viper
+	Cmd    *cobra.Command
 	Reader *csv.Reader
 	Closer io.Closer
 }
@@ -75,15 +74,16 @@ var (
 
 const keywordRecordLength = 3
 
-func LoadPlasmidOntology(_ *cobra.Command, _ []string) error {
 	handler := logger.GetSlogHandler()
+func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
+	handler := logger.GetSlogHandler(cmd)
 	slogger := slog.New(handler)
 	errLogger := slog.NewLogLogger(handler, slog.LevelError)
 	infoLogger := slog.NewLogLogger(handler, slog.LevelInfo)
 	elog := E.Logger[error, KeywordProcessingSummary](errLogger, infoLogger)
 
 	return F.Pipe8(
-		IOE.Do[error](KeywordLoaderConfig{Viper: viper.GetViper()}),
+		IOE.Do[error](KeywordLoaderConfig{Cmd: cmd}),
 		IOE.ChainFirst(
 			IOE.LogJSON[KeywordLoaderConfig](
 				"Starting plasmid ontology association:\n%s",
@@ -122,7 +122,7 @@ func openKeywordReader(
 	config KeywordLoaderConfig,
 ) IOE.IOEither[error, KeywordReaderResource] {
 	return IOE.TryCatchError(func() (KeywordReaderResource, error) {
-		inputPath := config.Viper.GetString("input")
+		inputPath, _ := config.Cmd.Flags().GetString("input")
 		file, err := os.Open(inputPath)
 		if err != nil {
 			return KeywordReaderResource{}, fmt.Errorf(
@@ -147,7 +147,8 @@ func streamKeywordRecords(
 			defer config.Closer.Close()
 		}
 
-		keywordFn := keywordFilterProperty(viper.GetString("property"))
+		prop, _ := config.Cmd.Flags().GetString("property")
+		keywordFn := keywordFilterProperty(prop)
 		results := []KeywordProcessingResult{}
 		for {
 			record, err := config.Reader.Read()
