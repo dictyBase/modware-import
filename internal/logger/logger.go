@@ -2,13 +2,16 @@ package logger
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	logrus_stack "github.com/Gurpartap/logrus-stack"
+	F "github.com/IBM/fp-go/function"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 )
 
@@ -121,4 +124,32 @@ func getLogFmt(format string) (logrus.Formatter, error) {
 		)
 	}
 	return lfmt, nil
+}
+
+func GetSlogHandler() slog.Handler {
+	return F.Pipe4(
+		"log-level",
+		viper.GetString,
+		toSlogLevel,
+		toHandlerOptions,
+		toSlogHandler,
+	)
+}
+
+func toSlogLevel(s string) slog.Level {
+	if s == "debug" {
+		return slog.LevelDebug
+	}
+	return slog.LevelInfo
+}
+
+func toHandlerOptions(l slog.Level) *slog.HandlerOptions {
+	return &slog.HandlerOptions{Level: l}
+}
+
+func toSlogHandler(opts *slog.HandlerOptions) slog.Handler {
+	if viper.GetString("log-format") == "text" {
+		return slog.NewTextHandler(os.Stderr, opts)
+	}
+	return slog.NewJSONHandler(os.Stderr, opts)
 }
