@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -19,6 +19,7 @@ import (
 
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/fputil"
+	"github.com/dictyBase/modware-import/internal/logger"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -75,12 +76,10 @@ var (
 const keywordRecordLength = 3
 
 func LoadPlasmidOntology(_ *cobra.Command, _ []string) error {
-	errLogger := log.New(
-		os.Stderr,
-		"[ERROR] ",
-		log.Ldate|log.Ltime|log.Lshortfile,
-	)
-	infoLogger := log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
+	handler := logger.GetSlogHandler()
+	slogger := slog.New(handler)
+	errLogger := slog.NewLogLogger(handler, slog.LevelError)
+	infoLogger := slog.NewLogLogger(handler, slog.LevelInfo)
 	elog := E.Logger[error, KeywordProcessingSummary](errLogger, infoLogger)
 
 	return F.Pipe8(
@@ -103,14 +102,17 @@ func LoadPlasmidOntology(_ *cobra.Command, _ []string) error {
 		E.Fold(
 			fperrors.IdentityError,
 			func(summary KeywordProcessingSummary) error {
-				infoLogger.Printf(
-					"Created: %d, Existing: %d, Skipped: %d, Errors: %d",
-					len(summary.Created),
-					len(summary.Existing),
-					summary.Skipped,
-					summary.ErrorCount,
+				slogger.Info(
+					"plasmid ontology summary",
+					"created", len(summary.Created),
+					"existing", len(summary.Existing),
+					"skipped", summary.Skipped,
+					"errors", summary.ErrorCount,
 				)
-				return nil
+				if summary.ErrorCount > 0 {
+					slogger.Error("plasmid ontology errors", "errors", summary.Errors)
+				}
+				return summary.Err
 			},
 		),
 	)
