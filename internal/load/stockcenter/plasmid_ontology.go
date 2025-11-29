@@ -74,13 +74,13 @@ var (
 
 const keywordRecordLength = 3
 
-	handler := logger.GetSlogHandler()
 func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 	handler := logger.GetSlogHandler(cmd)
 	slogger := slog.New(handler)
-	errLogger := slog.NewLogLogger(handler, slog.LevelError)
-	infoLogger := slog.NewLogLogger(handler, slog.LevelInfo)
-	elog := E.Logger[error, KeywordProcessingSummary](errLogger, infoLogger)
+	elog := E.Logger[error, KeywordProcessingSummary](
+		slog.NewLogLogger(handler, slog.LevelInfo),
+		slog.NewLogLogger(handler, slog.LevelError),
+	)
 
 	return F.Pipe8(
 		IOE.Do[error](KeywordLoaderConfig{Cmd: cmd}),
@@ -110,7 +110,11 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 					"errors", summary.ErrorCount,
 				)
 				if summary.ErrorCount > 0 {
-					slogger.Error("plasmid ontology errors", "errors", summary.Errors)
+					slogger.Error(
+						"plasmid ontology errors",
+						"errors",
+						summary.Errors,
+					)
 				}
 				return summary.Err
 			},
