@@ -316,36 +316,53 @@ func keywordCreateSuccessResult(
 func aggregateKeywordResults(
 	results []KeywordProcessingResult,
 ) KeywordProcessingSummary {
-	return F.Pipe1(
+	return F.Pipe2(
 		results,
-		A.Reduce(
-			func(acc KeywordProcessingSummary, result KeywordProcessingResult) KeywordProcessingSummary {
-				return F.Pipe1(
-					result.Error,
-					O.Fold(
-						func() KeywordProcessingSummary {
-							if !result.Processed {
-								acc.Skipped++
-								return acc
-							}
-							association := keywordFormatAssociation(result)
-							if result.Created {
-								acc.Created = append(acc.Created, association)
-							} else {
-								acc.Existing = append(acc.Existing, association)
-							}
-							return acc
-						},
-						func(err error) KeywordProcessingSummary {
-							acc.ErrorCount++
-							acc.Errors = append(acc.Errors, err.Error())
-							acc.Err = errors.Join(acc.Err, err)
-							return acc
-						},
-					),
-				)
+		A.Map(resultToSummary),
+		A.Reduce(concatSummaries, KeywordProcessingSummary{}),
+	)
+}
+
+func concatSummaries(
+	a, b KeywordProcessingSummary,
+) KeywordProcessingSummary {
+	return KeywordProcessingSummary{
+		Created:    append(a.Created, b.Created...),
+		Existing:   append(a.Existing, b.Existing...),
+		Skipped:    a.Skipped + b.Skipped,
+		ErrorCount: a.ErrorCount + b.ErrorCount,
+		Errors:     append(a.Errors, b.Errors...),
+		Err:        errors.Join(a.Err, b.Err),
+	}
+}
+
+func resultToSummary(
+	result KeywordProcessingResult,
+) KeywordProcessingSummary {
+	return F.Pipe1(
+		result.Error,
+		O.Fold(
+			func() KeywordProcessingSummary {
+				switch {
+				case !result.Processed:
+					return KeywordProcessingSummary{Skipped: 1}
+				case result.Created:
+					return KeywordProcessingSummary{
+						Created: []string{keywordFormatAssociation(result)},
+					}
+				default:
+					return KeywordProcessingSummary{
+						Existing: []string{keywordFormatAssociation(result)},
+					}
+				}
 			},
-			KeywordProcessingSummary{},
+			func(err error) KeywordProcessingSummary {
+				return KeywordProcessingSummary{
+					ErrorCount: 1,
+					Errors:     []string{err.Error()},
+					Err:        err,
+				}
+			},
 		),
 	)
 }
