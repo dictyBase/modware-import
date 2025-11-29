@@ -85,16 +85,18 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 	return F.Pipe8(
 		IOE.Do[error](KeywordLoaderConfig{Cmd: cmd}),
 		IOE.ChainFirst(
-			IOE.LogJSON[KeywordLoaderConfig](
-				"Starting plasmid ontology association:\n%s",
+			logStep[KeywordLoaderConfig](
+				slogger,
+				"Starting plasmid ontology association",
 			),
 		),
 		IOE.Bind(setKeywordReader, openKeywordReader),
 		IOE.Chain(streamKeywordRecords),
 		IOE.Map[error](aggregateKeywordResults),
 		IOE.ChainFirst(
-			IOE.LogJSON[KeywordProcessingSummary](
-				"Plasmid ontology association summary:\n%s",
+			logStep[KeywordProcessingSummary](
+				slogger,
+				"Plasmid ontology association summary",
 			),
 		),
 		fputil.ToEither[error, KeywordProcessingSummary],
@@ -109,17 +111,22 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 					"skipped", summary.Skipped,
 					"errors", summary.ErrorCount,
 				)
-				if summary.ErrorCount > 0 {
-					slogger.Error(
-						"plasmid ontology errors",
-						"errors",
-						summary.Errors,
-					)
-				}
-				return summary.Err
+				return nil
 			},
 		),
 	)
+}
+
+func logStep[T any](
+	logger *slog.Logger,
+	msg string,
+) func(T) IOE.IOEither[error, T] {
+	return func(data T) IOE.IOEither[error, T] {
+		return IOE.TryCatchError(func() (T, error) {
+			logger.Info(msg, "payload", data)
+			return data, nil
+		})
+	}
 }
 
 func openKeywordReader(
