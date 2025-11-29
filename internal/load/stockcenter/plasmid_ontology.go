@@ -103,9 +103,13 @@ func LoadPlasmidOntology(_ *cobra.Command, _ []string) error {
 		E.Fold(
 			fperrors.IdentityError,
 			func(summary KeywordProcessingSummary) error {
-				if summary.Err != nil {
-					return summary.Err
-				}
+				infoLogger.Printf(
+					"Created: %d, Existing: %d, Skipped: %d, Errors: %d",
+					len(summary.Created),
+					len(summary.Existing),
+					summary.Skipped,
+					summary.ErrorCount,
+				)
 				return nil
 			},
 		),
