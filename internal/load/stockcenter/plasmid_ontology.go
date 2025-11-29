@@ -70,6 +70,10 @@ var (
 		},
 	)
 	errSkipRecord = errors.New("skip record")
+
+	keywordIsNotBlankRecord = A.Any(func(s string) bool {
+		return len(strings.TrimSpace(s)) > 0
+	})
 )
 
 const keywordRecordLength = 3
@@ -368,19 +372,22 @@ func resultToSummary(
 }
 
 func keywordFormatAssociation(result KeywordProcessingResult) string {
-	if strings.TrimSpace(result.Term) == "" {
-		return result.PlasmidID
-	}
-	return fmt.Sprintf("%s:%s", result.PlasmidID, result.Term)
-}
-
-func keywordIsNotBlankRecord(record []string) bool {
-	for _, field := range record {
-		if strings.TrimSpace(field) != "" {
-			return true
-		}
-	}
-	return false
+	return F.Pipe2(
+		result.Term,
+		O.FromPredicate(func(s string) bool {
+			return len(strings.TrimSpace(s)) > 0
+		}),
+		O.Fold(
+			func() string { return result.PlasmidID },
+			func(term string) string {
+				return fmt.Sprintf(
+					"%s:%s",
+					result.PlasmidID,
+					term,
+				)
+			},
+		),
+	)
 }
 
 func keywordSkipRecordError(_ []string) error {
