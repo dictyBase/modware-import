@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	defaultOntologyName = "plasmid_keywords"
 	defaultPropertyName = "keyword"
 )
 
@@ -29,11 +28,6 @@ func init() {
 		"tsv file with plasmid properties",
 	)
 	PlasmidOntologyCmd.MarkFlagRequired("input")
-	PlasmidOntologyCmd.Flags().String(
-		"ontology",
-		defaultOntologyName,
-		"ontology to use for plasmid keywords",
-	)
 	PlasmidOntologyCmd.Flags().String(
 		"property",
 		defaultPropertyName,
