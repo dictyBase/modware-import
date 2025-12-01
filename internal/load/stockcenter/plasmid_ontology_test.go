@@ -79,6 +79,7 @@ func testLoadPlasmidOntologySuccess(t *testing.T) {
 	cmd := &cobra.Command{}
 	cmd.Flags().String("input", filePath, "")
 	cmd.Flags().String("property", "keyword", "")
+	cmd.Flags().String("input-source", "folder", "")
 
 	// Execute
 	err := LoadPlasmidOntology(cmd, []string{})
@@ -116,6 +117,7 @@ func testLoadPlasmidOntologySkipExisting(t *testing.T) {
 	cmd := &cobra.Command{}
 	cmd.Flags().String("input", filePath, "")
 	cmd.Flags().String("property", "keyword", "")
+	cmd.Flags().String("input-source", "folder", "")
 
 	err := LoadPlasmidOntology(cmd, []string{})
 	require.NoError(t, err)
@@ -136,6 +138,7 @@ func testLoadPlasmidOntologyValidationError(t *testing.T) {
 	cmd := &cobra.Command{}
 	cmd.Flags().String("input", filePath, "")
 	cmd.Flags().String("property", "keyword", "")
+	cmd.Flags().String("input-source", "folder", "")
 
 	// The function logs errors but returns nil for partial successes/failures
 	err := LoadPlasmidOntology(cmd, []string{})
@@ -165,6 +168,7 @@ func testLoadPlasmidOntologyAPIError(t *testing.T) {
 	cmd := &cobra.Command{}
 	cmd.Flags().String("input", filePath, "")
 	cmd.Flags().String("property", "keyword", "")
+	cmd.Flags().String("input-source", "folder", "")
 
 	err := LoadPlasmidOntology(cmd, []string{})
 	require.NoError(t, err)
