@@ -15,7 +15,7 @@ var GwdiCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadGwdi,
 	PreRunE: func(_ *cobra.Command, _ []string) error {
-		if err := SetStrainAPIClient(); err != nil {
+		if err := SetStockAPIClient(); err != nil {
 			return err
 		}
 		if err := SetAnnoAPIClient(); err != nil {

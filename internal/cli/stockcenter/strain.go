@@ -23,7 +23,7 @@ var StrainCmd = &cobra.Command{
 }
 
 func setStrainPreRun(_ *cobra.Command, _ []string) error {
-	if err := SetStrainAPIClient(); err != nil {
+	if err := SetStockAPIClient(); err != nil {
 		return err
 	}
 	if err := setStrainInputReader(); err != nil {

@@ -16,7 +16,7 @@ var PlasmidOntologyCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE:  loader.LoadPlasmidOntology,
 	PreRunE: func(_ *cobra.Command, _ []string) error {
-		return SetStrainAPIClient()
+		return SetStockAPIClient()
 	},
 }
 

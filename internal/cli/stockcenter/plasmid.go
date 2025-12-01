@@ -31,7 +31,7 @@ func plasmidInputMap() map[string]string {
 }
 
 func setPlasmidPreRun(_ *cobra.Command, _ []string) error {
-	for _, fn := range []func() error{SetStrainAPIClient, setPlasmidInputReader} {
+	for _, fn := range []func() error{SetStockAPIClient, setPlasmidInputReader} {
 		if err := fn(); err != nil {
 			return err
 		}
