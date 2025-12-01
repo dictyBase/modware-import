@@ -16,6 +16,7 @@ import (
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
 	O "github.com/IBM/fp-go/option"
+	S "github.com/IBM/fp-go/semigroup"
 
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/fputil"
@@ -323,21 +324,26 @@ func aggregateKeywordResults(
 	return F.Pipe2(
 		results,
 		A.Map(resultToSummary),
-		A.Reduce(concatSummaries, KeywordProcessingSummary{}),
+		A.Reduce(
+			SummarySemigroup().Concat,
+			KeywordProcessingSummary{},
+		),
 	)
 }
 
-func concatSummaries(
-	a, b KeywordProcessingSummary,
-) KeywordProcessingSummary {
-	return KeywordProcessingSummary{
-		Created:    append(a.Created, b.Created...),
-		Existing:   append(a.Existing, b.Existing...),
-		Skipped:    a.Skipped + b.Skipped,
-		ErrorCount: a.ErrorCount + b.ErrorCount,
-		Errors:     append(a.Errors, b.Errors...),
-		Err:        errors.Join(a.Err, b.Err),
-	}
+func SummarySemigroup() S.Semigroup[KeywordProcessingSummary] {
+	return S.MakeSemigroup(
+		func(a, b KeywordProcessingSummary) KeywordProcessingSummary {
+			return KeywordProcessingSummary{
+				Created:    append(a.Created, b.Created...),
+				Existing:   append(a.Existing, b.Existing...),
+				Skipped:    a.Skipped + b.Skipped,
+				ErrorCount: a.ErrorCount + b.ErrorCount,
+				Errors:     append(a.Errors, b.Errors...),
+				Err:        errors.Join(a.Err, b.Err),
+			}
+		},
+	)
 }
 
 func resultToSummary(
