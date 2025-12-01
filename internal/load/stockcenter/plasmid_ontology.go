@@ -59,7 +59,6 @@ type KeywordProcessingSummary struct {
 	Skipped    int      `json:"skipped"`
 	ErrorCount int      `json:"error_count"`
 	Errors     []string `json:"errors"`
-	Err        error    `json:"-"`
 }
 
 var (
@@ -87,7 +86,7 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 		slog.NewLogLogger(handler, slog.LevelError),
 	)
 
-	return F.Pipe8(
+	return F.Pipe7(
 		IOE.Do[error](KeywordLoaderConfig{Cmd: cmd}),
 		IOE.ChainFirst(
 			logStep[KeywordLoaderConfig](
@@ -96,8 +95,7 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 			),
 		),
 		IOE.Bind(setKeywordReader, openKeywordReader),
-		IOE.Chain(streamKeywordRecords),
-		IOE.Map[error](aggregateKeywordResults),
+		IOE.Chain(processAndAggregateKeywordRecords),
 		IOE.ChainFirst(
 			logStep[KeywordProcessingSummary](
 				slogger,
@@ -155,24 +153,24 @@ func openKeywordReader(
 	})
 }
 
-func streamKeywordRecords(
+func processAndAggregateKeywordRecords(
 	config KeywordLoaderConfig,
-) IOE.IOEither[error, []KeywordProcessingResult] {
-	return IOE.TryCatchError(func() ([]KeywordProcessingResult, error) {
+) IOE.IOEither[error, KeywordProcessingSummary] {
+	return IOE.TryCatchError(func() (KeywordProcessingSummary, error) {
 		if config.Closer != nil {
 			defer config.Closer.Close()
 		}
 
 		prop, _ := config.Cmd.Flags().GetString("property")
 		keywordFn := keywordFilterProperty(prop)
-		results := []KeywordProcessingResult{}
+		summary := KeywordProcessingSummary{}
 		for {
 			record, err := config.Reader.Read()
 			if err == io.EOF {
 				break
 			}
 			if err != nil {
-				return nil, fmt.Errorf("tsv read error: %w", err)
+				return summary, fmt.Errorf("tsv read error: %w", err)
 			}
 
 			result := F.Pipe6(
@@ -196,10 +194,13 @@ func streamKeywordRecords(
 				),
 			)
 
-			results = append(results, result)
+			summary = SummarySemigroup().Concat(
+				summary,
+				resultToSummary(result),
+			)
 		}
 
-		return results, nil
+		return summary, nil
 	})
 }
 
@@ -318,19 +319,6 @@ func keywordCreateSuccessResult(
 	}
 }
 
-func aggregateKeywordResults(
-	results []KeywordProcessingResult,
-) KeywordProcessingSummary {
-	return F.Pipe2(
-		results,
-		A.Map(resultToSummary),
-		A.Reduce(
-			SummarySemigroup().Concat,
-			KeywordProcessingSummary{},
-		),
-	)
-}
-
 func SummarySemigroup() S.Semigroup[KeywordProcessingSummary] {
 	return S.MakeSemigroup(
 		func(a, b KeywordProcessingSummary) KeywordProcessingSummary {
@@ -340,7 +328,6 @@ func SummarySemigroup() S.Semigroup[KeywordProcessingSummary] {
 				Skipped:    a.Skipped + b.Skipped,
 				ErrorCount: a.ErrorCount + b.ErrorCount,
 				Errors:     append(a.Errors, b.Errors...),
-				Err:        errors.Join(a.Err, b.Err),
 			}
 		},
 	)
@@ -370,7 +357,6 @@ func resultToSummary(
 				return KeywordProcessingSummary{
 					ErrorCount: 1,
 					Errors:     []string{err.Error()},
-					Err:        err,
 				}
 			},
 		),
