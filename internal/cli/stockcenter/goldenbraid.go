@@ -21,7 +21,7 @@ and loads it directly to the stock center without requiring intermediate files.`
 
 func setGoldenbraidPreRun(_ *cobra.Command, _ []string) error {
 	// Set up API client (reuse existing strain API client setup)
-	return SetStrainAPIClient()
+	return SetStockAPIClient()
 }
 
 func init() {

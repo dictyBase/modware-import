@@ -102,7 +102,7 @@ func SetAnnoAPIClient() error {
 	return nil
 }
 
-func SetStrainAPIClient() error {
+func SetStockAPIClient() error {
 	conn, err := grpc.NewClient(
 		fmt.Sprintf(
 			"%s:%s",
