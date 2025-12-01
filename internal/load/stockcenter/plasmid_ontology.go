@@ -21,7 +21,9 @@ import (
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/dictyBase/modware-import/internal/logger"
+	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/minio/minio-go/v6"
 	"github.com/spf13/cobra"
 )
 
@@ -136,21 +138,64 @@ func openKeywordReader(
 	config KeywordLoaderConfig,
 ) IOE.IOEither[error, KeywordReaderResource] {
 	return IOE.TryCatchError(func() (KeywordReaderResource, error) {
-		inputPath, _ := config.Cmd.Flags().GetString("input")
-		file, err := os.Open(inputPath)
-		if err != nil {
+		source, _ := config.Cmd.Flags().GetString("input-source")
+		switch source {
+		case "folder":
+			return openFileReader(config)
+		case "bucket":
+			return openS3Reader(config)
+		default:
 			return KeywordReaderResource{}, fmt.Errorf(
-				"failed to open TSV file %s: %w",
-				inputPath,
-				err,
+				"unsupported input source %s",
+				source,
 			)
 		}
-		reader := csv.NewReader(file)
-		reader.Comma = '\t'
-		reader.FieldsPerRecord = -1
-		reader.TrimLeadingSpace = true
-		return KeywordReaderResource{Reader: reader, Closer: file}, nil
 	})
+}
+
+func openFileReader(
+	config KeywordLoaderConfig,
+) (KeywordReaderResource, error) {
+	inputPath, _ := config.Cmd.Flags().GetString("input")
+	file, err := os.Open(inputPath)
+	if err != nil {
+		return KeywordReaderResource{}, fmt.Errorf(
+			"failed to open TSV file %s: %w",
+			inputPath,
+			err,
+		)
+	}
+	reader := csv.NewReader(file)
+	reader.Comma = '\t'
+	reader.FieldsPerRecord = -1
+	reader.TrimLeadingSpace = true
+	return KeywordReaderResource{Reader: reader, Closer: file}, nil
+}
+
+func openS3Reader(
+	config KeywordLoaderConfig,
+) (KeywordReaderResource, error) {
+	bucket, _ := config.Cmd.Flags().GetString("s3-bucket")
+	path, _ := config.Cmd.Flags().GetString("s3-bucket-path")
+	file, _ := config.Cmd.Flags().GetString("input")
+	reader, err := registry.GetS3Client().GetObject(
+		bucket,
+		fmt.Sprintf("%s/%s", path, file),
+		minio.GetObjectOptions{},
+	)
+	if err != nil {
+		return KeywordReaderResource{}, fmt.Errorf(
+			"failed to open s3 file %s/%s: %w",
+			path,
+			file,
+			err,
+		)
+	}
+	csvReader := csv.NewReader(reader)
+	csvReader.Comma = '\t'
+	csvReader.FieldsPerRecord = -1
+	csvReader.TrimLeadingSpace = true
+	return KeywordReaderResource{Reader: csvReader, Closer: reader}, nil
 }
 
 func processAndAggregateKeywordRecords(
