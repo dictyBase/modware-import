@@ -25,7 +25,7 @@ func init() {
 		"input",
 		"i",
 		"",
-		"tsv file with plasmid properties",
+		"tsv file with plasmid properties (local path or filename in bucket)",
 	)
 	PlasmidOntologyCmd.MarkFlagRequired("input")
 	PlasmidOntologyCmd.Flags().String(
