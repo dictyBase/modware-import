@@ -27,19 +27,19 @@ func setGoldenbraidPreRun(_ *cobra.Command, _ []string) error {
 func init() {
 	GoldenbraidCmd.Flags().StringP(
 		"input", "i", "",
-		"GoldenBraid CSV file path (required)",
+		"GoldenBraid CSV file path (local path or filename in bucket)",
 	)
 	GoldenbraidCmd.MarkFlagRequired("input")
 
 	GoldenbraidCmd.Flags().StringP(
 		"user-email", "u", "",
-		"Email of the user loading the data (required)",
+		"Email of the user loading the data",
 	)
 	GoldenbraidCmd.MarkFlagRequired("user-email")
 
 	GoldenbraidCmd.Flags().StringP(
 		"plasmid-cvterm", "c", "",
-		"Plasmid ontology term (required, e.g., 'GB vector')",
+		"Plasmid ontology term (e.g., 'GB vector')",
 	)
 	GoldenbraidCmd.MarkFlagRequired("plasmid-cvterm")
 
