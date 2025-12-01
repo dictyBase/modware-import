@@ -236,7 +236,7 @@ func keywordHasValidRecordLength(record []string) bool {
 
 func keywordRecordLengthError(record []string) error {
 	return fmt.Errorf(
-		"invalid record: expected at least %d columns, got %d (%s)",
+		"invalid record: expected exactly %d columns, got %d (%s)",
 		keywordRecordLength,
 		len(record),
 		strings.Join(record, "\t"),
@@ -267,7 +267,7 @@ func associateKeywordTerm(
 				err,
 			)
 		}
-		existing := plasmid.Data.Attributes.DictyPlasmidProperty
+		existing := plasmid.GetData().GetAttributes().GetDictyPlasmidProperty()
 		if strings.EqualFold(existing, record.Term) {
 			return keywordCreateSuccessResult(
 				record.PlasmidID,
