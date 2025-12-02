@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path"
 
 	E "github.com/IBM/fp-go/either"
 	fperrors "github.com/IBM/fp-go/errors"
@@ -35,11 +36,7 @@ type LoaderConfig struct {
 	Reader *csv.Reader
 	Closer io.Closer
 	Viper  *viper.Viper
-}
-
-type GoldenBraidReaderResource struct {
-	Reader *csv.Reader
-	Closer io.Closer
+	Logger *slog.Logger
 }
 
 // PlasmidProcessingResult represents the result of processing a single plasmid
@@ -97,8 +94,8 @@ func GoldenBraidSummarySemigroup() S.Semigroup[GoldenBraidProcessingResult] {
 // openReader opens a CSV file from config and returns a reader wrapped in IOEither
 func openReader(
 	config LoaderConfig,
-) IOE.IOEither[error, GoldenBraidReaderResource] {
-	return IOE.TryCatchError(func() (GoldenBraidReaderResource, error) {
+) IOE.IOEither[error, LoaderConfig] {
+	return IOE.TryCatchError(func() (LoaderConfig, error) {
 		source, _ := config.Cmd.Flags().GetString("input-source")
 		switch source {
 		case "folder":
@@ -106,7 +103,7 @@ func openReader(
 		case "bucket":
 			return openGoldenBraidS3Reader(config)
 		default:
-			return GoldenBraidReaderResource{}, fmt.Errorf(
+			return config, fmt.Errorf(
 				"unsupported input source %s",
 				source,
 			)
@@ -114,11 +111,11 @@ func openReader(
 	})
 }
 
-func openGoldenBraidFileReader(config LoaderConfig) (GoldenBraidReaderResource, error) {
+func openGoldenBraidFileReader(config LoaderConfig) (LoaderConfig, error) {
 	inputPath, _ := config.Cmd.Flags().GetString("input")
 	file, err := os.Open(inputPath)
 	if err != nil {
-		return GoldenBraidReaderResource{}, fmt.Errorf(
+		return config, fmt.Errorf(
 			"failed to open CSV file %s: %w",
 			inputPath,
 			err,
@@ -132,28 +129,30 @@ func openGoldenBraidFileReader(config LoaderConfig) (GoldenBraidReaderResource, 
 	// Skip header row
 	if _, err := reader.Read(); err != nil {
 		file.Close()
-		return GoldenBraidReaderResource{}, fmt.Errorf(
+		return config, fmt.Errorf(
 			"failed to read CSV header: %w",
 			err,
 		)
 	}
 
-	return GoldenBraidReaderResource{Reader: reader, Closer: file}, nil
+	config.Reader = reader
+	config.Closer = file
+	return config, nil
 }
 
-func openGoldenBraidS3Reader(config LoaderConfig) (GoldenBraidReaderResource, error) {
+func openGoldenBraidS3Reader(config LoaderConfig) (LoaderConfig, error) {
 	bucket, _ := config.Cmd.Flags().GetString("s3-bucket")
-	path, _ := config.Cmd.Flags().GetString("s3-bucket-path")
+	bucketPath, _ := config.Cmd.Flags().GetString("s3-bucket-path")
 	file, _ := config.Cmd.Flags().GetString("input")
 	reader, err := registry.GetS3Client().GetObject(
 		bucket,
-		fmt.Sprintf("%s/%s", path, file),
+		path.Join(bucketPath, file),
 		minio.GetObjectOptions{},
 	)
 	if err != nil {
-		return GoldenBraidReaderResource{}, fmt.Errorf(
+		return config, fmt.Errorf(
 			"failed to open s3 file %s/%s: %w",
-			path,
+			bucketPath,
 			file,
 			err,
 		)
@@ -165,31 +164,21 @@ func openGoldenBraidS3Reader(config LoaderConfig) (GoldenBraidReaderResource, er
 	// Skip header row
 	if _, err := csvReader.Read(); err != nil {
 		reader.Close()
-		return GoldenBraidReaderResource{}, fmt.Errorf(
+		return config, fmt.Errorf(
 			"failed to read CSV header: %w",
 			err,
 		)
 	}
-	return GoldenBraidReaderResource{Reader: csvReader, Closer: reader}, nil
+	config.Reader = csvReader
+	config.Closer = reader
+	return config, nil
 }
-
-// SetReader is a curried setter that adds CSV reader to config
-var SetReader = F.Curry2(
-	func(resource GoldenBraidReaderResource, config LoaderConfig) LoaderConfig {
-		config.Reader = resource.Reader
-		config.Closer = resource.Closer
-		return config
-	},
-)
 
 // streamAndProcessRecords reads CSV records one by one and processes them
 func streamAndProcessRecords(
 	config LoaderConfig,
 ) IOE.IOEither[error, GoldenBraidProcessingResult] {
 	return IOE.TryCatchError(func() (GoldenBraidProcessingResult, error) {
-		if config.Closer != nil {
-			defer config.Closer.Close()
-		}
 		userEmail := config.Viper.GetString("user-email")
 		plasmidCVTerm := config.Viper.GetString("plasmid-cvterm")
 		summary := GoldenBraidProcessingResult{}
@@ -200,6 +189,12 @@ func streamAndProcessRecords(
 				break
 			}
 			if err != nil {
+				config.Logger.Error(
+					"CSV read error, partial results",
+					"successes", len(summary.Successes),
+					"errors", summary.ErrorCount,
+					"error", err,
+				)
 				return summary, fmt.Errorf("CSV read error: %w", err)
 			}
 
@@ -235,7 +230,10 @@ func streamAndProcessRecords(
 				),
 			)
 
-			summary = GoldenBraidSummarySemigroup().Concat(summary, goldenBraidResultToSummary(result))
+			summary = GoldenBraidSummarySemigroup().Concat(
+				summary,
+				goldenBraidResultToSummary(result),
+			)
 		}
 
 		return summary, nil
@@ -313,6 +311,31 @@ func loadPlasmidToAPI(
 	})
 }
 
+func releaseGoldenBraidReader(
+	config LoaderConfig,
+	_ E.Either[error, GoldenBraidProcessingResult],
+) IOE.IOEither[error, any] {
+	return IOE.TryCatchError(func() (any, error) {
+		if config.Closer != nil {
+			return nil, config.Closer.Close()
+		}
+		return nil, nil
+	})
+}
+
+func useGoldenBraidReader(
+	config LoaderConfig,
+) IOE.IOEither[error, GoldenBraidProcessingResult] {
+	return F.Pipe2(
+		config,
+		logGoldenBraidStep[LoaderConfig](
+			config.Logger,
+			"CSV reader opened, processing records",
+		),
+		IOE.Chain(streamAndProcessRecords),
+	)
+}
+
 // LoadGoldenBraid is the main entry point for loading GoldenBraid CSV data
 func LoadGoldenBraid(cmd *cobra.Command, _ []string) error {
 	handler := logger.GetSlogHandler(cmd)
@@ -322,11 +345,12 @@ func LoadGoldenBraid(cmd *cobra.Command, _ []string) error {
 		slog.NewLogLogger(handler, slog.LevelError),
 	)
 
-	return F.Pipe8(
+	return F.Pipe6(
 		IOE.Do[error](LoaderConfig{
 			Viper:  viper.GetViper(),
 			Cmd:    cmd,
 			Reader: nil,
+			Logger: slogger,
 		}),
 		IOE.ChainFirst(
 			logGoldenBraidStep[LoaderConfig](
@@ -334,14 +358,15 @@ func LoadGoldenBraid(cmd *cobra.Command, _ []string) error {
 				"Starting GoldenBraid loading",
 			),
 		),
-		IOE.Bind(SetReader, openReader),
-		IOE.ChainFirst(
-			logGoldenBraidStep[LoaderConfig](
-				slogger,
-				"CSV reader opened, processing records",
-			),
+		IOE.Chain(
+			func(config LoaderConfig) IOE.IOEither[error, GoldenBraidProcessingResult] {
+				return IOE.Bracket(
+					openReader(config),
+					useGoldenBraidReader,
+					releaseGoldenBraidReader,
+				)
+			},
 		),
-		IOE.Chain(streamAndProcessRecords),
 		IOE.ChainFirst(
 			logGoldenBraidStep[GoldenBraidProcessingResult](
 				slogger,
