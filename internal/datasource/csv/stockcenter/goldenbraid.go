@@ -71,13 +71,12 @@ func parseCommaSeparatedField(field string) O.Option[[]string] {
 // parsePublicationField parses a single PMID into Option[[]string]
 // Empty → None, populated → Some([]string{pmid})
 func parsePublicationField(field string) O.Option[[]string] {
-	trimmed := strings.TrimSpace(field)
-
-	if S.IsEmpty(trimmed) {
-		return O.None[[]string]()
-	}
-
-	return O.Some([]string{trimmed})
+	return F.Pipe3(
+		field,
+		strings.TrimSpace,
+		O.FromPredicate(S.IsNonEmpty),
+		O.Map(A.Of[string]),
+	)
 }
 
 // HasValidRecordLength checks if CSV record has exactly GoldenBraidFieldCount fields
