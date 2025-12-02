@@ -6,6 +6,7 @@ import (
 	"time"
 
 	A "github.com/IBM/fp-go/array"
+	Eq "github.com/IBM/fp-go/eq"
 	F "github.com/IBM/fp-go/function"
 	O "github.com/IBM/fp-go/option"
 	Pred "github.com/IBM/fp-go/predicate"
@@ -52,6 +53,13 @@ var (
 			hasPrefix,
 		),
 	)
+
+	// Eq.Of creates an Eq instance for comparable types.
+	// We then create a predicate that checks for equality with GoldenBraidFieldCount.
+	HasValidRecordLength = F.Flow2(
+		A.Size[string],
+		Eq.Equals(Eq.FromStrictEquals[int]())(GoldenBraidFieldCount),
+	)
 )
 
 // parseCommaSeparatedField parses a comma-separated string into Option[[]string]
@@ -77,11 +85,6 @@ func parsePublicationField(field string) O.Option[[]string] {
 		O.FromPredicate(S.IsNonEmpty),
 		O.Map(A.Of[string]),
 	)
-}
-
-// HasValidRecordLength checks if CSV record has exactly GoldenBraidFieldCount fields
-func HasValidRecordLength(r []string) bool {
-	return len(r) == GoldenBraidFieldCount
 }
 
 // RecordLengthError creates error for invalid record length
