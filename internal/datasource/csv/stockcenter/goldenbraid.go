@@ -29,22 +29,42 @@ type GoldenBraidPlasmid struct {
 	UpdatedOn    time.Time          // Default timestamp
 }
 
+var (
+	splitWithComma = F.Bind2nd(strings.Split, ",")
+
+	hasPrefix = F.Bind1st(strings.HasPrefix, "p")
+
+	HasValidUser = F.Flow2(
+		func(p *GoldenBraidPlasmid) string { return p.User },
+		S.IsNonEmpty,
+	)
+
+	HasValidSummary = F.Flow2(
+		func(p *GoldenBraidPlasmid) string { return p.Summary },
+		S.IsNonEmpty,
+	)
+
+	// HasValidName checks if plasmid name starts with 'p' and is non-empty
+	HasValidName = F.Flow2(
+		func(p *GoldenBraidPlasmid) string { return p.Name },
+		Pred.MonoidAll[string]().Concat(
+			S.IsNonEmpty,
+			hasPrefix,
+		),
+	)
+)
+
 // parseCommaSeparatedField parses a comma-separated string into Option[[]string]
 // Empty string → None, populated → Some([]string)
 func parseCommaSeparatedField(field string) O.Option[[]string] {
-	trimmed := strings.TrimSpace(field)
-
-	// Empty string → None
-	if S.IsEmpty(trimmed) {
-		return O.None[[]string]()
-	}
-
-	// Split, trim, filter non-empty using predicate
 	return F.Pipe3(
-		strings.Split(trimmed, ","),
-		A.Map(strings.TrimSpace),
-		A.Filter(Pred.Not(S.IsEmpty)),
-		O.Some[[]string],
+		field,
+		splitWithComma,
+		A.Map(F.Flow2(
+			strings.TrimSpace,
+			O.FromPredicate(S.IsNonEmpty),
+		)),
+		O.SequenceArray[string],
 	)
 }
 
@@ -75,7 +95,10 @@ func RecordLengthError(r []string) error {
 }
 
 // BuildPlasmid constructs GoldenBraidPlasmid immutably from CSV record (curried)
-func BuildPlasmid(userEmail string, plasmidCVTerm string) func([]string) *GoldenBraidPlasmid {
+func BuildPlasmid(
+	userEmail string,
+	plasmidCVTerm string,
+) func([]string) *GoldenBraidPlasmid {
 	return func(r []string) *GoldenBraidPlasmid {
 		now := time.Now()
 		return &GoldenBraidPlasmid{
@@ -93,29 +116,14 @@ func BuildPlasmid(userEmail string, plasmidCVTerm string) func([]string) *Golden
 
 // Validation predicates
 
-// HasValidName checks if plasmid name starts with 'p' and is non-empty
-func HasValidName(p *GoldenBraidPlasmid) bool {
-	return !S.IsEmpty(p.Name) && strings.HasPrefix(p.Name, "p")
-}
-
 // NameError creates error for invalid name
 func NameError(p *GoldenBraidPlasmid) error {
 	return fmt.Errorf("invalid plasmid name '%s': must start with 'p'", p.Name)
 }
 
-// HasValidSummary checks if summary is non-empty
-func HasValidSummary(p *GoldenBraidPlasmid) bool {
-	return !S.IsEmpty(p.Summary)
-}
-
 // SummaryError creates error for empty summary
 func SummaryError(p *GoldenBraidPlasmid) error {
 	return fmt.Errorf("plasmid '%s' has empty summary", p.Name)
-}
-
-// HasValidUser checks if user email is non-empty
-func HasValidUser(p *GoldenBraidPlasmid) bool {
-	return !S.IsEmpty(p.User)
 }
 
 // UserError creates error for missing user
