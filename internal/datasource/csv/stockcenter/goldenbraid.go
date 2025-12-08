@@ -33,7 +33,7 @@ type GoldenBraidPlasmid struct {
 var (
 	splitWithComma = F.Bind2nd(strings.Split, ",")
 
-	hasPrefix = F.Bind1st(strings.HasPrefix, "p")
+	hasPrefix = F.Bind2nd(strings.HasPrefix, "p")
 
 	HasValidUser = F.Flow2(
 		func(p *GoldenBraidPlasmid) string { return p.User },
@@ -65,14 +65,12 @@ var (
 // parseCommaSeparatedField parses a comma-separated string into Option[[]string]
 // Empty string → None, populated → Some([]string)
 func parseCommaSeparatedField(field string) O.Option[[]string] {
-	return F.Pipe3(
+	return F.Pipe4(
 		field,
 		splitWithComma,
-		A.Map(F.Flow2(
-			strings.TrimSpace,
-			O.FromPredicate(S.IsNonEmpty),
-		)),
-		O.SequenceArray[string],
+		A.Map(strings.TrimSpace),
+		A.Filter(S.IsNonEmpty),
+		O.FromPredicate(A.IsNonEmpty[string]),
 	)
 }
 
