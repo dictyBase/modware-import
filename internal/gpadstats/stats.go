@@ -21,6 +21,11 @@ type StatsLoaderConfig struct {
 	DB   *sql.DB
 }
 
+type GeneCountStats struct {
+	Count    int
+	EcoCount int
+}
+
 func builder(config StatsLoaderConfig) IOE.IOEither[error, StatsLoaderConfig] {
 	return IOE.TryCatchError(func() (StatsLoaderConfig, error) {
 		ctx := context.Background()
@@ -65,9 +70,40 @@ func queryCount(config StatsLoaderConfig) IOE.IOEither[error, int] {
 	})
 }
 
+func queryEcoCount(config StatsLoaderConfig) IOE.IOEither[error, int] {
+	return IOE.TryCatch(func() (int, error) {
+		var count int
+		err := config.DB.QueryRow(
+			`SELECT COUNT(DISTINCT DB_Object_ID) FROM gpad WHERE Evidence_Code IN (
+				'ECO:0000269', 'ECO:0000314', 'ECO:0000353', 'ECO:0000315', 'ECO:0000316',
+				'ECO:0000270', 'ECO:0006056', 'ECO:0007005', 'ECO:0007001', 'ECO:0007003',
+				'ECO:0007007', 'ECO:0005581'
+			)`,
+		).Scan(&count)
+		return count, err
+	}, func(err error) error {
+		return fmt.Errorf("error in running gpad eco query %w", err)
+	})
+}
+
+func queryCounts(config StatsLoaderConfig) IOE.IOEither[error, GeneCountStats] {
+	return F.Pipe1(
+		IOE.SequenceT2(
+			queryCount(config),
+			queryEcoCount(config),
+		),
+		IOE.Map[error](func(t T.Tuple2[int, int]) GeneCountStats {
+			return GeneCountStats{
+				Count:    t.F1,
+				EcoCount: t.F2,
+			}
+		}),
+	)
+}
+
 func releaseResources(
 	config StatsLoaderConfig,
-	_ E.Either[error, int],
+	_ E.Either[error, GeneCountStats],
 ) IOE.IOEither[error, any] {
 	return IOE.TryCatchError(func() (any, error) {
 		config.DB.Close()
@@ -78,6 +114,14 @@ func releaseResources(
 
 func toEither[ERR, A any](io IOE.IOEither[ERR, A]) E.Either[ERR, A] {
 	return io()
+}
+
+func onStatsError(err error) T.Tuple2[GeneCountStats, error] {
+	return T.MakeTuple2(GeneCountStats{}, err)
+}
+
+func onStatsSuccess(stats GeneCountStats) T.Tuple2[GeneCountStats, error] {
+	return T.MakeTuple2(stats, (error)(nil))
 }
 
 func builderFromFile(file string) IOE.IOEither[error, StatsLoaderConfig] {
@@ -94,19 +138,20 @@ func Run(cltx *cli.Context) error {
 	output := F.Pipe2(
 		IOE.Bracket(
 			builderFromFile(cltx.String("file")),
-			queryCount,
+			queryCounts,
 			releaseResources,
 		),
-		toEither[error, int],
+		toEither[error, GeneCountStats],
 		E.Fold(
-			F.Bind1st(T.MakeTuple2[int, error], 0),
-			F.Bind2nd(T.MakeTuple2[int, error], nil),
+			onStatsError,
+			onStatsSuccess,
 		),
 	)
 
 	if output.F2 != nil {
 		return cli.Exit(fmt.Sprintf("Error: %v", output.F2), 1)
 	}
-	fmt.Printf("Unique Gene Count: %d\n", output.F1)
+	fmt.Printf("Unique Gene Count: %d\n", output.F1.Count)
+	fmt.Printf("Unique Gene with ECO code Count: %d\n", output.F1.EcoCount)
 	return nil
 }
