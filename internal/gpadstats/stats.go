@@ -76,12 +76,18 @@ func releaseResources(
 	})
 }
 
-func Run(path string) error {
-	return F.Pipe5(
-		IOE.Do[error](StatsLoaderConfig{Path: path}),
-		IOE.Chain(openResources),
-		IOE.Chain(builder),
-		IOE.Chain(computeStats),
+func Run(cltx *cli.Context) error {
+	return F.Pipe2(
+		IOE.Bracket(
+			F.Pipe2(IOE.Do[error](StatsLoaderConfig{
+				Path: cltx.String("file"),
+			}),
+				IOE.Chain(openResources),
+				IOE.Chain(builder),
+			),
+			computeStats,
+			releaseResources,
+		),
 		fputil.ToEither[error, int],
 		E.Fold(
 			func(err error) error {
