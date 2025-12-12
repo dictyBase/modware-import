@@ -10,7 +10,8 @@ import (
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 )
 
-const header = "DB_Object_ID\tNegation\tRelation\tGO_ID\tDB_Reference\tEvidence_Code\tWith_or_From\tInteracting_Taxon_ID\tDate\tAssigned_By\tAnnotation_Extensions\tAnnotation_Properties\n"
+const header = "DB_Object_ID\tNegation\tRelation\tGO_ID\tDB_Reference\tEvidence_Code\tWith_or_From\t" +
+	"Interacting_Taxon_ID\tDate\tAssigned_By\tAnnotation_Extensions\tAnnotation_Properties\n"
 
 type wrappedReadCloser struct {
 	io.Reader
@@ -23,7 +24,7 @@ func (w *wrappedReadCloser) Close() error {
 
 func httpGet(url string) IOE.IOEither[error, io.ReadCloser] {
 	return IOE.TryCatchError(func() (io.ReadCloser, error) {
-		resp, err := http.Get(url)
+		resp, err := http.Get(url) //nolint:gosec
 		if err != nil {
 			return nil, err
 		}

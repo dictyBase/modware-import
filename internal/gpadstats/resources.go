@@ -54,7 +54,7 @@ func openResources(
 	)
 }
 
-func openUrlResources(url string) IOE.IOEither[error, StatsLoaderConfig] {
+func openURLResources(url string) IOE.IOEither[error, StatsLoaderConfig] {
 	return F.Pipe3(
 		httpGet(url),
 		IOE.Chain(gzipReader),
@@ -85,9 +85,9 @@ func builderFromFile(file string) IOE.IOEither[error, StatsLoaderConfig] {
 	)
 }
 
-func builderFromUrl(url string) IOE.IOEither[error, StatsLoaderConfig] {
+func builderFromURL(url string) IOE.IOEither[error, StatsLoaderConfig] {
 	return F.Pipe1(
-		openUrlResources(url),
+		openURLResources(url),
 		IOE.Chain(builder),
 	)
 }
