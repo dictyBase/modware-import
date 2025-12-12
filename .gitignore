@@ -37,3 +37,6 @@ opencode.json
 .opencode
 goldenbraid
 .tool-versions
+dictybase_gpad.tsv
+dictybase_gpad_with_header.tsv
+plasmid_props.tsv
