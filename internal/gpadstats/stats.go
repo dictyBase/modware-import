@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"os"
 
-	E "github.com/IBM/fp-go/either"
-	F "github.com/IBM/fp-go/function"
-	IOE "github.com/IBM/fp-go/ioeither"
-	"github.com/IBM/fp-go/ioeither/file"
-	T "github.com/IBM/fp-go/tuple"
-	fputil "github.com/dictyBase/modware-import/internal/fputil"
+	E "github.com/IBM/fp-go/v2/either"
+	F "github.com/IBM/fp-go/v2/function"
+	IOE "github.com/IBM/fp-go/v2/ioeither"
+	"github.com/IBM/fp-go/v2/ioeither/file"
+	T "github.com/IBM/fp-go/v2/tuple"
 	"github.com/nao1215/filesql"
 	"github.com/urfave/cli/v2"
 )
@@ -77,6 +76,10 @@ func releaseResources(
 	})
 }
 
+func toEither[ERR, A any](io IOE.IOEither[ERR, A]) E.Either[ERR, A] {
+	return io()
+}
+
 func Run(cltx *cli.Context) error {
 	output := F.Pipe2(
 		IOE.Bracket(
@@ -90,7 +93,7 @@ func Run(cltx *cli.Context) error {
 			computeStats,
 			releaseResources,
 		),
-		fputil.ToEither[error, int],
+		toEither[error, int],
 		E.Fold(
 			F.Bind1st(T.MakeTuple2[int, error], 0),
 			F.Bind2nd(T.MakeTuple2[int, error], nil),
