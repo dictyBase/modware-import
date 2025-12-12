@@ -10,6 +10,7 @@ import (
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
 	"github.com/IBM/fp-go/ioeither/file"
+	T "github.com/IBM/fp-go/tuple"
 	fputil "github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/nao1215/filesql"
 	"github.com/urfave/cli/v2"
@@ -77,11 +78,12 @@ func releaseResources(
 }
 
 func Run(cltx *cli.Context) error {
-	return F.Pipe2(
+	output := F.Pipe2(
 		IOE.Bracket(
-			F.Pipe2(IOE.Do[error](StatsLoaderConfig{
-				Path: cltx.String("file"),
-			}),
+			F.Pipe2(
+				IOE.Do[error](StatsLoaderConfig{
+					Path: cltx.String("file"),
+				}),
 				IOE.Chain(openResources),
 				IOE.Chain(builder),
 			),
@@ -90,13 +92,18 @@ func Run(cltx *cli.Context) error {
 		),
 		fputil.ToEither[error, int],
 		E.Fold(
-			func(err error) error {
-				return cli.Exit(fmt.Sprintf("Error: %v", err), 1)
+			func(err error) T.Tuple2[int, error] {
+				return T.MakeTuple2(0, err)
 			},
-			func(count int) error {
-				fmt.Printf("Unique Gene Count: %d\n", count)
-				return nil
+			func(count int) T.Tuple2[int, error] {
+				return T.MakeTuple2[int, error](count, nil)
 			},
 		),
 	)
+
+	if output.F2 != nil {
+		return cli.Exit(fmt.Sprintf("Error: %v", output.F2), 1)
+	}
+	fmt.Printf("Unique Gene Count: %d\n", output.F1)
+	return nil
 }
