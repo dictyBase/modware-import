@@ -27,6 +27,20 @@ func main() {
 				},
 				Action: gpadstats.Run,
 			},
+			{
+				Name:    "gene-count-url",
+				Aliases: []string{"gcu"},
+				Usage:   "Calculate unique gene counts from GPAD file URL",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "url",
+						Aliases:  []string{"u"},
+						Usage:    "URL of the gzipped GPAD file",
+						Required: true,
+					},
+				},
+				Action: gpadstats.RunURL,
+			},
 		},
 	}
 
