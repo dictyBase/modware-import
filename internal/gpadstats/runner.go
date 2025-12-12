@@ -22,6 +22,15 @@ func onStatsSuccess(stats GeneCountStats) T.Tuple2[GeneCountStats, error] {
 	return T.MakeTuple2(stats, (error)(nil))
 }
 
+func handleOutput(output T.Tuple2[GeneCountStats, error]) error {
+	if output.F2 != nil {
+		return cli.Exit(fmt.Sprintf("Error: %v", output.F2), 1)
+	}
+	fmt.Printf("Unique Gene Count: %d\n", output.F1.Count)
+	fmt.Printf("Unique Gene with ECO code Count: %d\n", output.F1.EcoCount)
+	return nil
+}
+
 func Run(cltx *cli.Context) error {
 	output := F.Pipe2(
 		IOE.Bracket(
@@ -36,18 +45,13 @@ func Run(cltx *cli.Context) error {
 		),
 	)
 
-	if output.F2 != nil {
-		return cli.Exit(fmt.Sprintf("Error: %v", output.F2), 1)
-	}
-	fmt.Printf("Unique Gene Count: %d\n", output.F1.Count)
-	fmt.Printf("Unique Gene with ECO code Count: %d\n", output.F1.EcoCount)
-	return nil
+	return handleOutput(output)
 }
 
 func RunURL(cltx *cli.Context) error {
 	output := F.Pipe2(
 		IOE.Bracket(
-			builderFromUrl(cltx.String("url")),
+			builderFromURL(cltx.String("url")),
 			queryCounts,
 			releaseResources,
 		),
@@ -58,10 +62,5 @@ func RunURL(cltx *cli.Context) error {
 		),
 	)
 
-	if output.F2 != nil {
-		return cli.Exit(fmt.Sprintf("Error: %v", output.F2), 1)
-	}
-	fmt.Printf("Unique Gene Count: %d\n", output.F1.Count)
-	fmt.Printf("Unique Gene with ECO code Count: %d\n", output.F1.EcoCount)
-	return nil
+	return handleOutput(output)
 }
