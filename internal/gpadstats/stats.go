@@ -10,7 +10,6 @@ import (
 	F "github.com/IBM/fp-go/v2/function"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 	"github.com/IBM/fp-go/v2/ioeither/file"
-	S "github.com/IBM/fp-go/v2/semigroup"
 	T "github.com/IBM/fp-go/v2/tuple"
 	"github.com/nao1215/filesql"
 	"github.com/urfave/cli/v2"
@@ -25,15 +24,6 @@ type StatsLoaderConfig struct {
 type GeneCountStats struct {
 	Count    int
 	EcoCount int
-}
-
-func GeneCountStatsSemigroup() S.Semigroup[GeneCountStats] {
-	return S.MakeSemigroup(func(a, b GeneCountStats) GeneCountStats {
-		return GeneCountStats{
-			Count:    a.Count + b.Count,
-			EcoCount: a.EcoCount + b.EcoCount,
-		}
-	})
 }
 
 func builder(config StatsLoaderConfig) IOE.IOEither[error, StatsLoaderConfig] {
