@@ -92,12 +92,8 @@ func Run(cltx *cli.Context) error {
 		),
 		fputil.ToEither[error, int],
 		E.Fold(
-			func(err error) T.Tuple2[int, error] {
-				return T.MakeTuple2(0, err)
-			},
-			func(count int) T.Tuple2[int, error] {
-				return T.MakeTuple2[int, error](count, nil)
-			},
+			F.Bind1st(T.MakeTuple2[int, error], 0),
+			F.Bind2nd(T.MakeTuple2[int, error], nil),
 		),
 	)
 
