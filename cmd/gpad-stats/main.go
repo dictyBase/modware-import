@@ -12,15 +12,22 @@ func main() {
 	app := &cli.App{
 		Name:  "gpad-stats",
 		Usage: "Generate statistics from Gene Ontology annotation files (GPAD)",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "file",
-				Aliases:  []string{"f"},
-				Usage:    "Path to the GPAD/TSV file",
-				Required: true,
+		Commands: []*cli.Command{
+			{
+				Name:    "gene-count",
+				Aliases: []string{"gc"},
+				Usage:   "Calculate unique gene counts from GPAD file",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "file",
+						Aliases:  []string{"f"},
+						Usage:    "Path to the GPAD/TSV file",
+						Required: true,
+					},
+				},
+				Action: gpadstats.Run,
 			},
 		},
-		Action: gpadstats.Run,
 	}
 
 	if err := app.Run(os.Args); err != nil {
