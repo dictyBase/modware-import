@@ -14,7 +14,7 @@ import (
 )
 
 func TestRunURL(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		raw := `!gpad-version 1.2
 !date 2023-01-01
 !comments
