@@ -1,11 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
-	E "github.com/IBM/fp-go/either"
 	"github.com/dictyBase/modware-import/internal/gpadstats"
 	"github.com/urfave/cli/v2"
 )
@@ -22,23 +20,7 @@ func main() {
 				Required: true,
 			},
 		},
-		Action: func(c *cli.Context) error {
-			filePath := c.String("file")
-
-			// Execute the pure functional pipeline
-			result := gpadstats.Run(filePath)
-
-			// Unwrap and handle the result (Impure boundary)
-			return E.Fold(
-				func(err error) error {
-					return cli.Exit(fmt.Sprintf("Error: %v", err), 1)
-				},
-				func(count int) error {
-					fmt.Printf("Unique Gene Count: %d\n", count)
-					return nil
-				},
-			)(result())
-		},
+		Action: gpadstats.Run,
 	}
 
 	if err := app.Run(os.Args); err != nil {
