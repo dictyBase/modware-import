@@ -16,10 +16,7 @@ func closeConfig(config StatsLoaderConfig) {
 	if config.DB != nil {
 		_ = config.DB.Close()
 	}
-	if config.File != nil {
-		_ = config.File.Close()
-	}
-	if config.File == nil && config.Reader != nil {
+	if config.Reader != nil {
 		if c, ok := config.Reader.(io.Closer); ok {
 			_ = c.Close()
 		}
@@ -29,12 +26,8 @@ func closeConfig(config StatsLoaderConfig) {
 func builder(config StatsLoaderConfig) IOE.IOEither[error, StatsLoaderConfig] {
 	return IOE.TryCatchError(func() (StatsLoaderConfig, error) {
 		ctx := context.Background()
-		var r io.Reader = config.File
-		if config.Reader != nil {
-			r = config.Reader
-		}
 		validatedBuilder, err := filesql.NewBuilder().
-			AddReader(r, "gpad", filesql.FileTypeTSV).
+			AddReader(config.Reader, "gpad", filesql.FileTypeTSV).
 			Build(ctx)
 		if err != nil {
 			closeConfig(config)
@@ -56,7 +49,7 @@ func openResources(
 	return F.Pipe1(
 		file.Open(config.Path),
 		IOE.Map[error](func(f *os.File) StatsLoaderConfig {
-			return StatsLoaderConfig{File: f, Reader: f}
+			return StatsLoaderConfig{Reader: f}
 		}),
 	)
 }
