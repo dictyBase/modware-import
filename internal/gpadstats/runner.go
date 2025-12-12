@@ -43,3 +43,25 @@ func Run(cltx *cli.Context) error {
 	fmt.Printf("Unique Gene with ECO code Count: %d\n", output.F1.EcoCount)
 	return nil
 }
+
+func RunURL(cltx *cli.Context) error {
+	output := F.Pipe2(
+		IOE.Bracket(
+			builderFromUrl(cltx.String("url")),
+			queryCounts,
+			releaseResources,
+		),
+		toEither[error, GeneCountStats],
+		E.Fold(
+			onStatsError,
+			onStatsSuccess,
+		),
+	)
+
+	if output.F2 != nil {
+		return cli.Exit(fmt.Sprintf("Error: %v", output.F2), 1)
+	}
+	fmt.Printf("Unique Gene Count: %d\n", output.F1.Count)
+	fmt.Printf("Unique Gene with ECO code Count: %d\n", output.F1.EcoCount)
+	return nil
+}
