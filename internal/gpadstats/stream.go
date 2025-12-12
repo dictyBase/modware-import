@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 
-	F "github.com/IBM/fp-go/v2/function"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 )
 
@@ -23,7 +22,7 @@ func (w *wrappedReadCloser) Close() error {
 }
 
 func httpGet(url string) IOE.IOEither[error, io.ReadCloser] {
-	return IOE.TryCatch(func() (io.ReadCloser, error) {
+	return IOE.TryCatchError(func() (io.ReadCloser, error) {
 		resp, err := http.Get(url)
 		if err != nil {
 			return nil, err
@@ -33,11 +32,11 @@ func httpGet(url string) IOE.IOEither[error, io.ReadCloser] {
 			return nil, fmt.Errorf("bad status: %s", resp.Status)
 		}
 		return resp.Body, nil
-	}, F.Identity[error])
+	})
 }
 
 func gzipReader(r io.ReadCloser) IOE.IOEither[error, io.ReadCloser] {
-	return IOE.TryCatch(func() (io.ReadCloser, error) {
+	return IOE.TryCatchError(func() (io.ReadCloser, error) {
 		gr, err := gzip.NewReader(r)
 		if err != nil {
 			return nil, err
@@ -53,11 +52,11 @@ func gzipReader(r io.ReadCloser) IOE.IOEither[error, io.ReadCloser] {
 				return e2
 			},
 		}, nil
-	}, F.Identity[error])
+	})
 }
 
 func transformStream(r io.ReadCloser) IOE.IOEither[error, io.Reader] {
-	return IOE.TryCatch(func() (io.Reader, error) {
+	return IOE.TryCatchError(func() (io.Reader, error) {
 		pr, pw := io.Pipe()
 		go func() {
 			defer pw.Close()
@@ -82,5 +81,5 @@ func transformStream(r io.ReadCloser) IOE.IOEither[error, io.Reader] {
 			}
 		}()
 		return pr, nil
-	}, F.Identity[error])
+	})
 }
