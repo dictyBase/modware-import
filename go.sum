@@ -15,6 +15,8 @@ github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4 h1:vdT7QwBh
 github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4/go.mod h1:SvXOG8ElV28oAiG9zv91SDe5+9PfIr7PPccpr8YyXNs=
 github.com/IBM/fp-go v1.1.71 h1:sPmxZ5AXHraEyN1QY4ztlJ5Q0zX2Q/r9v1Hbp4Hgd6Q=
 github.com/IBM/fp-go v1.1.71/go.mod h1:xQx8D6UU4EDtyYmR99rVYVyLpC4rNYXLl/l5ye8KfrE=
+github.com/IBM/fp-go/v2 v2.0.0-20251211151855-6a4dfa2c9312 h1:G8bMf/aeSH0NSNPHiN2rZh8sXzgUQuCgjhPXUu0n9uI=
+github.com/IBM/fp-go/v2 v2.0.0-20251211151855-6a4dfa2c9312/go.mod h1:b7y1r0BAYSHsbTbuM4wgQr+x0kC7aqVhf/o2PUGgBLk=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c h1:RGWPOewvKIROun94nF7v2cua9qP+thov/7M50KEoeSU=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/Microsoft/go-winio v0.5.2/go.mod h1:WpS1mjBmmwHBEWmogvA2mj8546UReBk4v8QkMxJ6pZY=
