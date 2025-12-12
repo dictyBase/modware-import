@@ -10,6 +10,7 @@ import (
 	F "github.com/IBM/fp-go/v2/function"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 	"github.com/IBM/fp-go/v2/ioeither/file"
+	S "github.com/IBM/fp-go/v2/semigroup"
 	T "github.com/IBM/fp-go/v2/tuple"
 	"github.com/nao1215/filesql"
 	"github.com/urfave/cli/v2"
@@ -24,6 +25,15 @@ type StatsLoaderConfig struct {
 type GeneCountStats struct {
 	Count    int
 	EcoCount int
+}
+
+func GeneCountStatsSemigroup() S.Semigroup[GeneCountStats] {
+	return S.MakeSemigroup(func(a, b GeneCountStats) GeneCountStats {
+		return GeneCountStats{
+			Count:    a.Count + b.Count,
+			EcoCount: a.EcoCount + b.EcoCount,
+		}
+	})
 }
 
 func builder(config StatsLoaderConfig) IOE.IOEither[error, StatsLoaderConfig] {
@@ -58,7 +68,7 @@ func openResources(
 	)
 }
 
-func queryCount(config StatsLoaderConfig) IOE.IOEither[error, int] {
+func queryGeneCount(config StatsLoaderConfig) IOE.IOEither[error, int] {
 	return IOE.TryCatch(func() (int, error) {
 		var count int
 		err := config.DB.QueryRow(
@@ -88,14 +98,14 @@ func queryEcoCount(config StatsLoaderConfig) IOE.IOEither[error, int] {
 
 func queryCounts(config StatsLoaderConfig) IOE.IOEither[error, GeneCountStats] {
 	return F.Pipe1(
-		IOE.SequenceT2(
-			queryCount(config),
+		IOE.SequenceArraySeq([]IOE.IOEither[error, int]{
+			queryGeneCount(config),
 			queryEcoCount(config),
-		),
-		IOE.Map[error](func(t T.Tuple2[int, int]) GeneCountStats {
+		}),
+		IOE.Map[error](func(results []int) GeneCountStats {
 			return GeneCountStats{
-				Count:    t.F1,
-				EcoCount: t.F2,
+				Count:    results[0],
+				EcoCount: results[1],
 			}
 		}),
 	)
