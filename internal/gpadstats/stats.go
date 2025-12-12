@@ -53,16 +53,21 @@ func openResources(
 	)
 }
 
-func computeStats(config StatsLoaderConfig) IOE.IOEither[error, int] {
-	return IOE.TryCatchError(func() (int, error) {
-		var count int
-		err := config.DB.QueryRow("SELECT COUNT(DISTINCT DB_Object_ID) FROM gpad").
-			Scan(&count)
-		if err != nil {
-			return 0, fmt.Errorf("failed to execute count query: %w", err)
-		}
-		return count, nil
-	})
+func queryCount(config StatsLoaderConfig) IOE.IOEither[error, int] {
+	return F.Pipe2(
+		IOE.TryCatchError(func() (int, error) {
+			var count int
+			err := config.DB.QueryRow("SELECT COUNT(DISTINCT DB_Object_ID) FROM gpad").
+				Scan(&count)
+			return count, err
+		}),
+		IOE.MapLeft[int](func(err error) error {
+			return fmt.Errorf("error in running gpad query %w", err)
+		}),
+		IOE.Map[error](func(ct int) int {
+			return ct
+		}),
+	)
 }
 
 func releaseResources(
@@ -90,7 +95,7 @@ func Run(cltx *cli.Context) error {
 				IOE.Chain(openResources),
 				IOE.Chain(builder),
 			),
-			computeStats,
+			queryCount,
 			releaseResources,
 		),
 		toEither[error, int],
