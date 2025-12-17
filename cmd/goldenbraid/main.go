@@ -97,17 +97,15 @@ func setAnnotationClient(c *cli.Context) IOE.IOEither[error, *grpc.ClientConn] {
 }
 
 func setClients(c *cli.Context) error {
-	return F.Pipe3(
-		setStockClient(c),
-		IOE.Chain(
-			func(_ *grpc.ClientConn) IOE.IOEither[error, *grpc.ClientConn] {
-				return setAnnotationClient(c)
-			},
-		),
-		fputil.ToEither[error, *grpc.ClientConn],
+	return F.Pipe2(
+		IOE.SequenceArraySeq([]IOE.IOEither[error, *grpc.ClientConn]{
+			setStockClient(c),
+			setAnnotationClient(c),
+		}),
+		fputil.ToEither[error, []*grpc.ClientConn],
 		E.Fold(
 			F.Identity[error],
-			F.Constant1[*grpc.ClientConn, error](nil),
+			F.Constant1[[]*grpc.ClientConn, error](nil),
 		),
 	)
 }
