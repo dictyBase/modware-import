@@ -38,25 +38,32 @@ func closeInventoryConfig(config InventoryLoaderConfig) {
 func inventoryBuilder(
 	config InventoryLoaderConfig,
 ) InventoryLoaderIOE {
-	return IOE.TryCatchError(func() (InventoryLoaderConfig, error) {
-		ctx := context.Background()
-		// Initialize filesql builder
-		// Ensure filesql handles the CSV headers correctly
-		validatedBuilder, err := filesql.NewBuilder().
-			AddReader(config.Reader, "inventory", filesql.FileTypeCSV).
-			Build(ctx)
-		if err != nil {
-			closeInventoryConfig(config)
-			return config, err
-		}
-		db, err := validatedBuilder.Open(ctx)
-		if err != nil {
-			closeInventoryConfig(config)
-			return config, err
-		}
-		config.DB = db
-		return config, nil
-	})
+	ctx := context.Background()
+	return F.Pipe2(
+		IOE.TryCatchError(func() (*sql.DB, error) {
+			validatedBuilder, err := filesql.NewBuilder().
+				AddReader(
+					config.Reader,
+					"inventory",
+					filesql.FileTypeCSV,
+				).
+				Build(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return validatedBuilder.Open(ctx)
+		}),
+		IOE.MapLeft[*sql.DB](func(err error) error {
+			return fmt.Errorf(
+				"failed to build inventory database: %w",
+				err,
+			)
+		}),
+		IOE.Map[error](func(db *sql.DB) InventoryLoaderConfig {
+			config.DB = db
+			return config
+		}),
+	)
 }
 
 func getInventorySource(cfg InventoryLoaderConfig) string {
