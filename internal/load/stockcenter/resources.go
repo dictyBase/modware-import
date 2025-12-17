@@ -24,6 +24,8 @@ type InventoryLoaderConfig struct {
 	Cmd    *cli.Context
 }
 
+type InventoryLoaderIOE = IOE.IOEither[error, InventoryLoaderConfig]
+
 func closeInventoryConfig(config InventoryLoaderConfig) {
 	if config.DB != nil {
 		_ = config.DB.Close()
@@ -35,7 +37,7 @@ func closeInventoryConfig(config InventoryLoaderConfig) {
 
 func inventoryBuilder(
 	config InventoryLoaderConfig,
-) IOE.IOEither[error, InventoryLoaderConfig] {
+) InventoryLoaderIOE {
 	return IOE.TryCatchError(func() (InventoryLoaderConfig, error) {
 		ctx := context.Background()
 		// Initialize filesql builder
@@ -63,7 +65,7 @@ func getInventorySource(cfg InventoryLoaderConfig) string {
 
 func invLoaderFromFile(
 	cfg InventoryLoaderConfig,
-) IOE.IOEither[error, InventoryLoaderConfig] {
+) InventoryLoaderIOE {
 	inputPath := cfg.Cmd.String("input")
 	return F.Pipe2(
 		IOE.TryCatchError(func() (io.ReadCloser, error) {
@@ -87,7 +89,7 @@ func invLoaderFromFile(
 
 func invLoaderFromS3Bucket(
 	cfg InventoryLoaderConfig,
-) IOE.IOEither[error, InventoryLoaderConfig] {
+) InventoryLoaderIOE {
 	objectPath := fmt.Sprintf(
 		"%s/%s",
 		cfg.Cmd.String("s3-bucket-path"),
@@ -117,8 +119,8 @@ func invLoaderFromS3Bucket(
 	)
 }
 
-func invLoaderMap() map[string]func(InventoryLoaderConfig) IOE.IOEither[error, InventoryLoaderConfig] {
-	return map[string]func(InventoryLoaderConfig) IOE.IOEither[error, InventoryLoaderConfig]{
+func invLoaderMap() map[string]func(InventoryLoaderConfig) InventoryLoaderIOE {
+	return map[string]func(InventoryLoaderConfig) InventoryLoaderIOE{
 		"folder": invLoaderFromFile,
 		"bucket": invLoaderFromS3Bucket,
 	}
@@ -126,24 +128,11 @@ func invLoaderMap() map[string]func(InventoryLoaderConfig) IOE.IOEither[error, I
 
 func defaultInvLoader(
 	cfg InventoryLoaderConfig,
-) IOE.IOEither[error, InventoryLoaderConfig] {
+) InventoryLoaderIOE {
 	return IOE.Left[InventoryLoaderConfig](
 		fmt.Errorf(
 			"unsupported input source %s",
 			cfg.Cmd.String("input-source"),
-		),
-	)
-}
-
-func openInventoryReader(
-	config InventoryLoaderConfig,
-) IOE.IOEither[error, InventoryLoaderConfig] {
-	return F.Pipe1(
-		config,
-		F.Switch(
-			getInventorySource,
-			invLoaderMap(),
-			defaultInvLoader,
 		),
 	)
 }
@@ -161,13 +150,17 @@ func ReleaseInventoryResources(
 func InventoryBuilderFromFile(
 	cmd *cli.Context,
 	logger *slog.Logger,
-) IOE.IOEither[error, InventoryLoaderConfig] {
+) InventoryLoaderIOE {
 	return F.Pipe2(
 		IOE.Do[error](InventoryLoaderConfig{
 			Cmd:    cmd,
 			Logger: logger,
 		}),
-		IOE.Chain(openInventoryReader),
+		IOE.Chain(F.Switch(
+			getInventorySource,
+			invLoaderMap(),
+			defaultInvLoader,
+		)),
 		IOE.Chain(inventoryBuilder),
 	)
 }
