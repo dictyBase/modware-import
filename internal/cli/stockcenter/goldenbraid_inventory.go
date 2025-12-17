@@ -2,31 +2,18 @@ package stockcenter
 
 import (
 	"log/slog"
-	"os"
 
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
 	"github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/dictyBase/modware-import/internal/load/stockcenter"
+	"github.com/dictyBase/modware-import/internal/logger"
 	"github.com/urfave/cli/v2"
 )
 
-func getSlogHandler(c *cli.Context) slog.Handler {
-	opts := &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}
-	if c.String("log-level") == "debug" {
-		opts.Level = slog.LevelDebug
-	}
-	if c.String("log-format") == "text" {
-		return slog.NewTextHandler(os.Stderr, opts)
-	}
-	return slog.NewJSONHandler(os.Stderr, opts)
-}
-
 func LoadGoldenBraidInventory(cmd *cli.Context) error {
-	handler := getSlogHandler(cmd)
+	handler := logger.GetCliSlogHandler(cmd)
 	slogger := slog.New(handler)
 	elog := E.Logger[error, stockcenter.InventoryProcessingSummary](
 		slog.NewLogLogger(handler, slog.LevelInfo),
