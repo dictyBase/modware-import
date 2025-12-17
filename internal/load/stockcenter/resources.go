@@ -33,7 +33,9 @@ func closeInventoryConfig(config InventoryLoaderConfig) {
 	}
 }
 
-func inventoryBuilder(config InventoryLoaderConfig) IOE.IOEither[error, InventoryLoaderConfig] {
+func inventoryBuilder(
+	config InventoryLoaderConfig,
+) IOE.IOEither[error, InventoryLoaderConfig] {
 	return IOE.TryCatchError(func() (InventoryLoaderConfig, error) {
 		ctx := context.Background()
 		// Initialize filesql builder
@@ -55,44 +57,95 @@ func inventoryBuilder(config InventoryLoaderConfig) IOE.IOEither[error, Inventor
 	})
 }
 
-func openInventoryReader(config InventoryLoaderConfig) IOE.IOEither[error, InventoryLoaderConfig] {
-	return IOE.TryCatchError(func() (InventoryLoaderConfig, error) {
-		source := config.Cmd.String("input-source")
-		switch source {
-		case "folder":
-			return openInventoryFileReader(config)
-		case "bucket":
-			return openInventoryS3Reader(config)
-		default:
-			return config, fmt.Errorf("unsupported input source %s", source)
-		}
-	})
+func getInventorySource(cfg InventoryLoaderConfig) string {
+	return cfg.Cmd.String("input-source")
 }
 
-func openInventoryFileReader(config InventoryLoaderConfig) (InventoryLoaderConfig, error) {
-	inputPath := config.Cmd.String("input")
-	file, err := os.Open(inputPath)
-	if err != nil {
-		return config, fmt.Errorf("failed to open CSV file %s: %w", inputPath, err)
-	}
-	config.Reader = file
-	return config, nil
-}
-
-func openInventoryS3Reader(config InventoryLoaderConfig) (InventoryLoaderConfig, error) {
-	bucket := config.Cmd.String("s3-bucket")
-	bucketPath := config.Cmd.String("s3-bucket-path")
-	file := config.Cmd.String("input")
-	reader, err := registry.GetS3Client().GetObject(
-		bucket,
-		fmt.Sprintf("%s/%s", bucketPath, file),
-		minio.GetObjectOptions{},
+func invLoaderFromFile(
+	cfg InventoryLoaderConfig,
+) IOE.IOEither[error, InventoryLoaderConfig] {
+	inputPath := cfg.Cmd.String("input")
+	return F.Pipe2(
+		IOE.TryCatchError(func() (io.ReadCloser, error) {
+			return os.Open(inputPath)
+		}),
+		IOE.MapLeft[io.ReadCloser](func(err error) error {
+			return fmt.Errorf(
+				"failed to open CSV file %s: %w",
+				inputPath,
+				err,
+			)
+		}),
+		IOE.Map[error](
+			func(reader io.ReadCloser) InventoryLoaderConfig {
+				cfg.Reader = reader
+				return cfg
+			},
+		),
 	)
-	if err != nil {
-		return config, fmt.Errorf("failed to open s3 file %s/%s: %w", bucketPath, file, err)
+}
+
+func invLoaderFromS3Bucket(
+	cfg InventoryLoaderConfig,
+) IOE.IOEither[error, InventoryLoaderConfig] {
+	objectPath := fmt.Sprintf(
+		"%s/%s",
+		cfg.Cmd.String("s3-bucket-path"),
+		cfg.Cmd.String("input"),
+	)
+	return F.Pipe2(
+		IOE.TryCatchError(func() (io.ReadCloser, error) {
+			return registry.GetS3Client().GetObject(
+				cfg.Cmd.String("s3-bucket"),
+				objectPath,
+				minio.GetObjectOptions{},
+			)
+		}),
+		IOE.MapLeft[io.ReadCloser](func(err error) error {
+			return fmt.Errorf(
+				"failed to open s3 file %s: %w",
+				objectPath,
+				err,
+			)
+		}),
+		IOE.Map[error](
+			func(reader io.ReadCloser) InventoryLoaderConfig {
+				cfg.Reader = reader
+				return cfg
+			},
+		),
+	)
+}
+
+func invLoaderMap() map[string]func(InventoryLoaderConfig) IOE.IOEither[error, InventoryLoaderConfig] {
+	return map[string]func(InventoryLoaderConfig) IOE.IOEither[error, InventoryLoaderConfig]{
+		"folder": invLoaderFromFile,
+		"bucket": invLoaderFromS3Bucket,
 	}
-	config.Reader = reader
-	return config, nil
+}
+
+func defaultInvLoader(
+	cfg InventoryLoaderConfig,
+) IOE.IOEither[error, InventoryLoaderConfig] {
+	return IOE.Left[InventoryLoaderConfig](
+		fmt.Errorf(
+			"unsupported input source %s",
+			cfg.Cmd.String("input-source"),
+		),
+	)
+}
+
+func openInventoryReader(
+	config InventoryLoaderConfig,
+) IOE.IOEither[error, InventoryLoaderConfig] {
+	return F.Pipe1(
+		config,
+		F.Switch(
+			getInventorySource,
+			invLoaderMap(),
+			defaultInvLoader,
+		),
+	)
 }
 
 func ReleaseInventoryResources(
