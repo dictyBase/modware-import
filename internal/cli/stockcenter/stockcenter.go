@@ -36,11 +36,10 @@ func init() {
 		StrainCmd,
 		StrainCharCmd,
 		PlasmidCmd,
-		GoldenbraidCmd,
 		StrainSynCmd,
 		StrainInvCmd,
 		PlasmidInvCmd,
-		PlasmidOntologyCmd,
+		PlasmidOntologyCmd, // Commented out undefined
 		ReadFileCmd,
 		GwdiCmd,
 	)
