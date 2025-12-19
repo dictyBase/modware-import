@@ -103,16 +103,11 @@ var toPlasmidNameContext = F.Curry2(
 	},
 )
 
-// resolvePlasmidID finds the plasmid ID for a given name
+// resolvePlasmidID finds plasmid ID using point-free pipeline
 func resolvePlasmidID(name string) IOE.IOEither[error, string] {
-	return F.Pipe3(
-		// Step 1: Call API
-		IOE.TryCatchError(listPlasmids(name)),
-		// Step 2: Add error context
-		IOE.MapLeft[*stock.PlasmidCollection](plasmidListError(name)),
-		// Step 3: Map to Context
-		IOE.Map[error](toPlasmidNameContext(name)),
-		// Step 4: Validate response
+	return F.Pipe2(
+		IOE.Of[error](name),
+		IOE.Chain(listPlasmidsIOE),
 		IOE.ChainEitherK(validatePlasmidResponse),
 	)
 }
