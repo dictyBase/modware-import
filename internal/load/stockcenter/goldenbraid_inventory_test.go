@@ -285,7 +285,38 @@ func TestResolvePlasmidID(t *testing.T) {
 
 	_, err = E.Unwrap(resolvePlasmidID("pUnknown")())
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "plasmid not found")
+	require.Contains(t, err.Error(), "expected 1 plasmid")
+}
+
+func TestResolvePlasmidIDPointFree(t *testing.T) {
+	mockStock := new(InventoryMockStockClient)
+	regsc.SetStockAPIClient(mockStock)
+
+	// Case 1: Found
+	name := "pDV-CFPC-GB0000"
+	mockStock.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
+		return p.Filter == "name=="+name
+	}), mock.Anything).Return(&stock.PlasmidCollection{
+		Data: []*stock.PlasmidCollection_Data{
+			{Id: "test-id-123"},
+		},
+	}, nil).Once()
+
+	id, err := E.Unwrap(resolvePlasmidID(name)())
+	require.NoError(t, err)
+	require.Equal(t, "test-id-123", id)
+
+	// Case 2: Not Found
+	unknownName := "pUnknown"
+	mockStock.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
+		return p.Filter == "name=="+unknownName
+	}), mock.Anything).Return(&stock.PlasmidCollection{
+		Data: []*stock.PlasmidCollection_Data{},
+	}, nil).Once()
+
+	_, err = E.Unwrap(resolvePlasmidID(unknownName)())
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "expected 1 plasmid")
 }
 
 // Test SyncInventory
