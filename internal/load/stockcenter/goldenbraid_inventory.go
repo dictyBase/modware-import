@@ -71,38 +71,6 @@ func listPlasmidsIOE(name string) IOE.IOEither[error, PlasmidNameContext] {
 	)
 }
 
-// listPlasmids creates the API call function
-func listPlasmids(name string) func() (*stock.PlasmidCollection, error) {
-	return func() (*stock.PlasmidCollection, error) {
-		return regsc.GetStockAPIClient().
-			ListPlasmids(context.Background(),
-				&stock.StockParameters{
-					Filter: fmt.Sprintf(
-						"name==%s",
-						name,
-					),
-					Limit: plasmidSearchLimit,
-				})
-	}
-}
-
-var plasmidListError = F.Curry2(func(name string, err error) error {
-	return fmt.Errorf(
-		"error listing plasmids for name %s: %w",
-		name,
-		err,
-	)
-})
-
-var toPlasmidNameContext = F.Curry2(
-	func(name string, resp *stock.PlasmidCollection) PlasmidNameContext {
-		return PlasmidNameContext{
-			Name: name,
-			Resp: resp,
-		}
-	},
-)
-
 // resolvePlasmidID finds plasmid ID using point-free pipeline
 func resolvePlasmidID(name string) IOE.IOEither[error, string] {
 	return F.Pipe2(
