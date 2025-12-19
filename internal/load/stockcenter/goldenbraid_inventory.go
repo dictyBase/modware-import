@@ -75,15 +75,6 @@ func listPlasmidsIOE(name string) IOE.IOEither[error, PlasmidNameContext] {
 	)
 }
 
-// resolvePlasmidID finds plasmid ID using point-free pipeline
-func resolvePlasmidID(name string) IOE.IOEither[error, string] {
-	return F.Pipe2(
-		IOE.Of[error](name),
-		IOE.Chain(listPlasmidsIOE),
-		IOE.ChainEitherK(validatePlasmidResponse),
-	)
-}
-
 func hasSinglePlasmid(ctx PlasmidNameContext) bool {
 	return len(ctx.Resp.Data) == 1
 }
@@ -114,36 +105,123 @@ func validatePlasmidResponse(
 	)
 }
 
-// syncInventory handles the check-delete-create logic for inventory
-func syncInventory(plasmidID, location string) IOE.IOEither[error, string] {
-	client := regsc.GetAnnotationAPIClient()
-
-	return F.Pipe2(
-		// Step 1: Get existing inventory
-		getInventoryIO(plasmidID, client),
-		// Step 2: Delete if exists
-		IOE.Chain(
-			func(gc *pb.TaggedAnnotationGroupCollection) IOE.IOEither[error, *pb.TaggedAnnotationGroupCollection] {
-				return deleteInventoryIfExists(client, gc)
-			},
-		),
-		// Step 3: Create new inventory
-		IOE.Chain(
-			func(*pb.TaggedAnnotationGroupCollection) IOE.IOEither[error, string] {
-				return createInventoryIO(plasmidID, location, client)
-			},
-		),
-	)
+// ProcessRowCtx is the initial context for processRow pipeline
+type ProcessRowCtx struct {
+	PlasmidName string
+	Location    string
 }
 
-// getInventoryIO wraps getInventory in IOEither
-func getInventoryIO(
-	plasmidID string,
-	client pb.TaggedAnnotationServiceClient,
-) IOE.IOEither[error, *pb.TaggedAnnotationGroupCollection] {
+// WithPlasmidContext adds the plasmid name context from API
+type WithPlasmidContext struct {
+	ProcessRowCtx
+	NameContext PlasmidNameContext
+}
+
+// WithPlasmidID adds the validated plasmid ID
+type WithPlasmidID struct {
+	WithPlasmidContext
+	PlasmidID string
+}
+
+// WithInventory adds the existing inventory collection
+type WithInventory struct {
+	WithPlasmidID
+	Inventory *pb.TaggedAnnotationGroupCollection
+}
+
+// WithDeletedInventory represents state after deletion check
+type WithDeletedInventory struct {
+	WithInventory
+}
+
+// WithAnnotationIDs adds the created annotation IDs
+type WithAnnotationIDs struct {
+	WithDeletedInventory
+	AnnotationIDs []string
+}
+
+// WithAnnotationGroup represents state after annotation group creation
+type WithAnnotationGroup struct {
+	WithAnnotationIDs
+}
+
+// SetPlasmidContext sets the plasmid name context
+var SetPlasmidContext = F.Curry2(func(ctx PlasmidNameContext, s ProcessRowCtx) WithPlasmidContext {
+	return WithPlasmidContext{ProcessRowCtx: s, NameContext: ctx}
+})
+
+// SetPlasmidID sets the validated plasmid ID
+var SetPlasmidID = F.Curry2(func(id string, s WithPlasmidContext) WithPlasmidID {
+	return WithPlasmidID{WithPlasmidContext: s, PlasmidID: id}
+})
+
+// SetInventory sets the existing inventory collection
+var SetInventory = F.Curry2(
+	func(inv *pb.TaggedAnnotationGroupCollection, s WithPlasmidID) WithInventory {
+		return WithInventory{WithPlasmidID: s, Inventory: inv}
+	},
+)
+
+// SetDeletedInventory marks inventory as deleted (or confirmed absent)
+var SetDeletedInventory = F.Curry2(
+	func(_ *pb.TaggedAnnotationGroupCollection, s WithInventory) WithDeletedInventory {
+		return WithDeletedInventory{WithInventory: s}
+	},
+)
+
+// SetAnnotationIDs sets the created annotation IDs
+var SetAnnotationIDs = F.Curry2(func(ids []string, s WithDeletedInventory) WithAnnotationIDs {
+	return WithAnnotationIDs{WithDeletedInventory: s, AnnotationIDs: ids}
+})
+
+// SetAnnotationGroup marks annotation group as created
+var SetAnnotationGroup = F.Curry2(func(_ []string, s WithAnnotationIDs) WithAnnotationGroup {
+	return WithAnnotationGroup{WithAnnotationIDs: s}
+})
+
+// SetFinalID sets the final plasmid ID result
+var SetFinalID = F.Curry2(func(id string, _ WithAnnotationGroup) string {
+	return id
+})
+
+// getPlasmidContext retrieves plasmid name context from API
+func getPlasmidContext(ctx ProcessRowCtx) IOE.IOEither[error, PlasmidNameContext] {
+	return listPlasmidsIOE(ctx.PlasmidName)
+}
+
+// validateAndExtractID validates plasmid response and extracts ID
+func validateAndExtractID(ctx WithPlasmidContext) IOE.IOEither[error, string] {
+	return IOE.FromEither(validatePlasmidResponse(ctx.NameContext))
+}
+
+// createInventoryAnnotations creates annotation IDs for inventory attributes from context
+func createInventoryAnnotations(ctx WithDeletedInventory) IOE.IOEither[error, []string] {
+	client := regsc.GetAnnotationAPIClient()
+	attributes := map[string]string{
+		regsc.InvLocationTag:    ctx.Location,
+		regsc.InvStorageDateTag: time.Now().Format(time.RFC3339Nano),
+	}
+
+	return createAnnotationsForAttributes(ctx.PlasmidID, attributes, client)
+}
+
+// getInventoryIO retrieves existing inventory for plasmid from context
+func getInventoryIO(ctx WithPlasmidID) IOE.IOEither[error, *pb.TaggedAnnotationGroupCollection] {
+	client := regsc.GetAnnotationAPIClient()
+
 	return F.Pipe1(
 		IOE.TryCatchError(func() (*pb.TaggedAnnotationGroupCollection, error) {
-			return getInventory(plasmidID, client, regsc.PlasmidInvOntO)
+			return client.ListAnnotationGroups(
+				context.Background(),
+				&pb.ListGroupParameters{
+					Filter: fmt.Sprintf(
+						"entry_id==%s;tag==%s;ontology==%s",
+						ctx.PlasmidID,
+						regsc.InvLocationTag,
+						regsc.PlasmidInvOntO,
+					),
+				},
+			)
 		}),
 		IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](func(err error) error {
 			return fmt.Errorf("error checking inventory: %w", err)
@@ -151,48 +229,25 @@ func getInventoryIO(
 	)
 }
 
-// deleteInventoryIfExists conditionally deletes
+// deleteInventoryIfExists conditionally deletes existing inventory from context
 func deleteInventoryIfExists(
-	client pb.TaggedAnnotationServiceClient,
-	gc *pb.TaggedAnnotationGroupCollection,
+	ctx WithInventory,
 ) IOE.IOEither[error, *pb.TaggedAnnotationGroupCollection] {
-	if len(gc.Data) == 0 {
+	if len(ctx.Inventory.Data) == 0 {
 		// Nothing to delete - return success
-		return IOE.Of[error](gc)
+		return IOE.Of[error](ctx.Inventory)
 	}
 
+	client := regsc.GetAnnotationAPIClient()
 	return F.Pipe1(
 		IOE.TryCatchError(func() (*pb.TaggedAnnotationGroupCollection, error) {
-			if err := delAnnotationGroup(client, gc); err != nil {
+			if err := delAnnotationGroup(client, ctx.Inventory); err != nil {
 				return nil, err
 			}
-			return gc, nil
+			return ctx.Inventory, nil
 		}),
 		IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](func(err error) error {
 			return fmt.Errorf("error deleting existing inventory: %w", err)
-		}),
-	)
-}
-
-func createInventoryIO(
-	plasmidID, location string,
-	client pb.TaggedAnnotationServiceClient,
-) IOE.IOEither[error, string] {
-	attributes := map[string]string{
-		regsc.InvLocationTag:    location,
-		regsc.InvStorageDateTag: time.Now().Format(time.RFC3339Nano),
-	}
-
-	return F.Pipe2(
-		// Step 1: Create all annotations (using Traverse pattern)
-		createAnnotationsForAttributes(plasmidID, attributes, client),
-		// Step 2: Create annotation group
-		IOE.Chain(func(annoIDs []string) IOE.IOEither[error, []string] {
-			return createAnnotationGroupIO(client, annoIDs)
-		}),
-		// Step 3: Mark existence
-		IOE.Chain(func(_ []string) IOE.IOEither[error, string] {
-			return markInventoryExistence(plasmidID, client)
 		}),
 	)
 }
@@ -245,18 +300,17 @@ func createAnnotationsForAttributes(
 	)
 }
 
-// createAnnotationGroupIO creates the annotation group
-func createAnnotationGroupIO(
-	client pb.TaggedAnnotationServiceClient,
-	annoIDs []string,
-) IOE.IOEither[error, []string] {
+// createAnnotationGroupIO creates annotation group from context
+func createAnnotationGroupIO(ctx WithAnnotationIDs) IOE.IOEither[error, []string] {
+	client := regsc.GetAnnotationAPIClient()
+
 	return F.Pipe1(
 		IOE.TryCatchError(func() ([]string, error) {
 			_, err := client.CreateAnnotationGroup(
 				context.Background(),
-				&pb.AnnotationIdList{Ids: annoIDs},
+				&pb.AnnotationIdList{Ids: ctx.AnnotationIDs},
 			)
-			return annoIDs, err
+			return ctx.AnnotationIDs, err
 		}),
 		IOE.MapLeft[[]string](func(err error) error {
 			return fmt.Errorf("failed to create annotation group: %w", err)
@@ -264,21 +318,20 @@ func createAnnotationGroupIO(
 	)
 }
 
-// markInventoryExistence marks the inventory as existing
-func markInventoryExistence(
-	plasmidID string,
-	client pb.TaggedAnnotationServiceClient,
-) IOE.IOEither[error, string] {
+// markInventoryExistence marks inventory as existing from context
+func markInventoryExistence(ctx WithAnnotationGroup) IOE.IOEither[error, string] {
+	client := regsc.GetAnnotationAPIClient()
+
 	return F.Pipe1(
 		IOE.TryCatchError(func() (string, error) {
 			err := createAnno(&createAnnoArgs{
 				client:   client,
 				tag:      regsc.PlasmidInvTag,
-				id:       plasmidID,
+				id:       ctx.PlasmidID,
 				ontology: regsc.PlasmidInvOntO,
 				value:    regsc.InvExistValue,
 			})
-			return plasmidID, err
+			return ctx.PlasmidID, err
 		}),
 		IOE.MapLeft[string](func(err error) error {
 			return fmt.Errorf("failed to mark inventory existence: %w", err)
@@ -286,13 +339,18 @@ func markInventoryExistence(
 	)
 }
 
+// processRow processes a single inventory record using Do/Bind pattern
 func processRow(record InventoryRecord) IOE.IOEither[error, string] {
-	return F.Pipe2(
-		resolvePlasmidID(record.PlasmidName),
-		IOE.Chain(func(id string) IOE.IOEither[error, string] {
-			return syncInventory(id, record.Location)
-		}),
-		IOE.Map[error](func(id string) string { return id }),
+	return F.Pipe8(
+		IOE.Do[error](ProcessRowCtx(record)),
+		IOE.Bind(SetPlasmidContext, getPlasmidContext),
+		IOE.Bind(SetPlasmidID, validateAndExtractID),
+		IOE.Bind(SetInventory, getInventoryIO),
+		IOE.Bind(SetDeletedInventory, deleteInventoryIfExists),
+		IOE.Bind(SetAnnotationIDs, createInventoryAnnotations),
+		IOE.Bind(SetAnnotationGroup, createAnnotationGroupIO),
+		IOE.Bind(SetFinalID, markInventoryExistence),
+		IOE.Map[error](F.Identity[string]),
 	)
 }
 
