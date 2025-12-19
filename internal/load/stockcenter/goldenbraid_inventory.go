@@ -31,6 +31,11 @@ type InventoryProcessingSummary struct {
 	Errors       []string
 }
 
+type PlasmidNameContext struct {
+	Name string
+	Resp *stock.PlasmidCollection
+}
+
 func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
 	return S.MakeSemigroup(
 		func(a, b InventoryProcessingSummary) InventoryProcessingSummary {
@@ -43,75 +48,79 @@ func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
 	)
 }
 
+// listPlasmids creates the API call function
+func listPlasmids(name string) func() (*stock.PlasmidCollection, error) {
+	return func() (*stock.PlasmidCollection, error) {
+		return regsc.GetStockAPIClient().
+			ListPlasmids(context.Background(),
+				&stock.StockParameters{
+					Filter: fmt.Sprintf(
+						"name==%s",
+						name,
+					),
+					Limit: plasmidSearchLimit,
+				})
+	}
+}
+
+var plasmidListError = F.Curry2(func(name string, err error) error {
+	return fmt.Errorf(
+		"error listing plasmids for name %s: %w",
+		name,
+		err,
+	)
+})
+
+var toPlasmidNameContext = F.Curry2(
+	func(name string, resp *stock.PlasmidCollection) PlasmidNameContext {
+		return PlasmidNameContext{
+			Name: name,
+			Resp: resp,
+		}
+	},
+)
+
 // resolvePlasmidID finds the plasmid ID for a given name
 func resolvePlasmidID(name string) IOE.IOEither[error, string] {
-	return F.Pipe2(
+	return F.Pipe3(
 		// Step 1: Call API
-		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
-			return regsc.GetStockAPIClient().
-				ListPlasmids(context.Background(),
-					&stock.StockParameters{
-						Filter: fmt.Sprintf(
-							"name==%s",
-							name,
-						),
-						Limit: plasmidSearchLimit,
-					})
-		}),
+		IOE.TryCatchError(listPlasmids(name)),
 		// Step 2: Add error context
-		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
-			return fmt.Errorf(
-				"error listing plasmids for name %s: %w",
-				name,
-				err,
-			)
-		}),
-		// Step 3: Validate response
-		IOE.Chain(
-			func(resp *stock.PlasmidCollection) IOE.IOEither[error, string] {
-				return IOE.FromEither(validatePlasmidResponse(resp, name))
-			},
-		),
+		IOE.MapLeft[*stock.PlasmidCollection](plasmidListError(name)),
+		// Step 3: Map to Context
+		IOE.Map[error](toPlasmidNameContext(name)),
+		// Step 4: Validate response
+		IOE.ChainEitherK(validatePlasmidResponse),
 	)
+}
+
+func hasSinglePlasmid(ctx PlasmidNameContext) bool {
+	return len(ctx.Resp.Data) == 1
+}
+
+func plasmidCountError(ctx PlasmidNameContext) error {
+	return fmt.Errorf(
+		"expected 1 plasmid for %s, found %d",
+		ctx.Name,
+		len(ctx.Resp.Data),
+	)
+}
+
+func firstPlasmidID(ctx PlasmidNameContext) string {
+	return ctx.Resp.Data[0].Id
 }
 
 // validatePlasmidResponse uses Either for pure validation
 func validatePlasmidResponse(
-	resp *stock.PlasmidCollection,
-	name string,
+	ctx PlasmidNameContext,
 ) E.Either[error, string] {
-	return F.Pipe3(
-		E.Of[error](resp.Data),
-		E.ChainFirst(
-			func(data []*stock.PlasmidCollection_Data) E.Either[error, []*stock.PlasmidCollection_Data] {
-				return E.FromPredicate(
-					func(d []*stock.PlasmidCollection_Data) bool { return len(d) > 0 },
-					func([]*stock.PlasmidCollection_Data) error {
-						return fmt.Errorf("plasmid not found: %s", name)
-					},
-				)(
-					data,
-				)
-			},
+	return F.Pipe2(
+		ctx,
+		E.FromPredicate(
+			hasSinglePlasmid,
+			plasmidCountError,
 		),
-		E.ChainFirst(
-			func(data []*stock.PlasmidCollection_Data) E.Either[error, []*stock.PlasmidCollection_Data] {
-				return E.FromPredicate(
-					func(d []*stock.PlasmidCollection_Data) bool { return len(d) == 1 },
-					func([]*stock.PlasmidCollection_Data) error {
-						return fmt.Errorf(
-							"multiple plasmids found for name: %s",
-							name,
-						)
-					},
-				)(
-					data,
-				)
-			},
-		),
-		E.Map[error](func(data []*stock.PlasmidCollection_Data) string {
-			return data[0].Id
-		}),
+		E.Map[error](firstPlasmidID),
 	)
 }
 
