@@ -42,105 +42,105 @@ func (m *InventoryMockStockClient) GetPlasmid(
 }
 
 func (m *InventoryMockStockClient) CreatePlasmid(
-	ctx context.Context,
-	in *stock.NewPlasmid,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.NewPlasmid,
+	_ ...grpc.CallOption,
 ) (*stock.Plasmid, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) UpdatePlasmid(
-	ctx context.Context,
-	in *stock.PlasmidUpdate,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.PlasmidUpdate,
+	_ ...grpc.CallOption,
 ) (*stock.Plasmid, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) DeletePlasmid(
-	ctx context.Context,
-	in *stock.StockId,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.StockId,
+	_ ...grpc.CallOption,
 ) (*emptypb.Empty, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) LoadPlasmid(
-	ctx context.Context,
-	in *stock.ExistingPlasmid,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.ExistingPlasmid,
+	_ ...grpc.CallOption,
 ) (*stock.Plasmid, error) {
 	return nil, nil
 }
 
 // Removed OboJSON as it caused undefined type issues and is not used
 func (m *InventoryMockStockClient) CreateStrain(
-	ctx context.Context,
-	in *stock.NewStrain,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.NewStrain,
+	_ ...grpc.CallOption,
 ) (*stock.Strain, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) ListStrains(
-	ctx context.Context,
-	in *stock.StockParameters,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.StockParameters,
+	_ ...grpc.CallOption,
 ) (*stock.StrainCollection, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) GetStrain(
-	ctx context.Context,
-	in *stock.StockId,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.StockId,
+	_ ...grpc.CallOption,
 ) (*stock.Strain, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) UpdateStrain(
-	ctx context.Context,
-	in *stock.StrainUpdate,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.StrainUpdate,
+	_ ...grpc.CallOption,
 ) (*stock.Strain, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) DeleteStrain(
-	ctx context.Context,
-	in *stock.StockId,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.StockId,
+	_ ...grpc.CallOption,
 ) (*emptypb.Empty, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) LoadStrain(
-	ctx context.Context,
-	in *stock.ExistingStrain,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.ExistingStrain,
+	_ ...grpc.CallOption,
 ) (*stock.Strain, error) {
 	return nil, nil
 }
 
-func (m *InventoryMockStockClient) ListStrainsByIds(
-	ctx context.Context,
-	in *stock.StockIdList,
-	opts ...grpc.CallOption,
+func (m *InventoryMockStockClient) ListStrainsByIds( //nolint:revive // API-defined method name
+	_ context.Context,
+	_ *stock.StockIdList,
+	_ ...grpc.CallOption,
 ) (*stock.StrainList, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) OboJSONFileUpload(
-	ctx context.Context,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ ...grpc.CallOption,
 ) (stock.StockService_OboJSONFileUploadClient, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockStockClient) RemoveStock(
-	ctx context.Context,
-	in *stock.StockId,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *stock.StockId,
+	_ ...grpc.CallOption,
 ) (*emptypb.Empty, error) {
 	return nil, nil
 }
@@ -187,73 +187,73 @@ func (m *InventoryMockAnnotationClient) CreateAnnotation(
 }
 
 func (m *InventoryMockAnnotationClient) AddToAnnotationGroup(
-	ctx context.Context,
-	in *annotation.AnnotationGroupId,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *annotation.AnnotationGroupId,
+	_ ...grpc.CallOption,
 ) (*annotation.TaggedAnnotationGroup, error) {
 	return nil, nil
 }
 
 // Stub other methods
 func (m *InventoryMockAnnotationClient) GetAnnotation(
-	ctx context.Context,
-	in *annotation.AnnotationId,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *annotation.AnnotationId,
+	_ ...grpc.CallOption,
 ) (*annotation.TaggedAnnotation, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockAnnotationClient) GetEntryAnnotation(
-	ctx context.Context,
-	in *annotation.EntryAnnotationRequest,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *annotation.EntryAnnotationRequest,
+	_ ...grpc.CallOption,
 ) (*annotation.TaggedAnnotation, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockAnnotationClient) GetAnnotationGroup(
-	ctx context.Context,
-	in *annotation.GroupEntryId,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *annotation.GroupEntryId,
+	_ ...grpc.CallOption,
 ) (*annotation.TaggedAnnotationGroup, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockAnnotationClient) UpdateAnnotation(
-	ctx context.Context,
-	in *annotation.TaggedAnnotationUpdate,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *annotation.TaggedAnnotationUpdate,
+	_ ...grpc.CallOption,
 ) (*annotation.TaggedAnnotation, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockAnnotationClient) DeleteAnnotation(
-	ctx context.Context,
-	in *annotation.DeleteAnnotationRequest,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *annotation.DeleteAnnotationRequest,
+	_ ...grpc.CallOption,
 ) (*emptypb.Empty, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockAnnotationClient) GetAnnotationTag(
-	ctx context.Context,
-	in *annotation.TagRequest,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *annotation.TagRequest,
+	_ ...grpc.CallOption,
 ) (*annotation.AnnotationTag, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockAnnotationClient) ListAnnotations(
-	ctx context.Context,
-	in *annotation.ListParameters,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ *annotation.ListParameters,
+	_ ...grpc.CallOption,
 ) (*annotation.TaggedAnnotationCollection, error) {
 	return nil, nil
 }
 
 func (m *InventoryMockAnnotationClient) OboJSONFileUpload(
-	ctx context.Context,
-	opts ...grpc.CallOption,
+	_ context.Context,
+	_ ...grpc.CallOption,
 ) (annotation.TaggedAnnotationService_OboJSONFileUploadClient, error) {
 	return nil, nil
 }

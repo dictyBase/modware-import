@@ -60,7 +60,11 @@ func listPlasmidsIOE(name string) IOE.IOEither[error, PlasmidNameContext] {
 					})
 		}),
 		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
-			return fmt.Errorf("error listing plasmids for name %s: %w", name, err)
+			return fmt.Errorf(
+				"error listing plasmids for name %s: %w",
+				name,
+				err,
+			)
 		}),
 		IOE.Map[error](func(resp *stock.PlasmidCollection) PlasmidNameContext {
 			return PlasmidNameContext{
