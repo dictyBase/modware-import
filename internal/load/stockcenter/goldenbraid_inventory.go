@@ -48,6 +48,29 @@ func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
 	)
 }
 
+// listPlasmidsIOE calls API and maps result to PlasmidNameContext
+func listPlasmidsIOE(name string) IOE.IOEither[error, PlasmidNameContext] {
+	return F.Pipe2(
+		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
+			return regsc.GetStockAPIClient().
+				ListPlasmids(context.Background(),
+					&stock.StockParameters{
+						Filter: fmt.Sprintf("name==%s", name),
+						Limit:  plasmidSearchLimit,
+					})
+		}),
+		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
+			return fmt.Errorf("error listing plasmids for name %s: %w", name, err)
+		}),
+		IOE.Map[error](func(resp *stock.PlasmidCollection) PlasmidNameContext {
+			return PlasmidNameContext{
+				Name: name,
+				Resp: resp,
+			}
+		}),
+	)
+}
+
 // listPlasmids creates the API call function
 func listPlasmids(name string) func() (*stock.PlasmidCollection, error) {
 	return func() (*stock.PlasmidCollection, error) {
