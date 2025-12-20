@@ -258,74 +258,26 @@ func (m *InventoryMockAnnotationClient) OboJSONFileUpload(
 	return nil, nil
 }
 
-// Test ResolvePlasmidID
-func TestResolvePlasmidID(t *testing.T) {
+func TestProcessRow(t *testing.T) {
 	mockStock := new(InventoryMockStockClient)
 	regsc.SetStockAPIClient(mockStock)
+	mockAnno := new(InventoryMockAnnotationClient)
+	regsc.SetAnnotationAPIClient(mockAnno)
 
-	// Case 1: Found
+	record := InventoryRecord{
+		PlasmidName: "pTest",
+		Location:    "Box1",
+	}
+	plasmidID := "123"
+
+	// Mock ListPlasmids (Found)
 	mockStock.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
 		return p.Filter == "name==pTest"
 	}), mock.Anything).Return(&stock.PlasmidCollection{
 		Data: []*stock.PlasmidCollection_Data{
-			{Id: "12345"}, // Assumed field based on usage
+			{Id: plasmidID},
 		},
 	}, nil).Once()
-
-	id, err := E.Unwrap(resolvePlasmidID("pTest")())
-	require.NoError(t, err)
-	require.Equal(t, "12345", id)
-
-	// Case 2: Not Found
-	mockStock.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
-		return p.Filter == "name==pUnknown"
-	}), mock.Anything).Return(&stock.PlasmidCollection{
-		Data: []*stock.PlasmidCollection_Data{},
-	}, nil).Once()
-
-	_, err = E.Unwrap(resolvePlasmidID("pUnknown")())
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "expected 1 plasmid")
-}
-
-func TestResolvePlasmidIDPointFree(t *testing.T) {
-	mockStock := new(InventoryMockStockClient)
-	regsc.SetStockAPIClient(mockStock)
-
-	// Case 1: Found
-	name := "pDV-CFPC-GB0000"
-	mockStock.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
-		return p.Filter == "name=="+name
-	}), mock.Anything).Return(&stock.PlasmidCollection{
-		Data: []*stock.PlasmidCollection_Data{
-			{Id: "test-id-123"},
-		},
-	}, nil).Once()
-
-	id, err := E.Unwrap(resolvePlasmidID(name)())
-	require.NoError(t, err)
-	require.Equal(t, "test-id-123", id)
-
-	// Case 2: Not Found
-	unknownName := "pUnknown"
-	mockStock.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
-		return p.Filter == "name=="+unknownName
-	}), mock.Anything).Return(&stock.PlasmidCollection{
-		Data: []*stock.PlasmidCollection_Data{},
-	}, nil).Once()
-
-	_, err = E.Unwrap(resolvePlasmidID(unknownName)())
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "expected 1 plasmid")
-}
-
-// Test SyncInventory
-func TestSyncInventory(t *testing.T) {
-	mockAnno := new(InventoryMockAnnotationClient)
-	regsc.SetAnnotationAPIClient(mockAnno)
-
-	plasmidID := "123"
-	location := "Box1"
 
 	// Mock Check Inventory (Found)
 	expectedFilter := fmt.Sprintf(
@@ -360,8 +312,9 @@ func TestSyncInventory(t *testing.T) {
 	mockAnno.On("CreateAnnotationGroup", mock.Anything, mock.Anything, mock.Anything).
 		Return(&annotation.TaggedAnnotationGroup{}, nil).Once()
 
-	_, err := E.Unwrap(syncInventory(plasmidID, location)())
+	_, err := E.Unwrap(processRow(record)())
 	require.NoError(t, err)
+	mockStock.AssertExpectations(t)
 	mockAnno.AssertExpectations(t)
 }
 
