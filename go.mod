@@ -47,7 +47,7 @@ require (
 
 require (
 	buf.build/go/protovalidate v1.1.0
-	github.com/IBM/fp-go v1.1.78
+	github.com/IBM/fp-go v1.1.84
 	github.com/IBM/fp-go/v2 v2.0.0-20251211151855-6a4dfa2c9312
 	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/alicebob/miniredis/v2 v2.35.0
