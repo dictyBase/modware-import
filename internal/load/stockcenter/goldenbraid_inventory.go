@@ -20,91 +20,6 @@ const (
 	plasmidSearchLimit = 2
 )
 
-type InventoryRecord struct {
-	PlasmidName string
-	Location    string
-}
-
-type InventoryProcessingSummary struct {
-	SuccessCount int
-	ErrorCount   int
-	Errors       []string
-}
-
-type PlasmidNameContext struct {
-	Name string
-	Resp *stock.PlasmidCollection
-}
-
-func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
-	return S.MakeSemigroup(
-		func(a, b InventoryProcessingSummary) InventoryProcessingSummary {
-			return InventoryProcessingSummary{
-				SuccessCount: a.SuccessCount + b.SuccessCount,
-				ErrorCount:   a.ErrorCount + b.ErrorCount,
-				Errors:       append(a.Errors, b.Errors...),
-			}
-		},
-	)
-}
-
-// listPlasmidsIOE calls API and maps result to PlasmidNameContext
-func listPlasmidsIOE(name string) IOE.IOEither[error, PlasmidNameContext] {
-	return F.Pipe2(
-		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
-			return regsc.GetStockAPIClient().
-				ListPlasmids(context.Background(),
-					&stock.StockParameters{
-						Filter: fmt.Sprintf("name==%s", name),
-						Limit:  plasmidSearchLimit,
-					})
-		}),
-		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
-			return fmt.Errorf(
-				"error listing plasmids for name %s: %w",
-				name,
-				err,
-			)
-		}),
-		IOE.Map[error](func(resp *stock.PlasmidCollection) PlasmidNameContext {
-			return PlasmidNameContext{
-				Name: name,
-				Resp: resp,
-			}
-		}),
-	)
-}
-
-func hasSinglePlasmid(ctx PlasmidNameContext) bool {
-	return len(ctx.Resp.Data) == 1
-}
-
-func plasmidCountError(ctx PlasmidNameContext) error {
-	return fmt.Errorf(
-		"expected 1 plasmid for %s, found %d",
-		ctx.Name,
-		len(ctx.Resp.Data),
-	)
-}
-
-func firstPlasmidID(ctx PlasmidNameContext) string {
-	return ctx.Resp.Data[0].Id
-}
-
-// validatePlasmidResponse uses Either for pure validation
-func validatePlasmidResponse(
-	ctx PlasmidNameContext,
-) E.Either[error, string] {
-	return F.Pipe2(
-		ctx,
-		E.FromPredicate(
-			hasSinglePlasmid,
-			plasmidCountError,
-		),
-		E.Map[error](firstPlasmidID),
-	)
-}
-
 // ProcessRowCtx is the initial context for processRow pipeline
 type ProcessRowCtx struct {
 	PlasmidName string
@@ -145,15 +60,35 @@ type WithAnnotationGroup struct {
 	WithAnnotationIDs
 }
 
+type InventoryRecord struct {
+	PlasmidName string
+	Location    string
+}
+
+type InventoryProcessingSummary struct {
+	SuccessCount int
+	ErrorCount   int
+	Errors       []string
+}
+
+type PlasmidNameContext struct {
+	Name string
+	Resp *stock.PlasmidCollection
+}
+
 // SetPlasmidContext sets the plasmid name context
-var SetPlasmidContext = F.Curry2(func(ctx PlasmidNameContext, s ProcessRowCtx) WithPlasmidContext {
-	return WithPlasmidContext{ProcessRowCtx: s, NameContext: ctx}
-})
+var SetPlasmidContext = F.Curry2(
+	func(ctx PlasmidNameContext, s ProcessRowCtx) WithPlasmidContext {
+		return WithPlasmidContext{ProcessRowCtx: s, NameContext: ctx}
+	},
+)
 
 // SetPlasmidID sets the validated plasmid ID
-var SetPlasmidID = F.Curry2(func(id string, s WithPlasmidContext) WithPlasmidID {
-	return WithPlasmidID{WithPlasmidContext: s, PlasmidID: id}
-})
+var SetPlasmidID = F.Curry2(
+	func(id string, s WithPlasmidContext) WithPlasmidID {
+		return WithPlasmidID{WithPlasmidContext: s, PlasmidID: id}
+	},
+)
 
 // SetInventory sets the existing inventory collection
 var SetInventory = F.Curry2(
@@ -170,32 +105,100 @@ var SetDeletedInventory = F.Curry2(
 )
 
 // SetAnnotationIDs sets the created annotation IDs
-var SetAnnotationIDs = F.Curry2(func(ids []string, s WithDeletedInventory) WithAnnotationIDs {
-	return WithAnnotationIDs{WithDeletedInventory: s, AnnotationIDs: ids}
-})
+var SetAnnotationIDs = F.Curry2(
+	func(ids []string, s WithDeletedInventory) WithAnnotationIDs {
+		return WithAnnotationIDs{WithDeletedInventory: s, AnnotationIDs: ids}
+	},
+)
 
 // SetAnnotationGroup marks annotation group as created
-var SetAnnotationGroup = F.Curry2(func(_ []string, s WithAnnotationIDs) WithAnnotationGroup {
-	return WithAnnotationGroup{WithAnnotationIDs: s}
-})
+var SetAnnotationGroup = F.Curry2(
+	func(_ []string, s WithAnnotationIDs) WithAnnotationGroup {
+		return WithAnnotationGroup{WithAnnotationIDs: s}
+	},
+)
 
 // SetFinalID sets the final plasmid ID result
 var SetFinalID = F.Curry2(func(id string, _ WithAnnotationGroup) string {
 	return id
 })
 
-// getPlasmidContext retrieves plasmid name context from API
-func getPlasmidContext(ctx ProcessRowCtx) IOE.IOEither[error, PlasmidNameContext] {
-	return listPlasmidsIOE(ctx.PlasmidName)
+func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
+	return S.MakeSemigroup(
+		func(a, b InventoryProcessingSummary) InventoryProcessingSummary {
+			return InventoryProcessingSummary{
+				SuccessCount: a.SuccessCount + b.SuccessCount,
+				ErrorCount:   a.ErrorCount + b.ErrorCount,
+				Errors:       append(a.Errors, b.Errors...),
+			}
+		},
+	)
 }
 
-// validateAndExtractID validates plasmid response and extracts ID
-func validateAndExtractID(ctx WithPlasmidContext) IOE.IOEither[error, string] {
-	return IOE.FromEither(validatePlasmidResponse(ctx.NameContext))
+// listPlasmidsIOE calls API and maps result to PlasmidNameContext
+func listPlasmidsIOE(
+	ctx ProcessRowCtx,
+) IOE.IOEither[error, PlasmidNameContext] {
+	return F.Pipe2(
+		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
+			return regsc.GetStockAPIClient().
+				ListPlasmids(context.Background(),
+					&stock.StockParameters{
+						Filter: fmt.Sprintf("name==%s", ctx.PlasmidName),
+						Limit:  plasmidSearchLimit,
+					})
+		}),
+		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
+			return fmt.Errorf(
+				"error listing plasmids for name %s: %w",
+				ctx.PlasmidName,
+				err,
+			)
+		}),
+		IOE.Map[error](func(resp *stock.PlasmidCollection) PlasmidNameContext {
+			return PlasmidNameContext{
+				Name: ctx.PlasmidName,
+				Resp: resp,
+			}
+		}),
+	)
+}
+
+func hasSinglePlasmid(ctx PlasmidNameContext) bool {
+	return len(ctx.Resp.Data) == 1
+}
+
+func plasmidCountError(ctx PlasmidNameContext) error {
+	return fmt.Errorf(
+		"expected 1 plasmid for %s, found %d",
+		ctx.Name,
+		len(ctx.Resp.Data),
+	)
+}
+
+func firstPlasmidID(ctx PlasmidNameContext) string {
+	return ctx.Resp.Data[0].Id
+}
+
+// validatePlasmidResponse validates plasmid response and extracts ID using pure Either logic
+func validatePlasmidResponse(
+	ctx WithPlasmidContext,
+) IOE.IOEither[error, string] {
+	return F.Pipe3(
+		ctx.NameContext,
+		E.FromPredicate(
+			hasSinglePlasmid,
+			plasmidCountError,
+		),
+		E.Map[error](firstPlasmidID),
+		IOE.FromEither,
+	)
 }
 
 // createInventoryAnnotations creates annotation IDs for inventory attributes from context
-func createInventoryAnnotations(ctx WithDeletedInventory) IOE.IOEither[error, []string] {
+func createInventoryAnnotations(
+	ctx WithDeletedInventory,
+) IOE.IOEither[error, []string] {
 	client := regsc.GetAnnotationAPIClient()
 	attributes := map[string]string{
 		regsc.InvLocationTag:    ctx.Location,
@@ -206,7 +209,9 @@ func createInventoryAnnotations(ctx WithDeletedInventory) IOE.IOEither[error, []
 }
 
 // getInventoryIO retrieves existing inventory for plasmid from context
-func getInventoryIO(ctx WithPlasmidID) IOE.IOEither[error, *pb.TaggedAnnotationGroupCollection] {
+func getInventoryIO(
+	ctx WithPlasmidID,
+) IOE.IOEither[error, *pb.TaggedAnnotationGroupCollection] {
 	client := regsc.GetAnnotationAPIClient()
 
 	return F.Pipe1(
@@ -301,7 +306,9 @@ func createAnnotationsForAttributes(
 }
 
 // createAnnotationGroupIO creates annotation group from context
-func createAnnotationGroupIO(ctx WithAnnotationIDs) IOE.IOEither[error, []string] {
+func createAnnotationGroupIO(
+	ctx WithAnnotationIDs,
+) IOE.IOEither[error, []string] {
 	client := regsc.GetAnnotationAPIClient()
 
 	return F.Pipe1(
@@ -319,7 +326,9 @@ func createAnnotationGroupIO(ctx WithAnnotationIDs) IOE.IOEither[error, []string
 }
 
 // markInventoryExistence marks inventory as existing from context
-func markInventoryExistence(ctx WithAnnotationGroup) IOE.IOEither[error, string] {
+func markInventoryExistence(
+	ctx WithAnnotationGroup,
+) IOE.IOEither[error, string] {
 	client := regsc.GetAnnotationAPIClient()
 
 	return F.Pipe1(
@@ -343,8 +352,8 @@ func markInventoryExistence(ctx WithAnnotationGroup) IOE.IOEither[error, string]
 func processRow(record InventoryRecord) IOE.IOEither[error, string] {
 	return F.Pipe8(
 		IOE.Do[error](ProcessRowCtx(record)),
-		IOE.Bind(SetPlasmidContext, getPlasmidContext),
-		IOE.Bind(SetPlasmidID, validateAndExtractID),
+		IOE.Bind(SetPlasmidContext, listPlasmidsIOE),
+		IOE.Bind(SetPlasmidID, validatePlasmidResponse),
 		IOE.Bind(SetInventory, getInventoryIO),
 		IOE.Bind(SetDeletedInventory, deleteInventoryIfExists),
 		IOE.Bind(SetAnnotationIDs, createInventoryAnnotations),
