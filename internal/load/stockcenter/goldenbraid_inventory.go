@@ -212,11 +212,9 @@ func createInventoryAnnotations(
 func getInventoryIO(
 	ctx WithPlasmidID,
 ) IOE.IOEither[error, *pb.TaggedAnnotationGroupCollection] {
-	client := regsc.GetAnnotationAPIClient()
-
 	return F.Pipe1(
 		IOE.TryCatchError(func() (*pb.TaggedAnnotationGroupCollection, error) {
-			return client.ListAnnotationGroups(
+			return regsc.GetAnnotationAPIClient().ListAnnotationGroups(
 				context.Background(),
 				&pb.ListGroupParameters{
 					Filter: fmt.Sprintf(
