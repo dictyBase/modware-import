@@ -345,7 +345,14 @@ func markInventoryExistence(
 		}),
 		// 2. Handle errors
 		IOE.MapLeft[*pb.TaggedAnnotation](func(err error) error {
-			return fmt.Errorf("failed to mark inventory existence: %w", err)
+			return fmt.Errorf(
+				"failed to mark inventory existence: %w",
+				err,
+			)
+		}),
+		// 3. Map success to the desired output (PlasmidID)
+		IOE.Map[error](func(_ *pb.TaggedAnnotation) string {
+			return ctx.PlasmidID
 		}),
 		// 3. Map success to the desired output (PlasmidID)
 		IOE.Map[error](func(_ *pb.TaggedAnnotation) string {
