@@ -325,20 +325,31 @@ func createAnnotationGroupIO(
 func markInventoryExistence(
 	ctx WithAnnotationGroup,
 ) IOE.IOEither[error, string] {
-	client := regsc.GetAnnotationAPIClient()
-	return F.Pipe1(
-		IOE.TryCatchError(func() (string, error) {
-			err := createAnno(&createAnnoArgs{
-				client:   client,
-				tag:      regsc.PlasmidInvTag,
-				id:       ctx.PlasmidID,
-				ontology: regsc.PlasmidInvOntO,
-				value:    regsc.InvExistValue,
-			})
-			return ctx.PlasmidID, err
+	input := &pb.NewTaggedAnnotation_Data{
+		Attributes: &pb.NewTaggedAnnotationAttributes{
+			Value:     regsc.InvExistValue,
+			CreatedBy: regsc.DefaultUser,
+			Tag:       regsc.PlasmidInvTag,
+			EntryId:   ctx.PlasmidID,
+			Ontology:  regsc.PlasmidInvOntO,
+		},
+	}
+	return F.Pipe2(
+		// 1. Perform the IO operation
+		IOE.TryCatchError(func() (*pb.TaggedAnnotation, error) {
+			return regsc.GetAnnotationAPIClient().
+				CreateAnnotation(
+					context.Background(),
+					&pb.NewTaggedAnnotation{Data: input},
+				)
 		}),
-		IOE.MapLeft[string](func(err error) error {
+		// 2. Handle errors
+		IOE.MapLeft[*pb.TaggedAnnotation](func(err error) error {
 			return fmt.Errorf("failed to mark inventory existence: %w", err)
+		}),
+		// 3. Map success to the desired output (PlasmidID)
+		IOE.Map[error](func(_ *pb.TaggedAnnotation) string {
+			return ctx.PlasmidID
 		}),
 	)
 }
