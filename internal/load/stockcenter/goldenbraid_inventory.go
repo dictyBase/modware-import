@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
@@ -15,6 +16,7 @@ import (
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const (
@@ -277,25 +279,101 @@ func getInventoryIO(
 	)
 }
 
+func toAnnoID(anno *pb.TaggedAnnotationGroup_Data) string {
+	return anno.Id
+}
+
+func toGroupID(gcd *pb.TaggedAnnotationGroupCollection_Data) string {
+	return gcd.Group.GroupId
+}
+
+func extractAnnotationIDs(gc *pb.TaggedAnnotationGroupCollection) []string {
+	return F.Pipe1(
+		gc.Data,
+		A.Chain(func(gcd *pb.TaggedAnnotationGroupCollection_Data) []string {
+			return F.Pipe1(
+				gcd.Group.Data,
+				A.Map(toAnnoID),
+			)
+		}),
+	)
+}
+
+func extractGroupIDs(gc *pb.TaggedAnnotationGroupCollection) []string {
+	return F.Pipe1(
+		gc.Data,
+		A.Map(toGroupID),
+	)
+}
+
+func deleteAnnotationIOE(
+	client pb.TaggedAnnotationServiceClient,
+) func(string) IOE.IOEither[error, string] {
+	return func(id string) IOE.IOEither[error, string] {
+		return F.Pipe2(
+			IOE.TryCatchError(func() (*emptypb.Empty, error) {
+				return client.DeleteAnnotation(
+					context.Background(),
+					&pb.DeleteAnnotationRequest{Id: id, Purge: true},
+				)
+			}),
+			IOE.MapLeft[*emptypb.Empty](func(err error) error {
+				return fmt.Errorf("error deleting annotation %s: %w", id, err)
+			}),
+			IOE.Map[error](func(_ *emptypb.Empty) string { return id }),
+		)
+	}
+}
+
+func deleteGroupIOE(
+	client pb.TaggedAnnotationServiceClient,
+) func(string) IOE.IOEither[error, string] {
+	return func(groupID string) IOE.IOEither[error, string] {
+		return F.Pipe2(
+			IOE.TryCatchError(func() (*emptypb.Empty, error) {
+				return client.DeleteAnnotationGroup(
+					context.Background(),
+					&pb.GroupEntryId{GroupId: groupID},
+				)
+			}),
+			IOE.MapLeft[*emptypb.Empty](func(err error) error {
+				return fmt.Errorf(
+					"error deleting annotation group %s: %w",
+					groupID,
+					err,
+				)
+			}),
+			IOE.Map[error](func(_ *emptypb.Empty) string { return groupID }),
+		)
+	}
+}
+
 // deleteInventoryIfExists conditionally deletes existing inventory from context
 func deleteInventoryIfExists(
 	ctx WithInventory,
 ) IOE.IOEither[error, *pb.TaggedAnnotationGroupCollection] {
-	if len(ctx.Inventory.Data) == 0 {
-		// Nothing to delete - return success
-		return IOE.Of[error](ctx.Inventory)
-	}
-
 	client := regsc.GetAnnotationAPIClient()
-	return F.Pipe1(
-		IOE.TryCatchError(func() (*pb.TaggedAnnotationGroupCollection, error) {
-			if err := delAnnotationGroup(client, ctx.Inventory); err != nil {
-				return nil, err
-			}
-			return ctx.Inventory, nil
+
+	return F.Pipe3(
+		// Step 1: Extract annotation IDs and delete them
+		F.Pipe2(
+			ctx.Inventory,
+			extractAnnotationIDs,
+			A.Map(deleteAnnotationIOE(client)),
+		),
+		IOE.SequenceArray[error, string],
+		// Step 2: Extract group IDs and delete them
+		IOE.Chain(func(_ []string) IOE.IOEither[error, []string] {
+			return F.Pipe3(
+				ctx.Inventory,
+				extractGroupIDs,
+				A.Map(deleteGroupIOE(client)),
+				IOE.SequenceArray[error, string],
+			)
 		}),
-		IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](func(err error) error {
-			return fmt.Errorf("error deleting existing inventory: %w", err)
+		// Step 3: Return original collection
+		IOE.Map[error](func(_ []string) *pb.TaggedAnnotationGroupCollection {
+			return ctx.Inventory
 		}),
 	)
 }
@@ -316,7 +394,10 @@ func createAnnotationGroupIO(
 			return ctx.AnnotationIDs, err
 		}),
 		IOE.MapLeft[[]string](func(err error) error {
-			return fmt.Errorf("failed to create annotation group: %w", err)
+			return fmt.Errorf(
+				"failed to create annotation group: %w",
+				err,
+			)
 		}),
 	)
 }
