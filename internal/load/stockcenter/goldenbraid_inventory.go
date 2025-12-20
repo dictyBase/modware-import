@@ -10,6 +10,7 @@ import (
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
+	R "github.com/IBM/fp-go/record"
 	S "github.com/IBM/fp-go/semigroup"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
@@ -24,6 +25,13 @@ const (
 type ProcessRowCtx struct {
 	PlasmidName string
 	Location    string
+}
+
+type AnnotationContext struct {
+	Client    pb.TaggedAnnotationServiceClient
+	PlasmidID string
+	Tag       string
+	Value     string
 }
 
 // WithPlasmidContext adds the plasmid name context from API
@@ -195,17 +203,54 @@ func validatePlasmidResponse(
 	)
 }
 
+func createAnnotationIOE(
+	ctx AnnotationContext,
+) IOE.IOEither[error, *pb.TaggedAnnotation] {
+	return IOE.TryCatchError(func() (*pb.TaggedAnnotation, error) {
+		return ctx.Client.CreateAnnotation(
+			context.Background(),
+			&pb.NewTaggedAnnotation{
+				Data: &pb.NewTaggedAnnotation_Data{
+					Attributes: &pb.NewTaggedAnnotationAttributes{
+						Value:     ctx.Value,
+						CreatedBy: regsc.DefaultUser,
+						Tag:       ctx.Tag,
+						EntryId:   ctx.PlasmidID,
+						Ontology:  regsc.PlasmidInvOntO,
+						Rank:      0,
+					},
+				},
+			},
+		)
+	})
+}
+
 // createInventoryAnnotations creates annotation IDs for inventory attributes from context
 func createInventoryAnnotations(
 	ctx WithDeletedInventory,
 ) IOE.IOEither[error, []string] {
-	client := regsc.GetAnnotationAPIClient()
-	attributes := map[string]string{
-		regsc.InvLocationTag:    ctx.Location,
-		regsc.InvStorageDateTag: time.Now().Format(time.RFC3339Nano),
-	}
-
-	return createAnnotationsForAttributes(ctx.PlasmidID, attributes, client)
+	return F.Pipe2(
+		map[string]string{
+			regsc.InvLocationTag:    ctx.Location,
+			regsc.InvStorageDateTag: time.Now().Format(time.RFC3339Nano),
+		},
+		R.Collect(
+			func(tag string, value string) IOE.IOEither[error, string] {
+				return F.Pipe3(
+					AnnotationContext{
+						Client:    regsc.GetAnnotationAPIClient(),
+						PlasmidID: ctx.PlasmidID,
+						Tag:       tag,
+						Value:     value,
+					},
+					createAnnotationIOE,
+					IOE.MapLeft[*pb.TaggedAnnotation](wrapAnnotationError(tag)),
+					IOE.Map[error](extractAnnotationID),
+				)
+			},
+		),
+		IOE.SequenceArray[error, string],
+	)
 }
 
 // getInventoryIO retrieves existing inventory for plasmid from context
@@ -255,66 +300,19 @@ func deleteInventoryIfExists(
 	)
 }
 
-// createAnnotationsForAttributes creates annotations for all attributes
-// This replaces the imperative for loop with functional map
-func createAnnotationsForAttributes(
-	plasmidID string,
-	attributes map[string]string,
-	client pb.TaggedAnnotationServiceClient,
-) IOE.IOEither[error, []string] {
-	// Convert map to slice of key-value pairs
-	type attrPair struct{ tag, value string }
-	pairs := make([]attrPair, 0, len(attributes))
-	for tag, value := range attributes {
-		pairs = append(pairs, attrPair{tag, value})
-	}
-
-	// Use Traverse pattern: []A → IOEither[error, []B]
-	return IOE.TraverseArraySeq(
-		func(pair attrPair) IOE.IOEither[error, string] {
-			return F.Pipe2(
-				IOE.TryCatchError(func() (*pb.TaggedAnnotation, error) {
-					return createAnnoWithRank(&createAnnoArgs{
-						ontology: regsc.PlasmidInvOntO,
-						client:   client,
-						id:       plasmidID,
-						value:    pair.value,
-						tag:      pair.tag,
-						rank:     0,
-					})
-				}),
-				IOE.MapLeft[*pb.TaggedAnnotation](func(err error) error {
-					return fmt.Errorf(
-						"failed to create annotation for %s: %w",
-						pair.tag,
-						err,
-					)
-				}),
-				IOE.Map[error](func(anno *pb.TaggedAnnotation) string {
-					if anno == nil || anno.Data == nil {
-						return ""
-					}
-					return anno.Data.Id
-				}),
-			)
-		},
-	)(
-		pairs,
-	)
-}
-
 // createAnnotationGroupIO creates annotation group from context
 func createAnnotationGroupIO(
 	ctx WithAnnotationIDs,
 ) IOE.IOEither[error, []string] {
-	client := regsc.GetAnnotationAPIClient()
-
 	return F.Pipe1(
 		IOE.TryCatchError(func() ([]string, error) {
-			_, err := client.CreateAnnotationGroup(
-				context.Background(),
-				&pb.AnnotationIdList{Ids: ctx.AnnotationIDs},
-			)
+			_, err := regsc.GetAnnotationAPIClient().
+				CreateAnnotationGroup(
+					context.Background(),
+					&pb.AnnotationIdList{
+						Ids: ctx.AnnotationIDs,
+					},
+				)
 			return ctx.AnnotationIDs, err
 		}),
 		IOE.MapLeft[[]string](func(err error) error {
@@ -328,7 +326,6 @@ func markInventoryExistence(
 	ctx WithAnnotationGroup,
 ) IOE.IOEither[error, string] {
 	client := regsc.GetAnnotationAPIClient()
-
 	return F.Pipe1(
 		IOE.TryCatchError(func() (string, error) {
 			err := createAnno(&createAnnoArgs{
@@ -476,4 +473,20 @@ func processRowToSummary(
 			}
 		},
 	)(result)
+}
+
+// extractAnnotationID extracts ID from annotation response
+func extractAnnotationID(anno *pb.TaggedAnnotation) string {
+	return anno.Data.Id
+}
+
+// wrapAnnotationError creates tag-specific error wrapper
+func wrapAnnotationError(tag string) func(error) error {
+	return func(err error) error {
+		return fmt.Errorf(
+			"failed to create annotation for %s: %w",
+			tag,
+			err,
+		)
+	}
 }
