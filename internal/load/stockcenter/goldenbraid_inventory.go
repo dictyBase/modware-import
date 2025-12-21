@@ -446,10 +446,6 @@ func markInventoryExistence(
 		IOE.Map[error](func(_ *pb.TaggedAnnotation) string {
 			return ctx.PlasmidID
 		}),
-		// 3. Map success to the desired output (PlasmidID)
-		IOE.Map[error](func(_ *pb.TaggedAnnotation) string {
-			return ctx.PlasmidID
-		}),
 	)
 }
 
@@ -533,6 +529,29 @@ func foldRowsWithSemigroup(
 	})
 }
 
+// onProcessSuccess handles successful processing
+func onProcessSuccess(_ string) InventoryProcessingSummary {
+	return InventoryProcessingSummary{
+		SuccessCount: 1,
+	}
+}
+
+// onProcessError handles processing failure
+var onProcessError = F.Curry2(
+	func(name string, err error) InventoryProcessingSummary {
+		return InventoryProcessingSummary{
+			ErrorCount: 1,
+			Errors: []string{
+				fmt.Sprintf(
+					"%s: %v",
+					name,
+					err,
+				),
+			},
+		}
+	},
+)
+
 // processRowToSummary processes one row and returns a summary
 // Pure function that doesn't perform I/O (I/O happens in processRow)
 func processRowToSummary(record InventoryRecord) InventoryProcessingSummary {
@@ -541,23 +560,8 @@ func processRowToSummary(record InventoryRecord) InventoryProcessingSummary {
 		processRow,
 		fputil.ToEither,
 		E.Fold(
-			func(err error) InventoryProcessingSummary {
-				return InventoryProcessingSummary{
-					ErrorCount: 1,
-					Errors: []string{
-						fmt.Sprintf(
-							"%s: %v",
-							record.PlasmidName,
-							err,
-						),
-					},
-				}
-			},
-			func(_ string) InventoryProcessingSummary {
-				return InventoryProcessingSummary{
-					SuccessCount: 1,
-				}
-			},
+			onProcessError(record.PlasmidName),
+			onProcessSuccess,
 		),
 	)
 }
