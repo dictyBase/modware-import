@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log/slog"
 	"time"
 
 	A "github.com/IBM/fp-go/array"
@@ -15,6 +14,7 @@ import (
 	S "github.com/IBM/fp-go/semigroup"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
+	"github.com/dictyBase/modware-import/internal/fputil"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -208,22 +208,19 @@ func validatePlasmidResponse(
 func createAnnotationIOE(
 	ctx AnnotationContext,
 ) IOE.IOEither[error, *pb.TaggedAnnotation] {
+	input := &pb.NewTaggedAnnotation_Data{
+		Attributes: &pb.NewTaggedAnnotationAttributes{
+			Value:     ctx.Value,
+			CreatedBy: regsc.DefaultUser,
+			Tag:       ctx.Tag,
+			EntryId:   ctx.PlasmidID,
+			Ontology:  regsc.PlasmidInvOntO,
+			Rank:      0,
+		},
+	}
 	return IOE.TryCatchError(func() (*pb.TaggedAnnotation, error) {
-		return ctx.Client.CreateAnnotation(
-			context.Background(),
-			&pb.NewTaggedAnnotation{
-				Data: &pb.NewTaggedAnnotation_Data{
-					Attributes: &pb.NewTaggedAnnotationAttributes{
-						Value:     ctx.Value,
-						CreatedBy: regsc.DefaultUser,
-						Tag:       ctx.Tag,
-						EntryId:   ctx.PlasmidID,
-						Ontology:  regsc.PlasmidInvOntO,
-						Rank:      0,
-					},
-				},
-			},
-		)
+		return ctx.Client.CreateAnnotation(context.Background(),
+			&pb.NewTaggedAnnotation{Data: input})
 	})
 }
 
@@ -233,8 +230,9 @@ func createInventoryAnnotations(
 ) IOE.IOEither[error, []string] {
 	return F.Pipe2(
 		map[string]string{
-			regsc.InvLocationTag:    ctx.Location,
-			regsc.InvStorageDateTag: time.Now().Format(time.RFC3339Nano),
+			regsc.InvLocationTag: ctx.Location,
+			regsc.InvStorageDateTag: time.Now().
+				Format(time.RFC3339Nano),
 		},
 		R.Collect(
 			func(tag string, value string) IOE.IOEither[error, string] {
@@ -246,7 +244,9 @@ func createInventoryAnnotations(
 						Value:     value,
 					},
 					createAnnotationIOE,
-					IOE.MapLeft[*pb.TaggedAnnotation](wrapAnnotationError(tag)),
+					IOE.MapLeft[*pb.TaggedAnnotation](
+						wrapAnnotationError(tag),
+					),
 					IOE.Map[error](extractAnnotationID),
 				)
 			},
@@ -259,18 +259,17 @@ func createInventoryAnnotations(
 func getInventoryIO(
 	ctx WithPlasmidID,
 ) IOE.IOEither[error, *pb.TaggedAnnotationGroupCollection] {
+	filter := fmt.Sprintf(
+		"entry_id==%s;tag==%s;ontology==%s",
+		ctx.PlasmidID,
+		regsc.InvLocationTag,
+		regsc.PlasmidInvOntO,
+	)
 	return F.Pipe1(
 		IOE.TryCatchError(func() (*pb.TaggedAnnotationGroupCollection, error) {
 			return regsc.GetAnnotationAPIClient().ListAnnotationGroups(
 				context.Background(),
-				&pb.ListGroupParameters{
-					Filter: fmt.Sprintf(
-						"entry_id==%s;tag==%s;ontology==%s",
-						ctx.PlasmidID,
-						regsc.InvLocationTag,
-						regsc.PlasmidInvOntO,
-					),
-				},
+				&pb.ListGroupParameters{Filter: filter},
 			)
 		}),
 		IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](func(err error) error {
@@ -314,13 +313,21 @@ func deleteAnnotationIOE(
 			IOE.TryCatchError(func() (*emptypb.Empty, error) {
 				return client.DeleteAnnotation(
 					context.Background(),
-					&pb.DeleteAnnotationRequest{Id: id, Purge: true},
+					&pb.DeleteAnnotationRequest{
+						Id: id, Purge: true,
+					},
 				)
 			}),
 			IOE.MapLeft[*emptypb.Empty](func(err error) error {
-				return fmt.Errorf("error deleting annotation %s: %w", id, err)
+				return fmt.Errorf(
+					"error deleting annotation %s: %w",
+					id,
+					err,
+				)
 			}),
-			IOE.Map[error](func(_ *emptypb.Empty) string { return id }),
+			IOE.Map[error](func(_ *emptypb.Empty) string {
+				return id
+			}),
 		)
 	}
 }
@@ -343,7 +350,9 @@ func deleteGroupIOE(
 					err,
 				)
 			}),
-			IOE.Map[error](func(_ *emptypb.Empty) string { return groupID }),
+			IOE.Map[error](func(_ *emptypb.Empty) string {
+				return groupID
+			}),
 		)
 	}
 }
@@ -406,13 +415,15 @@ func createAnnotationGroupIO(
 func markInventoryExistence(
 	ctx WithAnnotationGroup,
 ) IOE.IOEither[error, string] {
-	input := &pb.NewTaggedAnnotation_Data{
-		Attributes: &pb.NewTaggedAnnotationAttributes{
-			Value:     regsc.InvExistValue,
-			CreatedBy: regsc.DefaultUser,
-			Tag:       regsc.PlasmidInvTag,
-			EntryId:   ctx.PlasmidID,
-			Ontology:  regsc.PlasmidInvOntO,
+	input := &pb.NewTaggedAnnotation{
+		Data: &pb.NewTaggedAnnotation_Data{
+			Attributes: &pb.NewTaggedAnnotationAttributes{
+				Value:     regsc.InvExistValue,
+				CreatedBy: regsc.DefaultUser,
+				Tag:       regsc.PlasmidInvTag,
+				EntryId:   ctx.PlasmidID,
+				Ontology:  regsc.PlasmidInvOntO,
+			},
 		},
 	}
 	return F.Pipe2(
@@ -421,7 +432,7 @@ func markInventoryExistence(
 			return regsc.GetAnnotationAPIClient().
 				CreateAnnotation(
 					context.Background(),
-					&pb.NewTaggedAnnotation{Data: input},
+					input,
 				)
 		}),
 		// 2. Handle errors
@@ -460,27 +471,16 @@ func processRow(record InventoryRecord) IOE.IOEither[error, string] {
 func ProcessInventory(
 	config InventoryLoaderConfig,
 ) IOE.IOEither[error, InventoryProcessingSummary] {
-	return F.Pipe1(
-		// Step 1: Query rows (returns *sql.Rows)
-		queryInventoryRows(config.DB),
-		// Step 2: Fold over rows using Semigroup (streaming, no materialization)
-		IOE.Chain(
-			func(rows *sql.Rows) IOE.IOEither[error, InventoryProcessingSummary] {
-				return foldRowsWithSemigroup(rows, config.Logger)
-			},
-		),
-	)
-}
-
-// queryInventoryRows queries the database and returns sql.Rows
-func queryInventoryRows(db *sql.DB) IOE.IOEither[error, *sql.Rows] {
-	return F.Pipe1(
+	return F.Pipe2(
 		IOE.TryCatchError(func() (*sql.Rows, error) {
-			return db.Query("SELECT Name, Location FROM inventory")
+			return config.DB.Query(
+				"SELECT Name, Location FROM inventory",
+			)
 		}),
 		IOE.MapLeft[*sql.Rows](func(err error) error {
 			return fmt.Errorf("error querying inventory: %w", err)
 		}),
+		IOE.Chain(foldRowsWithSemigroup),
 	)
 }
 
@@ -488,7 +488,6 @@ func queryInventoryRows(db *sql.DB) IOE.IOEither[error, *sql.Rows] {
 // This processes rows lazily without loading all into memory
 func foldRowsWithSemigroup(
 	rows *sql.Rows,
-	logger *slog.Logger,
 ) IOE.IOEither[error, InventoryProcessingSummary] {
 	return IOE.TryCatchError(func() (InventoryProcessingSummary, error) {
 		defer rows.Close()
@@ -510,7 +509,6 @@ func foldRowsWithSemigroup(
 				}
 				// Accumulate using Semigroup
 				summary = semigroup.Concat(summary, scanError)
-				logger.Error("failed to scan row", "error", err)
 				continue
 			}
 
@@ -520,7 +518,7 @@ func foldRowsWithSemigroup(
 			}
 
 			// Process single row to get its summary
-			rowSummary := processRowToSummary(record, logger)
+			rowSummary := processRowToSummary(record)
 
 			// Accumulate using Semigroup (fold step)
 			summary = semigroup.Concat(summary, rowSummary)
@@ -537,41 +535,31 @@ func foldRowsWithSemigroup(
 
 // processRowToSummary processes one row and returns a summary
 // Pure function that doesn't perform I/O (I/O happens in processRow)
-func processRowToSummary(
-	record InventoryRecord,
-	logger *slog.Logger,
-) InventoryProcessingSummary {
-	// Execute the IOEither to get Either result
-	result := processRow(record)()
-
-	// Fold the Either into a summary
-	return E.Fold(
-		// Error case
-		func(err error) InventoryProcessingSummary {
-			logger.Error(
-				"failed to process inventory",
-				"plasmid", record.PlasmidName,
-				"error", err,
-			)
-			return InventoryProcessingSummary{
-				ErrorCount: 1,
-				Errors: []string{
-					fmt.Sprintf("%s: %v", record.PlasmidName, err),
-				},
-			}
-		},
-		// Success case
-		func(_ string) InventoryProcessingSummary {
-			logger.Info(
-				"processed inventory",
-				"plasmid", record.PlasmidName,
-				"location", record.Location,
-			)
-			return InventoryProcessingSummary{
-				SuccessCount: 1,
-			}
-		},
-	)(result)
+func processRowToSummary(record InventoryRecord) InventoryProcessingSummary {
+	return F.Pipe3(
+		record,
+		processRow,
+		fputil.ToEither,
+		E.Fold(
+			func(err error) InventoryProcessingSummary {
+				return InventoryProcessingSummary{
+					ErrorCount: 1,
+					Errors: []string{
+						fmt.Sprintf(
+							"%s: %v",
+							record.PlasmidName,
+							err,
+						),
+					},
+				}
+			},
+			func(_ string) InventoryProcessingSummary {
+				return InventoryProcessingSummary{
+					SuccessCount: 1,
+				}
+			},
+		),
+	)
 }
 
 // extractAnnotationID extracts ID from annotation response
