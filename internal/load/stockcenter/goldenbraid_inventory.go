@@ -449,21 +449,6 @@ func markInventoryExistence(
 	)
 }
 
-// processRow processes a single inventory record using Do/Bind pattern
-func processRow(record InventoryRecord) IOE.IOEither[error, string] {
-	return F.Pipe8(
-		IOE.Do[error](ProcessRowCtx(record)),
-		IOE.Bind(SetPlasmidContext, listPlasmidsIOE),
-		IOE.Bind(SetPlasmidID, validatePlasmidResponse),
-		IOE.Bind(SetInventory, getInventoryIO),
-		IOE.Bind(SetDeletedInventory, deleteInventoryIfExists),
-		IOE.Bind(SetAnnotationIDs, createInventoryAnnotations),
-		IOE.Bind(SetAnnotationGroup, createAnnotationGroupIO),
-		IOE.Bind(SetFinalID, markInventoryExistence),
-		IOE.Map[error](F.Identity[string]),
-	)
-}
-
 func ProcessInventory(
 	config InventoryLoaderConfig,
 ) IOE.IOEither[error, InventoryProcessingSummary] {
@@ -553,11 +538,16 @@ var onProcessError = F.Curry2(
 )
 
 // processRowToSummary processes one row and returns a summary
-// Pure function that doesn't perform I/O (I/O happens in processRow)
 func processRowToSummary(record InventoryRecord) InventoryProcessingSummary {
-	return F.Pipe3(
-		record,
-		processRow,
+	return F.Pipe9(
+		IOE.Of[error](ProcessRowCtx(record)),
+		IOE.Bind(SetPlasmidContext, listPlasmidsIOE),
+		IOE.Bind(SetPlasmidID, validatePlasmidResponse),
+		IOE.Bind(SetInventory, getInventoryIO),
+		IOE.Bind(SetDeletedInventory, deleteInventoryIfExists),
+		IOE.Bind(SetAnnotationIDs, createInventoryAnnotations),
+		IOE.Bind(SetAnnotationGroup, createAnnotationGroupIO),
+		IOE.Bind(SetFinalID, markInventoryExistence),
 		fputil.ToEither,
 		E.Fold(
 			onProcessError(record.PlasmidName),
