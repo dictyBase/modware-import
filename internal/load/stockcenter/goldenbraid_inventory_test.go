@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	E "github.com/IBM/fp-go/either"
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
@@ -312,10 +311,11 @@ func TestProcessRow(t *testing.T) {
 	mockAnno.On("CreateAnnotationGroup", mock.Anything, mock.Anything, mock.Anything).
 		Return(&annotation.TaggedAnnotationGroup{}, nil).Once()
 
-	_, err := E.Unwrap(processRow(record)())
-	require.NoError(t, err)
+	summary := processRowToSummary(record)
+	require.Equal(t, 0, summary.ErrorCount, "unexpected errors: %v", summary.Errors)
+	require.Equal(t, 1, summary.SuccessCount)
+
 	mockStock.AssertExpectations(t)
-	mockAnno.AssertExpectations(t)
 }
 
 func TestFileSQLQuery(t *testing.T) {
