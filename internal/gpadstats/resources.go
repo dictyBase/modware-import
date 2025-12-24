@@ -3,12 +3,15 @@ package gpadstats
 import (
 	"context"
 	"io"
+	"net/http"
 	"os"
 
 	E "github.com/IBM/fp-go/v2/either"
 	F "github.com/IBM/fp-go/v2/function"
+	H "github.com/IBM/fp-go/v2/http"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 	"github.com/IBM/fp-go/v2/ioeither/file"
+	IOEH "github.com/IBM/fp-go/v2/ioeither/http"
 	"github.com/nao1215/filesql"
 )
 
@@ -55,8 +58,12 @@ func openResources(
 }
 
 func openURLResources(url string) IOE.IOEither[error, StatsLoaderConfig] {
-	return F.Pipe3(
-		httpGet(url),
+	return F.Pipe7(
+		url,
+		IOEH.MakeGetRequest,
+		IOEH.MakeClient(http.DefaultClient).Do,
+		IOE.ChainEitherK(H.ValidateResponse),
+		IOE.Map[error](H.GetBody),
 		IOE.Chain(gzipReader),
 		IOE.Chain(transformStream),
 		IOE.Map[error](func(r io.Reader) StatsLoaderConfig {
