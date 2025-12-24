@@ -3,11 +3,13 @@ package gpadstats
 import (
 	"bufio"
 	"compress/gzip"
-	"fmt"
 	"io"
 	"net/http"
 
+	F "github.com/IBM/fp-go/v2/function"
+	H "github.com/IBM/fp-go/v2/http"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
+	IOEH "github.com/IBM/fp-go/v2/ioeither/http"
 )
 
 const header = "DB_Object_ID\tNegation\tRelation\tGO_ID\tDB_Reference\tEvidence_Code\tWith_or_From\t" +
@@ -23,17 +25,13 @@ func (w *wrappedReadCloser) Close() error {
 }
 
 func httpGet(url string) IOE.IOEither[error, io.ReadCloser] {
-	return IOE.TryCatchError(func() (io.ReadCloser, error) {
-		resp, err := http.Get(url) //nolint:gosec
-		if err != nil {
-			return nil, err
-		}
-		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
-			return nil, fmt.Errorf("bad status: %s", resp.Status)
-		}
-		return resp.Body, nil
-	})
+	return F.Pipe4(
+		url,
+		IOEH.MakeGetRequest,
+		IOEH.MakeClient(http.DefaultClient).Do,
+		IOE.ChainEitherK(H.ValidateResponse),
+		IOE.Map[error](H.GetBody),
+	)
 }
 
 func gzipReader(r io.ReadCloser) IOE.IOEither[error, io.ReadCloser] {
