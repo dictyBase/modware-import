@@ -96,7 +96,10 @@ func setupFileProcessing(config SetupConfig) FileContext {
 	if config.Delimiter != "," && len(config.Delimiter) == 1 {
 		reader.Comma = rune(config.Delimiter[0])
 	} else if config.Delimiter != "," {
-		config.Logger.Warnf("delimiter '%s' is not a single character, using default ','", config.Delimiter)
+		config.Logger.Warnf(
+			"delimiter '%s' is not a single character, using default ','",
+			config.Delimiter,
+		)
 	}
 
 	config.Logger.Infof(

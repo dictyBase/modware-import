@@ -50,7 +50,11 @@ func handleGrpcResults(
 					"stage":   "grpc_update_completed",
 				}).Debug("Job completed from gRPC pool")
 				logger.Infof(
-					"Successfully updated gene %s (Job ID %s). %s", result.Output.GeneID, result.JobID, result.Output.Message)
+					"Successfully updated gene %s (Job ID %s). %s",
+					result.Output.GeneID,
+					result.JobID,
+					result.Output.Message,
+				)
 			}
 		case err, ok := <-grpcUpdatePool.Errors():
 			if !ok {
