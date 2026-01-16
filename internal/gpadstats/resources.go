@@ -62,8 +62,8 @@ func openURLResources(url string) IOE.IOEither[error, StatsLoaderConfig] {
 		url,
 		IOEH.MakeGetRequest,
 		IOEH.MakeClient(http.DefaultClient).Do,
-		IOE.ChainEitherK(H.ValidateResponse),
-		IOE.Map[error](H.GetBody),
+		IOE.ChainEitherK(H.ValidateResponse), //nolint:bodyclose
+		IOE.Map[error](H.GetBody),            //nolint:bodyclose
 		IOE.Chain(gzipReader),
 		IOE.Chain(transformStream),
 		IOE.Map[error](func(r io.Reader) StatsLoaderConfig {
