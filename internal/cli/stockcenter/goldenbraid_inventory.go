@@ -9,6 +9,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/dictyBase/modware-import/internal/load/stockcenter"
 	"github.com/dictyBase/modware-import/internal/logger"
+	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/urfave/cli/v2"
 )
 
@@ -47,10 +48,19 @@ func LoadGoldenBraidInventory(cmd *cli.Context) error {
 	handler := logger.GetCliSlogHandler(cmd)
 	slogger := slog.New(handler)
 
+	// Create dependencies struct with clients from registry
+	deps := stockcenter.Deps{
+		StockClient:      regsc.GetStockAPIClient(),
+		AnnotationClient: regsc.GetAnnotationAPIClient(),
+		Logger:           slogger,
+	}
+
 	output := F.Pipe2(
 		IOE.Bracket(
 			stockcenter.InventoryBuilderFromFile(cmd, slogger),
-			stockcenter.ProcessInventory,
+			func(config stockcenter.InventoryLoaderConfig) IOE.IOEither[error, stockcenter.InventoryProcessingSummary] {
+				return stockcenter.ProcessInventory(deps, config)
+			},
 			stockcenter.ReleaseInventoryResources,
 		),
 		fputil.ToEither[error, stockcenter.InventoryProcessingSummary],
