@@ -12,12 +12,12 @@ import (
 
 	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
-	fperrors "github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
 	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/semigroup"
+	T "github.com/IBM/fp-go/tuple"
 
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/fputil"
@@ -89,7 +89,7 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 		slog.NewLogLogger(handler, slog.LevelError),
 	)
 
-	return F.Pipe7(
+	output := F.Pipe7(
 		IOE.Do[error](KeywordLoaderConfig{Cmd: cmd}),
 		IOE.ChainFirstIOK[error](
 			IO.Logf[KeywordLoaderConfig](
@@ -105,20 +105,38 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 		),
 		fputil.ToEither[error, KeywordProcessingSummary],
 		elog("plasmid ontology association result"),
-		E.Fold(
-			fperrors.IdentityError,
-			func(summary KeywordProcessingSummary) error {
-				slogger.Info(
-					"plasmid ontology summary",
-					"created", len(summary.Created),
-					"existing", len(summary.Existing),
-					"skipped", summary.Skipped,
-					"errors", summary.ErrorCount,
-				)
-				return nil
-			},
-		),
+		E.Fold(onSummaryError, onSummarySuccess),
 	)
+
+	return handleSummaryOutput(slogger, output)
+}
+
+func onSummaryError(err error) T.Tuple2[KeywordProcessingSummary, error] {
+	return T.MakeTuple2(KeywordProcessingSummary{}, err)
+}
+
+func onSummarySuccess(
+	summary KeywordProcessingSummary,
+) T.Tuple2[KeywordProcessingSummary, error] {
+	return T.MakeTuple2(summary, (error)(nil))
+}
+
+func handleSummaryOutput(
+	slogger *slog.Logger,
+	output T.Tuple2[KeywordProcessingSummary, error],
+) error {
+	if output.F2 != nil {
+		return output.F2
+	}
+	summary := output.F1
+	slogger.Info(
+		"plasmid ontology summary",
+		"created", len(summary.Created),
+		"existing", len(summary.Existing),
+		"skipped", summary.Skipped,
+		"errors", summary.ErrorCount,
+	)
+	return nil
 }
 
 func openKeywordReader(
