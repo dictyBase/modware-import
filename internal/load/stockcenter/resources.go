@@ -24,6 +24,13 @@ type InventoryLoaderConfig struct {
 	Cmd    *cli.Context
 }
 
+// DBBuildContext contains only the fields needed for building inventory database
+type DBBuildContext struct {
+	Reader  io.ReadCloser
+	Context context.Context
+	Builder *filesql.DBBuilder
+}
+
 type InventoryLoaderIOE = IOE.IOEither[error, InventoryLoaderConfig]
 
 func closeInventoryConfig(config InventoryLoaderConfig) {
@@ -35,24 +42,46 @@ func closeInventoryConfig(config InventoryLoaderConfig) {
 	}
 }
 
-func inventoryBuilder(
-	config InventoryLoaderConfig,
-) InventoryLoaderIOE {
-	ctx := context.Background()
-	return F.Pipe2(
-		IOE.TryCatchError(func() (*sql.DB, error) {
-			validatedBuilder, err := filesql.NewBuilder().
+// buildInventorySQL creates and validates a filesql builder from a reader
+func buildInventorySQL(
+	ctx DBBuildContext,
+) IOE.IOEither[error, DBBuildContext] {
+	return F.Pipe1(
+		IOE.TryCatchError(func() (*filesql.DBBuilder, error) {
+			return filesql.NewBuilder().
 				AddReader(
-					config.Reader,
+					ctx.Reader,
 					"inventory",
 					filesql.FileTypeCSV,
 				).
-				Build(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return validatedBuilder.Open(ctx)
+				Build(ctx.Context)
 		}),
+		IOE.Map[error](func(builder *filesql.DBBuilder) DBBuildContext {
+			ctx.Builder = builder
+			return ctx
+		}),
+	)
+}
+
+// openInventoryDB opens a database connection from a validated builder
+func openInventoryDB(
+	ctx DBBuildContext,
+) IOE.IOEither[error, *sql.DB] {
+	return IOE.TryCatchError(func() (*sql.DB, error) {
+		return ctx.Builder.Open(ctx.Context)
+	})
+}
+
+func inventoryBuilder(
+	config InventoryLoaderConfig,
+) InventoryLoaderIOE {
+	return F.Pipe4(
+		DBBuildContext{
+			Reader:  config.Reader,
+			Context: context.Background(),
+		},
+		buildInventorySQL,
+		IOE.Chain(openInventoryDB),
 		IOE.MapLeft[*sql.DB](func(err error) error {
 			return fmt.Errorf(
 				"failed to build inventory database: %w",
@@ -60,8 +89,12 @@ func inventoryBuilder(
 			)
 		}),
 		IOE.Map[error](func(db *sql.DB) InventoryLoaderConfig {
-			config.DB = db
-			return config
+			return InventoryLoaderConfig{
+				DB:     db,
+				Reader: config.Reader,
+				Logger: config.Logger,
+				Cmd:    config.Cmd,
+			}
 		}),
 	)
 }
