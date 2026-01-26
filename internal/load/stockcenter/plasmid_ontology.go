@@ -14,6 +14,7 @@ import (
 	E "github.com/IBM/fp-go/either"
 	fperrors "github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
+	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/semigroup"
@@ -90,18 +91,16 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 
 	return F.Pipe7(
 		IOE.Do[error](KeywordLoaderConfig{Cmd: cmd}),
-		IOE.ChainFirst(
-			logStep[KeywordLoaderConfig](
-				slogger,
-				"Starting plasmid ontology association",
+		IOE.ChainFirstIOK[error](
+			IO.Logf[KeywordLoaderConfig](
+				"Starting plasmid ontology association: %+v",
 			),
 		),
 		IOE.Bind(setKeywordReader, openKeywordReader),
 		IOE.Chain(processAndAggregateKeywordRecords),
-		IOE.ChainFirst(
-			logStep[KeywordProcessingSummary](
-				slogger,
-				"Plasmid ontology association summary",
+		IOE.ChainFirstIOK[error](
+			IO.Logf[KeywordProcessingSummary](
+				"Plasmid ontology association summary: %+v",
 			),
 		),
 		fputil.ToEither[error, KeywordProcessingSummary],
@@ -120,18 +119,6 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 			},
 		),
 	)
-}
-
-func logStep[T any](
-	logger *slog.Logger,
-	msg string,
-) func(T) IOE.IOEither[error, T] {
-	return func(data T) IOE.IOEither[error, T] {
-		return IOE.TryCatchError(func() (T, error) {
-			logger.Info(msg, "payload", data)
-			return data, nil
-		})
-	}
 }
 
 func openKeywordReader(
