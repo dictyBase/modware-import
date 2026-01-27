@@ -30,17 +30,14 @@ import (
 
 type KeywordLoaderContext struct{}
 
-type KeywordReaderResource struct {
-	Reader *csv.Reader
-	Closer io.Closer
-}
-
 type KeywordLoaderConfig struct {
 	KeywordLoaderContext
 	Cmd    *cobra.Command
 	Reader *csv.Reader
 	Closer io.Closer
 }
+
+type KeywordReaderIOE = IOE.IOEither[error, KeywordLoaderConfig]
 
 type KeywordRecord struct {
 	PlasmidID string
@@ -65,13 +62,6 @@ type KeywordProcessingSummary struct {
 }
 
 var (
-	setKeywordReader = F.Curry2(
-		func(resource KeywordReaderResource, config KeywordLoaderConfig) KeywordLoaderConfig {
-			config.Reader = resource.Reader
-			config.Closer = resource.Closer
-			return config
-		},
-	)
 	errSkipRecord = errors.New("skip record")
 
 	keywordIsNotBlankRecord = A.Any(func(s string) bool {
@@ -96,7 +86,7 @@ func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 				"Starting plasmid ontology association: %+v",
 			),
 		),
-		IOE.Bind(setKeywordReader, openKeywordReader),
+		IOE.Chain(openKeywordReader),
 		IOE.Chain(processAndAggregateKeywordRecords),
 		IOE.ChainFirstIOK[error](
 			IO.Logf[KeywordProcessingSummary](
@@ -139,68 +129,81 @@ func handleSummaryOutput(
 	return nil
 }
 
-func openKeywordReader(
-	config KeywordLoaderConfig,
-) IOE.IOEither[error, KeywordReaderResource] {
-	return IOE.TryCatchError(func() (KeywordReaderResource, error) {
-		source, _ := config.Cmd.Flags().GetString("input-source")
-		switch source {
-		case "folder":
-			return openFileReader(config)
-		case "bucket":
-			return openS3Reader(config)
-		default:
-			return KeywordReaderResource{}, fmt.Errorf(
-				"unsupported input source %s",
-				source,
-			)
-		}
-	})
-}
-
-func openFileReader(
-	config KeywordLoaderConfig,
-) (KeywordReaderResource, error) {
-	inputPath, _ := config.Cmd.Flags().GetString("input")
-	file, err := os.Open(inputPath)
-	if err != nil {
-		return KeywordReaderResource{}, fmt.Errorf(
-			"failed to open TSV file %s: %w",
-			inputPath,
-			err,
-		)
-	}
-	reader := csv.NewReader(file)
-	reader.Comma = '\t'
-	reader.FieldsPerRecord = -1
-	reader.TrimLeadingSpace = true
-	return KeywordReaderResource{Reader: reader, Closer: file}, nil
-}
-
-func openS3Reader(
-	config KeywordLoaderConfig,
-) (KeywordReaderResource, error) {
-	bucket, _ := config.Cmd.Flags().GetString("s3-bucket")
-	path, _ := config.Cmd.Flags().GetString("s3-bucket-path")
-	file, _ := config.Cmd.Flags().GetString("input")
-	reader, err := registry.GetS3Client().GetObject(
-		bucket,
-		fmt.Sprintf("%s/%s", path, file),
-		minio.GetObjectOptions{},
-	)
-	if err != nil {
-		return KeywordReaderResource{}, fmt.Errorf(
-			"failed to open s3 file %s/%s: %w",
-			path,
-			file,
-			err,
-		)
-	}
+func configureTSVReader(reader io.Reader) *csv.Reader {
 	csvReader := csv.NewReader(reader)
 	csvReader.Comma = '\t'
 	csvReader.FieldsPerRecord = -1
 	csvReader.TrimLeadingSpace = true
-	return KeywordReaderResource{Reader: csvReader, Closer: reader}, nil
+	return csvReader
+}
+
+func openKeywordReader(config KeywordLoaderConfig) KeywordReaderIOE {
+	return F.Pipe1(
+		config,
+		F.Switch(
+			func(cfg KeywordLoaderConfig) string {
+				source, _ := cfg.
+					Cmd.
+					Flags().
+					GetString("input-source")
+				return source
+			},
+			map[string]func(KeywordLoaderConfig) KeywordReaderIOE{
+				"folder": keywordReaderFromFile,
+				"bucket": keywordReaderFromS3Bucket,
+			},
+			defaultKeywordReader,
+		),
+	)
+}
+
+func keywordReaderFromFile(cfg KeywordLoaderConfig) KeywordReaderIOE {
+	inputPath, _ := cfg.Cmd.Flags().GetString("input")
+	return F.Pipe2(
+		IOE.TryCatchError(func() (io.ReadCloser, error) {
+			return os.Open(inputPath)
+		}),
+		IOE.MapLeft[io.ReadCloser](func(err error) error {
+			return fmt.Errorf("failed to open TSV file %s: %w", inputPath, err)
+		}),
+		IOE.Map[error](func(file io.ReadCloser) KeywordLoaderConfig {
+			cfg.Reader = configureTSVReader(file)
+			cfg.Closer = file
+			return cfg
+		}),
+	)
+}
+
+func keywordReaderFromS3Bucket(cfg KeywordLoaderConfig) KeywordReaderIOE {
+	path, _ := cfg.Cmd.Flags().GetString("s3-bucket-path")
+	file, _ := cfg.Cmd.Flags().GetString("input")
+	bucket, _ := cfg.Cmd.Flags().GetString("s3-bucket")
+	objectPath := fmt.Sprintf("%s/%s", path, file)
+
+	return F.Pipe2(
+		IOE.TryCatchError(func() (io.ReadCloser, error) {
+			return registry.GetS3Client().GetObject(
+				bucket,
+				objectPath,
+				minio.GetObjectOptions{},
+			)
+		}),
+		IOE.MapLeft[io.ReadCloser](func(err error) error {
+			return fmt.Errorf("failed to open s3 file %s: %w", objectPath, err)
+		}),
+		IOE.Map[error](func(reader io.ReadCloser) KeywordLoaderConfig {
+			cfg.Reader = configureTSVReader(reader)
+			cfg.Closer = reader
+			return cfg
+		}),
+	)
+}
+
+func defaultKeywordReader(cfg KeywordLoaderConfig) KeywordReaderIOE {
+	source, _ := cfg.Cmd.Flags().GetString("input-source")
+	return IOE.Left[KeywordLoaderConfig](
+		fmt.Errorf("unsupported input source %s", source),
+	)
 }
 
 func processAndAggregateKeywordRecords(
