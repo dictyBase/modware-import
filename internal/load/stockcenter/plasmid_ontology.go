@@ -12,6 +12,7 @@ import (
 
 	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
+	Eq "github.com/IBM/fp-go/eq"
 	F "github.com/IBM/fp-go/function"
 	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
@@ -62,12 +63,32 @@ type KeywordProcessingSummary struct {
 	Errors     []string `json:"errors"`
 }
 
+type KeywordContext struct {
+	Record KeywordRecord
+}
+
+type WithPlasmid struct {
+	KeywordContext
+	Plasmid *stockpb.Plasmid
+}
+
+var SetPlasmid = F.Curry2(
+	func(plasmid *stockpb.Plasmid, ctx KeywordContext) WithPlasmid {
+		return WithPlasmid{
+			KeywordContext: ctx,
+			Plasmid:        plasmid,
+		}
+	},
+)
+
 var (
 	errSkipRecord = errors.New("skip record")
 
 	keywordIsNotBlankRecord = A.Any(func(s string) bool {
 		return len(strings.TrimSpace(s)) > 0
 	})
+
+	caseInsensitiveEq = Eq.FromEquals(strings.EqualFold)
 )
 
 const keywordRecordLength = 3
@@ -303,59 +324,97 @@ func parseKeywordRecord(record []string) KeywordRecord {
 	}
 }
 
+func fetchPlasmid(ctx KeywordContext) IOE.IOEither[error, *stockpb.Plasmid] {
+	return F.Pipe1(
+		IOE.TryCatchError(func() (*stockpb.Plasmid, error) {
+			return regsc.GetStockAPIClient().GetPlasmid(
+				context.Background(),
+				&stockpb.StockId{Id: ctx.Record.PlasmidID},
+			)
+		}),
+		IOE.MapLeft[*stockpb.Plasmid](func(err error) error {
+			return fmt.Errorf(
+				"failed to fetch plasmid %s: %w",
+				ctx.Record.PlasmidID,
+				err,
+			)
+		}),
+	)
+}
+
+func propertyAlreadyMatches(ctx WithPlasmid) bool {
+	return caseInsensitiveEq.Equals(
+		ctx.Plasmid.GetData().GetAttributes().GetDictyPlasmidProperty(),
+		ctx.Record.Term,
+	)
+}
+
+func returnExistingResult(
+	ctx WithPlasmid,
+) IOE.IOEither[error, KeywordProcessingResult] {
+	return IOE.Of[error](
+		keywordCreateSuccessResult(
+			ctx.Record.PlasmidID,
+			ctx.Record.Term,
+			false,
+		),
+	)
+}
+
+func updatePlasmidProperty(
+	ctx WithPlasmid,
+) IOE.IOEither[error, KeywordProcessingResult] {
+	input := &stockpb.PlasmidUpdate{
+		Data: &stockpb.PlasmidUpdate_Data{
+			Type: "plasmid",
+			Id:   ctx.Record.PlasmidID,
+			Attributes: &stockpb.PlasmidUpdateAttributes{
+				UpdatedBy:            regsc.DefaultUser,
+				DictyPlasmidProperty: ctx.Record.Term,
+			},
+		},
+	}
+	return F.Pipe2(
+		IOE.TryCatchError(func() (*stockpb.Plasmid, error) {
+			return regsc.GetStockAPIClient().UpdatePlasmid(
+				context.Background(),
+				input,
+			)
+		}),
+		IOE.MapLeft[*stockpb.Plasmid](func(err error) error {
+			return fmt.Errorf(
+				"failed to update plasmid %s: %w",
+				ctx.Record.PlasmidID,
+				err,
+			)
+		}),
+		IOE.Map[error](func(plasmid *stockpb.Plasmid) KeywordProcessingResult {
+			return KeywordProcessingResult{
+				Created:   true,
+				PlasmidID: plasmid.GetData().GetId(),
+				Term: plasmid.GetData().
+					GetAttributes().
+					GetDictyPlasmidProperty(),
+			}
+		}),
+	)
+}
+
 func associateKeywordTerm(
 	record KeywordRecord,
 ) E.Either[error, KeywordProcessingResult] {
-	fn := IOE.TryCatchError(func() (KeywordProcessingResult, error) {
-		client := regsc.GetStockAPIClient()
-		plasmid, err := client.GetPlasmid(
-			context.Background(),
-			&stockpb.StockId{Id: record.PlasmidID},
-		)
-		if err != nil {
-			return KeywordProcessingResult{}, fmt.Errorf(
-				"failed to fetch plasmid %s: %w",
-				record.PlasmidID,
-				err,
-			)
-		}
-		existing := plasmid.GetData().GetAttributes().GetDictyPlasmidProperty()
-		if strings.EqualFold(existing, record.Term) {
-			return keywordCreateSuccessResult(
-				record.PlasmidID,
-				record.Term,
-				false,
-			), nil
-		}
-
-		_, err = client.UpdatePlasmid(
-			context.Background(),
-			&stockpb.PlasmidUpdate{
-				Data: &stockpb.PlasmidUpdate_Data{
-					Type: "plasmid",
-					Id:   record.PlasmidID,
-					Attributes: &stockpb.PlasmidUpdateAttributes{
-						UpdatedBy:            regsc.DefaultUser,
-						DictyPlasmidProperty: record.Term,
-					},
-				},
-			},
-		)
-		if err != nil {
-			return KeywordProcessingResult{}, fmt.Errorf(
-				"failed to update plasmid %s: %w",
-				record.PlasmidID,
-				err,
-			)
-		}
-
-		return keywordCreateSuccessResult(
-			record.PlasmidID,
-			record.Term,
-			true,
-		), nil
-	})
-	return fputil.ToEither(fn)
+	return F.Pipe3(
+		IOE.Of[error](KeywordContext{Record: record}),
+		IOE.Bind(SetPlasmid, fetchPlasmid),
+		IOE.Chain(
+			F.Ternary(
+				propertyAlreadyMatches,
+				returnExistingResult,
+				updatePlasmidProperty,
+			),
+		),
+		fputil.ToEither,
+	)
 }
 
 func keywordCreateSuccessResult(
