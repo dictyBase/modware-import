@@ -99,10 +99,6 @@ func inventoryBuilder(
 	)
 }
 
-func getInventorySource(cfg InventoryLoaderConfig) string {
-	return cfg.Cmd.String("input-source")
-}
-
 func invLoaderFromFile(
 	cfg InventoryLoaderConfig,
 ) InventoryLoaderIOE {
@@ -159,13 +155,6 @@ func invLoaderFromS3Bucket(
 	)
 }
 
-func invLoaderMap() map[string]func(InventoryLoaderConfig) InventoryLoaderIOE {
-	return map[string]func(InventoryLoaderConfig) InventoryLoaderIOE{
-		"folder": invLoaderFromFile,
-		"bucket": invLoaderFromS3Bucket,
-	}
-}
-
 func defaultInvLoader(
 	cfg InventoryLoaderConfig,
 ) InventoryLoaderIOE {
@@ -196,11 +185,17 @@ func InventoryBuilderFromFile(
 			Cmd:    cmd,
 			Logger: logger,
 		}),
-		IOE.Chain(F.Switch(
-			getInventorySource,
-			invLoaderMap(),
-			defaultInvLoader,
-		)),
+		IOE.Chain(
+			F.Switch(
+				func(cfg InventoryLoaderConfig) string {
+					return cfg.Cmd.String("input-source")
+				},
+				map[string]func(InventoryLoaderConfig) InventoryLoaderIOE{
+					"folder": invLoaderFromFile,
+					"bucket": invLoaderFromS3Bucket,
+				},
+				defaultInvLoader,
+			)),
 		IOE.Chain(inventoryBuilder),
 	)
 }
