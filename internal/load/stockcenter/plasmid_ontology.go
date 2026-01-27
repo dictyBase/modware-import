@@ -15,6 +15,7 @@ import (
 	F "github.com/IBM/fp-go/function"
 	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
+	File "github.com/IBM/fp-go/ioeither/file"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/semigroup"
 	T "github.com/IBM/fp-go/tuple"
@@ -160,13 +161,11 @@ func openKeywordReader(config KeywordLoaderConfig) KeywordReaderIOE {
 func keywordReaderFromFile(cfg KeywordLoaderConfig) KeywordReaderIOE {
 	inputPath, _ := cfg.Cmd.Flags().GetString("input")
 	return F.Pipe2(
-		IOE.TryCatchError(func() (io.ReadCloser, error) {
-			return os.Open(inputPath)
-		}),
-		IOE.MapLeft[io.ReadCloser](func(err error) error {
+		File.Open(inputPath),
+		IOE.MapLeft[*os.File](func(err error) error {
 			return fmt.Errorf("failed to open TSV file %s: %w", inputPath, err)
 		}),
-		IOE.Map[error](func(file io.ReadCloser) KeywordLoaderConfig {
+		IOE.Map[error](func(file *os.File) KeywordLoaderConfig {
 			cfg.Reader = configureTSVReader(file)
 			cfg.Closer = file
 			return cfg
