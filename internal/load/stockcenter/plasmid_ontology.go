@@ -30,6 +30,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const keywordRecordLength = 3
+
+var (
+	errSkipRecord = errors.New("skip record")
+
+	keywordIsNotBlankRecord = A.Any(func(s string) bool {
+		return len(strings.TrimSpace(s)) > 0
+	})
+
+	caseInsensitiveEq = Eq.FromEquals(strings.EqualFold)
+
+	trimSpace         = strings.TrimSpace
+	normalizeProperty = F.Flow2(strings.TrimSpace, strings.ToLower)
+	SetPlasmid        = F.Curry2(
+		func(plasmid *stockpb.Plasmid, ctx KeywordContext) WithPlasmid {
+			return WithPlasmid{
+				KeywordContext: ctx,
+				Plasmid:        plasmid,
+			}
+		},
+	)
+)
+
 type KeywordLoaderContext struct{}
 
 type KeywordLoaderConfig struct {
@@ -71,27 +94,6 @@ type WithPlasmid struct {
 	KeywordContext
 	Plasmid *stockpb.Plasmid
 }
-
-var SetPlasmid = F.Curry2(
-	func(plasmid *stockpb.Plasmid, ctx KeywordContext) WithPlasmid {
-		return WithPlasmid{
-			KeywordContext: ctx,
-			Plasmid:        plasmid,
-		}
-	},
-)
-
-var (
-	errSkipRecord = errors.New("skip record")
-
-	keywordIsNotBlankRecord = A.Any(func(s string) bool {
-		return len(strings.TrimSpace(s)) > 0
-	})
-
-	caseInsensitiveEq = Eq.FromEquals(strings.EqualFold)
-)
-
-const keywordRecordLength = 3
 
 func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
 	handler := logger.GetSlogHandler(cmd)
@@ -235,10 +237,9 @@ func processAndAggregateKeywordRecords(
 		}
 
 		prop, _ := config.Cmd.Flags().GetString("property")
-		keywordFn := keywordFilterProperty(prop)
 		summary := KeywordProcessingSummary{}
 		for {
-			record, err := config.Reader.Read()
+			keyRecord, err := config.Reader.Read()
 			if err == io.EOF {
 				break
 			}
@@ -247,7 +248,7 @@ func processAndAggregateKeywordRecords(
 			}
 
 			result := F.Pipe6(
-				record,
+				keyRecord,
 				E.FromPredicate(
 					keywordIsNotBlankRecord,
 					keywordSkipRecordError,
@@ -259,7 +260,7 @@ func processAndAggregateKeywordRecords(
 					),
 				),
 				E.Map[error](parseKeywordRecord),
-				E.Chain(keywordFn),
+				E.Chain(keywordFilterProperty(prop)),
 				E.Chain(associateKeywordTerm),
 				E.Fold(
 					handleKeywordPipelineError,
@@ -303,24 +304,24 @@ func handleKeywordPipelineError(err error) KeywordProcessingResult {
 	}
 }
 
-func keywordHasValidRecordLength(record []string) bool {
-	return len(record) == keywordRecordLength
+func keywordHasValidRecordLength(keyRecord []string) bool {
+	return len(keyRecord) == keywordRecordLength
 }
 
-func keywordRecordLengthError(record []string) error {
+func keywordRecordLengthError(keyRecord []string) error {
 	return fmt.Errorf(
 		"invalid record: expected exactly %d columns, got %d (%s)",
 		keywordRecordLength,
-		len(record),
-		strings.Join(record, "\t"),
+		len(keyRecord),
+		strings.Join(keyRecord, "\t"),
 	)
 }
 
-func parseKeywordRecord(record []string) KeywordRecord {
+func parseKeywordRecord(keyRecord []string) KeywordRecord {
 	return KeywordRecord{
-		PlasmidID: strings.TrimSpace(record[0]),
-		Property:  strings.ToLower(strings.TrimSpace(record[1])),
-		Term:      strings.TrimSpace(record[2]),
+		PlasmidID: trimSpace(keyRecord[0]),
+		Property:  normalizeProperty(keyRecord[1]),
+		Term:      trimSpace(keyRecord[2]),
 	}
 }
 
@@ -401,10 +402,10 @@ func updatePlasmidProperty(
 }
 
 func associateKeywordTerm(
-	record KeywordRecord,
+	keyRecord KeywordRecord,
 ) E.Either[error, KeywordProcessingResult] {
 	return F.Pipe3(
-		IOE.Of[error](KeywordContext{Record: record}),
+		IOE.Of[error](KeywordContext{Record: keyRecord}),
 		IOE.Bind(SetPlasmid, fetchPlasmid),
 		IOE.Chain(
 			F.Ternary(
