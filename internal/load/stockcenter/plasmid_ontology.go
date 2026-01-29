@@ -17,6 +17,7 @@ import (
 	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
 	File "github.com/IBM/fp-go/ioeither/file"
+	N "github.com/IBM/fp-go/number"
 	S "github.com/IBM/fp-go/semigroup"
 	T "github.com/IBM/fp-go/tuple"
 
@@ -79,6 +80,15 @@ var (
 			}
 		},
 	)
+
+	// Field-level semigroups for composable aggregation
+	intSumSemigroup = N.SemigroupSum[int]()
+	errorsSemigroup = S.MakeSemigroup(func(a, b []error) []error {
+		return F.Pipe1(
+			A.ArrayConcatAll(a, b),
+			A.Slice[error](0, maxErrorMessages),
+		)
+	})
 )
 
 type KeywordLoaderContext struct{}
@@ -441,18 +451,23 @@ func associateKeywordTerm(
 func SummarySemigroup() S.Semigroup[KeywordProcessingSummary] {
 	return S.MakeSemigroup(
 		func(a, b KeywordProcessingSummary) KeywordProcessingSummary {
-			combinedErrors := append(a.Errors, b.Errors...)
-
-			// Cap at first maxErrorMessages errors
-			if len(combinedErrors) > maxErrorMessages {
-				combinedErrors = combinedErrors[:maxErrorMessages]
-			}
-
 			return KeywordProcessingSummary{
-				CreatedCount:  a.CreatedCount + b.CreatedCount,
-				ExistingCount: a.ExistingCount + b.ExistingCount,
-				ErrorCount:    a.ErrorCount + b.ErrorCount,
-				Errors:        combinedErrors,
+				CreatedCount: intSumSemigroup.Concat(
+					a.CreatedCount,
+					b.CreatedCount,
+				),
+				ExistingCount: intSumSemigroup.Concat(
+					a.ExistingCount,
+					b.ExistingCount,
+				),
+				ErrorCount: intSumSemigroup.Concat(
+					a.ErrorCount,
+					b.ErrorCount,
+				),
+				Errors: errorsSemigroup.Concat(
+					a.Errors,
+					b.Errors,
+				),
 			}
 		},
 	)
