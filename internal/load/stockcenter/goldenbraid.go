@@ -9,10 +9,12 @@ import (
 	"os"
 	"path"
 
+	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
 	fperrors "github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
+	N "github.com/IBM/fp-go/number"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/semigroup"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
@@ -39,24 +41,26 @@ type LoaderConfig struct {
 	Logger *slog.Logger
 }
 
+const gbMaxErrorMessages = 5
+
 // PlasmidProcessingResult represents the result of processing a single plasmid
 type PlasmidProcessingResult struct {
 	PlasmidID string
-	Error     O.Option[error]
+	Error     error
 }
 
 // createErrorResult creates a PlasmidProcessingResult for an error
 func createErrorResult(e error) PlasmidProcessingResult {
 	return PlasmidProcessingResult{
 		PlasmidID: "",
-		Error:     O.Some(e),
+		Error:     e,
 	}
 }
 
 func createProcessingResult(id string) PlasmidProcessingResult {
 	return PlasmidProcessingResult{
 		PlasmidID: id,
-		Error:     O.None[error](),
+		Error:     nil,
 	}
 }
 
@@ -75,17 +79,53 @@ func logGoldenBraidStep[T any](
 // GoldenBraidProcessingResult holds aggregate processing statistics
 type GoldenBraidProcessingResult struct {
 	Successes  []string
-	Errors     []string
+	Errors     []error
 	ErrorCount int
 }
+
+var (
+	gbHasError = func(r PlasmidProcessingResult) bool { return r.Error != nil }
+
+	gbSuccessSummary = func(r PlasmidProcessingResult) GoldenBraidProcessingResult {
+		return GoldenBraidProcessingResult{
+			Successes: []string{r.PlasmidID},
+		}
+	}
+	gbErrorSummary = func(r PlasmidProcessingResult) GoldenBraidProcessingResult {
+		return GoldenBraidProcessingResult{
+			ErrorCount: 1,
+			Errors:     []error{r.Error},
+		}
+	}
+
+	gbIntSumSemigroup      = N.SemigroupSum[int]()
+	gbStringArraySemigroup = S.MakeSemigroup(func(a, b []string) []string {
+		return A.ArrayConcatAll(a, b)
+	})
+	gbErrorsSemigroup = S.MakeSemigroup(func(a, b []error) []error {
+		return F.Pipe1(
+			A.ArrayConcatAll(a, b),
+			A.Slice[error](0, gbMaxErrorMessages),
+		)
+	})
+)
 
 func GoldenBraidSummarySemigroup() S.Semigroup[GoldenBraidProcessingResult] {
 	return S.MakeSemigroup(
 		func(a, b GoldenBraidProcessingResult) GoldenBraidProcessingResult {
 			return GoldenBraidProcessingResult{
-				Successes:  append(a.Successes, b.Successes...),
-				ErrorCount: a.ErrorCount + b.ErrorCount,
-				Errors:     append(a.Errors, b.Errors...),
+				Successes: gbStringArraySemigroup.Concat(
+					a.Successes,
+					b.Successes,
+				),
+				ErrorCount: gbIntSumSemigroup.Concat(
+					a.ErrorCount,
+					b.ErrorCount,
+				),
+				Errors: gbErrorsSemigroup.Concat(
+					a.Errors,
+					b.Errors,
+				),
 			}
 		},
 	)
@@ -244,19 +284,11 @@ func goldenBraidResultToSummary(
 	result PlasmidProcessingResult,
 ) GoldenBraidProcessingResult {
 	return F.Pipe1(
-		result.Error,
-		O.Fold(
-			func() GoldenBraidProcessingResult {
-				return GoldenBraidProcessingResult{
-					Successes: []string{result.PlasmidID},
-				}
-			},
-			func(err error) GoldenBraidProcessingResult {
-				return GoldenBraidProcessingResult{
-					ErrorCount: 1,
-					Errors:     []string{err.Error()},
-				}
-			},
+		result,
+		F.Ternary(
+			gbHasError,
+			gbErrorSummary,
+			gbSuccessSummary,
 		),
 	)
 }
