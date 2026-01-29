@@ -382,13 +382,7 @@ func propertyAlreadyMatches(ctx WithPlasmid) bool {
 func returnExistingResult(
 	ctx WithPlasmid,
 ) IOE.IOEither[error, KeywordProcessingResult] {
-	return IOE.Of[error](
-		keywordCreateSuccessResult(
-			ctx.Record.PlasmidID,
-			ctx.Record.Term,
-			false,
-		),
-	)
+	return IOE.Of[error](KeywordProcessingResult{Created: false})
 }
 
 func updatePlasmidProperty(
@@ -444,16 +438,6 @@ func associateKeywordTerm(
 	)
 }
 
-func keywordCreateSuccessResult(
-	_, _ string,
-	created bool,
-) KeywordProcessingResult {
-	return KeywordProcessingResult{
-		Created: created,
-		Error:   nil,
-	}
-}
-
 func SummarySemigroup() S.Semigroup[KeywordProcessingSummary] {
 	return S.MakeSemigroup(
 		func(a, b KeywordProcessingSummary) KeywordProcessingSummary {
@@ -477,11 +461,18 @@ func SummarySemigroup() S.Semigroup[KeywordProcessingSummary] {
 func resultToSummary(
 	result KeywordProcessingResult,
 ) KeywordProcessingSummary {
-	return F.Ternary(
-		hasError,
-		F.Ternary(isWrongPropertyError, skipSummary, errorSummary),
-		F.Ternary(isCreated, createdSummary, existingSummary),
-	)(result)
+	return F.Pipe1(
+		result,
+		F.Ternary(
+			hasError,
+			F.Ternary(
+				isWrongPropertyError,
+				skipSummary,
+				errorSummary,
+			),
+			F.Ternary(isCreated, createdSummary, existingSummary),
+		),
+	)
 }
 
 func keywordSkipRecordError(_ []string) error {
