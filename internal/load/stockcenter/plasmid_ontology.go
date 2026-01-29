@@ -17,7 +17,6 @@ import (
 	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
 	File "github.com/IBM/fp-go/ioeither/file"
-	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/semigroup"
 	T "github.com/IBM/fp-go/tuple"
 
@@ -32,8 +31,37 @@ import (
 
 const keywordRecordLength = 3
 
+const maxErrorMessages = 5
+
 var (
-	errSkipRecord = errors.New("skip record")
+	errSkipRecord    = errors.New("skip record")
+	errWrongProperty = errors.New("wrong property type")
+
+	// Predicates for result classification
+	hasError = func(r KeywordProcessingResult) bool { return r.Error != nil }
+	// isWrongPropertyError: checks ONLY for wrong property type (expected filtering, not an error)
+	// These lines have a different property type and should be skipped silently
+	isWrongPropertyError = func(r KeywordProcessingResult) bool {
+		return errors.Is(r.Error, errWrongProperty)
+	}
+	isCreated = func(r KeywordProcessingResult) bool { return r.Created }
+
+	// Summary builders
+	// skipSummary: for wrong property records only - skipped silently, not counted
+	skipSummary    = func(_ KeywordProcessingResult) KeywordProcessingSummary { return KeywordProcessingSummary{} }
+	createdSummary = func(_ KeywordProcessingResult) KeywordProcessingSummary {
+		return KeywordProcessingSummary{CreatedCount: 1}
+	}
+	existingSummary = func(_ KeywordProcessingResult) KeywordProcessingSummary {
+		return KeywordProcessingSummary{ExistingCount: 1}
+	}
+	// errorSummary: for real errors AND errSkipRecord (blank/invalid lines are errors)
+	errorSummary = func(r KeywordProcessingResult) KeywordProcessingSummary {
+		return KeywordProcessingSummary{
+			ErrorCount: 1,
+			Errors:     []error{r.Error},
+		}
+	}
 
 	keywordIsNotBlankRecord = A.Any(func(s string) bool {
 		return len(strings.TrimSpace(s)) > 0
@@ -71,19 +99,15 @@ type KeywordRecord struct {
 }
 
 type KeywordProcessingResult struct {
-	PlasmidID string
-	Term      string
-	Created   bool
-	Processed bool
-	Error     O.Option[error]
+	Created bool
+	Error   error
 }
 
 type KeywordProcessingSummary struct {
-	Created    []string `json:"created"`
-	Existing   []string `json:"existing"`
-	Skipped    int      `json:"skipped"`
-	ErrorCount int      `json:"error_count"`
-	Errors     []string `json:"errors"`
+	CreatedCount  int     `json:"created_count"`
+	ExistingCount int     `json:"existing_count"`
+	ErrorCount    int     `json:"error_count"`
+	Errors        []error `json:"-"`
 }
 
 type KeywordContext struct {
@@ -145,11 +169,22 @@ func handleSummaryOutput(
 	summary := output.F1
 	slogger.Info(
 		"plasmid ontology summary",
-		"created", len(summary.Created),
-		"existing", len(summary.Existing),
-		"skipped", summary.Skipped,
+		"created", summary.CreatedCount,
+		"existing", summary.ExistingCount,
 		"errors", summary.ErrorCount,
 	)
+
+	// Log error samples if present - use errors.Join to combine into single string
+	if len(summary.Errors) > 0 {
+		joinedErrors := errors.Join(summary.Errors...)
+		slogger.Warn(
+			"error samples (first 5)",
+			"sample_count", len(summary.Errors),
+			"total_errors", summary.ErrorCount,
+			"messages", joinedErrors.Error(),
+		)
+	}
+
 	return nil
 }
 
@@ -286,21 +321,15 @@ func keywordFilterProperty(
 			return strings.EqualFold(r.Property, target)
 		},
 		func(_ KeywordRecord) error {
-			return errSkipRecord
+			return errWrongProperty
 		},
 	)
 }
 
 func handleKeywordPipelineError(err error) KeywordProcessingResult {
-	if errors.Is(err, errSkipRecord) {
-		return KeywordProcessingResult{
-			Processed: false,
-			Error:     O.None[error](),
-		}
-	}
 	return KeywordProcessingResult{
-		Processed: false,
-		Error:     O.Some(err),
+		Created: false,
+		Error:   err,
 	}
 }
 
@@ -389,13 +418,10 @@ func updatePlasmidProperty(
 				err,
 			)
 		}),
-		IOE.Map[error](func(plasmid *stockpb.Plasmid) KeywordProcessingResult {
+		IOE.Map[error](func(_ *stockpb.Plasmid) KeywordProcessingResult {
 			return KeywordProcessingResult{
-				Created:   true,
-				PlasmidID: plasmid.GetData().GetId(),
-				Term: plasmid.GetData().
-					GetAttributes().
-					GetDictyPlasmidProperty(),
+				Created: true,
+				Error:   nil,
 			}
 		}),
 	)
@@ -419,27 +445,30 @@ func associateKeywordTerm(
 }
 
 func keywordCreateSuccessResult(
-	id, term string,
+	_, _ string,
 	created bool,
 ) KeywordProcessingResult {
 	return KeywordProcessingResult{
-		PlasmidID: id,
-		Term:      term,
-		Created:   created,
-		Processed: true,
-		Error:     O.None[error](),
+		Created: created,
+		Error:   nil,
 	}
 }
 
 func SummarySemigroup() S.Semigroup[KeywordProcessingSummary] {
 	return S.MakeSemigroup(
 		func(a, b KeywordProcessingSummary) KeywordProcessingSummary {
+			combinedErrors := append(a.Errors, b.Errors...)
+
+			// Cap at first maxErrorMessages errors
+			if len(combinedErrors) > maxErrorMessages {
+				combinedErrors = combinedErrors[:maxErrorMessages]
+			}
+
 			return KeywordProcessingSummary{
-				Created:    append(a.Created, b.Created...),
-				Existing:   append(a.Existing, b.Existing...),
-				Skipped:    a.Skipped + b.Skipped,
-				ErrorCount: a.ErrorCount + b.ErrorCount,
-				Errors:     append(a.Errors, b.Errors...),
+				CreatedCount:  a.CreatedCount + b.CreatedCount,
+				ExistingCount: a.ExistingCount + b.ExistingCount,
+				ErrorCount:    a.ErrorCount + b.ErrorCount,
+				Errors:        combinedErrors,
 			}
 		},
 	)
@@ -448,50 +477,11 @@ func SummarySemigroup() S.Semigroup[KeywordProcessingSummary] {
 func resultToSummary(
 	result KeywordProcessingResult,
 ) KeywordProcessingSummary {
-	return F.Pipe1(
-		result.Error,
-		O.Fold(
-			func() KeywordProcessingSummary {
-				switch {
-				case !result.Processed:
-					return KeywordProcessingSummary{Skipped: 1}
-				case result.Created:
-					return KeywordProcessingSummary{
-						Created: []string{keywordFormatAssociation(result)},
-					}
-				default:
-					return KeywordProcessingSummary{
-						Existing: []string{keywordFormatAssociation(result)},
-					}
-				}
-			},
-			func(err error) KeywordProcessingSummary {
-				return KeywordProcessingSummary{
-					ErrorCount: 1,
-					Errors:     []string{err.Error()},
-				}
-			},
-		),
-	)
-}
-
-func keywordFormatAssociation(result KeywordProcessingResult) string {
-	return F.Pipe2(
-		result.Term,
-		O.FromPredicate(func(s string) bool {
-			return len(strings.TrimSpace(s)) > 0
-		}),
-		O.Fold(
-			func() string { return result.PlasmidID },
-			func(term string) string {
-				return fmt.Sprintf(
-					"%s:%s",
-					result.PlasmidID,
-					term,
-				)
-			},
-		),
-	)
+	return F.Ternary(
+		hasError,
+		F.Ternary(isWrongPropertyError, skipSummary, errorSummary),
+		F.Ternary(isCreated, createdSummary, existingSummary),
+	)(result)
 }
 
 func keywordSkipRecordError(_ []string) error {

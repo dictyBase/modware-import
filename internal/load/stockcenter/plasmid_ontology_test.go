@@ -14,13 +14,15 @@ import (
 
 func TestSummarySemigroup(t *testing.T) {
 	// Create two summaries with errors
+	err1 := errors.New("error 1")
+	err2 := errors.New("error 2")
 	s1 := KeywordProcessingSummary{
 		ErrorCount: 1,
-		Errors:     []string{"error 1"},
+		Errors:     []error{err1},
 	}
 	s2 := KeywordProcessingSummary{
 		ErrorCount: 1,
-		Errors:     []string{"error 2"},
+		Errors:     []error{err2},
 	}
 
 	sg := SummarySemigroup()
@@ -28,8 +30,8 @@ func TestSummarySemigroup(t *testing.T) {
 
 	require.Equal(t, 2, result.ErrorCount)
 	require.Len(t, result.Errors, 2)
-	require.Contains(t, result.Errors, "error 1")
-	require.Contains(t, result.Errors, "error 2")
+	require.Contains(t, result.Errors, err1)
+	require.Contains(t, result.Errors, err2)
 }
 
 func TestLoadPlasmidOntology(t *testing.T) {
