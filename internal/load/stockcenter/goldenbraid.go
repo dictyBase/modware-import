@@ -14,6 +14,7 @@ import (
 	fperrors "github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
+	File "github.com/IBM/fp-go/ioeither/file"
 	N "github.com/IBM/fp-go/number"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/semigroup"
@@ -361,83 +362,100 @@ func convertCollectionDataToPlasmid(
 func openReader(
 	config LoaderConfig,
 ) IOE.IOEither[error, LoaderConfig] {
-	return IOE.TryCatchError(func() (LoaderConfig, error) {
-		source, _ := config.Cmd.Flags().GetString("input-source")
-		switch source {
-		case "folder":
-			return openGoldenBraidFileReader(config)
-		case "bucket":
-			return openGoldenBraidS3Reader(config)
-		default:
-			return config, fmt.Errorf(
-				"unsupported input source %s",
-				source,
-			)
-		}
-	})
+	return F.Pipe1(
+		config,
+		F.Switch(
+			func(cfg LoaderConfig) string {
+				source, _ := cfg.Cmd.Flags().GetString("input-source")
+				return source
+			},
+			map[string]func(LoaderConfig) IOE.IOEither[error, LoaderConfig]{
+				"folder": openGoldenBraidFileReader,
+				"bucket": openGoldenBraidS3Reader,
+			},
+			defaultGoldenBraidReader,
+		),
+	)
 }
 
-func openGoldenBraidFileReader(config LoaderConfig) (LoaderConfig, error) {
+func openGoldenBraidFileReader(config LoaderConfig) IOE.IOEither[error, LoaderConfig] {
 	inputPath, _ := config.Cmd.Flags().GetString("input")
-	file, err := os.Open(inputPath)
-	if err != nil {
-		return config, fmt.Errorf(
-			"failed to open CSV file %s: %w",
-			inputPath,
-			err,
-		)
-	}
 
-	reader := csv.NewReader(file)
-	reader.FieldsPerRecord = source.GoldenBraidFieldCount
-	reader.TrimLeadingSpace = true
+	return F.Pipe2(
+		File.Open(inputPath),
+		IOE.MapLeft[*os.File](func(err error) error {
+			return fmt.Errorf("failed to open CSV file %s: %w", inputPath, err)
+		}),
+		IOE.Chain(func(file *os.File) IOE.IOEither[error, LoaderConfig] {
+			reader := csv.NewReader(file)
+			reader.FieldsPerRecord = source.GoldenBraidFieldCount
+			reader.TrimLeadingSpace = true
 
-	// Skip header row
-	if _, err := reader.Read(); err != nil {
-		file.Close()
-		return config, fmt.Errorf(
-			"failed to read CSV header: %w",
-			err,
-		)
-	}
-
-	config.Reader = reader
-	config.Closer = file
-	return config, nil
+			// Read and skip header - returns IOE
+			return F.Pipe2(
+				IOE.TryCatchError(func() ([]string, error) {
+					return reader.Read()
+				}),
+				IOE.MapLeft[[]string](func(err error) error {
+					file.Close() // Clean up on error
+					return fmt.Errorf("failed to read CSV header: %w", err)
+				}),
+				IOE.Map[error](func(_ []string) LoaderConfig {
+					config.Reader = reader
+					config.Closer = file
+					return config
+				}),
+			)
+		}),
+	)
 }
 
-func openGoldenBraidS3Reader(config LoaderConfig) (LoaderConfig, error) {
+func openGoldenBraidS3Reader(config LoaderConfig) IOE.IOEither[error, LoaderConfig] {
 	bucket, _ := config.Cmd.Flags().GetString("s3-bucket")
 	bucketPath, _ := config.Cmd.Flags().GetString("s3-bucket-path")
 	file, _ := config.Cmd.Flags().GetString("input")
-	reader, err := registry.GetS3Client().GetObject(
-		bucket,
-		path.Join(bucketPath, file),
-		minio.GetObjectOptions{},
-	)
-	if err != nil {
-		return config, fmt.Errorf(
-			"failed to open s3 file %s/%s: %w",
-			bucketPath,
-			file,
-			err,
-		)
-	}
-	csvReader := csv.NewReader(reader)
-	csvReader.FieldsPerRecord = source.GoldenBraidFieldCount
-	csvReader.TrimLeadingSpace = true
+	objectPath := path.Join(bucketPath, file)
 
-	// Skip header row
-	if _, err := csvReader.Read(); err != nil {
-		reader.Close()
-		return config, fmt.Errorf(
-			"failed to read CSV header: %w",
-			err,
-		)
-	}
-	config.Reader = csvReader
-	config.Closer = reader
-	return config, nil
+	return F.Pipe2(
+		IOE.TryCatchError(func() (io.ReadCloser, error) {
+			return registry.GetS3Client().GetObject(
+				bucket,
+				objectPath,
+				minio.GetObjectOptions{},
+			)
+		}),
+		IOE.MapLeft[io.ReadCloser](func(err error) error {
+			return fmt.Errorf("failed to open s3 file %s: %w", objectPath, err)
+		}),
+		IOE.Chain(func(reader io.ReadCloser) IOE.IOEither[error, LoaderConfig] {
+			csvReader := csv.NewReader(reader)
+			csvReader.FieldsPerRecord = source.GoldenBraidFieldCount
+			csvReader.TrimLeadingSpace = true
+
+			// Read and skip header - returns IOE
+			return F.Pipe2(
+				IOE.TryCatchError(func() ([]string, error) {
+					return csvReader.Read()
+				}),
+				IOE.MapLeft[[]string](func(err error) error {
+					reader.Close() // Clean up on error
+					return fmt.Errorf("failed to read CSV header: %w", err)
+				}),
+				IOE.Map[error](func(_ []string) LoaderConfig {
+					config.Reader = csvReader
+					config.Closer = reader
+					return config
+				}),
+			)
+		}),
+	)
+}
+
+func defaultGoldenBraidReader(cfg LoaderConfig) IOE.IOEither[error, LoaderConfig] {
+	source, _ := cfg.Cmd.Flags().GetString("input-source")
+	return IOE.Left[LoaderConfig](
+		fmt.Errorf("unsupported input source %s", source),
+	)
 }
 
 // streamAndProcessRecords reads CSV records one by one and processes them
