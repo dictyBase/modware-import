@@ -3,6 +3,7 @@ package stockcenter
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -11,13 +12,14 @@ import (
 
 	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
-	fperrors "github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
+	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
 	File "github.com/IBM/fp-go/ioeither/file"
 	N "github.com/IBM/fp-go/number"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/semigroup"
+	T "github.com/IBM/fp-go/tuple"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/fputil"
@@ -39,22 +41,9 @@ type LoaderConfig struct {
 	Reader *csv.Reader
 	Closer io.Closer
 	Viper  *viper.Viper
-	Logger *slog.Logger
 }
 
 const gbMaxErrorMessages = 5
-
-func logGoldenBraidStep[T any](
-	logger *slog.Logger,
-	msg string,
-) func(T) IOE.IOEither[error, T] {
-	return func(data T) IOE.IOEither[error, T] {
-		return IOE.TryCatchError(func() (T, error) {
-			logger.Info(msg, "payload", data)
-			return data, nil
-		})
-	}
-}
 
 // Context for UPSERT pipeline
 type GoldenBraidContext struct {
@@ -378,7 +367,9 @@ func openReader(
 	)
 }
 
-func openGoldenBraidFileReader(config LoaderConfig) IOE.IOEither[error, LoaderConfig] {
+func openGoldenBraidFileReader(
+	config LoaderConfig,
+) IOE.IOEither[error, LoaderConfig] {
 	inputPath, _ := config.Cmd.Flags().GetString("input")
 
 	return F.Pipe2(
@@ -410,7 +401,9 @@ func openGoldenBraidFileReader(config LoaderConfig) IOE.IOEither[error, LoaderCo
 	)
 }
 
-func openGoldenBraidS3Reader(config LoaderConfig) IOE.IOEither[error, LoaderConfig] {
+func openGoldenBraidS3Reader(
+	config LoaderConfig,
+) IOE.IOEither[error, LoaderConfig] {
 	bucket, _ := config.Cmd.Flags().GetString("s3-bucket")
 	bucketPath, _ := config.Cmd.Flags().GetString("s3-bucket-path")
 	file, _ := config.Cmd.Flags().GetString("input")
@@ -451,7 +444,9 @@ func openGoldenBraidS3Reader(config LoaderConfig) IOE.IOEither[error, LoaderConf
 	)
 }
 
-func defaultGoldenBraidReader(cfg LoaderConfig) IOE.IOEither[error, LoaderConfig] {
+func defaultGoldenBraidReader(
+	cfg LoaderConfig,
+) IOE.IOEither[error, LoaderConfig] {
 	source, _ := cfg.Cmd.Flags().GetString("input-source")
 	return IOE.Left[LoaderConfig](
 		fmt.Errorf("unsupported input source %s", source),
@@ -473,12 +468,6 @@ func streamAndProcessRecords(
 				break
 			}
 			if err != nil {
-				config.Logger.Error(
-					"CSV read error, partial results",
-					"successes", len(summary.Successes),
-					"errors", summary.ErrorCount,
-					"error", err,
-				)
 				return summary, fmt.Errorf("CSV read error: %w", err)
 			}
 
@@ -542,10 +531,11 @@ func useGoldenBraidReader(
 	config LoaderConfig,
 ) IOE.IOEither[error, GoldenBraidProcessingResult] {
 	return F.Pipe2(
-		config,
-		logGoldenBraidStep[LoaderConfig](
-			config.Logger,
-			"CSV reader opened, processing records",
+		IOE.Of[error](config),
+		IOE.ChainFirstIOK[error](
+			IO.Logf[LoaderConfig](
+				"CSV reader opened, processing records: %+v",
+			),
 		),
 		IOE.Chain(streamAndProcessRecords),
 	)
@@ -560,17 +550,15 @@ func LoadGoldenBraid(cmd *cobra.Command, _ []string) error {
 		slog.NewLogLogger(handler, slog.LevelError),
 	)
 
-	return F.Pipe6(
+	output := F.Pipe6(
 		IOE.Do[error](LoaderConfig{
 			Viper:  viper.GetViper(),
 			Cmd:    cmd,
 			Reader: nil,
-			Logger: slogger,
 		}),
-		IOE.ChainFirst(
-			logGoldenBraidStep[LoaderConfig](
-				slogger,
-				"Starting GoldenBraid loading",
+		IOE.ChainFirstIOK[error](
+			IO.Logf[LoaderConfig](
+				"Starting GoldenBraid loading: %+v",
 			),
 		),
 		IOE.Chain(
@@ -582,26 +570,58 @@ func LoadGoldenBraid(cmd *cobra.Command, _ []string) error {
 				)
 			},
 		),
-		IOE.ChainFirst(
-			logGoldenBraidStep[GoldenBraidProcessingResult](
-				slogger,
-				"Processing complete",
+		IOE.ChainFirstIOK[error](
+			IO.Logf[GoldenBraidProcessingResult](
+				"Processing complete: %+v",
 			),
 		),
 		fputil.ToEither[error, GoldenBraidProcessingResult],
 		elog("GoldenBraid loading result"),
 		E.Fold(
-			fperrors.IdentityError,
-			func(summary GoldenBraidProcessingResult) error {
-				slogger.Info(
-					"GoldenBraid loading summary",
-					"created", summary.CreatedCount,
-					"updated", summary.UpdatedCount,
-					"total_successes", len(summary.Successes),
-					"errors", summary.ErrorCount,
-				)
-				return nil
-			},
-		),
+			onGoldenBraidSummaryError,
+			onGoldenBraidSummarySuccess),
 	)
+
+	return handleGoldenBraidSummaryOutput(slogger, output)
+}
+
+func onGoldenBraidSummaryError(
+	err error,
+) T.Tuple2[GoldenBraidProcessingResult, error] {
+	return T.MakeTuple2(GoldenBraidProcessingResult{}, err)
+}
+
+func onGoldenBraidSummarySuccess(
+	summary GoldenBraidProcessingResult,
+) T.Tuple2[GoldenBraidProcessingResult, error] {
+	return T.MakeTuple2(summary, (error)(nil))
+}
+
+func handleGoldenBraidSummaryOutput(
+	slogger *slog.Logger,
+	output T.Tuple2[GoldenBraidProcessingResult, error],
+) error {
+	if output.F2 != nil {
+		return output.F2
+	}
+	summary := output.F1
+	slogger.Info(
+		"GoldenBraid loading summary",
+		"created", summary.CreatedCount,
+		"updated", summary.UpdatedCount,
+		"total_successes", len(summary.Successes),
+		"errors", summary.ErrorCount,
+	)
+
+	if len(summary.Errors) > 0 {
+		joinedErrors := errors.Join(summary.Errors...)
+		slogger.Warn(
+			"error samples (first 5)",
+			"sample_count", len(summary.Errors),
+			"total_errors", summary.ErrorCount,
+			"messages", joinedErrors.Error(),
+		)
+	}
+
+	return nil
 }
