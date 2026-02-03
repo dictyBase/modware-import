@@ -33,14 +33,16 @@ var commonFlags = []cli.Flag{
 		Value: "import/stockcenter",
 	},
 	&cli.StringFlag{
-		Name:  "stock-grpc-host",
-		Usage: "gRPC host address for stock service",
-		Value: "stock-api",
+		Name:    "stock-grpc-host",
+		Usage:   "gRPC host address for stock service",
+		Value:   "stock-api",
+		EnvVars: []string{"STOCK_API_SERVICE_HOST"},
 	},
 	&cli.StringFlag{
-		Name:  "stock-grpc-port",
-		Usage: "gRPC port for stock service",
-		Value: "9560",
+		Name:    "stock-grpc-port",
+		Usage:   "gRPC port for stock service",
+		Value:   "9560",
+		EnvVars: []string{"STOCK_API_SERVICE_PORT"},
 	},
 }
 
