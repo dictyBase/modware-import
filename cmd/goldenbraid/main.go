@@ -49,22 +49,25 @@ var commonFlags = []cli.Flag{
 // S3 configuration flags
 var s3Flags = []cli.Flag{
 	&cli.StringFlag{
-		Name:  "s3-server",
-		Usage: "S3 server endpoint",
-		Value: "minio",
+		Name:    "s3-server",
+		Usage:   "S3 server endpoint",
+		Value:   "minio",
+		EnvVars: []string{"MINIO_SERVICE_HOST"},
 	},
 	&cli.StringFlag{
-		Name:  "s3-server-port",
-		Usage: "S3 server port",
-		Value: "9000",
+		Name:    "s3-server-port",
+		Usage:   "S3 server port",
+		EnvVars: []string{"MINIO_SERVICE_PORT"},
 	},
 	&cli.StringFlag{
-		Name:  "access-key",
-		Usage: "S3 access key",
+		Name:    "access-key",
+		Usage:   "S3 access key",
+		EnvVars: []string{"user"},
 	},
 	&cli.StringFlag{
-		Name:  "secret-key",
-		Usage: "S3 secret key",
+		Name:    "secret-key",
+		Usage:   "S3 secret key",
+		EnvVars: []string{"pass"},
 	},
 }
 
