@@ -39,7 +39,6 @@ func init() {
 		StrainSynCmd,
 		StrainInvCmd,
 		PlasmidInvCmd,
-		PlasmidOntologyCmd, // Commented out undefined
 		ReadFileCmd,
 		GwdiCmd,
 	)

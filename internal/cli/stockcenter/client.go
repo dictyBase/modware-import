@@ -107,3 +107,21 @@ func SetClients(c *cli.Context) error {
 		),
 	)
 }
+
+// SetStockClientOnly sets up only the stock client
+func SetStockClientOnly(c *cli.Context) error {
+	return F.Pipe4(
+		GRPCClientConfig{
+			Host:        c.String("stock-grpc-host"),
+			Port:        c.String("stock-grpc-port"),
+			ServiceName: "stock grpc server",
+		},
+		createGRPCConnection,
+		IOE.Chain(registerStockClient),
+		fputil.ToEither[error, *grpc.ClientConn],
+		E.Fold(
+			F.Identity[error],
+			F.Constant1[*grpc.ClientConn, error](nil),
+		),
+	)
+}
