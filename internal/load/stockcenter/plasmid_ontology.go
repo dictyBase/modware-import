@@ -19,7 +19,6 @@ import (
 	File "github.com/IBM/fp-go/ioeither/file"
 	N "github.com/IBM/fp-go/number"
 	S "github.com/IBM/fp-go/semigroup"
-	T "github.com/IBM/fp-go/tuple"
 
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/fputil"
@@ -27,7 +26,7 @@ import (
 	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/minio/minio-go/v6"
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 )
 
 const keywordRecordLength = 3
@@ -93,15 +92,6 @@ var (
 
 type KeywordLoaderContext struct{}
 
-type KeywordLoaderConfig struct {
-	KeywordLoaderContext
-	Cmd    *cobra.Command
-	Reader *csv.Reader
-	Closer io.Closer
-}
-
-type KeywordReaderIOE = IOE.IOEither[error, KeywordLoaderConfig]
-
 type KeywordRecord struct {
 	PlasmidID string
 	Property  string
@@ -129,198 +119,12 @@ type WithPlasmid struct {
 	Plasmid *stockpb.Plasmid
 }
 
-func LoadPlasmidOntology(cmd *cobra.Command, _ []string) error {
-	handler := logger.GetSlogHandler(cmd)
-	slogger := slog.New(handler)
-	elog := E.Logger[error, KeywordProcessingSummary](
-		slog.NewLogLogger(handler, slog.LevelInfo),
-		slog.NewLogLogger(handler, slog.LevelError),
-	)
-
-	output := F.Pipe7(
-		IOE.Do[error](KeywordLoaderConfig{Cmd: cmd}),
-		IOE.ChainFirstIOK[error](
-			IO.Logf[KeywordLoaderConfig](
-				"Starting plasmid ontology association: %+v",
-			),
-		),
-		IOE.Chain(openKeywordReader),
-		IOE.Chain(processAndAggregateKeywordRecords),
-		IOE.ChainFirstIOK[error](
-			IO.Logf[KeywordProcessingSummary](
-				"Plasmid ontology association summary: %+v",
-			),
-		),
-		fputil.ToEither[error, KeywordProcessingSummary],
-		elog("plasmid ontology association result"),
-		E.Fold(onSummaryError, onSummarySuccess),
-	)
-
-	return handleSummaryOutput(slogger, output)
-}
-
-func onSummaryError(err error) T.Tuple2[KeywordProcessingSummary, error] {
-	return T.MakeTuple2(KeywordProcessingSummary{}, err)
-}
-
-func onSummarySuccess(
-	summary KeywordProcessingSummary,
-) T.Tuple2[KeywordProcessingSummary, error] {
-	return T.MakeTuple2(summary, (error)(nil))
-}
-
-func handleSummaryOutput(
-	slogger *slog.Logger,
-	output T.Tuple2[KeywordProcessingSummary, error],
-) error {
-	if output.F2 != nil {
-		return output.F2
-	}
-	summary := output.F1
-	slogger.Info(
-		"plasmid ontology summary",
-		"created", summary.CreatedCount,
-		"existing", summary.ExistingCount,
-		"errors", summary.ErrorCount,
-	)
-
-	// Log error samples if present - use errors.Join to combine into single string
-	if len(summary.Errors) > 0 {
-		joinedErrors := errors.Join(summary.Errors...)
-		slogger.Warn(
-			"error samples (first 5)",
-			"sample_count", len(summary.Errors),
-			"total_errors", summary.ErrorCount,
-			"messages", joinedErrors.Error(),
-		)
-	}
-
-	return nil
-}
-
 func configureTSVReader(reader io.Reader) *csv.Reader {
 	csvReader := csv.NewReader(reader)
 	csvReader.Comma = '\t'
 	csvReader.FieldsPerRecord = -1
 	csvReader.TrimLeadingSpace = true
 	return csvReader
-}
-
-func openKeywordReader(config KeywordLoaderConfig) KeywordReaderIOE {
-	return F.Pipe1(
-		config,
-		F.Switch(
-			func(cfg KeywordLoaderConfig) string {
-				source, _ := cfg.
-					Cmd.
-					Flags().
-					GetString("input-source")
-				return source
-			},
-			map[string]func(KeywordLoaderConfig) KeywordReaderIOE{
-				"folder": keywordReaderFromFile,
-				"bucket": keywordReaderFromS3Bucket,
-			},
-			defaultKeywordReader,
-		),
-	)
-}
-
-func keywordReaderFromFile(cfg KeywordLoaderConfig) KeywordReaderIOE {
-	inputPath, _ := cfg.Cmd.Flags().GetString("input")
-	return F.Pipe2(
-		File.Open(inputPath),
-		IOE.MapLeft[*os.File](func(err error) error {
-			return fmt.Errorf("failed to open TSV file %s: %w", inputPath, err)
-		}),
-		IOE.Map[error](func(file *os.File) KeywordLoaderConfig {
-			cfg.Reader = configureTSVReader(file)
-			cfg.Closer = file
-			return cfg
-		}),
-	)
-}
-
-func keywordReaderFromS3Bucket(cfg KeywordLoaderConfig) KeywordReaderIOE {
-	path, _ := cfg.Cmd.Flags().GetString("s3-bucket-path")
-	file, _ := cfg.Cmd.Flags().GetString("input")
-	bucket, _ := cfg.Cmd.Flags().GetString("s3-bucket")
-	objectPath := fmt.Sprintf("%s/%s", path, file)
-
-	return F.Pipe2(
-		IOE.TryCatchError(func() (io.ReadCloser, error) {
-			return registry.GetS3Client().GetObject(
-				bucket,
-				objectPath,
-				minio.GetObjectOptions{},
-			)
-		}),
-		IOE.MapLeft[io.ReadCloser](func(err error) error {
-			return fmt.Errorf("failed to open s3 file %s: %w", objectPath, err)
-		}),
-		IOE.Map[error](func(reader io.ReadCloser) KeywordLoaderConfig {
-			cfg.Reader = configureTSVReader(reader)
-			cfg.Closer = reader
-			return cfg
-		}),
-	)
-}
-
-func defaultKeywordReader(cfg KeywordLoaderConfig) KeywordReaderIOE {
-	source, _ := cfg.Cmd.Flags().GetString("input-source")
-	return IOE.Left[KeywordLoaderConfig](
-		fmt.Errorf("unsupported input source %s", source),
-	)
-}
-
-func processAndAggregateKeywordRecords(
-	config KeywordLoaderConfig,
-) IOE.IOEither[error, KeywordProcessingSummary] {
-	return IOE.TryCatchError(func() (KeywordProcessingSummary, error) {
-		if config.Closer != nil {
-			defer config.Closer.Close()
-		}
-
-		prop, _ := config.Cmd.Flags().GetString("property")
-		summary := KeywordProcessingSummary{}
-		for {
-			keyRecord, err := config.Reader.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return summary, fmt.Errorf("tsv read error: %w", err)
-			}
-
-			result := F.Pipe6(
-				keyRecord,
-				E.FromPredicate(
-					keywordIsNotBlankRecord,
-					keywordSkipRecordError,
-				),
-				E.Chain(
-					E.FromPredicate(
-						keywordHasValidRecordLength,
-						keywordRecordLengthError,
-					),
-				),
-				E.Map[error](parseKeywordRecord),
-				E.Chain(keywordFilterProperty(prop)),
-				E.Chain(associateKeywordTerm),
-				E.Fold(
-					handleKeywordPipelineError,
-					F.Identity[KeywordProcessingResult],
-				),
-			)
-
-			summary = SummarySemigroup().Concat(
-				summary,
-				resultToSummary(result),
-			)
-		}
-
-		return summary, nil
-	})
 }
 
 func keywordFilterProperty(
@@ -492,4 +296,196 @@ func resultToSummary(
 
 func keywordSkipRecordError(_ []string) error {
 	return errSkipRecord
+}
+
+// ===== CLI Context Support =====
+
+type KeywordLoaderCliConfig struct {
+	KeywordLoaderContext
+	Cmd    *cli.Context
+	Reader *csv.Reader
+	Closer io.Closer
+}
+
+type KeywordReaderCliIOE = IOE.IOEither[error, KeywordLoaderCliConfig]
+
+func openKeywordReaderCli(config KeywordLoaderCliConfig) KeywordReaderCliIOE {
+	return F.Pipe1(
+		config,
+		F.Switch(
+			func(cfg KeywordLoaderCliConfig) string {
+				return cfg.Cmd.String("input-source")
+			},
+			map[string]func(KeywordLoaderCliConfig) KeywordReaderCliIOE{
+				"folder": keywordReaderFromFileCli,
+				"bucket": keywordReaderFromS3BucketCli,
+			},
+			defaultKeywordReaderCli,
+		),
+	)
+}
+
+func keywordReaderFromFileCli(cfg KeywordLoaderCliConfig) KeywordReaderCliIOE {
+	inputPath := cfg.Cmd.String("input")
+	return F.Pipe2(
+		File.Open(inputPath),
+		IOE.MapLeft[*os.File](func(err error) error {
+			return fmt.Errorf("failed to open TSV file %s: %w", inputPath, err)
+		}),
+		IOE.Map[error](func(file *os.File) KeywordLoaderCliConfig {
+			cfg.Reader = configureTSVReader(file)
+			cfg.Closer = file
+			return cfg
+		}),
+	)
+}
+
+func keywordReaderFromS3BucketCli(
+	cfg KeywordLoaderCliConfig,
+) KeywordReaderCliIOE {
+	path := cfg.Cmd.String("s3-bucket-path")
+	file := cfg.Cmd.String("input")
+	bucket := cfg.Cmd.String("s3-bucket")
+	objectPath := fmt.Sprintf("%s/%s", path, file)
+
+	return F.Pipe2(
+		IOE.TryCatchError(func() (io.ReadCloser, error) {
+			return registry.GetS3Client().GetObject(
+				bucket,
+				objectPath,
+				minio.GetObjectOptions{},
+			)
+		}),
+		IOE.MapLeft[io.ReadCloser](func(err error) error {
+			return fmt.Errorf("failed to open s3 file %s: %w", objectPath, err)
+		}),
+		IOE.Map[error](func(reader io.ReadCloser) KeywordLoaderCliConfig {
+			cfg.Reader = configureTSVReader(reader)
+			cfg.Closer = reader
+			return cfg
+		}),
+	)
+}
+
+func defaultKeywordReaderCli(cfg KeywordLoaderCliConfig) KeywordReaderCliIOE {
+	source := cfg.Cmd.String("input-source")
+	return IOE.Left[KeywordLoaderCliConfig](
+		fmt.Errorf("unsupported input source %s", source),
+	)
+}
+
+func processAndAggregateKeywordRecordsCli(
+	config KeywordLoaderCliConfig,
+) IOE.IOEither[error, KeywordProcessingSummary] {
+	return IOE.TryCatchError(func() (KeywordProcessingSummary, error) {
+		if config.Closer != nil {
+			defer config.Closer.Close()
+		}
+
+		prop := config.Cmd.String("property")
+		summary := KeywordProcessingSummary{}
+		for {
+			keyRecord, err := config.Reader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return summary, fmt.Errorf("tsv read error: %w", err)
+			}
+
+			result := F.Pipe6(
+				keyRecord,
+				E.FromPredicate(
+					keywordIsNotBlankRecord,
+					keywordSkipRecordError,
+				),
+				E.Chain(
+					E.FromPredicate(
+						keywordHasValidRecordLength,
+						keywordRecordLengthError,
+					),
+				),
+				E.Map[error](parseKeywordRecord),
+				E.Chain(keywordFilterProperty(prop)),
+				E.Chain(associateKeywordTerm),
+				E.Fold(
+					handleKeywordPipelineError,
+					F.Identity[KeywordProcessingResult],
+				),
+			)
+
+			summary = SummarySemigroup().Concat(
+				summary,
+				resultToSummary(result),
+			)
+		}
+
+		return summary, nil
+	})
+}
+
+type plasmidOntologyLoadResult struct {
+	Summary KeywordProcessingSummary
+	Error   error
+}
+
+func onPlasmidOntologyError(err error) plasmidOntologyLoadResult {
+	return plasmidOntologyLoadResult{Error: err}
+}
+
+func onPlasmidOntologySuccess(
+	summary KeywordProcessingSummary,
+) plasmidOntologyLoadResult {
+	return plasmidOntologyLoadResult{Summary: summary}
+}
+
+func handlePlasmidOntologyOutput(
+	result plasmidOntologyLoadResult,
+	slogger *slog.Logger,
+) error {
+	if result.Error != nil {
+		return result.Error
+	}
+
+	slogger.Info(
+		"plasmid ontology summary",
+		"created", result.Summary.CreatedCount,
+		"existing", result.Summary.ExistingCount,
+		"errors", result.Summary.ErrorCount,
+	)
+
+	// Log error samples if present
+	if len(result.Summary.Errors) > 0 {
+		joinedErrors := errors.Join(result.Summary.Errors...)
+		slogger.Warn(
+			"error samples (first 5)",
+			"sample_count", len(result.Summary.Errors),
+			"total_errors", result.Summary.ErrorCount,
+			"messages", joinedErrors.Error(),
+		)
+	}
+
+	return nil
+}
+
+func LoadPlasmidOntologyCli(cmd *cli.Context) error {
+	handler := logger.GetCliSlogHandler(cmd)
+	slogger := slog.New(handler)
+
+	output := F.Pipe1(
+		F.Pipe4(
+			IOE.Do[error](KeywordLoaderCliConfig{Cmd: cmd}),
+			IOE.Chain(openKeywordReaderCli),
+			IOE.Chain(processAndAggregateKeywordRecordsCli),
+			IOE.ChainFirstIOK[error](
+				IO.Logf[KeywordProcessingSummary](
+					"Plasmid ontology association summary: %+v",
+				),
+			),
+			fputil.ToEither[error, KeywordProcessingSummary],
+		),
+		E.Fold(onPlasmidOntologyError, onPlasmidOntologySuccess),
+	)
+
+	return handlePlasmidOntologyOutput(output, slogger)
 }
