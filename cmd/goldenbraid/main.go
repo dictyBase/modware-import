@@ -85,6 +85,20 @@ var annotationFlags = []cli.Flag{
 	},
 }
 
+// Logging flags
+var loggingFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:  "log-level",
+		Usage: "Log level (debug, info, warn, error)",
+		Value: "info",
+	},
+	&cli.StringFlag{
+		Name:  "log-format",
+		Usage: "Log format (json, text)",
+		Value: "json",
+	},
+}
+
 func main() {
 	app := &cli.App{
 		Name:  "goldenbraid",
@@ -95,7 +109,11 @@ func main() {
 				Usage:  "Load GoldenBraid inventory",
 				Action: stockcenter.LoadGoldenBraidInventory,
 				Before: stockcenter.SetClients,
-				Flags:  slices.Concat(commonFlags, annotationFlags),
+				Flags: slices.Concat(
+					commonFlags,
+					annotationFlags,
+					loggingFlags,
+				),
 			},
 			{
 				Name:   "plasmid-ontology",
@@ -105,6 +123,7 @@ func main() {
 				Flags: slices.Concat(
 					commonFlags,
 					s3Flags,
+					loggingFlags,
 					[]cli.Flag{
 						&cli.StringFlag{
 							Name:  "property",
