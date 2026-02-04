@@ -50,7 +50,7 @@ func (bp *BatchProcessor[I, O]) Add(item I) bool {
 // automatically submitting the batch when it reaches the configured size
 func (bp *BatchProcessor[I, O]) AddWithMeta(
 	item I,
-	meta map[string]interface{},
+	meta map[string]any,
 ) bool {
 	bp.batchMutex.Lock()
 	defer bp.batchMutex.Unlock()
