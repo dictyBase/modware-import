@@ -30,7 +30,7 @@ var commonFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  "s3-bucket-path",
 		Usage: "Path inside S3 bucket for input files",
-		Value: "import/stockcenter",
+		Value: "import/data/stockcenter",
 	},
 	&cli.StringFlag{
 		Name:    "stock-grpc-host",
