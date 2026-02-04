@@ -117,16 +117,19 @@ func SetS3Client(cltx *cli.Context) IOE.IOEither[error, *minio.Client] {
 
 // SetStockAndS3Clients sets up both stock client and S3 client
 func SetStockAndS3Clients(cltx *cli.Context) error {
-	return F.Pipe4(
-		cltx,
-		SetStockClient,
-		IOE.Chain(func(_ *grpc.ClientConn) IOE.IOEither[error, *minio.Client] {
-			return SetS3Client(cltx)
+	return F.Pipe2(
+		IOE.SequenceArraySeq([]IOE.IOEither[error, any]{
+			IOE.Map[error](F.Constant1[*grpc.ClientConn, any](nil))(
+				SetStockClient(cltx),
+			),
+			IOE.Map[error](F.Constant1[*minio.Client, any](nil))(
+				SetS3Client(cltx),
+			),
 		}),
-		fputil.ToEither[error, *minio.Client],
+		fputil.ToEither[error, []any],
 		E.Fold(
 			F.Identity[error],
-			F.Constant1[*minio.Client, error](nil),
+			F.Constant1[[]any, error](nil),
 		),
 	)
 }
