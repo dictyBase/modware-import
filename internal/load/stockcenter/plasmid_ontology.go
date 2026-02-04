@@ -345,46 +345,97 @@ func keywordReaderFromFileCli(cfg KeywordLoaderCliConfig) KeywordReaderCliIOE {
 	)
 }
 
-func keywordReaderFromS3BucketCli(
-	cfg KeywordLoaderCliConfig,
-) KeywordReaderCliIOE {
+// S3ReaderContext holds state accumulated through the S3 reader pipeline
+type S3ReaderContext struct {
+	Cmd        *cli.Context
+	Bucket     string
+	ObjectPath string
+	Client     *minio.Client
+	Reader     io.ReadCloser
+}
+
+// setS3Client returns a function that sets the S3 client in the context
+func setS3Client(client *minio.Client) func(S3ReaderContext) S3ReaderContext {
+	return func(ctx S3ReaderContext) S3ReaderContext {
+		ctx.Client = client
+		return ctx
+	}
+}
+
+// setS3Reader returns a function that sets the reader in the context
+func setS3Reader(reader io.ReadCloser) func(S3ReaderContext) S3ReaderContext {
+	return func(ctx S3ReaderContext) S3ReaderContext {
+		ctx.Reader = reader
+		return ctx
+	}
+}
+
+// createS3ClientIOE creates the S3 client from CLI context
+func createS3ClientIOE(ctx S3ReaderContext) IOE.IOEither[error, *minio.Client] {
+	return F.Pipe1(
+		IOE.TryCatchError(func() (*minio.Client, error) {
+			return s3.NewCliS3Client(ctx.Cmd)
+		}),
+		IOE.MapLeft[*minio.Client](func(err error) error {
+			return fmt.Errorf("failed to create S3 client: %w", err)
+		}),
+	)
+}
+
+// statS3ObjectIOE validates object exists and credentials are valid
+func statS3ObjectIOE(ctx S3ReaderContext) IOE.IOEither[error, minio.ObjectInfo] {
+	return F.Pipe1(
+		IOE.TryCatchError(func() (minio.ObjectInfo, error) {
+			return ctx.Client.StatObject(
+				ctx.Bucket,
+				ctx.ObjectPath,
+				minio.StatObjectOptions{},
+			)
+		}),
+		IOE.MapLeft[minio.ObjectInfo](func(err error) error {
+			return fmt.Errorf("failed to stat s3 object %s: %w", ctx.ObjectPath, err)
+		}),
+	)
+}
+
+// getS3ObjectReaderIOE fetches the object stream
+func getS3ObjectReaderIOE(ctx S3ReaderContext) IOE.IOEither[error, io.ReadCloser] {
+	return F.Pipe1(
+		IOE.TryCatchError(func() (io.ReadCloser, error) {
+			return ctx.Client.GetObject(
+				ctx.Bucket,
+				ctx.ObjectPath,
+				minio.GetObjectOptions{},
+			)
+		}),
+		IOE.MapLeft[io.ReadCloser](func(err error) error {
+			return fmt.Errorf("failed to open s3 file %s: %w", ctx.ObjectPath, err)
+		}),
+	)
+}
+
+func keywordReaderFromS3BucketCli(cfg KeywordLoaderCliConfig) KeywordReaderCliIOE {
 	path := cfg.Cmd.String("s3-bucket-path")
 	file := cfg.Cmd.String("input")
 	bucket := cfg.Cmd.String("s3-bucket")
 	objectPath := fmt.Sprintf("%s/%s", path, file)
 
-	// Create S3 client on-demand and use it directly
-	return F.Pipe2(
-		IOE.TryCatchError(func() (*minio.Client, error) {
-			return s3.NewCliS3Client(cfg.Cmd)
-		}),
-		IOE.MapLeft[*minio.Client](func(err error) error {
-			return fmt.Errorf("failed to create S3 client: %w", err)
-		}),
-		IOE.Chain(func(client *minio.Client) KeywordReaderCliIOE {
-			return F.Pipe2(
-				IOE.TryCatchError(func() (io.ReadCloser, error) {
-					return client.GetObject(
-						bucket,
-						objectPath,
-						minio.GetObjectOptions{},
-					)
-				}),
-				IOE.MapLeft[io.ReadCloser](func(err error) error {
-					return fmt.Errorf(
-						"failed to open s3 file %s: %w",
-						objectPath,
-						err,
-					)
-				}),
-				IOE.Map[error](
-					func(reader io.ReadCloser) KeywordLoaderCliConfig {
-						cfg.Reader = configureTSVReader(reader)
-						cfg.Closer = reader
-						return cfg
-					},
-				),
-			)
+	initialCtx := S3ReaderContext{
+		Cmd:        cfg.Cmd,
+		Bucket:     bucket,
+		ObjectPath: objectPath,
+	}
+
+	// Flat pipeline: Do -> Bind(client) -> ChainFirst(stat) -> Bind(reader) -> Map(config)
+	return F.Pipe4(
+		IOE.Do[error](initialCtx),
+		IOE.Bind(setS3Client, createS3ClientIOE),
+		IOE.ChainFirst(statS3ObjectIOE),
+		IOE.Bind(setS3Reader, getS3ObjectReaderIOE),
+		IOE.Map[error](func(ctx S3ReaderContext) KeywordLoaderCliConfig {
+			cfg.Reader = configureTSVReader(ctx.Reader)
+			cfg.Closer = ctx.Reader
+			return cfg
 		}),
 	)
 }
