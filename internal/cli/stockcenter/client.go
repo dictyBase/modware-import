@@ -8,8 +8,11 @@ import (
 	IOE "github.com/IBM/fp-go/ioeither"
 	"github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
+	"github.com/dictyBase/modware-import/internal/datasource/s3"
 	"github.com/dictyBase/modware-import/internal/fputil"
+	registry "github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"github.com/minio/minio-go/v6"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -45,60 +48,48 @@ func createGRPCConnection(
 		}))
 }
 
-// registerStockClient registers stock API client and returns connection
-func registerStockClient(
-	conn *grpc.ClientConn,
-) IOE.IOEither[error, *grpc.ClientConn] {
-	return IOE.TryCatchError(func() (*grpc.ClientConn, error) {
-		regsc.SetStockAPIClient(stock.NewStockServiceClient(conn))
-		return conn, nil
-	})
-}
-
-// registerAnnotationClient registers annotation API client and returns connection
-func registerAnnotationClient(
-	conn *grpc.ClientConn,
-) IOE.IOEither[error, *grpc.ClientConn] {
-	return IOE.TryCatchError(func() (*grpc.ClientConn, error) {
-		regsc.SetAnnotationAPIClient(
-			annotation.NewTaggedAnnotationServiceClient(conn),
-		)
-		return conn, nil
-	})
-}
-
 // SetStockClient creates stock gRPC connection and registers client
-func SetStockClient(c *cli.Context) IOE.IOEither[error, *grpc.ClientConn] {
+func SetStockClient(cltx *cli.Context) IOE.IOEither[error, *grpc.ClientConn] {
 	return F.Pipe2(
 		GRPCClientConfig{
-			Host:        c.String("stock-grpc-host"),
-			Port:        c.String("stock-grpc-port"),
+			Host:        cltx.String("stock-grpc-host"),
+			Port:        cltx.String("stock-grpc-port"),
 			ServiceName: "stock grpc server",
 		},
 		createGRPCConnection,
-		IOE.Chain(registerStockClient),
+		IOE.Map[error](func(conn *grpc.ClientConn) *grpc.ClientConn {
+			regsc.SetStockAPIClient(stock.NewStockServiceClient(conn))
+			return conn
+		}),
 	)
 }
 
 // SetAnnotationClient creates annotation gRPC connection and registers client
-func SetAnnotationClient(c *cli.Context) IOE.IOEither[error, *grpc.ClientConn] {
+func SetAnnotationClient(
+	cltx *cli.Context,
+) IOE.IOEither[error, *grpc.ClientConn] {
 	return F.Pipe2(
 		GRPCClientConfig{
-			Host:        c.String("annotation-grpc-host"),
-			Port:        c.String("annotation-grpc-port"),
+			Host:        cltx.String("annotation-grpc-host"),
+			Port:        cltx.String("annotation-grpc-port"),
 			ServiceName: "annotation grpc server",
 		},
 		createGRPCConnection,
-		IOE.Chain(registerAnnotationClient),
+		IOE.Map[error](func(conn *grpc.ClientConn) *grpc.ClientConn {
+			regsc.SetAnnotationAPIClient(
+				annotation.NewTaggedAnnotationServiceClient(conn),
+			)
+			return conn
+		}),
 	)
 }
 
 // SetClients sets up both stock and annotation clients
-func SetClients(c *cli.Context) error {
+func SetClients(cltx *cli.Context) error {
 	return F.Pipe2(
 		IOE.SequenceArraySeq([]IOE.IOEither[error, *grpc.ClientConn]{
-			SetStockClient(c),
-			SetAnnotationClient(c),
+			SetStockClient(cltx),
+			SetAnnotationClient(cltx),
 		}),
 		fputil.ToEither[error, []*grpc.ClientConn],
 		E.Fold(
@@ -108,20 +99,34 @@ func SetClients(c *cli.Context) error {
 	)
 }
 
-// SetStockClientOnly sets up only the stock client
-func SetStockClientOnly(c *cli.Context) error {
+// SetS3Client initializes the S3 client
+func SetS3Client(cltx *cli.Context) IOE.IOEither[error, *minio.Client] {
+	return F.Pipe2(
+		IOE.TryCatchError(func() (*minio.Client, error) {
+			return s3.NewCliS3Client(cltx)
+		}),
+		IOE.MapLeft[*minio.Client](func(err error) error {
+			return fmt.Errorf("error in getting instance of s3 client %w", err)
+		}),
+		IOE.Map[error](func(client *minio.Client) *minio.Client {
+			registry.SetS3Client(client)
+			return client
+		}),
+	)
+}
+
+// SetStockAndS3Clients sets up both stock client and S3 client
+func SetStockAndS3Clients(cltx *cli.Context) error {
 	return F.Pipe4(
-		GRPCClientConfig{
-			Host:        c.String("stock-grpc-host"),
-			Port:        c.String("stock-grpc-port"),
-			ServiceName: "stock grpc server",
-		},
-		createGRPCConnection,
-		IOE.Chain(registerStockClient),
-		fputil.ToEither[error, *grpc.ClientConn],
+		cltx,
+		SetStockClient,
+		IOE.Chain(func(_ *grpc.ClientConn) IOE.IOEither[error, *minio.Client] {
+			return SetS3Client(cltx)
+		}),
+		fputil.ToEither[error, *minio.Client],
 		E.Fold(
 			F.Identity[error],
-			F.Constant1[*grpc.ClientConn, error](nil),
+			F.Constant1[*minio.Client, error](nil),
 		),
 	)
 }
