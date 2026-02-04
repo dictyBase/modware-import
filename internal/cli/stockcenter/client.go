@@ -64,6 +64,19 @@ func SetStockClient(cltx *cli.Context) IOE.IOEither[error, *grpc.ClientConn] {
 	)
 }
 
+// SetStockClientWrapper wraps SetStockClient for use as a Before hook
+// Returns error directly instead of IOEither for urfave/cli compatibility
+func SetStockClientWrapper(cltx *cli.Context) error {
+	return F.Pipe2(
+		SetStockClient(cltx),
+		fputil.ToEither[error, *grpc.ClientConn],
+		E.Fold(
+			F.Identity[error],
+			F.Constant1[*grpc.ClientConn, error](nil),
+		),
+	)
+}
+
 // SetAnnotationClient creates annotation gRPC connection and registers client
 func SetAnnotationClient(
 	cltx *cli.Context,

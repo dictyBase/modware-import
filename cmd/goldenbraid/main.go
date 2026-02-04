@@ -101,7 +101,7 @@ func main() {
 				Name:   "plasmid-ontology",
 				Usage:  "Associate plasmids with ontology keywords",
 				Action: loader.LoadPlasmidOntologyCli,
-				Before: stockcenter.SetStockAndS3Clients,
+				Before: stockcenter.SetStockClientWrapper,
 				Flags: slices.Concat(
 					commonFlags,
 					s3Flags,

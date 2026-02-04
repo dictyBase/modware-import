@@ -21,9 +21,9 @@ import (
 	S "github.com/IBM/fp-go/semigroup"
 
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
+	"github.com/dictyBase/modware-import/internal/datasource/s3"
 	"github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/dictyBase/modware-import/internal/logger"
-	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/minio/minio-go/v6"
 	"github.com/urfave/cli/v2"
@@ -89,6 +89,11 @@ var (
 		)
 	})
 )
+
+type plasmidOntologyLoadResult struct {
+	Summary KeywordProcessingSummary
+	Error   error
+}
 
 type KeywordLoaderContext struct{}
 
@@ -348,21 +353,38 @@ func keywordReaderFromS3BucketCli(
 	bucket := cfg.Cmd.String("s3-bucket")
 	objectPath := fmt.Sprintf("%s/%s", path, file)
 
+	// Create S3 client on-demand and use it directly
 	return F.Pipe2(
-		IOE.TryCatchError(func() (io.ReadCloser, error) {
-			return registry.GetS3Client().GetObject(
-				bucket,
-				objectPath,
-				minio.GetObjectOptions{},
+		IOE.TryCatchError(func() (*minio.Client, error) {
+			return s3.NewCliS3Client(cfg.Cmd)
+		}),
+		IOE.MapLeft[*minio.Client](func(err error) error {
+			return fmt.Errorf("failed to create S3 client: %w", err)
+		}),
+		IOE.Chain(func(client *minio.Client) KeywordReaderCliIOE {
+			return F.Pipe2(
+				IOE.TryCatchError(func() (io.ReadCloser, error) {
+					return client.GetObject(
+						bucket,
+						objectPath,
+						minio.GetObjectOptions{},
+					)
+				}),
+				IOE.MapLeft[io.ReadCloser](func(err error) error {
+					return fmt.Errorf(
+						"failed to open s3 file %s: %w",
+						objectPath,
+						err,
+					)
+				}),
+				IOE.Map[error](
+					func(reader io.ReadCloser) KeywordLoaderCliConfig {
+						cfg.Reader = configureTSVReader(reader)
+						cfg.Closer = reader
+						return cfg
+					},
+				),
 			)
-		}),
-		IOE.MapLeft[io.ReadCloser](func(err error) error {
-			return fmt.Errorf("failed to open s3 file %s: %w", objectPath, err)
-		}),
-		IOE.Map[error](func(reader io.ReadCloser) KeywordLoaderCliConfig {
-			cfg.Reader = configureTSVReader(reader)
-			cfg.Closer = reader
-			return cfg
 		}),
 	)
 }
@@ -422,11 +444,6 @@ func processAndAggregateKeywordRecordsCli(
 
 		return summary, nil
 	})
-}
-
-type plasmidOntologyLoadResult struct {
-	Summary KeywordProcessingSummary
-	Error   error
 }
 
 func onPlasmidOntologyError(err error) plasmidOntologyLoadResult {
