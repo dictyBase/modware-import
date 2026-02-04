@@ -193,7 +193,7 @@ func fetchPlasmid(ctx KeywordContext) IOE.IOEither[error, *stockpb.Plasmid] {
 
 func propertyAlreadyMatches(ctx WithPlasmid) bool {
 	return caseInsensitiveEq.Equals(
-		ctx.Plasmid.GetData().GetAttributes().GetDictyPlasmidProperty(),
+		ctx.Plasmid.Data.Attributes.DictyPlasmidProperty,
 		ctx.Record.Term,
 	)
 }
