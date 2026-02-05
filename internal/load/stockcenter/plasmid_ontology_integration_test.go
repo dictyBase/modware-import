@@ -150,7 +150,8 @@ func TestKeywordReaderFromS3BucketCli_Success(t *testing.T) {
 
 	// Upload test fixture file
 	testFile := "plasmid_props_test.tsv"
-	testFilePath := filepath.Join("testdata", testFile)
+	// Path is relative to project root (go up 3 levels: stockcenter -> load -> internal -> root)
+	testFilePath := filepath.Join("..", "..", "..", "testdata", testFile)
 	bucket := "test-bucket"
 	s3Path := "import/data"
 
