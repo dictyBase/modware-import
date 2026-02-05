@@ -2,224 +2,148 @@ package stockcenter
 
 import (
 	"context"
-	"encoding/csv"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
-	"os"
 	"strings"
+	"time"
 
 	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
 	Eq "github.com/IBM/fp-go/eq"
 	F "github.com/IBM/fp-go/function"
-	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
-	File "github.com/IBM/fp-go/ioeither/file"
 	N "github.com/IBM/fp-go/number"
+	P "github.com/IBM/fp-go/predicate"
 	S "github.com/IBM/fp-go/semigroup"
 
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
-	"github.com/dictyBase/modware-import/internal/datasource/s3"
 	"github.com/dictyBase/modware-import/internal/fputil"
 	"github.com/dictyBase/modware-import/internal/logger"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
-	"github.com/minio/minio-go/v6"
 	"github.com/urfave/cli/v2"
 )
 
-const keywordRecordLength = 3
+const maxErrorSamples = 5
 
-const maxErrorMessages = 5
-
-var (
-	errSkipRecord    = errors.New("skip record")
-	errWrongProperty = errors.New("wrong property type")
-
-	// Predicates for result classification
-	hasError = func(r KeywordProcessingResult) bool { return r.Error != nil }
-	// isWrongPropertyError: checks ONLY for wrong property type (expected filtering, not an error)
-	// These lines have a different property type and should be skipped silently
-	isWrongPropertyError = func(r KeywordProcessingResult) bool {
-		return errors.Is(r.Error, errWrongProperty)
-	}
-	isCreated = func(r KeywordProcessingResult) bool { return r.Created }
-
-	// Summary builders
-	// skipSummary: for wrong property records only - skipped silently, not counted
-	skipSummary    = func(_ KeywordProcessingResult) KeywordProcessingSummary { return KeywordProcessingSummary{} }
-	createdSummary = func(_ KeywordProcessingResult) KeywordProcessingSummary {
-		return KeywordProcessingSummary{CreatedCount: 1}
-	}
-	existingSummary = func(_ KeywordProcessingResult) KeywordProcessingSummary {
-		return KeywordProcessingSummary{ExistingCount: 1}
-	}
-	// errorSummary: for real errors AND errSkipRecord (blank/invalid lines are errors)
-	errorSummary = func(r KeywordProcessingResult) KeywordProcessingSummary {
-		return KeywordProcessingSummary{
-			ErrorCount: 1,
-			Errors:     []error{r.Error},
-		}
-	}
-
-	keywordIsNotBlankRecord = A.Any(func(s string) bool {
-		return len(strings.TrimSpace(s)) > 0
-	})
-
-	caseInsensitiveEq = Eq.FromEquals(strings.EqualFold)
-
-	trimSpace         = strings.TrimSpace
-	normalizeProperty = F.Flow2(strings.TrimSpace, strings.ToLower)
-	SetPlasmid        = F.Curry2(
-		func(plasmid *stockpb.Plasmid, ctx KeywordContext) WithPlasmid {
-			return WithPlasmid{
-				KeywordContext: ctx,
-				Plasmid:        plasmid,
-			}
-		},
-	)
-
-	// Field-level semigroups for composable aggregation
-	intSumSemigroup = N.SemigroupSum[int]()
-	errorsSemigroup = S.MakeSemigroup(func(a, b []error) []error {
-		return F.Pipe1(
-			A.ArrayConcatAll(a, b),
-			A.Slice[error](0, maxErrorMessages),
-		)
-	})
-)
-
-type plasmidOntologyLoadResult struct {
-	Summary KeywordProcessingSummary
-	Error   error
+// OntologyUpdateStats tracks update operation metrics
+type OntologyUpdateStats struct {
+	ProcessedCount int       `json:"processed_count"` // Total plasmids examined
+	UpdatedCount   int       `json:"updated_count"`   // Successfully updated
+	ErrorCount     int       `json:"error_count"`     // Failed updates
+	Errors         []error   `json:"-"`               // Error samples (first 5)
+	StartTime      time.Time `json:"start_time"`
+	EndTime        time.Time `json:"end_time"`
 }
 
-type KeywordLoaderContext struct{}
-
-type KeywordRecord struct {
-	PlasmidID string
-	Property  string
-	Term      string
-}
-
-type KeywordProcessingResult struct {
-	Created bool
-	Error   error
-}
-
-type KeywordProcessingSummary struct {
-	CreatedCount  int     `json:"created_count"`
-	ExistingCount int     `json:"existing_count"`
-	ErrorCount    int     `json:"error_count"`
-	Errors        []error `json:"-"`
-}
-
-type KeywordContext struct {
-	Record KeywordRecord
-}
-
-type WithPlasmid struct {
-	KeywordContext
+// UpdateContext - Context struct for updatePlasmidTerm (point-free, no lambda wrapper)
+type UpdateContext struct {
+	Client  stockpb.StockServiceClient
+	Term    string
 	Plasmid *stockpb.Plasmid
 }
 
-func configureTSVReader(reader io.Reader) *csv.Reader {
-	csvReader := csv.NewReader(reader)
-	csvReader.Comma = '\t'
-	csvReader.FieldsPerRecord = -1
-	csvReader.TrimLeadingSpace = true
-	return csvReader
+// ProcessContext - Context struct for processPlasmid (point-free, no lambda wrapper)
+type ProcessContext struct {
+	Client  stockpb.StockServiceClient
+	Term    string
+	Plasmid *stockpb.PlasmidCollection_Data
 }
 
-func keywordFilterProperty(
-	target string,
-) func(KeywordRecord) E.Either[error, KeywordRecord] {
-	return E.FromPredicate(
-		func(r KeywordRecord) bool {
-			return strings.EqualFold(r.Property, target)
-		},
-		func(_ KeywordRecord) error {
-			return errWrongProperty
-		},
-	)
-}
+// Reusable from existing code
+var (
+	caseInsensitiveEq = Eq.FromEquals(strings.EqualFold)
+	intSumSemigroup   = N.SemigroupSum[int]()
+	errorsSemigroup   = S.MakeSemigroup(func(a, b []error) []error {
+		return F.Pipe1(
+			A.ArrayConcatAll(a, b),
+			A.Slice[error](0, maxErrorSamples),
+		)
+	})
 
-func handleKeywordPipelineError(err error) KeywordProcessingResult {
-	return KeywordProcessingResult{
-		Created: false,
-		Error:   err,
+	// countPlasmids counts plasmids in a slice (point-free)
+	countPlasmids = func(plasmids []*stockpb.PlasmidCollection_Data) int {
+		return len(plasmids)
 	}
-}
 
-func keywordHasValidRecordLength(keyRecord []string) bool {
-	return len(keyRecord) == keywordRecordLength
-}
-
-func keywordRecordLengthError(keyRecord []string) error {
-	return fmt.Errorf(
-		"invalid record: expected exactly %d columns, got %d (%s)",
-		keywordRecordLength,
-		len(keyRecord),
-		strings.Join(keyRecord, "\t"),
-	)
-}
-
-func parseKeywordRecord(keyRecord []string) KeywordRecord {
-	return KeywordRecord{
-		PlasmidID: trimSpace(keyRecord[0]),
-		Property:  normalizeProperty(keyRecord[1]),
-		Term:      trimSpace(keyRecord[2]),
+	// createInitialStats creates initial stats with count (point-free)
+	createInitialStats = func(count int) OntologyUpdateStats {
+		return OntologyUpdateStats{ProcessedCount: count}
 	}
-}
 
-func fetchPlasmid(ctx KeywordContext) IOE.IOEither[error, *stockpb.Plasmid] {
-	return F.Pipe1(
-		IOE.TryCatchError(func() (*stockpb.Plasmid, error) {
-			return regsc.GetStockAPIClient().GetPlasmid(
-				context.Background(),
-				&stockpb.StockId{Id: ctx.Record.PlasmidID},
-			)
-		}),
-		IOE.MapLeft[*stockpb.Plasmid](func(err error) error {
-			return fmt.Errorf(
-				"failed to fetch plasmid %s: %w",
-				ctx.Record.PlasmidID,
-				err,
-			)
-		}),
-	)
-}
+	updateErrorSummary = func(err error) OntologyUpdateStats {
+		return OntologyUpdateStats{
+			ErrorCount: 1,
+			Errors:     []error{err},
+		}
+	}
 
-func propertyAlreadyMatches(ctx WithPlasmid) bool {
+	updateSuccessSummary = func(_ *stockpb.Plasmid) OntologyUpdateStats {
+		return OntologyUpdateStats{
+			UpdatedCount: 1,
+		}
+	}
+
+	shouldSkip = F.Pipe1(hasProperty, P.Or(hasGBVector))
+)
+
+func hasProperty(pctx ProcessContext) bool {
 	return caseInsensitiveEq.Equals(
-		ctx.Plasmid.Data.Attributes.DictyPlasmidProperty,
-		ctx.Record.Term,
+		pctx.Term,
+		pctx.Plasmid.Attributes.DictyPlasmidProperty,
 	)
 }
 
-func returnExistingResult(
-	ctx WithPlasmid,
-) IOE.IOEither[error, KeywordProcessingResult] {
-	return IOE.Of[error](KeywordProcessingResult{Created: false})
+func hasGBVector(pctx ProcessContext) bool {
+	return caseInsensitiveEq.Equals(
+		"GB vector",
+		pctx.Plasmid.Attributes.DictyPlasmidProperty,
+	)
 }
 
-func updatePlasmidProperty(
-	ctx WithPlasmid,
-) IOE.IOEither[error, KeywordProcessingResult] {
+// StatsSemigroup creates a semigroup for combining stats
+func StatsSemigroup() S.Semigroup[OntologyUpdateStats] {
+	return S.MakeSemigroup(
+		func(a, b OntologyUpdateStats) OntologyUpdateStats {
+			return OntologyUpdateStats{
+				ProcessedCount: intSumSemigroup.Concat(
+					a.ProcessedCount,
+					b.ProcessedCount,
+				),
+				UpdatedCount: intSumSemigroup.Concat(
+					a.UpdatedCount,
+					b.UpdatedCount,
+				),
+				ErrorCount: intSumSemigroup.Concat(
+					a.ErrorCount,
+					b.ErrorCount,
+				),
+				Errors:    errorsSemigroup.Concat(a.Errors, b.Errors),
+				StartTime: a.StartTime,
+				EndTime:   b.EndTime,
+			}
+		},
+	)
+}
+
+// updatePlasmidTerm updates a plasmid's property to the target term
+// Point-free: takes UpdateContext directly, no lambda wrapper
+func updatePlasmidTerm(
+	ctx ProcessContext,
+) IOE.IOEither[error, *stockpb.Plasmid] {
 	input := &stockpb.PlasmidUpdate{
 		Data: &stockpb.PlasmidUpdate_Data{
 			Type: "plasmid",
-			Id:   ctx.Record.PlasmidID,
+			Id:   ctx.Plasmid.Id,
 			Attributes: &stockpb.PlasmidUpdateAttributes{
 				UpdatedBy:            regsc.DefaultUser,
-				DictyPlasmidProperty: ctx.Record.Term,
+				DictyPlasmidProperty: ctx.Term,
 			},
 		},
 	}
-	return F.Pipe2(
+	return F.Pipe1(
 		IOE.TryCatchError(func() (*stockpb.Plasmid, error) {
-			return regsc.GetStockAPIClient().UpdatePlasmid(
+			return ctx.Client.UpdatePlasmid(
 				context.Background(),
 				input,
 			)
@@ -227,333 +151,130 @@ func updatePlasmidProperty(
 		IOE.MapLeft[*stockpb.Plasmid](func(err error) error {
 			return fmt.Errorf(
 				"failed to update plasmid %s: %w",
-				ctx.Record.PlasmidID,
+				ctx.Plasmid.Id,
 				err,
 			)
 		}),
-		IOE.Map[error](func(_ *stockpb.Plasmid) KeywordProcessingResult {
-			return KeywordProcessingResult{
-				Created: true,
-				Error:   nil,
+	)
+}
+
+func processBatch(
+	plasmids []*stockpb.PlasmidCollection_Data,
+	client stockpb.StockServiceClient,
+	term string,
+) OntologyUpdateStats {
+	return F.Pipe6(
+		plasmids,
+		A.Map(func(pl *stockpb.PlasmidCollection_Data) ProcessContext {
+			return ProcessContext{
+				Client:  client,
+				Term:    term,
+				Plasmid: pl,
 			}
 		}),
-	)
-}
-
-func associateKeywordTerm(
-	keyRecord KeywordRecord,
-) E.Either[error, KeywordProcessingResult] {
-	return F.Pipe3(
-		IOE.Of[error](KeywordContext{Record: keyRecord}),
-		IOE.Bind(SetPlasmid, fetchPlasmid),
-		IOE.Chain(
-			F.Ternary(
-				propertyAlreadyMatches,
-				returnExistingResult,
-				updatePlasmidProperty,
-			),
-		),
-		fputil.ToEither,
-	)
-}
-
-func SummarySemigroup() S.Semigroup[KeywordProcessingSummary] {
-	return S.MakeSemigroup(
-		func(a, b KeywordProcessingSummary) KeywordProcessingSummary {
-			return KeywordProcessingSummary{
-				CreatedCount: intSumSemigroup.Concat(
-					a.CreatedCount,
-					b.CreatedCount,
-				),
-				ExistingCount: intSumSemigroup.Concat(
-					a.ExistingCount,
-					b.ExistingCount,
-				),
-				ErrorCount: intSumSemigroup.Concat(
-					a.ErrorCount,
-					b.ErrorCount,
-				),
-				Errors: errorsSemigroup.Concat(
-					a.Errors,
-					b.Errors,
-				),
-			}
-		},
-	)
-}
-
-func resultToSummary(
-	result KeywordProcessingResult,
-) KeywordProcessingSummary {
-	return F.Pipe1(
-		result,
-		F.Ternary(
-			hasError,
-			F.Ternary(
-				isWrongPropertyError,
-				skipSummary,
-				errorSummary,
-			),
-			F.Ternary(isCreated, createdSummary, existingSummary),
+		A.Filter(P.Not(shouldSkip)),
+		A.Map(updatePlasmidTerm), // Process each context (point-free!)
+		A.Map(fputil.ToEither[error, *stockpb.Plasmid]),
+		A.Map(E.Fold[error](updateErrorSummary, updateSuccessSummary)),
+		A.Reduce(StatsSemigroup().Concat,
+			F.Pipe2(plasmids, countPlasmids, createInitialStats),
 		),
 	)
 }
 
-func keywordSkipRecordError(_ []string) error {
-	return errSkipRecord
-}
+// LoadPlasmidOntologyCli is the CLI entry point for ontology updates
+func LoadPlasmidOntologyCli(cmd *cli.Context) error {
+	handler := logger.GetCliSlogHandler(cmd)
+	slogger := slog.New(handler)
+	client := regsc.GetStockAPIClient()
 
-// ===== CLI Context Support =====
+	term := cmd.String("ontology-term")
+	batchSize := cmd.Int("batch-size")
 
-type KeywordLoaderCliConfig struct {
-	KeywordLoaderContext
-	Cmd    *cli.Context
-	Reader *csv.Reader
-	Closer io.Closer
-}
+	cursor := int64(0)
+	totalStats := OntologyUpdateStats{
+		StartTime: time.Now(),
+	}
 
-type KeywordReaderCliIOE = IOE.IOEither[error, KeywordLoaderCliConfig]
+	slogger.Info("Starting plasmid ontology update",
+		"target_term", term,
+		"batch_size", batchSize,
+	)
 
-func openKeywordReaderCli(config KeywordLoaderCliConfig) KeywordReaderCliIOE {
-	return F.Pipe1(
-		config,
-		F.Switch(
-			func(cfg KeywordLoaderCliConfig) string {
-				return cfg.Cmd.String("input-source")
+	// Pagination loop
+	for {
+		resp, err := client.ListPlasmids(
+			context.Background(),
+			&stockpb.StockParameters{
+				Limit:  int64(batchSize),
+				Cursor: cursor,
 			},
-			map[string]func(KeywordLoaderCliConfig) KeywordReaderCliIOE{
-				"folder": keywordReaderFromFileCli,
-				"bucket": keywordReaderFromS3BucketCli,
-			},
-			defaultKeywordReaderCli,
-		),
-	)
-}
-
-func keywordReaderFromFileCli(cfg KeywordLoaderCliConfig) KeywordReaderCliIOE {
-	inputPath := cfg.Cmd.String("input")
-	return F.Pipe2(
-		File.Open(inputPath),
-		IOE.MapLeft[*os.File](func(err error) error {
-			return fmt.Errorf("failed to open TSV file %s: %w", inputPath, err)
-		}),
-		IOE.Map[error](func(file *os.File) KeywordLoaderCliConfig {
-			cfg.Reader = configureTSVReader(file)
-			cfg.Closer = file
-			return cfg
-		}),
-	)
-}
-
-// S3ReaderContext holds state accumulated through the S3 reader pipeline
-type S3ReaderContext struct {
-	Cmd        *cli.Context
-	Bucket     string
-	ObjectPath string
-	Client     *minio.Client
-	Reader     io.ReadCloser
-}
-
-// setS3Client returns a function that sets the S3 client in the context
-func setS3Client(client *minio.Client) func(S3ReaderContext) S3ReaderContext {
-	return func(ctx S3ReaderContext) S3ReaderContext {
-		ctx.Client = client
-		return ctx
-	}
-}
-
-// setS3Reader returns a function that sets the reader in the context
-func setS3Reader(reader io.ReadCloser) func(S3ReaderContext) S3ReaderContext {
-	return func(ctx S3ReaderContext) S3ReaderContext {
-		ctx.Reader = reader
-		return ctx
-	}
-}
-
-// createS3ClientIOE creates the S3 client from CLI context
-func createS3ClientIOE(ctx S3ReaderContext) IOE.IOEither[error, *minio.Client] {
-	return F.Pipe1(
-		IOE.TryCatchError(func() (*minio.Client, error) {
-			return s3.NewCliS3Client(ctx.Cmd)
-		}),
-		IOE.MapLeft[*minio.Client](func(err error) error {
-			return fmt.Errorf("failed to create S3 client: %w", err)
-		}),
-	)
-}
-
-// statS3ObjectIOE validates object exists and credentials are valid
-func statS3ObjectIOE(ctx S3ReaderContext) IOE.IOEither[error, minio.ObjectInfo] {
-	return F.Pipe1(
-		IOE.TryCatchError(func() (minio.ObjectInfo, error) {
-			return ctx.Client.StatObject(
-				ctx.Bucket,
-				ctx.ObjectPath,
-				minio.StatObjectOptions{},
-			)
-		}),
-		IOE.MapLeft[minio.ObjectInfo](func(err error) error {
-			return fmt.Errorf("failed to stat s3 object %s: %w", ctx.ObjectPath, err)
-		}),
-	)
-}
-
-// getS3ObjectReaderIOE fetches the object stream
-func getS3ObjectReaderIOE(ctx S3ReaderContext) IOE.IOEither[error, io.ReadCloser] {
-	return F.Pipe1(
-		IOE.TryCatchError(func() (io.ReadCloser, error) {
-			return ctx.Client.GetObject(
-				ctx.Bucket,
-				ctx.ObjectPath,
-				minio.GetObjectOptions{},
-			)
-		}),
-		IOE.MapLeft[io.ReadCloser](func(err error) error {
-			return fmt.Errorf("failed to open s3 file %s: %w", ctx.ObjectPath, err)
-		}),
-	)
-}
-
-func keywordReaderFromS3BucketCli(cfg KeywordLoaderCliConfig) KeywordReaderCliIOE {
-	path := cfg.Cmd.String("s3-bucket-path")
-	file := cfg.Cmd.String("input")
-	bucket := cfg.Cmd.String("s3-bucket")
-	objectPath := fmt.Sprintf("%s/%s", path, file)
-
-	initialCtx := S3ReaderContext{
-		Cmd:        cfg.Cmd,
-		Bucket:     bucket,
-		ObjectPath: objectPath,
-	}
-
-	// Flat pipeline: Do -> Bind(client) -> ChainFirst(stat) -> Bind(reader) -> Map(config)
-	return F.Pipe4(
-		IOE.Do[error](initialCtx),
-		IOE.Bind(setS3Client, createS3ClientIOE),
-		IOE.ChainFirst(statS3ObjectIOE),
-		IOE.Bind(setS3Reader, getS3ObjectReaderIOE),
-		IOE.Map[error](func(ctx S3ReaderContext) KeywordLoaderCliConfig {
-			cfg.Reader = configureTSVReader(ctx.Reader)
-			cfg.Closer = ctx.Reader
-			return cfg
-		}),
-	)
-}
-
-func defaultKeywordReaderCli(cfg KeywordLoaderCliConfig) KeywordReaderCliIOE {
-	source := cfg.Cmd.String("input-source")
-	return IOE.Left[KeywordLoaderCliConfig](
-		fmt.Errorf("unsupported input source %s", source),
-	)
-}
-
-func processAndAggregateKeywordRecordsCli(
-	config KeywordLoaderCliConfig,
-) IOE.IOEither[error, KeywordProcessingSummary] {
-	return IOE.TryCatchError(func() (KeywordProcessingSummary, error) {
-		if config.Closer != nil {
-			defer config.Closer.Close()
-		}
-
-		prop := config.Cmd.String("property")
-		summary := KeywordProcessingSummary{}
-		for {
-			keyRecord, err := config.Reader.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return summary, fmt.Errorf("tsv read error: %w", err)
-			}
-
-			result := F.Pipe6(
-				keyRecord,
-				E.FromPredicate(
-					keywordIsNotBlankRecord,
-					keywordSkipRecordError,
-				),
-				E.Chain(
-					E.FromPredicate(
-						keywordHasValidRecordLength,
-						keywordRecordLengthError,
-					),
-				),
-				E.Map[error](parseKeywordRecord),
-				E.Chain(keywordFilterProperty(prop)),
-				E.Chain(associateKeywordTerm),
-				E.Fold(
-					handleKeywordPipelineError,
-					F.Identity[KeywordProcessingResult],
-				),
-			)
-
-			summary = SummarySemigroup().Concat(
-				summary,
-				resultToSummary(result),
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to list plasmids at cursor %d: %w",
+				cursor,
+				err,
 			)
 		}
 
-		return summary, nil
-	})
+		batchStats := processBatch(resp.Data, client, term)
+		batchStats.StartTime = totalStats.StartTime
+		batchStats.EndTime = time.Now()
+		totalStats = StatsSemigroup().Concat(totalStats, batchStats)
+
+		// Pagination: check for next page
+		if resp.Meta.NextCursor == 0 {
+			break
+		}
+		cursor = resp.Meta.NextCursor
+	}
+
+	totalStats.EndTime = time.Now()
+	return handleOntologyOutput(totalStats, slogger)
 }
 
-func onPlasmidOntologyError(err error) plasmidOntologyLoadResult {
-	return plasmidOntologyLoadResult{Error: err}
-}
-
-func onPlasmidOntologySuccess(
-	summary KeywordProcessingSummary,
-) plasmidOntologyLoadResult {
-	return plasmidOntologyLoadResult{Summary: summary}
-}
-
-func handlePlasmidOntologyOutput(
-	result plasmidOntologyLoadResult,
+// handleOntologyOutput logs final results and returns error if too many failures
+func handleOntologyOutput(
+	stats OntologyUpdateStats,
 	slogger *slog.Logger,
 ) error {
-	if result.Error != nil {
-		return result.Error
+	level := slog.LevelInfo
+	if stats.ErrorCount > 0 {
+		level = slog.LevelWarn
 	}
 
-	slogger.Info(
-		"plasmid ontology summary",
-		"created", result.Summary.CreatedCount,
-		"existing", result.Summary.ExistingCount,
-		"errors", result.Summary.ErrorCount,
+	slogger.Log(context.Background(), level,
+		"Plasmid ontology update complete",
+		"processed", stats.ProcessedCount,
+		"updated", stats.UpdatedCount,
+		"errors", stats.ErrorCount,
+		"duration_ms", stats.EndTime.Sub(stats.StartTime).Milliseconds(),
 	)
 
 	// Log error samples if present
-	if len(result.Summary.Errors) > 0 {
-		joinedErrors := errors.Join(result.Summary.Errors...)
+	if len(stats.Errors) > 0 {
+		joinedErrors := errors.Join(stats.Errors...)
 		slogger.Warn(
-			"error samples (first 5)",
-			"sample_count", len(result.Summary.Errors),
-			"total_errors", result.Summary.ErrorCount,
+			"Update errors (sample)",
+			"sample_count", len(stats.Errors),
+			"total_errors", stats.ErrorCount,
 			"messages", joinedErrors.Error(),
 		)
 	}
 
+	// Check failure rate
+	if stats.ProcessedCount > 0 {
+		failureRate := float64(stats.ErrorCount) / float64(stats.ProcessedCount)
+		if failureRate > 0.1 && stats.ProcessedCount > 10 {
+			return fmt.Errorf(
+				"high failure rate: %d/%d (%.1f%%) updates failed",
+				stats.ErrorCount,
+				stats.ProcessedCount,
+				failureRate*100,
+			)
+		}
+	}
+
 	return nil
-}
-
-func LoadPlasmidOntologyCli(cmd *cli.Context) error {
-	handler := logger.GetCliSlogHandler(cmd)
-	slogger := slog.New(handler)
-
-	output := F.Pipe1(
-		F.Pipe4(
-			IOE.Do[error](KeywordLoaderCliConfig{Cmd: cmd}),
-			IOE.Chain(openKeywordReaderCli),
-			IOE.Chain(processAndAggregateKeywordRecordsCli),
-			IOE.ChainFirstIOK[error](
-				IO.Logf[KeywordProcessingSummary](
-					"Plasmid ontology association summary: %+v",
-				),
-			),
-			fputil.ToEither[error, KeywordProcessingSummary],
-		),
-		E.Fold(onPlasmidOntologyError, onPlasmidOntologySuccess),
-	)
-
-	return handlePlasmidOntologyOutput(output, slogger)
 }

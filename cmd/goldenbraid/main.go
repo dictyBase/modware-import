@@ -10,8 +10,24 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// Common flags shared across all subcommands
-var commonFlags = []cli.Flag{
+// Stock connection flags (shared by both commands)
+var stockConnectionFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:    "stock-grpc-host",
+		Usage:   "gRPC host address for stock service",
+		Value:   "stock-api",
+		EnvVars: []string{"STOCK_API_SERVICE_HOST"},
+	},
+	&cli.StringFlag{
+		Name:    "stock-grpc-port",
+		Usage:   "gRPC port for stock service",
+		Value:   "9560",
+		EnvVars: []string{"STOCK_API_SERVICE_PORT"},
+	},
+}
+
+// Input flags (for file-based commands like inventory)
+var inputFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     "input",
 		Usage:    "Input file path (local path or filename in bucket)",
@@ -32,17 +48,19 @@ var commonFlags = []cli.Flag{
 		Usage: "Path inside S3 bucket for input files",
 		Value: "import/data/stockcenter",
 	},
+}
+
+// Ontology-specific flags (for plasmid-ontology command)
+var ontologyFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:    "stock-grpc-host",
-		Usage:   "gRPC host address for stock service",
-		Value:   "stock-api",
-		EnvVars: []string{"STOCK_API_SERVICE_HOST"},
+		Name:  "ontology-term",
+		Usage: "Target ontology term to assign to plasmids",
+		Value: "vector",
 	},
-	&cli.StringFlag{
-		Name:    "stock-grpc-port",
-		Usage:   "gRPC port for stock service",
-		Value:   "9560",
-		EnvVars: []string{"STOCK_API_SERVICE_PORT"},
+	&cli.IntFlag{
+		Name:  "batch-size",
+		Usage: "Number of plasmids to fetch per API call",
+		Value: 100,
 	},
 }
 
@@ -110,27 +128,22 @@ func main() {
 				Action: stockcenter.LoadGoldenBraidInventory,
 				Before: stockcenter.SetClients,
 				Flags: slices.Concat(
-					commonFlags,
+					inputFlags,
+					s3Flags,
+					stockConnectionFlags,
 					annotationFlags,
 					loggingFlags,
 				),
 			},
 			{
 				Name:   "plasmid-ontology",
-				Usage:  "Associate plasmids with ontology keywords",
+				Usage:  "Update GB vector plasmids with ontology term",
 				Action: loader.LoadPlasmidOntologyCli,
 				Before: stockcenter.SetStockClientWrapper,
 				Flags: slices.Concat(
-					commonFlags,
-					s3Flags,
+					stockConnectionFlags,
+					ontologyFlags,
 					loggingFlags,
-					[]cli.Flag{
-						&cli.StringFlag{
-							Name:  "property",
-							Usage: "Property label to filter plasmid keyword rows",
-							Value: "keyword",
-						},
-					},
 				),
 			},
 		},
