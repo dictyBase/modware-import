@@ -175,7 +175,7 @@ func processBatch(
 		A.Filter(P.Not(shouldSkip)),
 		A.Map(updatePlasmidTerm), // Process each context (point-free!)
 		A.Map(fputil.ToEither[error, *stockpb.Plasmid]),
-		A.Map(E.Fold[error](updateErrorSummary, updateSuccessSummary)),
+		A.Map(E.Fold(updateErrorSummary, updateSuccessSummary)),
 		A.Reduce(StatsSemigroup().Concat,
 			F.Pipe2(plasmids, countPlasmids, createInitialStats),
 		),
@@ -218,10 +218,10 @@ func LoadPlasmidOntologyCli(cmd *cli.Context) error {
 			)
 		}
 
-		batchStats := processBatch(resp.Data, client, term)
-		batchStats.StartTime = totalStats.StartTime
-		batchStats.EndTime = time.Now()
-		totalStats = StatsSemigroup().Concat(totalStats, batchStats)
+		runningStats := processBatch(resp.Data, client, term)
+		runningStats.StartTime = totalStats.StartTime
+		runningStats.EndTime = time.Now()
+		totalStats = StatsSemigroup().Concat(totalStats, runningStats)
 
 		// Pagination: check for next page
 		if resp.Meta.NextCursor == 0 {
@@ -239,42 +239,22 @@ func handleOntologyOutput(
 	stats OntologyUpdateStats,
 	slogger *slog.Logger,
 ) error {
-	level := slog.LevelInfo
 	if stats.ErrorCount > 0 {
-		level = slog.LevelWarn
+		joinedErrors := errors.Join(stats.Errors...)
+		slogger.Log(
+			context.Background(),
+			slog.LevelError,
+			"errors encountered",
+			"top 5 errors", joinedErrors,
+		)
+		return joinedErrors
 	}
-
-	slogger.Log(context.Background(), level,
+	slogger.Log(context.Background(), slog.LevelInfo,
 		"Plasmid ontology update complete",
 		"processed", stats.ProcessedCount,
 		"updated", stats.UpdatedCount,
 		"errors", stats.ErrorCount,
 		"duration_ms", stats.EndTime.Sub(stats.StartTime).Milliseconds(),
 	)
-
-	// Log error samples if present
-	if len(stats.Errors) > 0 {
-		joinedErrors := errors.Join(stats.Errors...)
-		slogger.Warn(
-			"Update errors (sample)",
-			"sample_count", len(stats.Errors),
-			"total_errors", stats.ErrorCount,
-			"messages", joinedErrors.Error(),
-		)
-	}
-
-	// Check failure rate
-	if stats.ProcessedCount > 0 {
-		failureRate := float64(stats.ErrorCount) / float64(stats.ProcessedCount)
-		if failureRate > 0.1 && stats.ProcessedCount > 10 {
-			return fmt.Errorf(
-				"high failure rate: %d/%d (%.1f%%) updates failed",
-				stats.ErrorCount,
-				stats.ProcessedCount,
-				failureRate*100,
-			)
-		}
-	}
-
 	return nil
 }
