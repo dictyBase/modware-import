@@ -55,12 +55,12 @@ func TestSetStockAndS3Clients_Success(t *testing.T) {
 
 	// Test configuration
 	cltx := createTestContext(t, map[string]string{
-		"stock-grpc-host":  "localhost",
-		"stock-grpc-port":  "50051",
-		"s3-server":        "localhost",
-		"s3-server-port":   "9000",
-		"access-key":       "minioadmin",
-		"secret-key":       "minioadmin",
+		"stock-grpc-host": "localhost",
+		"stock-grpc-port": "50051",
+		"s3-server":       "localhost",
+		"s3-server-port":  "9000",
+		"access-key":      "minioadmin",
+		"secret-key":      "minioadmin",
 	})
 
 	// Execute
@@ -88,12 +88,12 @@ func TestSetStockAndS3Clients_InvalidStockConfig(t *testing.T) {
 
 	// Test with invalid stock gRPC configuration (empty host/port)
 	cltx := createTestContext(t, map[string]string{
-		"stock-grpc-host":  "", // Invalid: empty host
-		"stock-grpc-port":  "",
-		"s3-server":        "localhost",
-		"s3-server-port":   "9000",
-		"access-key":       "minioadmin",
-		"secret-key":       "minioadmin",
+		"stock-grpc-host": "", // Invalid: empty host
+		"stock-grpc-port": "",
+		"s3-server":       "localhost",
+		"s3-server-port":  "9000",
+		"access-key":      "minioadmin",
+		"secret-key":      "minioadmin",
 	})
 
 	// Execute
@@ -115,12 +115,12 @@ func TestSetStockAndS3Clients_InvalidS3Config(t *testing.T) {
 
 	// Test with valid stock config but invalid S3 config
 	cltx := createTestContext(t, map[string]string{
-		"stock-grpc-host":  "localhost",
-		"stock-grpc-port":  "50051",
-		"s3-server":        "", // Invalid: empty S3 server
-		"s3-server-port":   "",
-		"access-key":       "",
-		"secret-key":       "",
+		"stock-grpc-host": "localhost",
+		"stock-grpc-port": "50051",
+		"s3-server":       "", // Invalid: empty S3 server
+		"s3-server-port":  "",
+		"access-key":      "",
+		"secret-key":      "",
 	})
 
 	// Execute
@@ -199,7 +199,11 @@ func TestSetAnnotationClient_Success(t *testing.T) {
 	result := stockcenter.SetAnnotationClient(cltx)()
 
 	// Verify
-	require.True(t, E.IsRight(result), "SetAnnotationClient should succeed with valid configuration")
+	require.True(
+		t,
+		E.IsRight(result),
+		"SetAnnotationClient should succeed with valid configuration",
+	)
 
 	conn := E.GetOrElse(func(_ error) *grpc.ClientConn { return nil })(result)
 	require.NotNil(t, conn, "Connection should be created")
