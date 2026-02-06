@@ -60,7 +60,7 @@ var ontologyFlags = []cli.Flag{
 	&cli.IntFlag{
 		Name:  "batch-size",
 		Usage: "Number of plasmids to fetch per API call",
-		Value: 100,
+		Value: 30,
 	},
 }
 
