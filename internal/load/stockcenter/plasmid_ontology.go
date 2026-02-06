@@ -14,6 +14,7 @@ import (
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
 	N "github.com/IBM/fp-go/number"
+	O "github.com/IBM/fp-go/option"
 	P "github.com/IBM/fp-go/predicate"
 	S "github.com/IBM/fp-go/semigroup"
 
@@ -182,6 +183,26 @@ func processBatch(
 	)
 }
 
+func listParams(batchSize int, cursor int64) *stockpb.StockParameters {
+	return F.Pipe2(
+		cursor,
+		O.FromPredicate(func(c int64) bool { return c != 0 }),
+		O.Fold(
+			func() *stockpb.StockParameters {
+				return &stockpb.StockParameters{
+					Limit: int64(batchSize),
+				}
+			},
+			func(c int64) *stockpb.StockParameters {
+				return &stockpb.StockParameters{
+					Limit:  int64(batchSize),
+					Cursor: c,
+				}
+			},
+		),
+	)
+}
+
 // LoadPlasmidOntologyCli is the CLI entry point for ontology updates
 func LoadPlasmidOntologyCli(cmd *cli.Context) error {
 	handler := logger.GetCliSlogHandler(cmd)
@@ -205,10 +226,7 @@ func LoadPlasmidOntologyCli(cmd *cli.Context) error {
 	for {
 		resp, err := client.ListPlasmids(
 			context.Background(),
-			&stockpb.StockParameters{
-				Limit:  int64(batchSize),
-				Cursor: cursor,
-			},
+			listParams(batchSize, cursor),
 		)
 		if err != nil {
 			return fmt.Errorf(
