@@ -20,101 +20,26 @@ func createTestPlasmidData(id string, property string) *stockpb.PlasmidCollectio
 	}
 }
 
-// TestShouldSkip tests the shouldSkip predicate
-func TestShouldSkip(t *testing.T) {
-	tests := []struct {
-		name     string
-		term     string
-		property string
-		want     bool
-	}{
-		{"GB vector should skip", "vector", "GB vector", true},
-		{"target term should skip", "vector", "vector", true},
-		{"case insensitive GB vector", "vector", "gb VECTOR", true},
-		{"case insensitive target", "vector", "VECTOR", true},
-		{"other value should process", "vector", "expression vector", false},
-		{"empty should process", "vector", "", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pctx := ProcessContext{
-				Term:    tt.term,
-				Plasmid: createTestPlasmidData("DBP001", tt.property),
-			}
-			require.Equal(t, tt.want, shouldSkip(pctx))
-		})
-	}
-}
-
-// TestHasGBVector tests the hasGBVector predicate
-func TestHasGBVector(t *testing.T) {
-	tests := []struct {
-		name     string
-		property string
-		want     bool
-	}{
-		{"exact match", "GB vector", true},
-		{"case insensitive", "gb VECTOR", true},
-		{"different value", "expression vector", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pctx := ProcessContext{
-				Plasmid: createTestPlasmidData("DBP001", tt.property),
-			}
-			require.Equal(t, tt.want, hasGBVector(pctx))
-		})
-	}
-}
-
-// TestHasProperty tests the hasProperty function
-func TestHasProperty(t *testing.T) {
-	tests := []struct {
-		name     string
-		target   string
-		property string
-		want     bool
-	}{
-		{"exact match", "vector", "vector", true},
-		{"case insensitive match", "vector", "VECTOR", true},
-		{"no match", "vector", "expression vector", false},
-		{"empty no match", "vector", "", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pctx := ProcessContext{
-				Term:    tt.target,
-				Plasmid: createTestPlasmidData("DBP001", tt.property),
-			}
-			require.Equal(t, tt.want, hasProperty(pctx))
-		})
-	}
-}
-
 // TestProcessBatch tests the processBatch function
+// Note: Server-side filtering now excludes plasmids with target term or "GB vector"
+// before they reach processBatch, so all plasmids in the batch should be updated
 func TestProcessBatch(t *testing.T) {
 	mockClient := new(MockStockClient)
 
+	// These plasmids already passed server-side filtering
 	plasmids := []*stockpb.PlasmidCollection_Data{
-		createTestPlasmidData("DBP001", "GB vector"),         // Skip (has GB vector)
-		createTestPlasmidData("DBP002", "vector"),            // Skip (already has target term)
-		createTestPlasmidData("DBP003", "expression vector"), // Update this one
+		createTestPlasmidData("DBP001", "expression vector"),
+		createTestPlasmidData("DBP002", "cloning vector"),
 	}
 
-	// Mock: UpdatePlasmid called only for DBP003
-	mockClient.On("UpdatePlasmid", mock.Anything, mock.MatchedBy(
-		func(req *stockpb.PlasmidUpdate) bool {
-			return req.Data.Id == "DBP003"
-		},
-	), mock.Anything).Return(&stockpb.Plasmid{}, nil).Once()
+	// Mock: UpdatePlasmid called for both plasmids
+	mockClient.On("UpdatePlasmid", mock.Anything, mock.Anything, mock.Anything).
+		Return(&stockpb.Plasmid{}, nil).Twice()
 
 	stats := processBatch(plasmids, mockClient, "vector")
 
-	require.Equal(t, 3, stats.ProcessedCount)
-	require.Equal(t, 1, stats.UpdatedCount)
+	require.Equal(t, 2, stats.ProcessedCount)
+	require.Equal(t, 2, stats.UpdatedCount)
 	require.Equal(t, 0, stats.ErrorCount)
 
 	mockClient.AssertExpectations(t)
