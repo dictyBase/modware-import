@@ -5,17 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
-	Eq "github.com/IBM/fp-go/eq"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
 	N "github.com/IBM/fp-go/number"
-	O "github.com/IBM/fp-go/option"
-	P "github.com/IBM/fp-go/predicate"
 	S "github.com/IBM/fp-go/semigroup"
 
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
@@ -53,9 +49,8 @@ type ProcessContext struct {
 
 // Reusable from existing code
 var (
-	caseInsensitiveEq = Eq.FromEquals(strings.EqualFold)
-	intSumSemigroup   = N.SemigroupSum[int]()
-	errorsSemigroup   = S.MakeSemigroup(func(a, b []error) []error {
+	intSumSemigroup = N.SemigroupSum[int]()
+	errorsSemigroup = S.MakeSemigroup(func(a, b []error) []error {
 		return F.Pipe1(
 			A.ArrayConcatAll(a, b),
 			A.Slice[error](0, maxErrorSamples),
@@ -84,23 +79,7 @@ var (
 			UpdatedCount: 1,
 		}
 	}
-
-	shouldSkip = F.Pipe1(hasProperty, P.Or(hasGBVector))
 )
-
-func hasProperty(pctx ProcessContext) bool {
-	return caseInsensitiveEq.Equals(
-		pctx.Term,
-		pctx.Plasmid.Attributes.DictyPlasmidProperty,
-	)
-}
-
-func hasGBVector(pctx ProcessContext) bool {
-	return caseInsensitiveEq.Equals(
-		"GB vector",
-		pctx.Plasmid.Attributes.DictyPlasmidProperty,
-	)
-}
 
 // StatsSemigroup creates a semigroup for combining stats
 func StatsSemigroup() S.Semigroup[OntologyUpdateStats] {
@@ -164,7 +143,7 @@ func processBatch(
 	client stockpb.StockServiceClient,
 	term string,
 ) OntologyUpdateStats {
-	return F.Pipe6(
+	return F.Pipe5(
 		plasmids,
 		A.Map(func(pl *stockpb.PlasmidCollection_Data) ProcessContext {
 			return ProcessContext{
@@ -173,32 +152,11 @@ func processBatch(
 				Plasmid: pl,
 			}
 		}),
-		A.Filter(P.Not(shouldSkip)),
 		A.Map(updatePlasmidTerm), // Process each context (point-free!)
 		A.Map(fputil.ToEither[error, *stockpb.Plasmid]),
 		A.Map(E.Fold(updateErrorSummary, updateSuccessSummary)),
 		A.Reduce(StatsSemigroup().Concat,
 			F.Pipe2(plasmids, countPlasmids, createInitialStats),
-		),
-	)
-}
-
-func listParams(batchSize int, cursor int64) *stockpb.StockParameters {
-	return F.Pipe2(
-		cursor,
-		O.FromPredicate(func(c int64) bool { return c != 0 }),
-		O.Fold(
-			func() *stockpb.StockParameters {
-				return &stockpb.StockParameters{
-					Limit: int64(batchSize),
-				}
-			},
-			func(c int64) *stockpb.StockParameters {
-				return &stockpb.StockParameters{
-					Limit:  int64(batchSize),
-					Cursor: c,
-				}
-			},
 		),
 	)
 }
@@ -223,11 +181,14 @@ func LoadPlasmidOntologyCli(cmd *cli.Context) error {
 	)
 
 	// Pagination loop
+	filter := fmt.Sprintf("tag!=%s;tag!=GB vector", term)
 	for {
-		resp, err := client.ListPlasmids(
-			context.Background(),
-			listParams(batchSize, cursor),
-		)
+		params := &stockpb.StockParameters{
+			Limit:  int64(batchSize),
+			Cursor: cursor,
+			Filter: filter,
+		}
+		resp, err := client.ListPlasmids(context.Background(), params)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to list plasmids at cursor %d: %w",
