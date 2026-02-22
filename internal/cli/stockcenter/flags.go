@@ -17,7 +17,6 @@ func StockConnectionFlags() []cli.Flag {
 		&cli.StringFlag{
 			Name:    "stock-grpc-port",
 			Usage:   "gRPC port for stock service",
-			Value:   "9560",
 			EnvVars: []string{"STOCK_API_SERVICE_PORT"},
 		},
 	}
