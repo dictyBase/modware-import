@@ -30,7 +30,7 @@ func main() {
 			},
 			{
 				Name:   "plasmid-ontology",
-				Usage:  "Update GB vector plasmids with ontology term",
+				Usage:  "Update plasmids with ontology term",
 				Action: loader.LoadPlasmidOntologyCli,
 				Before: stockcenter.SetStockClientWrapper,
 				Flags: slices.Concat(
