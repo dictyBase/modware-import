@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
+	Eq "github.com/IBM/fp-go/eq"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
 	N "github.com/IBM/fp-go/number"
+	P "github.com/IBM/fp-go/predicate"
 	S "github.com/IBM/fp-go/semigroup"
 
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
@@ -49,8 +52,9 @@ type ProcessContext struct {
 
 // Reusable from existing code
 var (
-	intSumSemigroup = N.SemigroupSum[int]()
-	errorsSemigroup = S.MakeSemigroup(func(a, b []error) []error {
+	caseInsensitiveEq = Eq.FromEquals(strings.EqualFold)
+	intSumSemigroup   = N.SemigroupSum[int]()
+	errorsSemigroup   = S.MakeSemigroup(func(a, b []error) []error {
 		return F.Pipe1(
 			A.ArrayConcatAll(a, b),
 			A.Slice[error](0, maxErrorSamples),
@@ -79,7 +83,23 @@ var (
 			UpdatedCount: 1,
 		}
 	}
+
+	shouldSkip = F.Pipe1(hasProperty, P.Or(hasGBVector))
 )
+
+func hasProperty(pctx ProcessContext) bool {
+	return caseInsensitiveEq.Equals(
+		pctx.Term,
+		pctx.Plasmid.Attributes.DictyPlasmidProperty,
+	)
+}
+
+func hasGBVector(pctx ProcessContext) bool {
+	return caseInsensitiveEq.Equals(
+		"GB vector",
+		pctx.Plasmid.Attributes.DictyPlasmidProperty,
+	)
+}
 
 // StatsSemigroup creates a semigroup for combining stats
 func StatsSemigroup() S.Semigroup[OntologyUpdateStats] {
@@ -143,7 +163,7 @@ func processBatch(
 	client stockpb.StockServiceClient,
 	term string,
 ) OntologyUpdateStats {
-	return F.Pipe5(
+	return F.Pipe6(
 		plasmids,
 		A.Map(func(pl *stockpb.PlasmidCollection_Data) ProcessContext {
 			return ProcessContext{
@@ -152,6 +172,7 @@ func processBatch(
 				Plasmid: pl,
 			}
 		}),
+		A.Filter(P.Not(shouldSkip)),
 		A.Map(updatePlasmidTerm), // Process each context (point-free!)
 		A.Map(fputil.ToEither[error, *stockpb.Plasmid]),
 		A.Map(E.Fold(updateErrorSummary, updateSuccessSummary)),
@@ -181,12 +202,10 @@ func LoadPlasmidOntologyCli(cmd *cli.Context) error {
 	)
 
 	// Pagination loop
-	filter := fmt.Sprintf("tag!=%s;tag!=GB vector", term)
 	for {
 		params := &stockpb.StockParameters{
 			Limit:  int64(batchSize),
 			Cursor: cursor,
-			Filter: filter,
 		}
 		resp, err := client.ListPlasmids(context.Background(), params)
 		if err != nil {
