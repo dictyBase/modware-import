@@ -27,20 +27,18 @@ import (
 	"github.com/dictyBase/modware-import/internal/registry"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/minio/minio-go/v6"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/urfave/cli/v2"
 )
 
 // LoaderContext is the initial empty context
 type LoaderContext struct{}
 
-// LoaderConfig holds viper configuration and CSV reader
+// LoaderConfig holds CLI context and CSV reader
 type LoaderConfig struct {
 	LoaderContext
-	Cmd    *cobra.Command
+	Cmd    *cli.Context
 	Reader *csv.Reader
 	Closer io.Closer
-	Viper  *viper.Viper
 }
 
 const gbMaxErrorMessages = 5
@@ -355,8 +353,7 @@ func openReader(
 		config,
 		F.Switch(
 			func(cfg LoaderConfig) string {
-				source, _ := cfg.Cmd.Flags().GetString("input-source")
-				return source
+				return cfg.Cmd.String("input-source")
 			},
 			map[string]func(LoaderConfig) IOE.IOEither[error, LoaderConfig]{
 				"folder": openGoldenBraidFileReader,
@@ -370,7 +367,7 @@ func openReader(
 func openGoldenBraidFileReader(
 	config LoaderConfig,
 ) IOE.IOEither[error, LoaderConfig] {
-	inputPath, _ := config.Cmd.Flags().GetString("input")
+	inputPath := config.Cmd.String("input")
 
 	return F.Pipe2(
 		File.Open(inputPath),
@@ -404,9 +401,9 @@ func openGoldenBraidFileReader(
 func openGoldenBraidS3Reader(
 	config LoaderConfig,
 ) IOE.IOEither[error, LoaderConfig] {
-	bucket, _ := config.Cmd.Flags().GetString("s3-bucket")
-	bucketPath, _ := config.Cmd.Flags().GetString("s3-bucket-path")
-	file, _ := config.Cmd.Flags().GetString("input")
+	bucket := config.Cmd.String("s3-bucket")
+	bucketPath := config.Cmd.String("s3-bucket-path")
+	file := config.Cmd.String("input")
 	objectPath := path.Join(bucketPath, file)
 
 	return F.Pipe2(
@@ -447,9 +444,8 @@ func openGoldenBraidS3Reader(
 func defaultGoldenBraidReader(
 	cfg LoaderConfig,
 ) IOE.IOEither[error, LoaderConfig] {
-	source, _ := cfg.Cmd.Flags().GetString("input-source")
 	return IOE.Left[LoaderConfig](
-		fmt.Errorf("unsupported input source %s", source),
+		fmt.Errorf("unsupported input source %s", cfg.Cmd.String("input-source")),
 	)
 }
 
@@ -458,8 +454,8 @@ func streamAndProcessRecords(
 	config LoaderConfig,
 ) IOE.IOEither[error, GoldenBraidProcessingResult] {
 	return IOE.TryCatchError(func() (GoldenBraidProcessingResult, error) {
-		userEmail := config.Viper.GetString("user-email")
-		plasmidCVTerm := config.Viper.GetString("plasmid-cvterm")
+		userEmail := config.Cmd.String("user-email")
+		plasmidCVTerm := config.Cmd.String("plasmid-cvterm")
 		summary := GoldenBraidProcessingResult{}
 
 		for {
@@ -541,9 +537,9 @@ func useGoldenBraidReader(
 	)
 }
 
-// LoadGoldenBraid is the main entry point for loading GoldenBraid CSV data
-func LoadGoldenBraid(cmd *cobra.Command, _ []string) error {
-	handler := logger.GetSlogHandler(cmd)
+// LoadGoldenBraidCli is the main entry point for loading GoldenBraid CSV data
+func LoadGoldenBraidCli(cmd *cli.Context) error {
+	handler := logger.GetCliSlogHandler(cmd)
 	slogger := slog.New(handler)
 	elog := E.Logger[error, GoldenBraidProcessingResult](
 		slog.NewLogLogger(handler, slog.LevelInfo),
@@ -552,7 +548,6 @@ func LoadGoldenBraid(cmd *cobra.Command, _ []string) error {
 
 	output := F.Pipe6(
 		IOE.Do[error](LoaderConfig{
-			Viper:  viper.GetViper(),
 			Cmd:    cmd,
 			Reader: nil,
 		}),
