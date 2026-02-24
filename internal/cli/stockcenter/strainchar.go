@@ -17,7 +17,10 @@ var StrainCharCmd = &cobra.Command{
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
-		if err := setReader(viper.GetString("strainchar-input"), regsc.StraincharReader); err != nil {
+		if err := setReader(
+			viper.GetString("strainchar-input"),
+			regsc.StraincharReader,
+		); err != nil {
 			return err
 		}
 		return nil

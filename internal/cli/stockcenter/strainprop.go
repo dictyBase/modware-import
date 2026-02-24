@@ -17,7 +17,10 @@ var StrainPropCmd = &cobra.Command{
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
-		if err := setReader(viper.GetString("strainprop-input"), regsc.StrainpropReader); err != nil {
+		if err := setReader(
+			viper.GetString("strainprop-input"),
+			regsc.StrainpropReader,
+		); err != nil {
 			return err
 		}
 		return nil

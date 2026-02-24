@@ -2,187 +2,153 @@ package stockcenter
 
 import (
 	"errors"
-	"os"
 	"testing"
 
-	"github.com/dictyBase/go-genproto/dictybaseapis/stock"
-	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
-	"github.com/spf13/cobra"
+	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSummarySemigroup(t *testing.T) {
-	// Create two summaries with errors
-	s1 := KeywordProcessingSummary{
-		ErrorCount: 1,
-		Errors:     []string{"error 1"},
+// Test helpers
+func createTestPlasmidData(id string, property string) *stockpb.PlasmidCollection_Data {
+	return &stockpb.PlasmidCollection_Data{
+		Id:   id,
+		Type: "plasmid",
+		Attributes: &stockpb.PlasmidAttributes{
+			DictyPlasmidProperty: property,
+		},
 	}
-	s2 := KeywordProcessingSummary{
-		ErrorCount: 1,
-		Errors:     []string{"error 2"},
+}
+
+// TestProcessBatch tests the processBatch function
+// Note: Server-side filtering now excludes plasmids with target term or "GB vector"
+// before they reach processBatch, so all plasmids in the batch should be updated
+func TestProcessBatch(t *testing.T) {
+	mockClient := new(MockStockClient)
+
+	// These plasmids already passed server-side filtering
+	plasmids := []*stockpb.PlasmidCollection_Data{
+		createTestPlasmidData("DBP001", "expression vector"),
+		createTestPlasmidData("DBP002", "cloning vector"),
 	}
 
-	sg := SummarySemigroup()
-	result := sg.Concat(s1, s2)
+	// Mock: UpdatePlasmid called for both plasmids
+	mockClient.On("UpdatePlasmid", mock.Anything, mock.Anything, mock.Anything).
+		Return(&stockpb.Plasmid{}, nil).Twice()
 
-	require.Equal(t, 2, result.ErrorCount)
-	require.Len(t, result.Errors, 2)
-	require.Contains(t, result.Errors, "error 1")
-	require.Contains(t, result.Errors, "error 2")
-}
+	stats := processBatch(plasmids, mockClient, "vector")
 
-func TestLoadPlasmidOntology(t *testing.T) {
-	t.Run("Success", testLoadPlasmidOntologySuccess)
-	t.Run("Skip Existing", testLoadPlasmidOntologySkipExisting)
-	t.Run("Validation Error", testLoadPlasmidOntologyValidationError)
-	t.Run("API Error", testLoadPlasmidOntologyAPIError)
-}
-
-func testLoadPlasmidOntologySuccess(t *testing.T) {
-	// Mock setup
-	mockClient := new(MockStockClient)
-	regsc.SetStockAPIClient(mockClient)
-	defer func() { regsc.SetStockAPIClient(nil) }()
-
-	// Test data
-	csvContent := "DBP0000001\tkeyword\tvector\n"
-	filePath := createTempCSV(t, csvContent)
-	defer os.Remove(filePath)
-
-	// Mock expectations
-	mockClient.On(
-		"GetPlasmid",
-		mock.Anything,
-		&stock.StockId{Id: "DBP0000001"},
-		mock.Anything,
-	).
-		Return(&stock.Plasmid{
-			Data: &stock.Plasmid_Data{
-				Attributes: &stock.PlasmidAttributes{
-					DictyPlasmidProperty: "", // Current property is empty
-				},
-			},
-		}, nil)
-
-	mockClient.On(
-		"UpdatePlasmid",
-		mock.Anything,
-		mock.MatchedBy(func(req *stock.PlasmidUpdate) bool {
-			return req.Data.Id == "DBP0000001" &&
-				req.Data.Attributes.DictyPlasmidProperty == "vector"
-		}),
-		mock.Anything,
-	).Return(&stock.Plasmid{}, nil)
-
-	// Command setup
-	cmd := &cobra.Command{}
-	cmd.Flags().String("input", filePath, "")
-	cmd.Flags().String("property", "keyword", "")
-	cmd.Flags().String("input-source", "folder", "")
-
-	// Execute
-	err := LoadPlasmidOntology(cmd, []string{})
-	require.NoError(t, err)
+	require.Equal(t, 2, stats.ProcessedCount)
+	require.Equal(t, 2, stats.UpdatedCount)
+	require.Equal(t, 0, stats.ErrorCount)
 
 	mockClient.AssertExpectations(t)
 }
 
-func testLoadPlasmidOntologySkipExisting(t *testing.T) {
+// TestProcessBatchWithErrors tests processBatch when updates fail
+func TestProcessBatchWithErrors(t *testing.T) {
 	mockClient := new(MockStockClient)
-	regsc.SetStockAPIClient(mockClient)
-	defer func() { regsc.SetStockAPIClient(nil) }()
 
-	csvContent := "DBP0000002\tkeyword\tvector\n"
-	filePath := createTempCSV(t, csvContent)
-	defer os.Remove(filePath)
+	plasmids := []*stockpb.PlasmidCollection_Data{
+		createTestPlasmidData("DBP001", "expression vector"), // Update - will succeed
+		createTestPlasmidData("DBP002", "cloning vector"),    // Update - will fail
+	}
 
-	// Should return existing matching property
-	mockClient.On(
-		"GetPlasmid",
-		mock.Anything,
-		&stock.StockId{Id: "DBP0000002"},
-		mock.Anything,
-	).
-		Return(&stock.Plasmid{
-			Data: &stock.Plasmid_Data{
-				Attributes: &stock.PlasmidAttributes{
-					DictyPlasmidProperty: "vector",
-				},
-			},
-		}, nil)
+	// Mock: DBP001 succeeds
+	mockClient.On("UpdatePlasmid", mock.Anything, mock.MatchedBy(
+		func(req *stockpb.PlasmidUpdate) bool {
+			return req.Data.Id == "DBP001"
+		},
+	), mock.Anything).Return(&stockpb.Plasmid{}, nil).Once()
 
-	// UpdatePlasmid should NOT be called
+	// Mock: DBP002 fails
+	mockClient.On("UpdatePlasmid", mock.Anything, mock.MatchedBy(
+		func(req *stockpb.PlasmidUpdate) bool {
+			return req.Data.Id == "DBP002"
+		},
+	), mock.Anything).Return(nil, errors.New("update failed")).Once()
 
-	cmd := &cobra.Command{}
-	cmd.Flags().String("input", filePath, "")
-	cmd.Flags().String("property", "keyword", "")
-	cmd.Flags().String("input-source", "folder", "")
+	stats := processBatch(plasmids, mockClient, "vector")
 
-	err := LoadPlasmidOntology(cmd, []string{})
-	require.NoError(t, err)
+	require.Equal(t, 2, stats.ProcessedCount)
+	require.Equal(t, 1, stats.UpdatedCount)
+	require.Equal(t, 1, stats.ErrorCount)
+	require.Len(t, stats.Errors, 1)
 
 	mockClient.AssertExpectations(t)
 }
 
-func testLoadPlasmidOntologyValidationError(t *testing.T) {
-	mockClient := new(MockStockClient)
-	regsc.SetStockAPIClient(mockClient)
-	defer func() { regsc.SetStockAPIClient(nil) }()
+// TestStatsSemigroup tests the StatsSemigroup combinator
+func TestStatsSemigroup(t *testing.T) {
+	semigroup := StatsSemigroup()
 
-	// Invalid CSV (only 2 columns)
-	csvContent := "DBP0000003\tkeyword\n"
-	filePath := createTempCSV(t, csvContent)
-	defer os.Remove(filePath)
+	stats1 := OntologyUpdateStats{
+		ProcessedCount: 5,
+		UpdatedCount:   3,
+		ErrorCount:     2,
+		Errors:         []error{errors.New("error 1")},
+	}
 
-	cmd := &cobra.Command{}
-	cmd.Flags().String("input", filePath, "")
-	cmd.Flags().String("property", "keyword", "")
-	cmd.Flags().String("input-source", "folder", "")
+	stats2 := OntologyUpdateStats{
+		ProcessedCount: 10,
+		UpdatedCount:   7,
+		ErrorCount:     3,
+		Errors:         []error{errors.New("error 2")},
+	}
 
-	// The function logs errors but returns nil for partial successes/failures
-	err := LoadPlasmidOntology(cmd, []string{})
-	require.NoError(t, err)
+	combined := semigroup.Concat(stats1, stats2)
 
-	// No API calls expected
-	mockClient.AssertExpectations(t)
+	require.Equal(t, 15, combined.ProcessedCount)
+	require.Equal(t, 10, combined.UpdatedCount)
+	require.Equal(t, 5, combined.ErrorCount)
+	require.Len(t, combined.Errors, 2)
 }
 
-func testLoadPlasmidOntologyAPIError(t *testing.T) {
-	mockClient := new(MockStockClient)
-	regsc.SetStockAPIClient(mockClient)
-	defer func() { regsc.SetStockAPIClient(nil) }()
+// TestStatsSemigroupErrorLimit tests that error sampling is limited
+func TestStatsSemigroupErrorLimit(t *testing.T) {
+	semigroup := StatsSemigroup()
 
-	csvContent := "DBP0000004\tkeyword\tvector\n"
-	filePath := createTempCSV(t, csvContent)
-	defer os.Remove(filePath)
+	// Create stats with more than maxErrorSamples errors
+	stats1 := OntologyUpdateStats{
+		Errors: []error{
+			errors.New("error 1"),
+			errors.New("error 2"),
+			errors.New("error 3"),
+		},
+	}
 
-	mockClient.On(
-		"GetPlasmid",
-		mock.Anything,
-		&stock.StockId{Id: "DBP0000004"},
-		mock.Anything,
-	).
-		Return(nil, errors.New("network error"))
+	stats2 := OntologyUpdateStats{
+		Errors: []error{
+			errors.New("error 4"),
+			errors.New("error 5"),
+			errors.New("error 6"),
+		},
+	}
 
-	cmd := &cobra.Command{}
-	cmd.Flags().String("input", filePath, "")
-	cmd.Flags().String("property", "keyword", "")
-	cmd.Flags().String("input-source", "folder", "")
+	combined := semigroup.Concat(stats1, stats2)
 
-	err := LoadPlasmidOntology(cmd, []string{})
-	require.NoError(t, err)
-
-	mockClient.AssertExpectations(t)
+	// Should be limited to maxErrorSamples (5)
+	require.LessOrEqual(t, len(combined.Errors), maxErrorSamples)
+	require.Equal(t, 5, len(combined.Errors))
 }
 
-// Helper to create temp file
-func createTempCSV(t *testing.T, content string) string {
-	f, err := os.CreateTemp("", "plasmid_ontology_*.tsv")
-	require.NoError(t, err)
-	_, err = f.WriteString(content)
-	require.NoError(t, err)
-	err = f.Close()
-	require.NoError(t, err)
-	return f.Name()
+// TestCountPlasmids tests the countPlasmids function
+func TestCountPlasmids(t *testing.T) {
+	plasmids := []*stockpb.PlasmidCollection_Data{
+		createTestPlasmidData("DBP001", "vector"),
+		createTestPlasmidData("DBP002", "expression vector"),
+		createTestPlasmidData("DBP003", "GB vector"),
+	}
+
+	count := countPlasmids(plasmids)
+	require.Equal(t, 3, count)
+}
+
+// TestCreateInitialStats tests the createInitialStats function
+func TestCreateInitialStats(t *testing.T) {
+	stats := createInitialStats(10)
+	require.Equal(t, 10, stats.ProcessedCount)
+	require.Equal(t, 0, stats.UpdatedCount)
+	require.Equal(t, 0, stats.ErrorCount)
+	require.Empty(t, stats.Errors)
 }

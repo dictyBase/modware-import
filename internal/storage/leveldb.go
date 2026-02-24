@@ -698,7 +698,13 @@ func (s *LevelDBStorage) updatePubmedIndexes(
 	add bool,
 ) error {
 	for _, pubmedID := range annotation.Attributes.Pubmed {
-		if err := s.updateListIndexWithTxn(txn, "pubmed_index", pubmedID, annotation.Id, add); err != nil {
+		if err := s.updateListIndexWithTxn(
+			txn,
+			"pubmed_index",
+			pubmedID,
+			annotation.Id,
+			add,
+		); err != nil {
 			return err
 		}
 	}
@@ -713,7 +719,13 @@ func (s *LevelDBStorage) updateDOIIndexes(
 	for _, publication := range annotation.Attributes.Publications {
 		// Check if it's a DOI (basic check for DOI format)
 		if strings.HasPrefix(publication, "10.") {
-			if err := s.updateListIndexWithTxn(txn, "doi_index", publication, annotation.Id, add); err != nil {
+			if err := s.updateListIndexWithTxn(
+				txn,
+				"doi_index",
+				publication,
+				annotation.Id,
+				add,
+			); err != nil {
 				return err
 			}
 		}

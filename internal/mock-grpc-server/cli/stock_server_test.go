@@ -25,6 +25,8 @@ type realServerFixture struct {
 }
 
 // setupRealServer starts actual gRPC server on random port
+//
+//nolint:unparam
 func setupRealServer(t *testing.T, persistent bool) *realServerFixture {
 	// Get random available port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")

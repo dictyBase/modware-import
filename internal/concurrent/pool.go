@@ -14,7 +14,7 @@ import (
 type Job[I any] struct {
 	ID      string
 	Payload I
-	Meta    map[string]interface{} // Optional metadata
+	Meta    map[string]any // Optional metadata
 }
 
 // Result represents the output of processing a job
@@ -108,7 +108,10 @@ func WithContext[I, O any](ctx context.Context) PoolOption[I, O] {
 }
 
 // NewPool creates a new worker pool with the given options
-func NewPool[I, O any](workerFunc WorkerFunc[I, O], options ...PoolOption[I, O]) *Pool[I, O] {
+func NewPool[I, O any](
+	workerFunc WorkerFunc[I, O],
+	options ...PoolOption[I, O],
+) *Pool[I, O] {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	pool := &Pool[I, O]{

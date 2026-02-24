@@ -91,7 +91,10 @@ func (s *FeatureAnnotationServer) RemoveTag(
 	}
 
 	// Remove tag from storage
-	if err := s.storage.RemoveTag(req.Id, req.Tag); err != nil { //nolint:staticcheck // SA1019: deprecated field access
+	if err := s.storage.RemoveTag(
+		req.Id,
+		req.Tag,
+	); err != nil { //nolint:staticcheck // SA1019: deprecated field access
 		s.logger.WithError(err).WithFields(logrus.Fields{
 			"id":  req.Id,  //nolint:staticcheck // SA1019: deprecated field access
 			"tag": req.Tag, //nolint:staticcheck // SA1019: deprecated field access

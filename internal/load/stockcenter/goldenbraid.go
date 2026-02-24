@@ -3,18 +3,23 @@ package stockcenter
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"path"
 
+	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
-	fperrors "github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
+	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
+	File "github.com/IBM/fp-go/ioeither/file"
+	N "github.com/IBM/fp-go/number"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/semigroup"
+	T "github.com/IBM/fp-go/tuple"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	"github.com/dictyBase/modware-import/internal/fputil"
@@ -36,142 +41,416 @@ type LoaderConfig struct {
 	Reader *csv.Reader
 	Closer io.Closer
 	Viper  *viper.Viper
-	Logger *slog.Logger
 }
 
-// PlasmidProcessingResult represents the result of processing a single plasmid
-type PlasmidProcessingResult struct {
+const gbMaxErrorMessages = 5
+
+// Context for UPSERT pipeline
+type GoldenBraidContext struct {
+	Plasmid   *source.GoldenBraidPlasmid
+	UserEmail string
+	PlasmidCV string
+}
+
+// Result of UPSERT operation
+type GoldenBraidUpsertResult struct {
 	PlasmidID string
-	Error     O.Option[error]
-}
-
-// createErrorResult creates a PlasmidProcessingResult for an error
-func createErrorResult(e error) PlasmidProcessingResult {
-	return PlasmidProcessingResult{
-		PlasmidID: "",
-		Error:     O.Some(e),
-	}
-}
-
-func createProcessingResult(id string) PlasmidProcessingResult {
-	return PlasmidProcessingResult{
-		PlasmidID: id,
-		Error:     O.None[error](),
-	}
-}
-
-func logGoldenBraidStep[T any](
-	logger *slog.Logger,
-	msg string,
-) func(T) IOE.IOEither[error, T] {
-	return func(data T) IOE.IOEither[error, T] {
-		return IOE.TryCatchError(func() (T, error) {
-			logger.Info(msg, "payload", data)
-			return data, nil
-		})
-	}
+	Created   bool // true=created, false=updated
+	Error     error
 }
 
 // GoldenBraidProcessingResult holds aggregate processing statistics
 type GoldenBraidProcessingResult struct {
-	Successes  []string
-	Errors     []string
-	ErrorCount int
+	CreatedCount int      // New plasmids created
+	UpdatedCount int      // Existing plasmids updated
+	Successes    []string // All plasmid IDs (created + updated)
+	Errors       []error
+	ErrorCount   int
 }
+
+var (
+	gbIntSumSemigroup      = N.SemigroupSum[int]()
+	gbStringArraySemigroup = S.MakeSemigroup(func(a, b []string) []string {
+		return A.ArrayConcatAll(a, b)
+	})
+	gbErrorsSemigroup = S.MakeSemigroup(func(a, b []error) []error {
+		return F.Pipe1(
+			A.ArrayConcatAll(a, b),
+			A.Slice[error](0, gbMaxErrorMessages),
+		)
+	})
+)
 
 func GoldenBraidSummarySemigroup() S.Semigroup[GoldenBraidProcessingResult] {
 	return S.MakeSemigroup(
 		func(a, b GoldenBraidProcessingResult) GoldenBraidProcessingResult {
 			return GoldenBraidProcessingResult{
-				Successes:  append(a.Successes, b.Successes...),
-				ErrorCount: a.ErrorCount + b.ErrorCount,
-				Errors:     append(a.Errors, b.Errors...),
+				CreatedCount: gbIntSumSemigroup.Concat(
+					a.CreatedCount,
+					b.CreatedCount,
+				),
+				UpdatedCount: gbIntSumSemigroup.Concat(
+					a.UpdatedCount,
+					b.UpdatedCount,
+				),
+				Successes: gbStringArraySemigroup.Concat(
+					a.Successes,
+					b.Successes,
+				),
+				ErrorCount: gbIntSumSemigroup.Concat(
+					a.ErrorCount,
+					b.ErrorCount,
+				),
+				Errors: gbErrorsSemigroup.Concat(
+					a.Errors,
+					b.Errors,
+				),
 			}
 		},
 	)
+}
+
+func goldenBraidUpsertResultToSummary(
+	result GoldenBraidUpsertResult,
+) GoldenBraidProcessingResult {
+	return F.Pipe1(
+		result,
+		F.Ternary(
+			// Check if error
+			func(r GoldenBraidUpsertResult) bool { return r.Error != nil },
+			// Error branch
+			func(r GoldenBraidUpsertResult) GoldenBraidProcessingResult {
+				return GoldenBraidProcessingResult{
+					ErrorCount: 1,
+					Errors:     []error{r.Error},
+				}
+			},
+			// Success branch - nested ternary for created vs updated
+			func(r GoldenBraidUpsertResult) GoldenBraidProcessingResult {
+				return F.Pipe1(
+					r,
+					F.Ternary(
+						func(r GoldenBraidUpsertResult) bool { return r.Created },
+						// Created branch
+						func(r GoldenBraidUpsertResult) GoldenBraidProcessingResult {
+							return GoldenBraidProcessingResult{
+								CreatedCount: 1,
+								Successes:    []string{r.PlasmidID},
+							}
+						},
+						// Updated branch
+						func(r GoldenBraidUpsertResult) GoldenBraidProcessingResult {
+							return GoldenBraidProcessingResult{
+								UpdatedCount: 1,
+								Successes:    []string{r.PlasmidID},
+							}
+						},
+					),
+				)
+			},
+		),
+	)
+}
+
+// Build NewPlasmid request from context
+func buildNewPlasmidRequest(ctx GoldenBraidContext) *stock.NewPlasmid {
+	return &stock.NewPlasmid{
+		Data: &stock.NewPlasmid_Data{
+			Type: "plasmid",
+			Attributes: &stock.NewPlasmidAttributes{
+				Name:      ctx.Plasmid.Name,
+				CreatedBy: ctx.UserEmail,
+				UpdatedBy: ctx.UserEmail,
+				Summary:   ctx.Plasmid.Summary,
+				Genes: O.GetOrElse(
+					F.Constant([]string{}),
+				)(
+					ctx.Plasmid.Genes,
+				),
+				Publications: O.GetOrElse(
+					F.Constant([]string{}),
+				)(
+					ctx.Plasmid.Publications,
+				),
+				DictyPlasmidProperty: ctx.PlasmidCV,
+			},
+		},
+	}
+}
+
+// Build PlasmidUpdate request from context and existing plasmid
+func buildUpdatePlasmidRequest(
+	ctx GoldenBraidContext,
+	existing *stock.Plasmid,
+) *stock.PlasmidUpdate {
+	return &stock.PlasmidUpdate{
+		Data: &stock.PlasmidUpdate_Data{
+			Id:   existing.Data.Id,
+			Type: "plasmid",
+			Attributes: &stock.PlasmidUpdateAttributes{
+				Name:      ctx.Plasmid.Name,
+				UpdatedBy: ctx.UserEmail,
+				Summary:   ctx.Plasmid.Summary,
+				Genes: O.GetOrElse(
+					F.Constant([]string{}),
+				)(
+					ctx.Plasmid.Genes,
+				),
+				Publications: O.GetOrElse(
+					F.Constant([]string{}),
+				)(
+					ctx.Plasmid.Publications,
+				),
+				DictyPlasmidProperty: ctx.PlasmidCV,
+			},
+		},
+	}
+}
+
+func createNewPlasmid(
+	ctx GoldenBraidContext,
+) func(O.Option[*stock.Plasmid]) IOE.IOEither[error, GoldenBraidUpsertResult] {
+	return func(_ O.Option[*stock.Plasmid]) IOE.IOEither[error, GoldenBraidUpsertResult] {
+		return F.Pipe2(
+			IOE.TryCatchError(func() (*stock.Plasmid, error) {
+				return regsc.GetStockAPIClient().CreatePlasmid(
+					context.Background(),
+					buildNewPlasmidRequest(ctx),
+				)
+			}),
+			IOE.MapLeft[*stock.Plasmid](func(err error) error {
+				return fmt.Errorf(
+					"failed to create plasmid %s: %w",
+					ctx.Plasmid.Name,
+					err,
+				)
+			}),
+			IOE.Map[error](
+				func(created *stock.Plasmid) GoldenBraidUpsertResult {
+					return GoldenBraidUpsertResult{
+						PlasmidID: created.Data.Id,
+						Created:   true,
+						Error:     nil,
+					}
+				},
+			),
+		)
+	}
+}
+
+func updateExistingPlasmid(
+	ctx GoldenBraidContext,
+) func(O.Option[*stock.Plasmid]) IOE.IOEither[error, GoldenBraidUpsertResult] {
+	return func(opt O.Option[*stock.Plasmid]) IOE.IOEither[error, GoldenBraidUpsertResult] {
+		existing := O.GetOrElse(func() *stock.Plasmid {
+			panic("impossible: Option was None in update branch")
+		})(opt)
+		return F.Pipe2(
+			IOE.TryCatchError(func() (*stock.Plasmid, error) {
+				return regsc.GetStockAPIClient().UpdatePlasmid(
+					context.Background(),
+					buildUpdatePlasmidRequest(ctx, existing),
+				)
+			}),
+			IOE.MapLeft[*stock.Plasmid](func(err error) error {
+				return fmt.Errorf(
+					"failed to update plasmid %s: %w",
+					existing.Data.Attributes.Name,
+					err,
+				)
+			}),
+			IOE.Map[error](
+				func(updated *stock.Plasmid) GoldenBraidUpsertResult {
+					return GoldenBraidUpsertResult{
+						PlasmidID: updated.Data.Id,
+						Created:   false,
+						Error:     nil,
+					}
+				},
+			),
+		)
+	}
+}
+
+// processPlasmidWithUpsert processes a single validated plasmid by upserting it to the API
+func processPlasmidWithUpsert(
+	userEmail string,
+	plasmidCVTerm string,
+) func(*source.GoldenBraidPlasmid) E.Either[error, GoldenBraidUpsertResult] {
+	return func(plasmid *source.GoldenBraidPlasmid) E.Either[error, GoldenBraidUpsertResult] {
+		ctx := GoldenBraidContext{
+			Plasmid:   plasmid,
+			UserEmail: userEmail,
+			PlasmidCV: plasmidCVTerm,
+		}
+		return F.Pipe3(
+			fetchPlasmidByName(ctx.Plasmid.Name),
+			IOE.Chain(F.Ternary(
+				O.IsSome[*stock.Plasmid],
+				updateExistingPlasmid(ctx),
+				createNewPlasmid(ctx),
+			)),
+			fputil.ToEither[error, GoldenBraidUpsertResult],
+			E.MapLeft[GoldenBraidUpsertResult](func(err error) error {
+				return fmt.Errorf(
+					"failed to upsert plasmid %s: %w",
+					plasmid.Name,
+					err,
+				)
+			}),
+		)
+	}
+}
+
+// fetchPlasmidByName uses ListPlasmids with filter to find plasmid by name
+func fetchPlasmidByName(
+	name string,
+) IOE.IOEither[error, O.Option[*stock.Plasmid]] {
+	return F.Pipe2(
+		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
+			return regsc.GetStockAPIClient().ListPlasmids(
+				context.Background(),
+				&stock.StockParameters{
+					Filter: fmt.Sprintf("plasmid_name===%s", name),
+					Limit:  1,
+				},
+			)
+		}),
+		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
+			return fmt.Errorf("failed to fetch plasmid %s: %w", name, err)
+		}),
+		IOE.Map[error](collectionToOption),
+	)
+}
+
+// collectionToOption converts PlasmidCollection to Option[Plasmid]
+func collectionToOption(
+	collection *stock.PlasmidCollection,
+) O.Option[*stock.Plasmid] {
+	return F.Pipe2(
+		collection.Data,
+		A.Head[*stock.PlasmidCollection_Data], // Returns Option - None if empty
+		O.Map(convertCollectionDataToPlasmid), // Transform if Some
+	)
+}
+
+// convertCollectionDataToPlasmid converts collection data to full Plasmid message
+func convertCollectionDataToPlasmid(
+	data *stock.PlasmidCollection_Data,
+) *stock.Plasmid {
+	return &stock.Plasmid{
+		Data: &stock.Plasmid_Data{
+			Type:       data.Type,
+			Id:         data.Id,
+			Attributes: data.Attributes,
+		},
+	}
 }
 
 // openReader opens a CSV file from config and returns a reader wrapped in IOEither
 func openReader(
 	config LoaderConfig,
 ) IOE.IOEither[error, LoaderConfig] {
-	return IOE.TryCatchError(func() (LoaderConfig, error) {
-		source, _ := config.Cmd.Flags().GetString("input-source")
-		switch source {
-		case "folder":
-			return openGoldenBraidFileReader(config)
-		case "bucket":
-			return openGoldenBraidS3Reader(config)
-		default:
-			return config, fmt.Errorf(
-				"unsupported input source %s",
-				source,
-			)
-		}
-	})
+	return F.Pipe1(
+		config,
+		F.Switch(
+			func(cfg LoaderConfig) string {
+				source, _ := cfg.Cmd.Flags().GetString("input-source")
+				return source
+			},
+			map[string]func(LoaderConfig) IOE.IOEither[error, LoaderConfig]{
+				"folder": openGoldenBraidFileReader,
+				"bucket": openGoldenBraidS3Reader,
+			},
+			defaultGoldenBraidReader,
+		),
+	)
 }
 
-func openGoldenBraidFileReader(config LoaderConfig) (LoaderConfig, error) {
+func openGoldenBraidFileReader(
+	config LoaderConfig,
+) IOE.IOEither[error, LoaderConfig] {
 	inputPath, _ := config.Cmd.Flags().GetString("input")
-	file, err := os.Open(inputPath)
-	if err != nil {
-		return config, fmt.Errorf(
-			"failed to open CSV file %s: %w",
-			inputPath,
-			err,
-		)
-	}
 
-	reader := csv.NewReader(file)
-	reader.FieldsPerRecord = source.GoldenBraidFieldCount
-	reader.TrimLeadingSpace = true
+	return F.Pipe2(
+		File.Open(inputPath),
+		IOE.MapLeft[*os.File](func(err error) error {
+			return fmt.Errorf("failed to open CSV file %s: %w", inputPath, err)
+		}),
+		IOE.Chain(func(file *os.File) IOE.IOEither[error, LoaderConfig] {
+			reader := csv.NewReader(file)
+			reader.FieldsPerRecord = source.GoldenBraidFieldCount
+			reader.TrimLeadingSpace = true
 
-	// Skip header row
-	if _, err := reader.Read(); err != nil {
-		file.Close()
-		return config, fmt.Errorf(
-			"failed to read CSV header: %w",
-			err,
-		)
-	}
-
-	config.Reader = reader
-	config.Closer = file
-	return config, nil
+			// Read and skip header - returns IOE
+			return F.Pipe2(
+				IOE.TryCatchError(func() ([]string, error) {
+					return reader.Read()
+				}),
+				IOE.MapLeft[[]string](func(err error) error {
+					file.Close() // Clean up on error
+					return fmt.Errorf("failed to read CSV header: %w", err)
+				}),
+				IOE.Map[error](func(_ []string) LoaderConfig {
+					config.Reader = reader
+					config.Closer = file
+					return config
+				}),
+			)
+		}),
+	)
 }
 
-func openGoldenBraidS3Reader(config LoaderConfig) (LoaderConfig, error) {
+func openGoldenBraidS3Reader(
+	config LoaderConfig,
+) IOE.IOEither[error, LoaderConfig] {
 	bucket, _ := config.Cmd.Flags().GetString("s3-bucket")
 	bucketPath, _ := config.Cmd.Flags().GetString("s3-bucket-path")
 	file, _ := config.Cmd.Flags().GetString("input")
-	reader, err := registry.GetS3Client().GetObject(
-		bucket,
-		path.Join(bucketPath, file),
-		minio.GetObjectOptions{},
-	)
-	if err != nil {
-		return config, fmt.Errorf(
-			"failed to open s3 file %s/%s: %w",
-			bucketPath,
-			file,
-			err,
-		)
-	}
-	csvReader := csv.NewReader(reader)
-	csvReader.FieldsPerRecord = source.GoldenBraidFieldCount
-	csvReader.TrimLeadingSpace = true
+	objectPath := path.Join(bucketPath, file)
 
-	// Skip header row
-	if _, err := csvReader.Read(); err != nil {
-		reader.Close()
-		return config, fmt.Errorf(
-			"failed to read CSV header: %w",
-			err,
-		)
-	}
-	config.Reader = csvReader
-	config.Closer = reader
-	return config, nil
+	return F.Pipe2(
+		IOE.TryCatchError(func() (io.ReadCloser, error) {
+			return registry.GetS3Client().GetObject(
+				bucket,
+				objectPath,
+				minio.GetObjectOptions{},
+			)
+		}),
+		IOE.MapLeft[io.ReadCloser](func(err error) error {
+			return fmt.Errorf("failed to open s3 file %s: %w", objectPath, err)
+		}),
+		IOE.Chain(func(reader io.ReadCloser) IOE.IOEither[error, LoaderConfig] {
+			csvReader := csv.NewReader(reader)
+			csvReader.FieldsPerRecord = source.GoldenBraidFieldCount
+			csvReader.TrimLeadingSpace = true
+
+			// Read and skip header - returns IOE
+			return F.Pipe2(
+				IOE.TryCatchError(func() ([]string, error) {
+					return csvReader.Read()
+				}),
+				IOE.MapLeft[[]string](func(err error) error {
+					reader.Close() // Clean up on error
+					return fmt.Errorf("failed to read CSV header: %w", err)
+				}),
+				IOE.Map[error](func(_ []string) LoaderConfig {
+					config.Reader = csvReader
+					config.Closer = reader
+					return config
+				}),
+			)
+		}),
+	)
+}
+
+func defaultGoldenBraidReader(
+	cfg LoaderConfig,
+) IOE.IOEither[error, LoaderConfig] {
+	source, _ := cfg.Cmd.Flags().GetString("input-source")
+	return IOE.Left[LoaderConfig](
+		fmt.Errorf("unsupported input source %s", source),
+	)
 }
 
 // streamAndProcessRecords reads CSV records one by one and processes them
@@ -189,12 +468,6 @@ func streamAndProcessRecords(
 				break
 			}
 			if err != nil {
-				config.Logger.Error(
-					"CSV read error, partial results",
-					"successes", len(summary.Successes),
-					"errors", summary.ErrorCount,
-					"error", err,
-				)
 				return summary, fmt.Errorf("CSV read error: %w", err)
 			}
 
@@ -223,91 +496,22 @@ func streamAndProcessRecords(
 					source.HasValidUser,
 					source.UserError,
 				)),
-				E.Chain(processPlasmid),
+				E.Chain(processPlasmidWithUpsert(userEmail, plasmidCVTerm)),
 				E.Fold(
-					createErrorResult,
-					createProcessingResult,
+					func(err error) GoldenBraidUpsertResult {
+						return GoldenBraidUpsertResult{Error: err}
+					},
+					F.Identity[GoldenBraidUpsertResult],
 				),
 			)
 
 			summary = GoldenBraidSummarySemigroup().Concat(
 				summary,
-				goldenBraidResultToSummary(result),
+				goldenBraidUpsertResultToSummary(result),
 			)
 		}
 
 		return summary, nil
-	})
-}
-
-func goldenBraidResultToSummary(
-	result PlasmidProcessingResult,
-) GoldenBraidProcessingResult {
-	return F.Pipe1(
-		result.Error,
-		O.Fold(
-			func() GoldenBraidProcessingResult {
-				return GoldenBraidProcessingResult{
-					Successes: []string{result.PlasmidID},
-				}
-			},
-			func(err error) GoldenBraidProcessingResult {
-				return GoldenBraidProcessingResult{
-					ErrorCount: 1,
-					Errors:     []string{err.Error()},
-				}
-			},
-		),
-	)
-}
-
-// processPlasmid processes a single validated plasmid by loading it to the API
-func processPlasmid(p *source.GoldenBraidPlasmid) E.Either[error, string] {
-	return F.Pipe2(p, loadPlasmidToAPI, fputil.ToEither[error, string])
-}
-
-// loadPlasmidToAPI loads a plasmid to the stock center API
-func loadPlasmidToAPI(
-	p *source.GoldenBraidPlasmid,
-) IOE.IOEither[error, string] {
-	return IOE.TryCatchError(func() (string, error) {
-		client := regsc.GetStockAPIClient()
-
-		plasmidData := &stock.NewPlasmid{
-			Data: &stock.NewPlasmid_Data{
-				Type: "plasmid",
-				Attributes: &stock.NewPlasmidAttributes{
-					Name:      p.Name,
-					Summary:   p.Summary,
-					CreatedBy: p.User,
-					UpdatedBy: p.User,
-					Genes: O.GetOrElse(
-						F.Constant([]string{}),
-					)(
-						p.Genes,
-					),
-					Publications: O.GetOrElse(
-						F.Constant([]string{}),
-					)(
-						p.Publications,
-					),
-				},
-			},
-		}
-
-		response, err := client.CreatePlasmid(
-			context.Background(),
-			plasmidData,
-		)
-		if err != nil {
-			return "", fmt.Errorf(
-				"failed to create plasmid %s: %w",
-				p.Name,
-				err,
-			)
-		}
-
-		return response.Data.Id, nil
 	})
 }
 
@@ -327,10 +531,11 @@ func useGoldenBraidReader(
 	config LoaderConfig,
 ) IOE.IOEither[error, GoldenBraidProcessingResult] {
 	return F.Pipe2(
-		config,
-		logGoldenBraidStep[LoaderConfig](
-			config.Logger,
-			"CSV reader opened, processing records",
+		IOE.Of[error](config),
+		IOE.ChainFirstIOK[error](
+			IO.Logf[LoaderConfig](
+				"CSV reader opened, processing records: %+v",
+			),
 		),
 		IOE.Chain(streamAndProcessRecords),
 	)
@@ -345,17 +550,15 @@ func LoadGoldenBraid(cmd *cobra.Command, _ []string) error {
 		slog.NewLogLogger(handler, slog.LevelError),
 	)
 
-	return F.Pipe6(
+	output := F.Pipe6(
 		IOE.Do[error](LoaderConfig{
 			Viper:  viper.GetViper(),
 			Cmd:    cmd,
 			Reader: nil,
-			Logger: slogger,
 		}),
-		IOE.ChainFirst(
-			logGoldenBraidStep[LoaderConfig](
-				slogger,
-				"Starting GoldenBraid loading",
+		IOE.ChainFirstIOK[error](
+			IO.Logf[LoaderConfig](
+				"Starting GoldenBraid loading: %+v",
 			),
 		),
 		IOE.Chain(
@@ -367,24 +570,58 @@ func LoadGoldenBraid(cmd *cobra.Command, _ []string) error {
 				)
 			},
 		),
-		IOE.ChainFirst(
-			logGoldenBraidStep[GoldenBraidProcessingResult](
-				slogger,
-				"Processing complete",
+		IOE.ChainFirstIOK[error](
+			IO.Logf[GoldenBraidProcessingResult](
+				"Processing complete: %+v",
 			),
 		),
 		fputil.ToEither[error, GoldenBraidProcessingResult],
 		elog("GoldenBraid loading result"),
 		E.Fold(
-			fperrors.IdentityError,
-			func(summary GoldenBraidProcessingResult) error {
-				slogger.Info(
-					"GoldenBraid loading summary",
-					"successes", len(summary.Successes),
-					"errors", summary.ErrorCount,
-				)
-				return nil
-			},
-		),
+			onGoldenBraidSummaryError,
+			onGoldenBraidSummarySuccess),
 	)
+
+	return handleGoldenBraidSummaryOutput(slogger, output)
+}
+
+func onGoldenBraidSummaryError(
+	err error,
+) T.Tuple2[GoldenBraidProcessingResult, error] {
+	return T.MakeTuple2(GoldenBraidProcessingResult{}, err)
+}
+
+func onGoldenBraidSummarySuccess(
+	summary GoldenBraidProcessingResult,
+) T.Tuple2[GoldenBraidProcessingResult, error] {
+	return T.MakeTuple2(summary, (error)(nil))
+}
+
+func handleGoldenBraidSummaryOutput(
+	slogger *slog.Logger,
+	output T.Tuple2[GoldenBraidProcessingResult, error],
+) error {
+	if output.F2 != nil {
+		return output.F2
+	}
+	summary := output.F1
+	slogger.Info(
+		"GoldenBraid loading summary",
+		"created", summary.CreatedCount,
+		"updated", summary.UpdatedCount,
+		"total_successes", len(summary.Successes),
+		"errors", summary.ErrorCount,
+	)
+
+	if len(summary.Errors) > 0 {
+		joinedErrors := errors.Join(summary.Errors...)
+		slogger.Warn(
+			"error samples (first 5)",
+			"sample_count", len(summary.Errors),
+			"total_errors", summary.ErrorCount,
+			"messages", joinedErrors.Error(),
+		)
+	}
+
+	return nil
 }

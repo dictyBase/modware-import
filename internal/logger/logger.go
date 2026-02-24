@@ -7,6 +7,7 @@ import (
 
 	logrus_stack "github.com/Gurpartap/logrus-stack"
 	F "github.com/IBM/fp-go/function"
+	T "github.com/IBM/fp-go/tuple"
 	"github.com/dictyBase/modware-import/internal/registry"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
@@ -23,10 +24,70 @@ func SetupCliLogger(cltx *cli.Context) error {
 	return nil
 }
 
-func NewCliLogger(c *cli.Context) (*logrus.Entry, error) {
-	format := c.String("log-format")
-	name := c.String("log-level")
-	fname := c.String("log-file")
+func ExtractCliLogKey(cltx *cli.Context) T.Tuple2[string, string] {
+	return T.MakeTuple2(cltx.String("log-level"), cltx.String("log-format"))
+}
+
+func MakeDebugTextHandler() slog.Handler {
+	return slog.NewTextHandler(
+		os.Stderr,
+		&slog.HandlerOptions{Level: slog.LevelDebug},
+	)
+}
+
+func MakeDebugJSONHandler() slog.Handler {
+	return slog.NewJSONHandler(
+		os.Stderr,
+		&slog.HandlerOptions{Level: slog.LevelDebug},
+	)
+}
+
+func MakeInfoTextHandler() slog.Handler {
+	return slog.NewTextHandler(
+		os.Stderr,
+		&slog.HandlerOptions{Level: slog.LevelInfo},
+	)
+}
+
+func MakeInfoJSONHandler() slog.Handler {
+	return slog.NewJSONHandler(
+		os.Stderr,
+		&slog.HandlerOptions{Level: slog.LevelInfo},
+	)
+}
+
+var SlogCliHandlers = map[T.Tuple2[string, string]]func(*cli.Context) slog.Handler{
+	T.MakeTuple2("debug", "text"): F.Constant1[*cli.Context](
+		MakeDebugTextHandler(),
+	),
+	T.MakeTuple2("debug", "json"): F.Constant1[*cli.Context](
+		MakeDebugJSONHandler(),
+	),
+	T.MakeTuple2("info", "text"): F.Constant1[*cli.Context](
+		MakeInfoTextHandler(),
+	),
+	T.MakeTuple2("info", "json"): F.Constant1[*cli.Context](
+		MakeInfoJSONHandler(),
+	),
+}
+
+var DefaultCliSlogHandler = F.Constant1[*cli.Context](MakeInfoJSONHandler())
+
+func GetCliSlogHandler(cltx *cli.Context) slog.Handler {
+	return F.Pipe1(
+		cltx,
+		F.Switch(
+			ExtractCliLogKey,      // Key extractor
+			SlogCliHandlers,       // Handler map
+			DefaultCliSlogHandler, // Fallback
+		),
+	)
+}
+
+func NewCliLogger(cltx *cli.Context) (*logrus.Entry, error) {
+	format := cltx.String("log-format")
+	name := cltx.String("log-level")
+	fname := cltx.String("log-file")
 	lfmt, err := getLogFmt(format)
 	if err != nil {
 		return &logrus.Entry{}, err

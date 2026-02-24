@@ -17,7 +17,10 @@ var StrainInvCmd = &cobra.Command{
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
-		if err := setReader(viper.GetString("strain-inventory-input"), regsc.InvReader); err != nil {
+		if err := setReader(
+			viper.GetString("strain-inventory-input"),
+			regsc.InvReader,
+		); err != nil {
 			return err
 		}
 		return nil

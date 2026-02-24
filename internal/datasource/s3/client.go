@@ -43,10 +43,6 @@ func NewS3Client(_ *cobra.Command) (*minio.Client, error) {
 }
 
 func NewCliS3Client(cltx *cli.Context) (*minio.Client, error) {
-	registry.GetLogger().
-		Debugf("using minio server:%s access-key:%s secret-key:%s port:%s",
-			cltx.String("s3-server"), cltx.String("access-key"),
-			cltx.String("secret-key"), cltx.String("s3-server-port"))
 	return minio.New(
 		fmt.Sprintf(
 			"%s:%s",

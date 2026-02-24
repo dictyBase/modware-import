@@ -3,9 +3,7 @@ package gpadstats
 import (
 	"bufio"
 	"compress/gzip"
-	"fmt"
 	"io"
-	"net/http"
 
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 )
@@ -20,20 +18,6 @@ type wrappedReadCloser struct {
 
 func (w *wrappedReadCloser) Close() error {
 	return w.closer()
-}
-
-func httpGet(url string) IOE.IOEither[error, io.ReadCloser] {
-	return IOE.TryCatchError(func() (io.ReadCloser, error) {
-		resp, err := http.Get(url) //nolint:gosec
-		if err != nil {
-			return nil, err
-		}
-		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
-			return nil, fmt.Errorf("bad status: %s", resp.Status)
-		}
-		return resp.Body, nil
-	})
 }
 
 func gzipReader(r io.ReadCloser) IOE.IOEither[error, io.ReadCloser] {

@@ -18,7 +18,10 @@ var PlasmidInvCmd = &cobra.Command{
 		if err := SetAnnoAPIClient(); err != nil {
 			return err
 		}
-		if err := setReader(viper.GetString("plasmid-inventory-input"), regsc.InvReader); err != nil {
+		if err := setReader(
+			viper.GetString("plasmid-inventory-input"),
+			regsc.InvReader,
+		); err != nil {
 			return err
 		}
 		return nil

@@ -16,6 +16,7 @@ const (
 	// Worker Pool Defaults
 	DefaultWorkerPoolSize     = 4
 	DefaultBatchSize          = 100
+	DefaultPlasmidBatchSize   = 30
 	DefaultCSVWorkerPoolSize  = 20
 	DefaultTimeoutSeconds     = 300
 	DefaultRetryBackoffFactor = 2
