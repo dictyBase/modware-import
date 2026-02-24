@@ -119,7 +119,10 @@ func SetS3Client(cltx *cli.Context) IOE.IOEither[error, *minio.Client] {
 			return s3.NewCliS3Client(cltx)
 		}),
 		IOE.MapLeft[*minio.Client](func(err error) error {
-			return fmt.Errorf("error in getting instance of s3 client %w", err)
+			return fmt.Errorf(
+				"error in getting instance of s3 client %w",
+				err,
+			)
 		}),
 		IOE.Map[error](func(client *minio.Client) *minio.Client {
 			registry.SetS3Client(client)
@@ -133,8 +136,22 @@ func SetS3Client(cltx *cli.Context) IOE.IOEither[error, *minio.Client] {
 func SetStockAndS3Clients(cltx *cli.Context) error {
 	return F.Pipe2(
 		IOE.SequenceArraySeq([]IOE.IOEither[error, any]{
-			IOE.Map[error](func(conn *grpc.ClientConn) any { return conn })(SetStockClient(cltx)),
-			IOE.Map[error](func(client *minio.Client) any { return client })(SetS3Client(cltx)),
+			F.Pipe2(
+				cltx,
+				SetStockClient,
+				IOE.Map[error](func(conn *grpc.ClientConn) any {
+					return conn
+				}),
+			),
+			F.Pipe2(
+				cltx,
+				SetS3Client,
+				IOE.Map[error](
+					func(client *minio.Client) any {
+						return client
+					},
+				),
+			),
 		}),
 		fputil.ToEither[error, []any],
 		E.Fold(
