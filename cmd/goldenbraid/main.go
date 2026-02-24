@@ -29,6 +29,32 @@ func main() {
 				),
 			},
 			{
+				Name:   "plasmid",
+				Usage:  "Load GoldenBraid plasmid CSV data",
+				Action: loader.LoadGoldenBraidCli,
+				Before: stockcenter.SetStockAndS3Clients,
+				Flags: slices.Concat(
+					stockcenter.InputFlags(),
+					stockcenter.S3Flags(),
+					stockcenter.StockConnectionFlags(),
+					stockcenter.LoggingFlags(),
+					[]cli.Flag{
+						&cli.StringFlag{
+							Name:     "user-email",
+							Aliases:  []string{"u"},
+							Usage:    "Email of the user loading the data",
+							Required: true,
+						},
+						&cli.StringFlag{
+							Name:     "plasmid-cvterm",
+							Aliases:  []string{"c"},
+							Usage:    "Plasmid ontology term (e.g., 'GB vector')",
+							Required: true,
+						},
+					},
+				),
+			},
+			{
 				Name:   "plasmid-ontology",
 				Usage:  "Update plasmids with ontology term",
 				Action: loader.LoadPlasmidOntologyCli,
