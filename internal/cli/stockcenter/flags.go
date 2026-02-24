@@ -11,7 +11,6 @@ func StockConnectionFlags() []cli.Flag {
 		&cli.StringFlag{
 			Name:    "stock-grpc-host",
 			Usage:   "gRPC host address for stock service",
-			Value:   "stock-api",
 			EnvVars: []string{"STOCK_API_SERVICE_HOST"},
 		},
 		&cli.StringFlag{
@@ -26,9 +25,9 @@ func StockConnectionFlags() []cli.Flag {
 func InputFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
-			Name:     "input",
-			Usage:    "Input file path (local path or filename in bucket)",
-			Required: true,
+			Name:  "input",
+			Usage: "Input file path (local path or filename in bucket)",
+			Value: "goldenbraid.csv",
 		},
 		&cli.StringFlag{
 			Name:  "input-source",
