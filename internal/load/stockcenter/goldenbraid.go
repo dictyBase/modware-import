@@ -191,37 +191,34 @@ func fetchPlasmidByName(
 	)
 }
 
-// createNewPlasmid returns the None-branch thunk for O.Fold.
-// It creates a new plasmid via API, closing over the context.
+// createNewPlasmid creates a new plasmid via API.
 func createNewPlasmid(
 	ctx *source.GoldenBraidContext,
-) func() IOE.IOEither[error, GoldenBraidUpsertResult] {
-	return func() IOE.IOEither[error, GoldenBraidUpsertResult] {
-		return F.Pipe2(
-			IOE.TryCatchError(func() (*stock.Plasmid, error) {
-				return regsc.GetStockAPIClient().CreatePlasmid(
-					context.Background(),
-					buildNewPlasmidRequest(ctx),
-				)
-			}),
-			IOE.MapLeft[*stock.Plasmid](func(err error) error {
-				return fmt.Errorf(
-					"failed to create plasmid %s: %w",
-					ctx.Name,
-					err,
-				)
-			}),
-			IOE.Map[error](
-				func(created *stock.Plasmid) GoldenBraidUpsertResult {
-					return GoldenBraidUpsertResult{
-						PlasmidID: created.Data.Id,
-						Created:   true,
-						Error:     nil,
-					}
-				},
-			),
-		)
-	}
+) IOE.IOEither[error, GoldenBraidUpsertResult] {
+	return F.Pipe2(
+		IOE.TryCatchError(func() (*stock.Plasmid, error) {
+			return regsc.GetStockAPIClient().CreatePlasmid(
+				context.Background(),
+				buildNewPlasmidRequest(ctx),
+			)
+		}),
+		IOE.MapLeft[*stock.Plasmid](func(err error) error {
+			return fmt.Errorf(
+				"failed to create plasmid %s: %w",
+				ctx.Name,
+				err,
+			)
+		}),
+		IOE.Map[error](
+			func(created *stock.Plasmid) GoldenBraidUpsertResult {
+				return GoldenBraidUpsertResult{
+					PlasmidID: created.Data.Id,
+					Created:   true,
+					Error:     nil,
+				}
+			},
+		),
+	)
 }
 
 // skipExistingPlasmid is the Some-branch function for O.Fold.
@@ -243,7 +240,12 @@ func processPlasmidWithUpsert(
 ) E.Either[error, GoldenBraidUpsertResult] {
 	return F.Pipe3(
 		fetchPlasmidByName(ctx.Name),
-		IOE.Chain(O.Fold(createNewPlasmid(ctx), skipExistingPlasmid)),
+		IOE.Chain(O.Fold(
+			func() IOE.IOEither[error, GoldenBraidUpsertResult] {
+				return createNewPlasmid(ctx)
+			},
+			skipExistingPlasmid,
+		)),
 		fputil.ToEither[error, GoldenBraidUpsertResult],
 		E.MapLeft[GoldenBraidUpsertResult](func(err error) error {
 			return fmt.Errorf(
