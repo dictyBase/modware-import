@@ -49,12 +49,7 @@ type GoldenBraidContext struct {
 	UserEmail string
 	PlasmidCV string
 	Depositor string
-}
-
-// WithExistingPlasmid extends GoldenBraidContext with a fetched plasmid lookup result
-type WithExistingPlasmid struct {
-	GoldenBraidContext
-	Existing O.Option[*stock.Plasmid]
+	Existing  O.Option[*stock.Plasmid]
 }
 
 // Result of UPSERT operation
@@ -84,16 +79,6 @@ var (
 			A.Slice[error](0, gbMaxErrorMessages),
 		)
 	})
-
-	// SetExistingPlasmid is a curried constructor used with IOE.Bind
-	SetExistingPlasmid = F.Curry2(
-		func(existing O.Option[*stock.Plasmid], ctx GoldenBraidContext) WithExistingPlasmid {
-			return WithExistingPlasmid{
-				GoldenBraidContext: ctx,
-				Existing:           existing,
-			}
-		},
-	)
 )
 
 func GoldenBraidSummarySemigroup() S.Semigroup[GoldenBraidProcessingResult] {
@@ -195,10 +180,10 @@ func buildNewPlasmidRequest(ctx GoldenBraidContext) *stock.NewPlasmid {
 }
 
 // fetchPlasmidByName uses ListPlasmids with filter to find a plasmid by name.
-// It accepts a GoldenBraidContext and extracts the plasmid name internally.
+// It returns an updated GoldenBraidContext with the Existing field populated.
 func fetchPlasmidByName(
 	ctx GoldenBraidContext,
-) IOE.IOEither[error, O.Option[*stock.Plasmid]] {
+) IOE.IOEither[error, GoldenBraidContext] {
 	name := ctx.Plasmid.Name
 	return F.Pipe2(
 		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
@@ -213,7 +198,15 @@ func fetchPlasmidByName(
 		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
 			return fmt.Errorf("failed to fetch plasmid %s: %w", name, err)
 		}),
-		IOE.Map[error](collectionToOption),
+		IOE.Map[error](func(col *stock.PlasmidCollection) GoldenBraidContext {
+			return GoldenBraidContext{
+				Plasmid:   ctx.Plasmid,
+				UserEmail: ctx.UserEmail,
+				PlasmidCV: ctx.PlasmidCV,
+				Depositor: ctx.Depositor,
+				Existing:  collectionToOption(col),
+			}
+		}),
 	)
 }
 
@@ -264,12 +257,12 @@ func skipExistingPlasmid(
 
 // resolveCreateOrSkip uses O.Fold to branch: skip if the plasmid already exists, create if not.
 func resolveCreateOrSkip(
-	ctx WithExistingPlasmid,
+	ctx GoldenBraidContext,
 ) IOE.IOEither[error, GoldenBraidUpsertResult] {
 	return F.Pipe1(
 		ctx.Existing,
 		O.Fold(
-			createNewPlasmid(ctx.GoldenBraidContext),
+			createNewPlasmid(ctx),
 			skipExistingPlasmid,
 		),
 	)
@@ -290,8 +283,8 @@ func processPlasmidWithUpsert(
 			Depositor: depositor,
 		}
 		return F.Pipe4(
-			IOE.Do[error](ctx),
-			IOE.Bind(SetExistingPlasmid, fetchPlasmidByName),
+			IOE.Of[error](ctx),
+			IOE.Chain(fetchPlasmidByName),
 			IOE.Chain(resolveCreateOrSkip),
 			fputil.ToEither[error, GoldenBraidUpsertResult],
 			E.MapLeft[GoldenBraidUpsertResult](func(err error) error {
