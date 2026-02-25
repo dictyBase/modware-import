@@ -78,7 +78,7 @@ func releaseResources(
 ) IOE.IOEither[error, any] {
 	return IOE.TryCatchError(func() (any, error) {
 		closeConfig(config)
-		return nil, nil
+		return struct{}{}, nil
 	})
 }
 

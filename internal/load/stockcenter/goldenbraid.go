@@ -517,9 +517,9 @@ func releaseGoldenBraidReader(
 ) IOE.IOEither[error, any] {
 	return IOE.TryCatchError(func() (any, error) {
 		if config.Closer != nil {
-			return nil, config.Closer.Close()
+			return struct{}{}, config.Closer.Close()
 		}
-		return nil, nil
+		return struct{}{}, nil
 	})
 }
 
