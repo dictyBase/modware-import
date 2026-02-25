@@ -61,8 +61,8 @@ type GoldenBraidUpsertResult struct {
 // GoldenBraidProcessingResult holds aggregate processing statistics
 type GoldenBraidProcessingResult struct {
 	CreatedCount int      // New plasmids created
-	UpdatedCount int      // Existing plasmids updated
-	Successes    []string // All plasmid IDs (created + updated)
+	SkippedCount int      // Existing plasmids skipped (already exist)
+	Successes    []string // All plasmid IDs (created + skipped)
 	Errors       []error
 	ErrorCount   int
 }
@@ -88,9 +88,9 @@ func GoldenBraidSummarySemigroup() S.Semigroup[GoldenBraidProcessingResult] {
 					a.CreatedCount,
 					b.CreatedCount,
 				),
-				UpdatedCount: gbIntSumSemigroup.Concat(
-					a.UpdatedCount,
-					b.UpdatedCount,
+				SkippedCount: gbIntSumSemigroup.Concat(
+					a.SkippedCount,
+					b.SkippedCount,
 				),
 				Successes: gbStringArraySemigroup.Concat(
 					a.Successes,
@@ -140,7 +140,7 @@ func goldenBraidUpsertResultToSummary(
 						// Updated branch
 						func(r GoldenBraidUpsertResult) GoldenBraidProcessingResult {
 							return GoldenBraidProcessingResult{
-								UpdatedCount: 1,
+								SkippedCount: 1,
 								Successes:    []string{r.PlasmidID},
 							}
 						},
@@ -159,36 +159,6 @@ func buildNewPlasmidRequest(ctx GoldenBraidContext) *stock.NewPlasmid {
 			Attributes: &stock.NewPlasmidAttributes{
 				Name:      ctx.Plasmid.Name,
 				CreatedBy: ctx.UserEmail,
-				UpdatedBy: ctx.UserEmail,
-				Depositor: ctx.Depositor,
-				Summary:   ctx.Plasmid.Summary,
-				Genes: O.GetOrElse(
-					F.Constant([]string{}),
-				)(
-					ctx.Plasmid.Genes,
-				),
-				Publications: O.GetOrElse(
-					F.Constant([]string{}),
-				)(
-					ctx.Plasmid.Publications,
-				),
-				DictyPlasmidProperty: ctx.PlasmidCV,
-			},
-		},
-	}
-}
-
-// Build PlasmidUpdate request from context and existing plasmid
-func buildUpdatePlasmidRequest(
-	ctx GoldenBraidContext,
-	existing *stock.Plasmid,
-) *stock.PlasmidUpdate {
-	return &stock.PlasmidUpdate{
-		Data: &stock.PlasmidUpdate_Data{
-			Id:   existing.Data.Id,
-			Type: "plasmid",
-			Attributes: &stock.PlasmidUpdateAttributes{
-				Name:      ctx.Plasmid.Name,
 				UpdatedBy: ctx.UserEmail,
 				Depositor: ctx.Depositor,
 				Summary:   ctx.Plasmid.Summary,
@@ -239,37 +209,18 @@ func createNewPlasmid(
 	}
 }
 
-func updateExistingPlasmid(
+func skipExistingPlasmid(
 	ctx GoldenBraidContext,
 ) func(O.Option[*stock.Plasmid]) IOE.IOEither[error, GoldenBraidUpsertResult] {
 	return func(opt O.Option[*stock.Plasmid]) IOE.IOEither[error, GoldenBraidUpsertResult] {
 		existing := O.GetOrElse(func() *stock.Plasmid {
-			panic("impossible: Option was None in update branch")
+			panic("impossible: Option was None in skip branch")
 		})(opt)
-		return F.Pipe2(
-			IOE.TryCatchError(func() (*stock.Plasmid, error) {
-				return regsc.GetStockAPIClient().UpdatePlasmid(
-					context.Background(),
-					buildUpdatePlasmidRequest(ctx, existing),
-				)
-			}),
-			IOE.MapLeft[*stock.Plasmid](func(err error) error {
-				return fmt.Errorf(
-					"failed to update plasmid %s: %w",
-					existing.Data.Attributes.Name,
-					err,
-				)
-			}),
-			IOE.Map[error](
-				func(updated *stock.Plasmid) GoldenBraidUpsertResult {
-					return GoldenBraidUpsertResult{
-						PlasmidID: updated.Data.Id,
-						Created:   false,
-						Error:     nil,
-					}
-				},
-			),
-		)
+		return IOE.Right[error](GoldenBraidUpsertResult{
+			PlasmidID: existing.Data.Id,
+			Created:   false,
+			Error:     nil,
+		})
 	}
 }
 
@@ -290,7 +241,7 @@ func processPlasmidWithUpsert(
 			fetchPlasmidByName(ctx.Plasmid.Name),
 			IOE.Chain(F.Ternary(
 				O.IsSome[*stock.Plasmid],
-				updateExistingPlasmid(ctx),
+				skipExistingPlasmid(ctx),
 				createNewPlasmid(ctx),
 			)),
 			fputil.ToEither[error, GoldenBraidUpsertResult],
@@ -609,7 +560,7 @@ func handleGoldenBraidSummaryOutput(
 	slogger.Info(
 		"GoldenBraid loading summary",
 		"created", summary.CreatedCount,
-		"updated", summary.UpdatedCount,
+		"skipped", summary.SkippedCount,
 		"total_successes", len(summary.Successes),
 		"errors", summary.ErrorCount,
 	)
