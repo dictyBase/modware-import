@@ -129,7 +129,7 @@ func TestGoldenBraidSummaryAggregation(t *testing.T) {
 	summary = semigroup.Concat(summary, goldenBraidUpsertResultToSummary(result3))
 
 	require.Equal(t, 1, summary.CreatedCount)
-	require.Equal(t, 1, summary.UpdatedCount)
+	require.Equal(t, 1, summary.SkippedCount)
 	require.Equal(t, 1, summary.ErrorCount)
 	require.Len(t, summary.Successes, 2)
 }
