@@ -236,23 +236,14 @@ func skipExistingPlasmid(
 	})
 }
 
-// fetchAndResolve fetches a plasmid by name, then creates or skips via O.Fold.
-func fetchAndResolve(
-	ctx *source.GoldenBraidContext,
-) IOE.IOEither[error, GoldenBraidUpsertResult] {
-	return F.Pipe1(
-		fetchPlasmidByName(ctx.Name),
-		IOE.Chain(O.Fold(createNewPlasmid(ctx), skipExistingPlasmid)),
-	)
-}
-
 // processPlasmidWithUpsert processes a single validated plasmid.
 // GoldenBraid loads are create-only: existing plasmids are skipped.
 func processPlasmidWithUpsert(
 	ctx *source.GoldenBraidContext,
 ) E.Either[error, GoldenBraidUpsertResult] {
-	return F.Pipe2(
-		fetchAndResolve(ctx),
+	return F.Pipe3(
+		fetchPlasmidByName(ctx.Name),
+		IOE.Chain(O.Fold(createNewPlasmid(ctx), skipExistingPlasmid)),
 		fputil.ToEither[error, GoldenBraidUpsertResult],
 		E.MapLeft[GoldenBraidUpsertResult](func(err error) error {
 			return fmt.Errorf(
