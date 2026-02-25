@@ -51,6 +51,11 @@ func main() {
 							Usage:   "Plasmid ontology term",
 							Value:   "GB vector",
 						},
+						&cli.StringFlag{
+							Name:  "depositor",
+							Usage: "Email of the depositor",
+							Value: "gadi@bcm.edu",
+						},
 					},
 				),
 			},

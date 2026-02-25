@@ -48,6 +48,7 @@ type GoldenBraidContext struct {
 	Plasmid   *source.GoldenBraidPlasmid
 	UserEmail string
 	PlasmidCV string
+	Depositor string
 }
 
 // Result of UPSERT operation
@@ -159,6 +160,7 @@ func buildNewPlasmidRequest(ctx GoldenBraidContext) *stock.NewPlasmid {
 				Name:      ctx.Plasmid.Name,
 				CreatedBy: ctx.UserEmail,
 				UpdatedBy: ctx.UserEmail,
+				Depositor: ctx.Depositor,
 				Summary:   ctx.Plasmid.Summary,
 				Genes: O.GetOrElse(
 					F.Constant([]string{}),
@@ -188,6 +190,7 @@ func buildUpdatePlasmidRequest(
 			Attributes: &stock.PlasmidUpdateAttributes{
 				Name:      ctx.Plasmid.Name,
 				UpdatedBy: ctx.UserEmail,
+				Depositor: ctx.Depositor,
 				Summary:   ctx.Plasmid.Summary,
 				Genes: O.GetOrElse(
 					F.Constant([]string{}),
@@ -274,12 +277,14 @@ func updateExistingPlasmid(
 func processPlasmidWithUpsert(
 	userEmail string,
 	plasmidCVTerm string,
+	depositor string,
 ) func(*source.GoldenBraidPlasmid) E.Either[error, GoldenBraidUpsertResult] {
 	return func(plasmid *source.GoldenBraidPlasmid) E.Either[error, GoldenBraidUpsertResult] {
 		ctx := GoldenBraidContext{
 			Plasmid:   plasmid,
 			UserEmail: userEmail,
 			PlasmidCV: plasmidCVTerm,
+			Depositor: depositor,
 		}
 		return F.Pipe3(
 			fetchPlasmidByName(ctx.Plasmid.Name),
@@ -456,6 +461,7 @@ func streamAndProcessRecords(
 	return IOE.TryCatchError(func() (GoldenBraidProcessingResult, error) {
 		userEmail := config.Cmd.String("user-email")
 		plasmidCVTerm := config.Cmd.String("plasmid-cvterm")
+		depositor := config.Cmd.String("depositor")
 		summary := GoldenBraidProcessingResult{}
 
 		for {
@@ -492,7 +498,7 @@ func streamAndProcessRecords(
 					source.HasValidUser,
 					source.UserError,
 				)),
-				E.Chain(processPlasmidWithUpsert(userEmail, plasmidCVTerm)),
+				E.Chain(processPlasmidWithUpsert(userEmail, plasmidCVTerm, depositor)),
 				E.Fold(
 					func(err error) GoldenBraidUpsertResult {
 						return GoldenBraidUpsertResult{Error: err}
