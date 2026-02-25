@@ -18,14 +18,15 @@ const (
 	GoldenBraidFieldCount = 7
 )
 
-// GoldenBraidPlasmid represents a plasmid from the GoldenBraid CSV file
-type GoldenBraidPlasmid struct {
+// GoldenBraidContext holds all inputs for a single GoldenBraid plasmid pipeline
+type GoldenBraidContext struct {
 	Name         string             // Column 0: "Plasmid  Name"
 	Summary      string             // Column 5: "Description"
 	Genes        O.Option[[]string] // Column 3: parsed comma-separated genes
 	Publications O.Option[[]string] // Column 6: "PMID" (stored as single-element slice)
 	User         string             // From CLI --user-email
 	PlasmidType  string             // From CLI --plasmid-cvterm
+	Depositor    string             // From CLI --depositor
 	CreatedOn    time.Time          // Default timestamp
 	UpdatedOn    time.Time          // Default timestamp
 }
@@ -36,18 +37,18 @@ var (
 	hasPrefix = F.Bind2nd(strings.HasPrefix, "p")
 
 	HasValidUser = F.Flow2(
-		func(p *GoldenBraidPlasmid) string { return p.User },
+		func(p *GoldenBraidContext) string { return p.User },
 		S.IsNonEmpty,
 	)
 
 	HasValidSummary = F.Flow2(
-		func(p *GoldenBraidPlasmid) string { return p.Summary },
+		func(p *GoldenBraidContext) string { return p.Summary },
 		S.IsNonEmpty,
 	)
 
 	// HasValidName checks if plasmid name starts with 'p' and is non-empty
 	HasValidName = F.Flow2(
-		func(p *GoldenBraidPlasmid) string { return p.Name },
+		func(p *GoldenBraidContext) string { return p.Name },
 		Pred.MonoidAll[string]().Concat(
 			S.IsNonEmpty,
 			hasPrefix,
@@ -94,20 +95,22 @@ func RecordLengthError(r []string) error {
 	)
 }
 
-// BuildPlasmid constructs GoldenBraidPlasmid immutably from CSV record (curried)
-func BuildPlasmid(
+// BuildGoldenBraidContext constructs GoldenBraidContext immutably from CSV record (curried)
+func BuildGoldenBraidContext(
 	userEmail string,
 	plasmidCVTerm string,
-) func([]string) *GoldenBraidPlasmid {
-	return func(r []string) *GoldenBraidPlasmid {
+	depositor string,
+) func([]string) *GoldenBraidContext {
+	return func(r []string) *GoldenBraidContext {
 		now := time.Now()
-		return &GoldenBraidPlasmid{
+		return &GoldenBraidContext{
 			Name:         strings.TrimSpace(r[0]),
 			Summary:      strings.TrimSpace(r[5]),
 			Genes:        parseCommaSeparatedField(r[3]),
 			Publications: parsePublicationField(r[6]),
 			User:         userEmail,
 			PlasmidType:  plasmidCVTerm,
+			Depositor:    depositor,
 			CreatedOn:    now,
 			UpdatedOn:    now,
 		}
@@ -117,16 +120,16 @@ func BuildPlasmid(
 // Validation predicates
 
 // NameError creates error for invalid name
-func NameError(p *GoldenBraidPlasmid) error {
+func NameError(p *GoldenBraidContext) error {
 	return fmt.Errorf("invalid plasmid name '%s': must start with 'p'", p.Name)
 }
 
 // SummaryError creates error for empty summary
-func SummaryError(p *GoldenBraidPlasmid) error {
+func SummaryError(p *GoldenBraidContext) error {
 	return fmt.Errorf("plasmid '%s' has empty summary", p.Name)
 }
 
 // UserError creates error for missing user
-func UserError(p *GoldenBraidPlasmid) error {
+func UserError(p *GoldenBraidContext) error {
 	return fmt.Errorf("plasmid '%s' has no user email", p.Name)
 }

@@ -130,13 +130,13 @@ func TestHasValidRecordLength(t *testing.T) {
 	}
 }
 
-func TestBuildPlasmid(t *testing.T) {
+func TestBuildGoldenBraidContext(t *testing.T) {
 	tests := []struct {
 		name      string
 		record    []string
 		userEmail string
 		cvterm    string
-		validate  func(*testing.T, *GoldenBraidPlasmid)
+		validate  func(*testing.T, *GoldenBraidContext)
 	}{
 		{
 			name: "valid record with all fields",
@@ -151,7 +151,7 @@ func TestBuildPlasmid(t *testing.T) {
 			},
 			userEmail: "test@example.com",
 			cvterm:    "GB vector",
-			validate: func(t *testing.T, p *GoldenBraidPlasmid) {
+			validate: func(t *testing.T, p *GoldenBraidContext) {
 				require.Equal(t, "pDGB_A1", p.Name)
 				require.Equal(t, "Test description", p.Summary)
 				require.Equal(t, "test@example.com", p.User)
@@ -181,7 +181,7 @@ func TestBuildPlasmid(t *testing.T) {
 			},
 			userEmail: "test@example.com",
 			cvterm:    "GB vector",
-			validate: func(t *testing.T, p *GoldenBraidPlasmid) {
+			validate: func(t *testing.T, p *GoldenBraidContext) {
 				require.True(t, O.IsNone(p.Genes))
 			},
 		},
@@ -189,7 +189,7 @@ func TestBuildPlasmid(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			plasmid := BuildPlasmid(tt.userEmail, tt.cvterm)(tt.record)
+			plasmid := BuildGoldenBraidContext(tt.userEmail, tt.cvterm, "test-depositor")(tt.record)
 			require.NotNil(t, plasmid)
 			if tt.validate != nil {
 				tt.validate(t, plasmid)
@@ -203,22 +203,22 @@ func TestValidationPredicates(t *testing.T) {
 	t.Run("HasValidName", func(t *testing.T) {
 		tests := []struct {
 			name     string
-			plasmid  *GoldenBraidPlasmid
+			plasmid  *GoldenBraidContext
 			expected bool
 		}{
 			{
 				name:     "valid name with p prefix",
-				plasmid:  &GoldenBraidPlasmid{Name: "pDGB_A1"},
+				plasmid:  &GoldenBraidContext{Name: "pDGB_A1"},
 				expected: true,
 			},
 			{
 				name:     "invalid name without p prefix",
-				plasmid:  &GoldenBraidPlasmid{Name: "DGB_A1"},
+				plasmid:  &GoldenBraidContext{Name: "DGB_A1"},
 				expected: false,
 			},
 			{
 				name:     "empty name",
-				plasmid:  &GoldenBraidPlasmid{Name: ""},
+				plasmid:  &GoldenBraidContext{Name: ""},
 				expected: false,
 			},
 		}
@@ -234,17 +234,17 @@ func TestValidationPredicates(t *testing.T) {
 	t.Run("HasValidSummary", func(t *testing.T) {
 		tests := []struct {
 			name     string
-			plasmid  *GoldenBraidPlasmid
+			plasmid  *GoldenBraidContext
 			expected bool
 		}{
 			{
 				name:     "valid summary",
-				plasmid:  &GoldenBraidPlasmid{Summary: "Test description"},
+				plasmid:  &GoldenBraidContext{Summary: "Test description"},
 				expected: true,
 			},
 			{
 				name:     "empty summary",
-				plasmid:  &GoldenBraidPlasmid{Summary: ""},
+				plasmid:  &GoldenBraidContext{Summary: ""},
 				expected: false,
 			},
 		}
@@ -260,17 +260,17 @@ func TestValidationPredicates(t *testing.T) {
 	t.Run("HasValidUser", func(t *testing.T) {
 		tests := []struct {
 			name     string
-			plasmid  *GoldenBraidPlasmid
+			plasmid  *GoldenBraidContext
 			expected bool
 		}{
 			{
 				name:     "valid user",
-				plasmid:  &GoldenBraidPlasmid{User: "test@example.com"},
+				plasmid:  &GoldenBraidContext{User: "test@example.com"},
 				expected: true,
 			},
 			{
 				name:     "empty user",
-				plasmid:  &GoldenBraidPlasmid{User: ""},
+				plasmid:  &GoldenBraidContext{User: ""},
 				expected: false,
 			},
 		}
