@@ -43,15 +43,6 @@ type LoaderConfig struct {
 
 const gbMaxErrorMessages = 5
 
-// GoldenBraidContext holds the inputs for a single plasmid upsert pipeline
-type GoldenBraidContext struct {
-	Plasmid   *source.GoldenBraidPlasmid
-	UserEmail string
-	PlasmidCV string
-	Depositor string
-	Existing  O.Option[*stock.Plasmid]
-}
-
 // Result of UPSERT operation
 type GoldenBraidUpsertResult struct {
 	PlasmidID string
@@ -153,38 +144,36 @@ func goldenBraidUpsertResultToSummary(
 }
 
 // buildNewPlasmidRequest constructs a NewPlasmid API request from context
-func buildNewPlasmidRequest(ctx GoldenBraidContext) *stock.NewPlasmid {
+func buildNewPlasmidRequest(ctx *source.GoldenBraidContext) *stock.NewPlasmid {
 	return &stock.NewPlasmid{
 		Data: &stock.NewPlasmid_Data{
 			Type: "plasmid",
 			Attributes: &stock.NewPlasmidAttributes{
-				Name:      ctx.Plasmid.Name,
-				CreatedBy: ctx.UserEmail,
-				UpdatedBy: ctx.UserEmail,
+				Name:      ctx.Name,
+				CreatedBy: ctx.User,
+				UpdatedBy: ctx.User,
 				Depositor: ctx.Depositor,
-				Summary:   ctx.Plasmid.Summary,
+				Summary:   ctx.Summary,
 				Genes: O.GetOrElse(
 					F.Constant([]string{}),
 				)(
-					ctx.Plasmid.Genes,
+					ctx.Genes,
 				),
 				Publications: O.GetOrElse(
 					F.Constant([]string{}),
 				)(
-					ctx.Plasmid.Publications,
+					ctx.Publications,
 				),
-				DictyPlasmidProperty: ctx.PlasmidCV,
+				DictyPlasmidProperty: ctx.PlasmidType,
 			},
 		},
 	}
 }
 
 // fetchPlasmidByName uses ListPlasmids with filter to find a plasmid by name.
-// It returns an updated GoldenBraidContext with the Existing field populated.
 func fetchPlasmidByName(
-	ctx GoldenBraidContext,
-) IOE.IOEither[error, GoldenBraidContext] {
-	name := ctx.Plasmid.Name
+	name string,
+) IOE.IOEither[error, O.Option[*stock.Plasmid]] {
 	return F.Pipe2(
 		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
 			return regsc.GetStockAPIClient().ListPlasmids(
@@ -198,22 +187,14 @@ func fetchPlasmidByName(
 		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
 			return fmt.Errorf("failed to fetch plasmid %s: %w", name, err)
 		}),
-		IOE.Map[error](func(col *stock.PlasmidCollection) GoldenBraidContext {
-			return GoldenBraidContext{
-				Plasmid:   ctx.Plasmid,
-				UserEmail: ctx.UserEmail,
-				PlasmidCV: ctx.PlasmidCV,
-				Depositor: ctx.Depositor,
-				Existing:  collectionToOption(col),
-			}
-		}),
+		IOE.Map[error](collectionToOption),
 	)
 }
 
 // createNewPlasmid returns the None-branch thunk for O.Fold.
-// It creates a new plasmid via API, closing over the GoldenBraidContext.
+// It creates a new plasmid via API, closing over the context.
 func createNewPlasmid(
-	ctx GoldenBraidContext,
+	ctx *source.GoldenBraidContext,
 ) func() IOE.IOEither[error, GoldenBraidUpsertResult] {
 	return func() IOE.IOEither[error, GoldenBraidUpsertResult] {
 		return F.Pipe2(
@@ -226,7 +207,7 @@ func createNewPlasmid(
 			IOE.MapLeft[*stock.Plasmid](func(err error) error {
 				return fmt.Errorf(
 					"failed to create plasmid %s: %w",
-					ctx.Plasmid.Name,
+					ctx.Name,
 					err,
 				)
 			}),
@@ -255,47 +236,32 @@ func skipExistingPlasmid(
 	})
 }
 
-// resolveCreateOrSkip uses O.Fold to branch: skip if the plasmid already exists, create if not.
-func resolveCreateOrSkip(
-	ctx GoldenBraidContext,
+// fetchAndResolve fetches a plasmid by name, then creates or skips via O.Fold.
+func fetchAndResolve(
+	ctx *source.GoldenBraidContext,
 ) IOE.IOEither[error, GoldenBraidUpsertResult] {
 	return F.Pipe1(
-		ctx.Existing,
-		O.Fold(
-			createNewPlasmid(ctx),
-			skipExistingPlasmid,
-		),
+		fetchPlasmidByName(ctx.Name),
+		IOE.Chain(O.Fold(createNewPlasmid(ctx), skipExistingPlasmid)),
 	)
 }
 
 // processPlasmidWithUpsert processes a single validated plasmid.
 // GoldenBraid loads are create-only: existing plasmids are skipped.
 func processPlasmidWithUpsert(
-	userEmail string,
-	plasmidCV string,
-	depositor string,
-) func(*source.GoldenBraidPlasmid) E.Either[error, GoldenBraidUpsertResult] {
-	return func(plasmid *source.GoldenBraidPlasmid) E.Either[error, GoldenBraidUpsertResult] {
-		return F.Pipe5(
-			GoldenBraidContext{
-				Plasmid:   plasmid,
-				UserEmail: userEmail,
-				PlasmidCV: plasmidCV,
-				Depositor: depositor,
-			},
-			IOE.Of[error],
-			IOE.Chain(fetchPlasmidByName),
-			IOE.Chain(resolveCreateOrSkip),
-			fputil.ToEither[error, GoldenBraidUpsertResult],
-			E.MapLeft[GoldenBraidUpsertResult](func(err error) error {
-				return fmt.Errorf(
-					"failed to upsert plasmid %s: %w",
-					plasmid.Name,
-					err,
-				)
-			}),
-		)
-	}
+	ctx *source.GoldenBraidContext,
+) E.Either[error, GoldenBraidUpsertResult] {
+	return F.Pipe2(
+		fetchAndResolve(ctx),
+		fputil.ToEither[error, GoldenBraidUpsertResult],
+		E.MapLeft[GoldenBraidUpsertResult](func(err error) error {
+			return fmt.Errorf(
+				"failed to upsert plasmid %s: %w",
+				ctx.Name,
+				err,
+			)
+		}),
+	)
 }
 
 // collectionToOption converts PlasmidCollection to Option[Plasmid]
@@ -455,31 +421,24 @@ func streamAndProcessRecords(
 					source.HasValidRecordLength,
 					source.RecordLengthError,
 				),
-				E.Map[error](source.BuildPlasmid(
+				E.Map[error](source.BuildGoldenBraidContext(
 					userEmail,
 					plasmidCVTerm,
+					depositor,
 				)),
 				E.Chain(E.FromPredicate(
 					source.HasValidName,
 					source.NameError,
 				)),
-				E.Chain(
-					E.FromPredicate(
-						source.HasValidSummary,
-						source.SummaryError,
-					),
-				),
+				E.Chain(E.FromPredicate(
+					source.HasValidSummary,
+					source.SummaryError,
+				)),
 				E.Chain(E.FromPredicate(
 					source.HasValidUser,
 					source.UserError,
 				)),
-				E.Chain(
-					processPlasmidWithUpsert(
-						userEmail,
-						plasmidCVTerm,
-						depositor,
-					),
-				),
+				E.Chain(processPlasmidWithUpsert),
 				E.Fold(
 					func(err error) GoldenBraidUpsertResult {
 						return GoldenBraidUpsertResult{Error: err}
