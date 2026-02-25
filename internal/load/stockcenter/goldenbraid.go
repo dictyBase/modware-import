@@ -44,7 +44,7 @@ type LoaderConfig struct {
 const gbMaxErrorMessages = 5
 
 // Result of UPSERT operation
-type GoldenBraidUpsertResult struct {
+type GoldenBraidResult struct {
 	PlasmidID string
 	Created   bool // true=created, false=skipped
 	Error     error
@@ -101,36 +101,36 @@ func GoldenBraidSummarySemigroup() S.Semigroup[GoldenBraidProcessingResult] {
 	)
 }
 
-func goldenBraidUpsertResultToSummary(
-	result GoldenBraidUpsertResult,
+func goldenBraidResultToSummary(
+	result GoldenBraidResult,
 ) GoldenBraidProcessingResult {
 	return F.Pipe1(
 		result,
 		F.Ternary(
 			// Check if error
-			func(r GoldenBraidUpsertResult) bool { return r.Error != nil },
+			func(r GoldenBraidResult) bool { return r.Error != nil },
 			// Error branch
-			func(r GoldenBraidUpsertResult) GoldenBraidProcessingResult {
+			func(r GoldenBraidResult) GoldenBraidProcessingResult {
 				return GoldenBraidProcessingResult{
 					ErrorCount: 1,
 					Errors:     []error{r.Error},
 				}
 			},
 			// Success branch - nested ternary for created vs skipped
-			func(r GoldenBraidUpsertResult) GoldenBraidProcessingResult {
+			func(r GoldenBraidResult) GoldenBraidProcessingResult {
 				return F.Pipe1(
 					r,
 					F.Ternary(
-						func(r GoldenBraidUpsertResult) bool { return r.Created },
+						func(r GoldenBraidResult) bool { return r.Created },
 						// Created branch
-						func(r GoldenBraidUpsertResult) GoldenBraidProcessingResult {
+						func(r GoldenBraidResult) GoldenBraidProcessingResult {
 							return GoldenBraidProcessingResult{
 								CreatedCount: 1,
 								Successes:    []string{r.PlasmidID},
 							}
 						},
 						// Skipped branch
-						func(r GoldenBraidUpsertResult) GoldenBraidProcessingResult {
+						func(r GoldenBraidResult) GoldenBraidProcessingResult {
 							return GoldenBraidProcessingResult{
 								SkippedCount: 1,
 								Successes:    []string{r.PlasmidID},
@@ -194,7 +194,7 @@ func fetchPlasmidByName(
 // createNewPlasmid creates a new plasmid via API.
 func createNewPlasmid(
 	ctx *source.GoldenBraidContext,
-) IOE.IOEither[error, GoldenBraidUpsertResult] {
+) IOE.IOEither[error, GoldenBraidResult] {
 	return F.Pipe2(
 		IOE.TryCatchError(func() (*stock.Plasmid, error) {
 			return regsc.GetStockAPIClient().CreatePlasmid(
@@ -210,8 +210,8 @@ func createNewPlasmid(
 			)
 		}),
 		IOE.Map[error](
-			func(created *stock.Plasmid) GoldenBraidUpsertResult {
-				return GoldenBraidUpsertResult{
+			func(created *stock.Plasmid) GoldenBraidResult {
+				return GoldenBraidResult{
 					PlasmidID: created.Data.Id,
 					Created:   true,
 					Error:     nil,
@@ -225,31 +225,31 @@ func createNewPlasmid(
 // It returns a skipped result for an existing plasmid without calling the API.
 func skipExistingPlasmid(
 	existing *stock.Plasmid,
-) IOE.IOEither[error, GoldenBraidUpsertResult] {
-	return IOE.Right[error](GoldenBraidUpsertResult{
+) IOE.IOEither[error, GoldenBraidResult] {
+	return IOE.Right[error](GoldenBraidResult{
 		PlasmidID: existing.Data.Id,
 		Created:   false,
 		Error:     nil,
 	})
 }
 
-// processPlasmidWithUpsert processes a single validated plasmid.
+// processPlasmid processes a single validated plasmid.
 // GoldenBraid loads are create-only: existing plasmids are skipped.
-func processPlasmidWithUpsert(
+func processPlasmid(
 	ctx *source.GoldenBraidContext,
-) E.Either[error, GoldenBraidUpsertResult] {
+) E.Either[error, GoldenBraidResult] {
 	return F.Pipe3(
 		fetchPlasmidByName(ctx.Name),
 		IOE.Chain(O.Fold(
-			func() IOE.IOEither[error, GoldenBraidUpsertResult] {
+			func() IOE.IOEither[error, GoldenBraidResult] {
 				return createNewPlasmid(ctx)
 			},
 			skipExistingPlasmid,
 		)),
-		fputil.ToEither[error, GoldenBraidUpsertResult],
-		E.MapLeft[GoldenBraidUpsertResult](func(err error) error {
+		fputil.ToEither[error, GoldenBraidResult],
+		E.MapLeft[GoldenBraidResult](func(err error) error {
 			return fmt.Errorf(
-				"failed to upsert plasmid %s: %w",
+				"failed to process plasmid %s: %w",
 				ctx.Name,
 				err,
 			)
@@ -431,18 +431,18 @@ func streamAndProcessRecords(
 					source.HasValidUser,
 					source.UserError,
 				)),
-				E.Chain(processPlasmidWithUpsert),
+				E.Chain(processPlasmid),
 				E.Fold(
-					func(err error) GoldenBraidUpsertResult {
-						return GoldenBraidUpsertResult{Error: err}
+					func(err error) GoldenBraidResult {
+						return GoldenBraidResult{Error: err}
 					},
-					F.Identity[GoldenBraidUpsertResult],
+					F.Identity[GoldenBraidResult],
 				),
 			)
 
 			summary = GoldenBraidSummarySemigroup().Concat(
 				summary,
-				goldenBraidUpsertResultToSummary(result),
+				goldenBraidResultToSummary(result),
 			)
 		}
 

@@ -66,7 +66,7 @@ func TestFetchPlasmidByName_ReturnsSomeWhenFound(t *testing.T) {
 
 func TestProcessPlasmidWithUpsert_CreateWhenNotExists(t *testing.T) {
 	t.Skip("deferred: tracked in modware-import-7zd")
-	// TODO(modware-import-7zd): restore body once processPlasmidWithUpsert depositor arg is wired up
+	// TODO(modware-import-7zd): restore body once processPlasmid depositor arg is wired up
 	// mockClient := new(MockStockClient)
 	// regsc.SetStockAPIClient(mockClient)
 	// plasmid := &source.GoldenBraidPlasmid{Name: "pNew"}
@@ -78,19 +78,19 @@ func TestProcessPlasmidWithUpsert_CreateWhenNotExists(t *testing.T) {
 	// 	return p.Data.Attributes.Name == "pNew"
 	// }), mock.Anything).
 	// 	Return(&stock.Plasmid{Data: &stock.Plasmid_Data{Id: "DBPNew"}}, nil)
-	// result := processPlasmidWithUpsert(userEmail, plasmidCV)(plasmid)
+	// result := processPlasmid(userEmail, plasmidCV)(plasmid)
 	// require.True(t, E.IsRight(result))
-	// upsertResult := E.GetOrElse(func(error) GoldenBraidUpsertResult {
-	// 	return GoldenBraidUpsertResult{}
+	// processResult := E.GetOrElse(func(error) GoldenBraidResult {
+	// 	return GoldenBraidResult{}
 	// })(result)
-	// require.True(t, upsertResult.Created)
-	// require.Equal(t, "DBPNew", upsertResult.PlasmidID)
+	// require.True(t, processResult.Created)
+	// require.Equal(t, "DBPNew", processResult.PlasmidID)
 	// mockClient.AssertExpectations(t)
 }
 
 func TestProcessPlasmidWithUpsert_UpdateWhenExists(t *testing.T) {
 	t.Skip("deferred: tracked in modware-import-7zd")
-	// TODO(modware-import-7zd): restore body once processPlasmidWithUpsert depositor arg is wired up
+	// TODO(modware-import-7zd): restore body once processPlasmid depositor arg is wired up
 	// mockClient := new(MockStockClient)
 	// regsc.SetStockAPIClient(mockClient)
 	// plasmid := &source.GoldenBraidPlasmid{Name: "pExisting"}
@@ -106,27 +106,27 @@ func TestProcessPlasmidWithUpsert_UpdateWhenExists(t *testing.T) {
 	// 	return p.Data.Id == "DBPExisting"
 	// }), mock.Anything).
 	// 	Return(&stock.Plasmid{Data: &stock.Plasmid_Data{Id: "DBPExisting"}}, nil)
-	// result := processPlasmidWithUpsert(userEmail, plasmidCV)(plasmid)
+	// result := processPlasmid(userEmail, plasmidCV)(plasmid)
 	// require.True(t, E.IsRight(result))
-	// upsertResult := E.GetOrElse(func(error) GoldenBraidUpsertResult {
-	// 	return GoldenBraidUpsertResult{}
+	// processResult := E.GetOrElse(func(error) GoldenBraidResult {
+	// 	return GoldenBraidResult{}
 	// })(result)
-	// require.False(t, upsertResult.Created)
-	// require.Equal(t, "DBPExisting", upsertResult.PlasmidID)
+	// require.False(t, processResult.Created)
+	// require.Equal(t, "DBPExisting", processResult.PlasmidID)
 	// mockClient.AssertExpectations(t)
 }
 
 func TestGoldenBraidSummaryAggregation(t *testing.T) {
-	result1 := GoldenBraidUpsertResult{PlasmidID: "DBP0001", Created: true}
-	result2 := GoldenBraidUpsertResult{PlasmidID: "DBP0002", Created: false}
-	result3 := GoldenBraidUpsertResult{Error: errors.New("test error")}
+	result1 := GoldenBraidResult{PlasmidID: "DBP0001", Created: true}
+	result2 := GoldenBraidResult{PlasmidID: "DBP0002", Created: false}
+	result3 := GoldenBraidResult{Error: errors.New("test error")}
 
 	summary := GoldenBraidProcessingResult{}
 	semigroup := GoldenBraidSummarySemigroup()
 
-	summary = semigroup.Concat(summary, goldenBraidUpsertResultToSummary(result1))
-	summary = semigroup.Concat(summary, goldenBraidUpsertResultToSummary(result2))
-	summary = semigroup.Concat(summary, goldenBraidUpsertResultToSummary(result3))
+	summary = semigroup.Concat(summary, goldenBraidResultToSummary(result1))
+	summary = semigroup.Concat(summary, goldenBraidResultToSummary(result2))
+	summary = semigroup.Concat(summary, goldenBraidResultToSummary(result3))
 
 	require.Equal(t, 1, summary.CreatedCount)
 	require.Equal(t, 1, summary.SkippedCount)
