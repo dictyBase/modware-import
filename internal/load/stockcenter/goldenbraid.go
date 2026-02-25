@@ -276,14 +276,14 @@ func processPlasmidWithUpsert(
 	depositor string,
 ) func(*source.GoldenBraidPlasmid) E.Either[error, GoldenBraidUpsertResult] {
 	return func(plasmid *source.GoldenBraidPlasmid) E.Either[error, GoldenBraidUpsertResult] {
-		ctx := GoldenBraidContext{
-			Plasmid:   plasmid,
-			UserEmail: userEmail,
-			PlasmidCV: plasmidCV,
-			Depositor: depositor,
-		}
-		return F.Pipe4(
-			IOE.Of[error](ctx),
+		return F.Pipe5(
+			GoldenBraidContext{
+				Plasmid:   plasmid,
+				UserEmail: userEmail,
+				PlasmidCV: plasmidCV,
+				Depositor: depositor,
+			},
+			IOE.Of[error],
 			IOE.Chain(fetchPlasmidByName),
 			IOE.Chain(resolveCreateOrSkip),
 			fputil.ToEither[error, GoldenBraidUpsertResult],
@@ -422,7 +422,10 @@ func defaultGoldenBraidReader(
 	cfg LoaderConfig,
 ) IOE.IOEither[error, LoaderConfig] {
 	return IOE.Left[LoaderConfig](
-		fmt.Errorf("unsupported input source %s", cfg.Cmd.String("input-source")),
+		fmt.Errorf(
+			"unsupported input source %s",
+			cfg.Cmd.String("input-source"),
+		),
 	)
 }
 
@@ -470,7 +473,13 @@ func streamAndProcessRecords(
 					source.HasValidUser,
 					source.UserError,
 				)),
-				E.Chain(processPlasmidWithUpsert(userEmail, plasmidCVTerm, depositor)),
+				E.Chain(
+					processPlasmidWithUpsert(
+						userEmail,
+						plasmidCVTerm,
+						depositor,
+					),
+				),
 				E.Fold(
 					func(err error) GoldenBraidUpsertResult {
 						return GoldenBraidUpsertResult{Error: err}
