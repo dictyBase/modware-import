@@ -32,10 +32,8 @@ func TestFetchPlasmidByName_ReturnsNoneWhenNotFound(t *testing.T) {
 	result := fetchPlasmidByName(makeCtx("nonexistent"))()
 
 	require.True(t, E.IsRight(result))
-	opt := E.GetOrElse(func(error) O.Option[*stock.Plasmid] {
-		return O.None[*stock.Plasmid]()
-	})(result)
-	require.True(t, O.IsNone(opt))
+	ctx := E.GetOrElse(func(error) GoldenBraidContext { return GoldenBraidContext{} })(result)
+	require.True(t, O.IsNone(ctx.Existing))
 	mockClient.AssertExpectations(t)
 }
 
@@ -62,11 +60,9 @@ func TestFetchPlasmidByName_ReturnsSomeWhenFound(t *testing.T) {
 	result := fetchPlasmidByName(makeCtx("pTest1"))()
 
 	require.True(t, E.IsRight(result))
-	opt := E.GetOrElse(func(error) O.Option[*stock.Plasmid] {
-		return O.None[*stock.Plasmid]()
-	})(result)
-	require.True(t, O.IsSome(opt))
-	plasmid := O.GetOrElse(func() *stock.Plasmid { return nil })(opt)
+	ctx := E.GetOrElse(func(error) GoldenBraidContext { return GoldenBraidContext{} })(result)
+	require.True(t, O.IsSome(ctx.Existing))
+	plasmid := O.GetOrElse(func() *stock.Plasmid { return nil })(ctx.Existing)
 	require.Equal(t, "DBP0001", plasmid.Data.Id)
 	mockClient.AssertExpectations(t)
 }
