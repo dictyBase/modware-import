@@ -7,6 +7,7 @@ import (
 	E "github.com/IBM/fp-go/either"
 	O "github.com/IBM/fp-go/option"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
+	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -64,56 +65,78 @@ func TestFetchPlasmidByName_ReturnsSomeWhenFound(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-func TestProcessPlasmidWithUpsert_CreateWhenNotExists(t *testing.T) {
-	t.Skip("deferred: tracked in modware-import-7zd")
-	// TODO(modware-import-7zd): restore body once processPlasmid depositor arg is wired up
-	// mockClient := new(MockStockClient)
-	// regsc.SetStockAPIClient(mockClient)
-	// plasmid := &source.GoldenBraidPlasmid{Name: "pNew"}
-	// userEmail := "test@example.com"
-	// plasmidCV := "test"
-	// mockClient.On("ListPlasmids", mock.Anything, mock.Anything, mock.Anything).
-	// 	Return(&stock.PlasmidCollection{Data: []*stock.PlasmidCollection_Data{}}, nil)
-	// mockClient.On("CreatePlasmid", mock.Anything, mock.MatchedBy(func(p *stock.NewPlasmid) bool {
-	// 	return p.Data.Attributes.Name == "pNew"
-	// }), mock.Anything).
-	// 	Return(&stock.Plasmid{Data: &stock.Plasmid_Data{Id: "DBPNew"}}, nil)
-	// result := processPlasmid(userEmail, plasmidCV)(plasmid)
-	// require.True(t, E.IsRight(result))
-	// processResult := E.GetOrElse(func(error) GoldenBraidResult {
-	// 	return GoldenBraidResult{}
-	// })(result)
-	// require.True(t, processResult.Created)
-	// require.Equal(t, "DBPNew", processResult.PlasmidID)
-	// mockClient.AssertExpectations(t)
+func TestProcessPlasmid_CreateWhenNotExists(t *testing.T) {
+	mockClient := new(MockStockClient)
+	regsc.SetStockAPIClient(mockClient)
+
+	ctx := &source.GoldenBraidContext{
+		Name:         "pNew",
+		Summary:      "A test plasmid",
+		User:         "test@example.com",
+		PlasmidType:  "plasmid",
+		Depositor:    "depositor@example.com",
+		Genes:        O.None[[]string](),
+		Publications: O.None[[]string](),
+	}
+
+	mockClient.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
+		return p.Limit == 1 && p.Filter == "plasmid_name===pNew"
+	}), mock.Anything).
+		Return(&stock.PlasmidCollection{Data: []*stock.PlasmidCollection_Data{}}, nil)
+	mockClient.On("CreatePlasmid", mock.Anything, mock.MatchedBy(func(p *stock.NewPlasmid) bool {
+		return p.Data.Attributes.Name == "pNew"
+	}), mock.Anything).
+		Return(&stock.Plasmid{Data: &stock.Plasmid_Data{Id: "DBPNew"}}, nil)
+
+	result := processPlasmid(ctx)
+
+	require.True(t, E.IsRight(result))
+	processResult := E.GetOrElse(func(error) GoldenBraidResult {
+		return GoldenBraidResult{}
+	})(result)
+	require.True(t, processResult.Created)
+	require.Equal(t, "DBPNew", processResult.PlasmidID)
+	mockClient.AssertExpectations(t)
 }
 
-func TestProcessPlasmidWithUpsert_UpdateWhenExists(t *testing.T) {
-	t.Skip("deferred: tracked in modware-import-7zd")
-	// TODO(modware-import-7zd): restore body once processPlasmid depositor arg is wired up
-	// mockClient := new(MockStockClient)
-	// regsc.SetStockAPIClient(mockClient)
-	// plasmid := &source.GoldenBraidPlasmid{Name: "pExisting"}
-	// userEmail := "test@example.com"
-	// plasmidCV := "test"
-	// mockClient.On("ListPlasmids", mock.Anything, mock.Anything, mock.Anything).
-	// 	Return(&stock.PlasmidCollection{
-	// 		Data: []*stock.PlasmidCollection_Data{
-	// 			{Id: "DBPExisting", Attributes: &stock.PlasmidAttributes{Name: "pExisting"}},
-	// 		},
-	// 	}, nil)
-	// mockClient.On("UpdatePlasmid", mock.Anything, mock.MatchedBy(func(p *stock.PlasmidUpdate) bool {
-	// 	return p.Data.Id == "DBPExisting"
-	// }), mock.Anything).
-	// 	Return(&stock.Plasmid{Data: &stock.Plasmid_Data{Id: "DBPExisting"}}, nil)
-	// result := processPlasmid(userEmail, plasmidCV)(plasmid)
-	// require.True(t, E.IsRight(result))
-	// processResult := E.GetOrElse(func(error) GoldenBraidResult {
-	// 	return GoldenBraidResult{}
-	// })(result)
-	// require.False(t, processResult.Created)
-	// require.Equal(t, "DBPExisting", processResult.PlasmidID)
-	// mockClient.AssertExpectations(t)
+func TestProcessPlasmid_SkipWhenExists(t *testing.T) {
+	mockClient := new(MockStockClient)
+	regsc.SetStockAPIClient(mockClient)
+
+	ctx := &source.GoldenBraidContext{
+		Name:         "pExisting",
+		Summary:      "An existing plasmid",
+		User:         "test@example.com",
+		PlasmidType:  "plasmid",
+		Depositor:    "depositor@example.com",
+		Genes:        O.None[[]string](),
+		Publications: O.None[[]string](),
+	}
+
+	mockClient.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
+		return p.Limit == 1 && p.Filter == "plasmid_name===pExisting"
+	}), mock.Anything).
+		Return(&stock.PlasmidCollection{
+			Data: []*stock.PlasmidCollection_Data{
+				{
+					Type: "plasmid",
+					Id:   "DBPExisting",
+					Attributes: &stock.PlasmidAttributes{
+						Name: "pExisting",
+					},
+				},
+			},
+		}, nil)
+
+	result := processPlasmid(ctx)
+
+	require.True(t, E.IsRight(result))
+	processResult := E.GetOrElse(func(error) GoldenBraidResult {
+		return GoldenBraidResult{}
+	})(result)
+	require.False(t, processResult.Created)
+	require.Equal(t, "DBPExisting", processResult.PlasmidID)
+	mockClient.AssertExpectations(t)
 }
 
 func TestGoldenBraidSummaryAggregation(t *testing.T) {
