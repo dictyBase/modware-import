@@ -172,7 +172,7 @@ func ReleaseInventoryResources(
 ) IOE.IOEither[error, any] {
 	return IOE.TryCatchError(func() (any, error) {
 		closeInventoryConfig(config)
-		return nil, nil
+		return struct{}{}, nil
 	})
 }
 
