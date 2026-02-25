@@ -7,10 +7,17 @@ import (
 	E "github.com/IBM/fp-go/either"
 	O "github.com/IBM/fp-go/option"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
+	source "github.com/dictyBase/modware-import/internal/datasource/csv/stockcenter"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+func makeCtx(name string) GoldenBraidContext {
+	return GoldenBraidContext{
+		Plasmid: &source.GoldenBraidPlasmid{Name: name},
+	}
+}
 
 func TestFetchPlasmidByName_ReturnsNoneWhenNotFound(t *testing.T) {
 	mockClient := new(MockStockClient)
@@ -22,7 +29,7 @@ func TestFetchPlasmidByName_ReturnsNoneWhenNotFound(t *testing.T) {
 	}), mock.Anything).
 		Return(&stock.PlasmidCollection{Data: []*stock.PlasmidCollection_Data{}}, nil)
 
-	result := fetchPlasmidByName("nonexistent")()
+	result := fetchPlasmidByName(makeCtx("nonexistent"))()
 
 	require.True(t, E.IsRight(result))
 	opt := E.GetOrElse(func(error) O.Option[*stock.Plasmid] {
@@ -52,7 +59,7 @@ func TestFetchPlasmidByName_ReturnsSomeWhenFound(t *testing.T) {
 			},
 		}, nil)
 
-	result := fetchPlasmidByName("pTest1")()
+	result := fetchPlasmidByName(makeCtx("pTest1"))()
 
 	require.True(t, E.IsRight(result))
 	opt := E.GetOrElse(func(error) O.Option[*stock.Plasmid] {
