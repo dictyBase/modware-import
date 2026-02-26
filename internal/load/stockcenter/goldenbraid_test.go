@@ -2,6 +2,7 @@ package stockcenter
 
 import (
 	"errors"
+	stdlog "log"
 	"testing"
 
 	E "github.com/IBM/fp-go/either"
@@ -23,7 +24,7 @@ func TestFetchPlasmidByName_ReturnsNoneWhenNotFound(t *testing.T) {
 	}), mock.Anything).
 		Return(&stock.PlasmidCollection{Data: []*stock.PlasmidCollection_Data{}}, nil)
 
-	result := fetchPlasmidByName("nonexistent")()
+	result := fetchPlasmidByName("nonexistent", stdlog.Default())()
 
 	require.True(t, E.IsRight(result))
 	opt := E.GetOrElse(func(error) O.Option[*stock.Plasmid] {
@@ -53,7 +54,7 @@ func TestFetchPlasmidByName_ReturnsSomeWhenFound(t *testing.T) {
 			},
 		}, nil)
 
-	result := fetchPlasmidByName("pTest1")()
+	result := fetchPlasmidByName("pTest1", stdlog.Default())()
 
 	require.True(t, E.IsRight(result))
 	opt := E.GetOrElse(func(error) O.Option[*stock.Plasmid] {
@@ -88,7 +89,7 @@ func TestProcessPlasmid_CreateWhenNotExists(t *testing.T) {
 	}), mock.Anything).
 		Return(&stock.Plasmid{Data: &stock.Plasmid_Data{Id: "DBPNew"}}, nil)
 
-	result := processPlasmid(ctx)
+	result := processPlasmid(ctx, stdlog.Default())
 
 	require.True(t, E.IsRight(result))
 	processResult := E.GetOrElse(func(error) GoldenBraidResult {
@@ -128,7 +129,7 @@ func TestProcessPlasmid_SkipWhenExists(t *testing.T) {
 			},
 		}, nil)
 
-	result := processPlasmid(ctx)
+	result := processPlasmid(ctx, stdlog.Default())
 
 	require.True(t, E.IsRight(result))
 	processResult := E.GetOrElse(func(error) GoldenBraidResult {
