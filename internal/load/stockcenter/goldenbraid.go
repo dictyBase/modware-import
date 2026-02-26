@@ -205,7 +205,7 @@ func fetchPlasmidByName(
 					"data_count", dataLen,
 					"meta_total", coll.GetMeta().GetTotal(),
 				)
-				return nil
+				return struct{}{}
 			}
 		}),
 		IOE.Map[error](collectionToOption),
