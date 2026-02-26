@@ -38,3 +38,60 @@ push-ghcr-multi tag="latest":
 # List images
 list:
     docker images | grep {{image}}
+
+# Run goldenbraid plasmid import job in dev cluster
+run-goldenbraid tag email:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    kubectl apply -f - <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: goldenbraid-plasmid
+      namespace: dev
+    spec:
+      ttlSecondsAfterFinished: 120
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: goldenbraid-plasmid
+              image: {{ghcr_image}}:{{tag}}
+              envFrom:
+                - secretRef:
+                    name: minio
+              args:
+                - plasmid
+                - --user-email
+                - {{email}}
+    EOF
+
+# Look up a GoldenBraid plasmid by exact name (uses goldenbraid-list image)
+lookup-plasmid tag name:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    kubectl apply -f - <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: goldenbraid-lookup
+      namespace: dev
+    spec:
+      ttlSecondsAfterFinished: 120
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: goldenbraid-lookup
+              image: ghcr.io/dictybase/goldenbraid-list:{{tag}}
+              env:
+                - name: PLASMID_NAME
+                  value: "{{name}}"
+              envFrom:
+                - secretRef:
+                    name: minio
+              args:
+                - lookup
+    EOF
