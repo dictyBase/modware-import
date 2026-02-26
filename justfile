@@ -67,6 +67,38 @@ run-goldenbraid tag email:
                 - {{email}}
     EOF
 
+# Run goldenbraid plasmid import with debug logging (diagnostic)
+run-goldenbraid-debug tag email:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    kubectl apply -f - <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: goldenbraid-plasmid-debug
+      namespace: dev
+    spec:
+      ttlSecondsAfterFinished: 300
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: goldenbraid-plasmid-debug
+              image: {{ghcr_image}}:{{tag}}
+              envFrom:
+                - secretRef:
+                    name: minio
+              args:
+                - plasmid
+                - --user-email
+                - {{email}}
+                - --log-level
+                - debug
+                - --log-format
+                - text
+    EOF
+
 # Look up a GoldenBraid plasmid by exact name (uses goldenbraid-list image)
 lookup-plasmid tag name:
     #!/usr/bin/env bash

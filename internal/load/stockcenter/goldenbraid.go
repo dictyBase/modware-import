@@ -174,18 +174,39 @@ func buildNewPlasmidRequest(ctx *source.GoldenBraidContext) *stock.NewPlasmid {
 func fetchPlasmidByName(
 	name string,
 ) IOE.IOEither[error, O.Option[*stock.Plasmid]] {
-	return F.Pipe2(
+	filter := fmt.Sprintf("plasmid_name===%s", name)
+	return F.Pipe3(
 		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
+			slog.Debug("fetchPlasmidByName: calling ListPlasmids",
+				"name", name,
+				"filter", filter,
+			)
 			return regsc.GetStockAPIClient().ListPlasmids(
 				context.Background(),
 				&stock.StockParameters{
-					Filter: fmt.Sprintf("plasmid_name===%s", name),
+					Filter: filter,
 					Limit:  1,
 				},
 			)
 		}),
 		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
 			return fmt.Errorf("failed to fetch plasmid %s: %w", name, err)
+		}),
+		IOE.ChainFirstIOK[error](func(
+			coll *stock.PlasmidCollection,
+		) IO.IO[any] {
+			return func() any {
+				dataLen := 0
+				if coll != nil && coll.Data != nil {
+					dataLen = len(coll.Data)
+				}
+				slog.Debug("fetchPlasmidByName: ListPlasmids response",
+					"name", name,
+					"data_count", dataLen,
+					"meta_total", coll.GetMeta().GetTotal(),
+				)
+				return nil
+			}
 		}),
 		IOE.Map[error](collectionToOption),
 	)
@@ -242,9 +263,18 @@ func processPlasmid(
 		fetchPlasmidByName(ctx.Name),
 		IOE.Chain(O.Fold(
 			func() IOE.IOEither[error, GoldenBraidResult] {
+				slog.Debug("processPlasmid: plasmid NOT found, creating",
+					"name", ctx.Name,
+				)
 				return createNewPlasmid(ctx)
 			},
-			skipExistingPlasmid,
+			func(existing *stock.Plasmid) IOE.IOEither[error, GoldenBraidResult] {
+				slog.Debug("processPlasmid: plasmid found, skipping",
+					"name", ctx.Name,
+					"existing_id", existing.Data.GetId(),
+				)
+				return skipExistingPlasmid(existing)
+			},
 		)),
 		fputil.ToEither[error, GoldenBraidResult],
 		E.MapLeft[GoldenBraidResult](func(err error) error {
@@ -480,6 +510,7 @@ func useGoldenBraidReader(
 func LoadGoldenBraidCli(cmd *cli.Context) error {
 	handler := logger.GetCliSlogHandler(cmd)
 	slogger := slog.New(handler)
+	slog.SetDefault(slogger)
 	elog := E.Logger[error, GoldenBraidProcessingResult](
 		slog.NewLogLogger(handler, slog.LevelInfo),
 		slog.NewLogLogger(handler, slog.LevelError),
