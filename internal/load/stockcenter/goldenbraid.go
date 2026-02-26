@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"os"
 	"path"
@@ -37,10 +36,10 @@ type LoaderContext struct{}
 // LoaderConfig holds CLI context and CSV reader
 type LoaderConfig struct {
 	LoaderContext
-	Cmd      *cli.Context
-	Reader   *csv.Reader
-	Closer   io.Closer
-	DebugLog *log.Logger
+	Cmd     *cli.Context
+	Reader  *csv.Reader
+	Closer  io.Closer
+	Slogger *slog.Logger
 }
 
 const gbMaxErrorMessages = 5
@@ -145,6 +144,42 @@ func goldenBraidResultToSummary(
 	)
 }
 
+// logFetchFilter logs the filter string sent to ListPlasmids.
+func logFetchFilter(slogger *slog.Logger) func(string) IO.IO[struct{}] {
+	return func(filter string) IO.IO[struct{}] {
+		return func() struct{} {
+			slogger.Debug("fetchPlasmidByName", "filter", filter)
+			return struct{}{}
+		}
+	}
+}
+
+// logListResponse logs the ListPlasmids response with count and total attributes.
+func logListResponse(
+	slogger *slog.Logger,
+) func(*stock.PlasmidCollection) IO.IO[struct{}] {
+	return func(coll *stock.PlasmidCollection) IO.IO[struct{}] {
+		return func() struct{} {
+			slogger.Debug("ListPlasmids response",
+				"data_count", len(coll.GetData()),
+				"total", coll.GetMeta().GetTotal(),
+			)
+			return struct{}{}
+		}
+	}
+}
+
+// logDecision logs the create-or-skip decision with a contextual string value.
+// msg distinguishes the create path from the skip path.
+func logDecision(msg string, slogger *slog.Logger) func(string) IO.IO[struct{}] {
+	return func(value string) IO.IO[struct{}] {
+		return func() struct{} {
+			slogger.Debug(msg, "value", value)
+			return struct{}{}
+		}
+	}
+}
+
 // buildNewPlasmidRequest constructs a NewPlasmid API request from context
 func buildNewPlasmidRequest(ctx *source.GoldenBraidContext) *stock.NewPlasmid {
 	return &stock.NewPlasmid{
@@ -175,12 +210,12 @@ func buildNewPlasmidRequest(ctx *source.GoldenBraidContext) *stock.NewPlasmid {
 // fetchPlasmidByName uses ListPlasmids with filter to find a plasmid by name.
 func fetchPlasmidByName(
 	name string,
-	debugLog *log.Logger,
+	slogger *slog.Logger,
 ) IOE.IOEither[error, O.Option[*stock.Plasmid]] {
 	filter := fmt.Sprintf("plasmid_name===%s", name)
 	return F.Pipe5(
 		IOE.Of[error](filter),
-		IOE.ChainFirstIOK[error](IO.Logger[string](debugLog)("fetchPlasmidByName")),
+		IOE.ChainFirstIOK[error](logFetchFilter(slogger)),
 		IOE.Chain(func(_ string) IOE.IOEither[error, *stock.PlasmidCollection] {
 			return IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
 				return regsc.GetStockAPIClient().ListPlasmids(
@@ -195,9 +230,7 @@ func fetchPlasmidByName(
 		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
 			return fmt.Errorf("failed to fetch plasmid %s: %w", name, err)
 		}),
-		IOE.ChainFirstIOK[error](
-			IO.Logger[*stock.PlasmidCollection](debugLog)("ListPlasmids response"),
-		),
+		IOE.ChainFirstIOK[error](logListResponse(slogger)),
 		IOE.Map[error](collectionToOption),
 	)
 }
@@ -248,17 +281,15 @@ func skipExistingPlasmid(
 // GoldenBraid loads are create-only: existing plasmids are skipped.
 func processPlasmid(
 	ctx *source.GoldenBraidContext,
-	debugLog *log.Logger,
+	slogger *slog.Logger,
 ) E.Either[error, GoldenBraidResult] {
-	logCreate := IO.Logger[string](debugLog)("processPlasmid: creating")
-	logSkip := IO.Logger[string](debugLog)("processPlasmid: skipping")
 	return F.Pipe3(
-		fetchPlasmidByName(ctx.Name, debugLog),
+		fetchPlasmidByName(ctx.Name, slogger),
 		IOE.Chain(O.Fold(
 			func() IOE.IOEither[error, GoldenBraidResult] {
 				return F.Pipe2(
 					IOE.Of[error](ctx.Name),
-					IOE.ChainFirstIOK[error](logCreate),
+					IOE.ChainFirstIOK[error](logDecision("processPlasmid: creating", slogger)),
 					IOE.Chain(func(_ string) IOE.IOEither[error, GoldenBraidResult] {
 						return createNewPlasmid(ctx)
 					}),
@@ -267,7 +298,7 @@ func processPlasmid(
 			func(existing *stock.Plasmid) IOE.IOEither[error, GoldenBraidResult] {
 				return F.Pipe2(
 					IOE.Of[error](existing.Data.GetId()),
-					IOE.ChainFirstIOK[error](logSkip),
+					IOE.ChainFirstIOK[error](logDecision("processPlasmid: skipping", slogger)),
 					IOE.Chain(func(_ string) IOE.IOEither[error, GoldenBraidResult] {
 						return skipExistingPlasmid(existing)
 					}),
@@ -460,7 +491,7 @@ func streamAndProcessRecords(
 					source.UserError,
 				)),
 				E.Chain(func(ctx *source.GoldenBraidContext) E.Either[error, GoldenBraidResult] {
-					return processPlasmid(ctx, config.DebugLog)
+					return processPlasmid(ctx, config.Slogger)
 				}),
 				E.Fold(
 					func(err error) GoldenBraidResult {
@@ -510,17 +541,12 @@ func useGoldenBraidReader(
 func LoadGoldenBraidCli(cmd *cli.Context) error {
 	handler := logger.GetCliSlogHandler(cmd)
 	slogger := slog.New(handler)
-	debugLog := slog.NewLogLogger(handler, slog.LevelDebug)
-	elog := E.Logger[error, GoldenBraidProcessingResult](
-		slog.NewLogLogger(handler, slog.LevelInfo),
-		slog.NewLogLogger(handler, slog.LevelError),
-	)
 
-	output := F.Pipe6(
+	output := F.Pipe5(
 		IOE.Do[error](LoaderConfig{
-			Cmd:      cmd,
-			Reader:   nil,
-			DebugLog: debugLog,
+			Cmd:     cmd,
+			Reader:  nil,
+			Slogger: slogger,
 		}),
 		IOE.ChainFirstIOK[error](
 			IO.Logf[LoaderConfig](
@@ -542,7 +568,6 @@ func LoadGoldenBraidCli(cmd *cli.Context) error {
 			),
 		),
 		fputil.ToEither[error, GoldenBraidProcessingResult],
-		elog("GoldenBraid loading result"),
 		E.Fold(
 			onGoldenBraidSummaryError,
 			onGoldenBraidSummarySuccess),
