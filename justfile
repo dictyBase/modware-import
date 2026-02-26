@@ -99,6 +99,60 @@ run-goldenbraid-debug tag email:
                 - text
     EOF
 
+# Run goldenbraid plasmid-ontology job in dev cluster (assigns ontology term to all plasmids)
+run-goldenbraid-plasmid-ontology tag ontology_term="vector":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    kubectl apply -f - <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: goldenbraid-plasmid-ontology
+      namespace: dev
+    spec:
+      ttlSecondsAfterFinished: 120
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: goldenbraid-plasmid-ontology
+              image: {{ghcr_image}}:{{tag}}
+              args:
+                - plasmid-ontology
+                - --ontology-term
+                - {{ontology_term}}
+    EOF
+
+# Run goldenbraid plasmid-ontology with debug logging
+run-goldenbraid-plasmid-ontology-debug tag ontology_term="vector":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    kubectl apply -f - <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: goldenbraid-plasmid-ontology-debug
+      namespace: dev
+    spec:
+      ttlSecondsAfterFinished: 300
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: goldenbraid-plasmid-ontology-debug
+              image: {{ghcr_image}}:{{tag}}
+              args:
+                - plasmid-ontology
+                - --ontology-term
+                - {{ontology_term}}
+                - --log-level
+                - debug
+                - --log-format
+                - text
+    EOF
+
 # Look up a GoldenBraid plasmid by exact name (uses goldenbraid-list image)
 lookup-plasmid tag name:
     #!/usr/bin/env bash
