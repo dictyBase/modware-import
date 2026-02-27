@@ -276,7 +276,7 @@ func TestProcessRow(t *testing.T) {
 
 	// Mock ListPlasmids (Found)
 	mockStock.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
-		return p.Filter == "name==pTest"
+		return p.Filter == "plasmid_name===pTest"
 	}), mock.Anything).Return(&stock.PlasmidCollection{
 		Data: []*stock.PlasmidCollection_Data{
 			{Id: plasmidID},
@@ -285,7 +285,7 @@ func TestProcessRow(t *testing.T) {
 
 	// Mock Check Inventory (Found)
 	expectedFilter := fmt.Sprintf(
-		"entry_id==%s;tag==%s;ontology==%s",
+		"entry_id===%s;tag===%s;ontology===%s",
 		plasmidID,
 		regsc.InvLocationTag,
 		regsc.PlasmidInvOntO,
