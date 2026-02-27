@@ -106,6 +106,18 @@ func AnnotationFlags() []cli.Flag {
 	}
 }
 
+// GoldenBraidInputFlags returns the flag for the goldenbraid plasmid CSV input.
+// Reuses --input-source, --s3-bucket, --s3-bucket-path from InputFlags() for source routing.
+func GoldenBraidInputFlags() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:  "goldenbraid-input",
+			Usage: "GoldenBraid plasmid CSV path (local) or filename in bucket",
+			Value: "goldenbraid.csv",
+		},
+	}
+}
+
 // LoggingFlags returns flags for logging configuration
 func LoggingFlags() []cli.Flag {
 	return []cli.Flag{

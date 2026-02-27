@@ -324,15 +324,27 @@ func TestProcessRow(t *testing.T) {
 }
 
 func TestFileSQLQuery(t *testing.T) {
-	csvContent := `Name,Location
-pTest1,Loc1
-pTest2,Loc2`
+	// pTest1 matches by Plasmid Name directly
+	// pTest2 matches via Synonym (pAlias2 in inventory)
+	// pTest3 has no inventory entry → must NOT appear in results
+	// pTest1 appears twice with different locations → both distinct rows
+	gbCSV := `Plasmid Name,Synonym,Depositor,Genes,Keywords,Description,PMID
+pTest1,syn1,Depositor A,geneA,keywords,desc1,123456
+pTest2,pAlias2,Depositor B,geneB,keywords,desc2,789012
+pTest3,syn3,Depositor C,geneC,keywords,desc3,345678`
 
-	reader := io.NopCloser(strings.NewReader(csvContent))
+	invCSV := `Name,Location
+pTest1,Box1
+pTest1,Box1A
+pAlias2,Box2`
+
+	gbReader := io.NopCloser(strings.NewReader(gbCSV))
+	invReader := io.NopCloser(strings.NewReader(invCSV))
 	ctx := context.Background()
 
 	builder, err := filesql.NewBuilder().
-		AddReader(reader, "inventory", filesql.FileTypeCSV).
+		AddReader(invReader, "goldenbraid_inventory", filesql.FileTypeCSV).
+		AddReader(gbReader, "goldenbraid", filesql.FileTypeCSV).
 		Build(ctx)
 	require.NoError(t, err)
 
@@ -340,20 +352,25 @@ pTest2,Loc2`
 	require.NoError(t, err)
 	defer db.Close()
 
-	rows, err := db.Query("SELECT Name, Location FROM inventory")
+	// Test JOIN query returns correct (name, location) pairs
+	rows, err := db.Query(inventoryJoinQuery)
 	require.NoError(t, err)
 	defer rows.Close()
 
-	count := 0
+	type result struct{ name, loc string }
+	var results []result
 	for rows.Next() {
-		var name, loc string
-		err := rows.Scan(&name, &loc)
-		require.NoError(t, err)
-		if count == 0 {
-			require.Equal(t, "pTest1", name)
-			require.Equal(t, "Loc1", loc)
-		}
-		count++
+		var r result
+		require.NoError(t, rows.Scan(&r.name, &r.loc))
+		results = append(results, r)
 	}
-	require.Equal(t, 2, count)
+	require.NoError(t, rows.Err())
+	// pTest1/Box1 + pTest1/Box1A + pTest2/Box2 = 3 distinct rows; pTest3 absent
+	require.Equal(t, 3, len(results))
+
+	// Test COUNT query matches row count
+	var count int
+	err = db.QueryRow(inventoryCountQuery).Scan(&count)
+	require.NoError(t, err)
+	require.Equal(t, 3, count)
 }

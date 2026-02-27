@@ -23,7 +23,21 @@ import (
 )
 
 const (
-	plasmidSearchLimit = 2
+	plasmidSearchLimit = 1
+
+	inventoryJoinQuery = `
+		SELECT DISTINCT g."Plasmid Name", gi.Location
+		FROM goldenbraid g
+		JOIN goldenbraid_inventory gi
+			ON gi.Name = g."Plasmid Name" OR gi.Name = g.Synonym`
+
+	inventoryCountQuery = `
+		SELECT COUNT(*) FROM (
+			SELECT DISTINCT g."Plasmid Name", gi.Location
+			FROM goldenbraid g
+			JOIN goldenbraid_inventory gi
+				ON gi.Name = g."Plasmid Name" OR gi.Name = g.Synonym
+		) AS distinct_rows`
 )
 
 // Deps holds dependencies for inventory processing
@@ -69,9 +83,10 @@ type InventoryRecord struct {
 }
 
 type InventoryProcessingSummary struct {
-	SuccessCount int
-	ErrorCount   int
-	Errors       []string
+	SuccessCount  int
+	ErrorCount    int
+	ExpectedCount int
+	Errors        []string
 }
 
 type PlasmidNameContext struct {
@@ -137,9 +152,10 @@ func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
 	return S.MakeSemigroup(
 		func(a, b InventoryProcessingSummary) InventoryProcessingSummary {
 			return InventoryProcessingSummary{
-				SuccessCount: a.SuccessCount + b.SuccessCount,
-				ErrorCount:   a.ErrorCount + b.ErrorCount,
-				Errors:       append(a.Errors, b.Errors...),
+				SuccessCount:  a.SuccessCount + b.SuccessCount,
+				ErrorCount:    a.ErrorCount + b.ErrorCount,
+				ExpectedCount: max(a.ExpectedCount, b.ExpectedCount),
+				Errors:        append(a.Errors, b.Errors...),
 			}
 		},
 	)
@@ -159,7 +175,7 @@ func listPlasmidsRE(
 							context.Background(),
 							&stock.StockParameters{
 								Filter: fmt.Sprintf(
-									"name==%s",
+									"plasmid_name===%s",
 									ctx.PlasmidName,
 								),
 								Limit: plasmidSearchLimit,
@@ -537,22 +553,58 @@ func markInventoryExistenceRE(
 	)
 }
 
+// queryInventoryCount runs the COUNT query against the joined tables
+func queryInventoryCount(db *sql.DB) IOE.IOEither[error, int] {
+	return IOE.TryCatchError(func() (int, error) {
+		var count int
+		err := db.QueryRow(inventoryCountQuery).Scan(&count)
+		return count, err
+	})
+}
+
+// queryInventoryRows runs the JOIN query and returns the result rows
+func queryInventoryRows(db *sql.DB) IOE.IOEither[error, *sql.Rows] {
+	return F.Pipe1(
+		IOE.TryCatchError(func() (*sql.Rows, error) {
+			return db.Query(inventoryJoinQuery)
+		}),
+		IOE.MapLeft[*sql.Rows](func(err error) error {
+			return fmt.Errorf("error querying inventory: %w", err)
+		}),
+	)
+}
+
+// stampExpectedCount returns a function that immutably sets ExpectedCount on a summary
+func stampExpectedCount(
+	summary InventoryProcessingSummary,
+) func(int) InventoryProcessingSummary {
+	return func(expected int) InventoryProcessingSummary {
+		return InventoryProcessingSummary{
+			SuccessCount:  summary.SuccessCount,
+			ErrorCount:    summary.ErrorCount,
+			ExpectedCount: expected,
+			Errors:        summary.Errors,
+		}
+	}
+}
+
 func ProcessInventory(
 	deps Deps,
 	config InventoryLoaderConfig,
 ) IOE.IOEither[error, InventoryProcessingSummary] {
 	return F.Pipe2(
-		IOE.TryCatchError(func() (*sql.Rows, error) {
-			return config.DB.Query(
-				"SELECT Name, Location FROM inventory",
-			)
-		}),
-		IOE.MapLeft[*sql.Rows](func(err error) error {
-			return fmt.Errorf("error querying inventory: %w", err)
-		}),
+		queryInventoryRows(config.DB),
 		IOE.Chain(
 			func(rows *sql.Rows) IOE.IOEither[error, InventoryProcessingSummary] {
 				return foldRowsWithSemigroup(deps, rows)
+			},
+		),
+		IOE.Chain(
+			func(summary InventoryProcessingSummary) IOE.IOEither[error, InventoryProcessingSummary] {
+				return F.Pipe1(
+					queryInventoryCount(config.DB),
+					IOE.Map[error](stampExpectedCount(summary)),
+				)
 			},
 		),
 	)
@@ -573,25 +625,22 @@ func foldRowsWithSemigroup(
 
 		// Stream over rows, folding one at a time
 		for rows.Next() {
-			var name, location string
-			// Scan row
-			if err := rows.Scan(&name, &location); err != nil {
-				// Create error summary for scan failure
+			var record InventoryRecord
+			if err := rows.Scan(
+				&record.PlasmidName,
+				&record.Location,
+			); err != nil {
 				scanError := InventoryProcessingSummary{
 					ErrorCount: 1,
-					Errors:     []string{fmt.Sprintf("scan error: %v", err)},
+					Errors: []string{fmt.Sprintf(
+						"scan error: %v",
+						err,
+					)},
 				}
-				// Accumulate using Semigroup
 				summary = semigroup.Concat(summary, scanError)
 				continue
 			}
-			record := InventoryRecord{
-				PlasmidName: name,
-				Location:    location,
-			}
-			// Process single row to get its summary
 			rowSummary := processRowToSummary(deps, record)
-			// Accumulate using Semigroup (fold step)
 			summary = semigroup.Concat(summary, rowSummary)
 		}
 		// Check for iteration errors

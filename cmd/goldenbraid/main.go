@@ -22,6 +22,7 @@ func main() {
 				Before: stockcenter.SetClients,
 				Flags: slices.Concat(
 					stockcenter.InputFlags(),
+					stockcenter.GoldenBraidInputFlags(),
 					stockcenter.S3Flags(),
 					stockcenter.StockConnectionFlags(),
 					stockcenter.AnnotationFlags(),
@@ -35,6 +36,7 @@ func main() {
 				Before: stockcenter.SetStockAndS3Clients,
 				Flags: slices.Concat(
 					stockcenter.InputFlags(),
+					stockcenter.GoldenBraidInputFlags(),
 					stockcenter.S3Flags(),
 					stockcenter.StockConnectionFlags(),
 					stockcenter.LoggingFlags(),
