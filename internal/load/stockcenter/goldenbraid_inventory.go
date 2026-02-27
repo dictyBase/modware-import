@@ -469,12 +469,19 @@ func foldRowsWithSemigroup(
 
 		for rows.Next() {
 			ctx := PipelineContext{Deps: deps}
-			if err := rows.Scan(&ctx.PlasmidName, &ctx.Location); err != nil {
-				scanError := InventoryProcessingSummary{
-					ErrorCount: 1,
-					Errors:     []string{fmt.Sprintf("scan error: %v", err)},
-				}
-				summary = semigroup.Concat(summary, scanError)
+			if err := rows.Scan(
+				&ctx.PlasmidName,
+				&ctx.Location,
+			); err != nil {
+				summary = semigroup.Concat(
+					summary,
+					InventoryProcessingSummary{
+						ErrorCount: 1,
+						Errors: []string{fmt.Sprintf(
+							"scan error: %v",
+							err,
+						)},
+					})
 				continue
 			}
 			summary = semigroup.Concat(
@@ -483,7 +490,10 @@ func foldRowsWithSemigroup(
 			)
 		}
 		if err := rows.Err(); err != nil {
-			return summary, fmt.Errorf("error iterating rows: %w", err)
+			return summary, fmt.Errorf(
+				"error iterating rows: %w",
+				err,
+			)
 		}
 		return summary, nil
 	})
@@ -508,21 +518,6 @@ var onProcessError = F.Curry2(
 	},
 )
 
-// foldPlasmidOption branches on the Option: None skips, Some runs the inventory pipeline.
-func foldPlasmidOption(
-	ctx PipelineContext,
-) func(O.Option[*stock.Plasmid]) E.Either[error, InventoryProcessingSummary] {
-	return O.Fold(
-		func() E.Either[error, InventoryProcessingSummary] {
-			return E.Right[error](InventoryProcessingSummary{})
-		},
-		func(plasmid *stock.Plasmid) E.Either[error, InventoryProcessingSummary] {
-			ctx.PlasmidID = plasmid.Data.Id
-			return processFoundPlasmid(ctx)
-		},
-	)
-}
-
 // runProcessing applies ctx to a Processing pipeline, runs the IO, and maps to summary.
 func runProcessing(
 	ctx PipelineContext,
@@ -536,33 +531,39 @@ func runProcessing(
 	}
 }
 
-// processFoundPlasmid runs the full inventory pipeline for a known plasmid ID.
-// Called from the Some branch of O.Fold in processRowToSummary.
-func processFoundPlasmid(
-	ctx PipelineContext,
-) E.Either[error, InventoryProcessingSummary] {
-	return F.Pipe1(
-		F.Pipe5(
-			RE.Of[Deps, error](ctx),
-			RE.Bind(setInventory, getInventoryRE),
-			RE.Bind(setInventoryDeleted, deleteInventoryIfExistsRE),
-			RE.Bind(setAnnotationIDs, createInventoryAnnotationsRE),
-			RE.Bind(setGroupCreated, createAnnotationGroupRE),
-			RE.Chain(markInventoryExistenceRE),
-		),
-		runProcessing(ctx),
-	)
-}
+// processFoundPlasmid runs the full inventory pipeline for a found plasmid.
+// Curried: processFoundPlasmid(ctx)(plasmid) — used directly as the O.Fold Some branch.
+var processFoundPlasmid = F.Curry2(
+	func(ctx PipelineContext, plasmid *stock.Plasmid) E.Either[error, InventoryProcessingSummary] {
+		ctx.PlasmidID = plasmid.Data.Id
+		return F.Pipe1(
+			F.Pipe5(
+				RE.Of[Deps, error](ctx),
+				RE.Bind(setInventory, getInventoryRE),
+				RE.Bind(setInventoryDeleted, deleteInventoryIfExistsRE),
+				RE.Bind(setAnnotationIDs, createInventoryAnnotationsRE),
+				RE.Bind(setGroupCreated, createAnnotationGroupRE),
+				RE.Chain(markInventoryExistenceRE),
+			),
+			runProcessing(ctx),
+		)
+	},
+)
 
 // processRowToSummary processes one inventory row and returns a summary.
 // Phase 1: look up plasmid by name → Either[error, Option[*Plasmid]].
-// Phase 2: O.Fold — None skips silently, Some runs processFoundPlasmid.
+// Phase 2: O.Fold — None skips silently, Some calls processFoundPlasmid(ctx) directly.
 func processRowToSummary(ctx PipelineContext) InventoryProcessingSummary {
 	return F.Pipe4(
 		ctx,
 		listPlasmidsIOE,
 		fputil.ToEither,
-		E.Chain(foldPlasmidOption(ctx)),
+		E.Chain(O.Fold(
+			func() E.Either[error, InventoryProcessingSummary] {
+				return E.Right[error](InventoryProcessingSummary{})
+			},
+			processFoundPlasmid(ctx),
+		)),
 		E.Fold(
 			onProcessError(ctx.PlasmidName),
 			F.Identity[InventoryProcessingSummary],
