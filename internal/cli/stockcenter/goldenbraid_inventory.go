@@ -38,6 +38,7 @@ func handleInventoryOutput(
 
 	slogger.Info(
 		"GoldenBraid inventory loading summary",
+		"expected", result.Summary.ExpectedCount,
 		"successes", result.Summary.SuccessCount,
 		"errors", result.Summary.ErrorCount,
 	)
