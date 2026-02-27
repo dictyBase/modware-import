@@ -261,14 +261,12 @@ func TestProcessRow(t *testing.T) {
 	mockStock := new(InventoryMockStockClient)
 	mockAnno := new(InventoryMockAnnotationClient)
 
-	// Create dependencies with mock clients
 	deps := Deps{
 		StockClient:      mockStock,
 		AnnotationClient: mockAnno,
-		Logger:           nil, // Not used in this test
 	}
-
-	record := InventoryRecord{
+	ctx := PipelineContext{
+		Deps:        deps,
 		PlasmidName: "pTest",
 		Location:    "Box1",
 	}
@@ -316,7 +314,7 @@ func TestProcessRow(t *testing.T) {
 	mockAnno.On("CreateAnnotationGroup", mock.Anything, mock.Anything, mock.Anything).
 		Return(&annotation.TaggedAnnotationGroup{}, nil).Once()
 
-	summary := processRowToSummary(deps, record)
+	summary := processRowToSummary(ctx)
 	require.Equal(t, 0, summary.ErrorCount, "unexpected errors: %v", summary.Errors)
 	require.Equal(t, 1, summary.SuccessCount)
 
@@ -326,17 +324,20 @@ func TestProcessRow(t *testing.T) {
 func TestProcessRowSkipsWhenPlasmidNotFound(t *testing.T) {
 	mockStock := new(InventoryMockStockClient)
 	mockAnno := new(InventoryMockAnnotationClient)
-	deps := Deps{
-		StockClient:      mockStock,
-		AnnotationClient: mockAnno,
+	ctx := PipelineContext{
+		Deps: Deps{
+			StockClient:      mockStock,
+			AnnotationClient: mockAnno,
+		},
+		PlasmidName: "pMissing",
+		Location:    "Box99",
 	}
-	record := InventoryRecord{PlasmidName: "pMissing", Location: "Box99"}
 
 	// ListPlasmids returns empty collection — plasmid not in stock
 	mockStock.On("ListPlasmids", mock.Anything, mock.Anything, mock.Anything).
 		Return(&stock.PlasmidCollection{}, nil).Once()
 
-	summary := processRowToSummary(deps, record)
+	summary := processRowToSummary(ctx)
 
 	// Silent skip: neither success nor error
 	require.Equal(t, 0, summary.ErrorCount)
