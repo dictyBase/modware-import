@@ -52,6 +52,7 @@ type Processing[A any] = RE.ReaderIOEither[Deps, error, A]
 
 // PipelineContext represents the complete state of inventory processing
 type PipelineContext struct {
+	Deps             Deps
 	PlasmidName      string
 	Location         string
 	PlasmidID        string
@@ -61,24 +62,11 @@ type PipelineContext struct {
 	GroupCreated     bool
 }
 
-// NewPipelineContext creates context from inventory record
-func NewPipelineContext(record InventoryRecord) PipelineContext {
-	return PipelineContext{
-		PlasmidName: record.PlasmidName,
-		Location:    record.Location,
-	}
-}
-
 type AnnotationContext struct {
 	Client    pb.TaggedAnnotationServiceClient
 	PlasmidID string
 	Tag       string
 	Value     string
-}
-
-type InventoryRecord struct {
-	PlasmidName string
-	Location    string
 }
 
 type InventoryProcessingSummary struct {
@@ -137,40 +125,31 @@ func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
 	)
 }
 
-// listPlasmidsRE calls ListPlasmids and returns an Option: None if not found, Some(first) if found.
-func listPlasmidsRE(
+// listPlasmidsIOE calls ListPlasmids and returns an Option: None if not found, Some(first) if found.
+func listPlasmidsIOE(
 	ctx PipelineContext,
-) Processing[O.Option[*stock.Plasmid]] {
-	return F.Pipe1(
-		RE.Ask[Deps, error](),
-		RE.Chain(func(deps Deps) Processing[O.Option[*stock.Plasmid]] {
-			return RE.FromIOEither[Deps](
-				F.Pipe2(
-					IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
-						return deps.StockClient.ListPlasmids(
-							context.Background(),
-							&stock.StockParameters{
-								Filter: fmt.Sprintf(
-									"plasmid_name===%s",
-									ctx.PlasmidName,
-								),
-								Limit: plasmidSearchLimit,
-							},
-						)
-					}),
-					IOE.MapLeft[*stock.PlasmidCollection](
-						func(err error) error {
-							return fmt.Errorf(
-								"error listing plasmids for name %s: %w",
-								ctx.PlasmidName,
-								err,
-							)
-						},
+) IOE.IOEither[error, O.Option[*stock.Plasmid]] {
+	return F.Pipe2(
+		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
+			return ctx.Deps.StockClient.ListPlasmids(
+				context.Background(),
+				&stock.StockParameters{
+					Filter: fmt.Sprintf(
+						"plasmid_name===%s",
+						ctx.PlasmidName,
 					),
-					IOE.Map[error](collectionToOption),
-				),
+					Limit: plasmidSearchLimit,
+				},
 			)
 		}),
+		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
+			return fmt.Errorf(
+				"error listing plasmids for name %s: %w",
+				ctx.PlasmidName,
+				err,
+			)
+		}),
+		IOE.Map[error](collectionToOption),
 	)
 }
 
@@ -193,41 +172,36 @@ func createAnnotationIOE(
 	})
 }
 
-// createInventoryAnnotationsRE creates annotation IDs for inventory attributes from context using Reader
+// createInventoryAnnotationsRE creates annotation IDs for inventory attributes from context
 func createInventoryAnnotationsRE(
 	ctx PipelineContext,
 ) Processing[[]string] {
-	return F.Pipe1(
-		RE.Ask[Deps, error](),
-		RE.Chain(func(deps Deps) Processing[[]string] {
-			return RE.FromIOEither[Deps](
-				F.Pipe2(
-					map[string]string{
-						regsc.InvLocationTag: ctx.Location,
-						regsc.InvStorageDateTag: time.Now().
-							Format(time.RFC3339Nano),
-					},
-					R.Collect(
-						func(tag string, value string) IOE.IOEither[error, string] {
-							return F.Pipe3(
-								AnnotationContext{
-									Client:    deps.AnnotationClient,
-									PlasmidID: ctx.PlasmidID,
-									Tag:       tag,
-									Value:     value,
-								},
-								createAnnotationIOE,
-								IOE.MapLeft[*pb.TaggedAnnotation](
-									wrapAnnotationError(tag),
-								),
-								IOE.Map[error](extractAnnotationID),
-							)
+	return RE.FromIOEither[Deps](
+		F.Pipe2(
+			map[string]string{
+				regsc.InvLocationTag: ctx.Location,
+				regsc.InvStorageDateTag: time.Now().
+					Format(time.RFC3339Nano),
+			},
+			R.Collect(
+				func(tag string, value string) IOE.IOEither[error, string] {
+					return F.Pipe3(
+						AnnotationContext{
+							Client:    ctx.Deps.AnnotationClient,
+							PlasmidID: ctx.PlasmidID,
+							Tag:       tag,
+							Value:     value,
 						},
-					),
-					IOE.SequenceArray[error, string],
-				),
-			)
-		}),
+						createAnnotationIOE,
+						IOE.MapLeft[*pb.TaggedAnnotation](
+							wrapAnnotationError(tag),
+						),
+						IOE.Map[error](extractAnnotationID),
+					)
+				},
+			),
+			IOE.SequenceArray[error, string],
+		),
 	)
 }
 
@@ -241,31 +215,19 @@ func getInventoryRE(
 		regsc.InvLocationTag,
 		regsc.PlasmidInvOntO,
 	)
-	return F.Pipe1(
-		RE.Ask[Deps, error](),
-		RE.Chain(
-			func(deps Deps) Processing[*pb.TaggedAnnotationGroupCollection] {
-				return RE.FromIOEither[Deps](
-					F.Pipe1(
-						IOE.TryCatchError(
-							func() (*pb.TaggedAnnotationGroupCollection, error) {
-								return deps.AnnotationClient.ListAnnotationGroups(
-									context.Background(),
-									&pb.ListGroupParameters{Filter: filter},
-								)
-							},
-						),
-						IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](
-							func(err error) error {
-								return fmt.Errorf(
-									"error checking inventory: %w",
-									err,
-								)
-							},
-						),
-					),
-				)
-			},
+	return RE.FromIOEither[Deps](
+		F.Pipe1(
+			IOE.TryCatchError(
+				func() (*pb.TaggedAnnotationGroupCollection, error) {
+					return ctx.Deps.AnnotationClient.ListAnnotationGroups(
+						context.Background(),
+						&pb.ListGroupParameters{Filter: filter},
+					)
+				},
+			),
+			IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](func(err error) error {
+				return fmt.Errorf("error checking inventory: %w", err)
+			}),
 		),
 	)
 }
@@ -349,80 +311,58 @@ func deleteGroupIOE(
 	}
 }
 
-// deleteInventoryIfExistsRE conditionally deletes existing inventory from context using Reader
+// deleteInventoryIfExistsRE conditionally deletes existing inventory from context
 func deleteInventoryIfExistsRE(
 	ctx PipelineContext,
 ) Processing[*pb.TaggedAnnotationGroupCollection] {
-	return F.Pipe1(
-		RE.Ask[Deps, error](),
-		RE.Chain(
-			func(deps Deps) Processing[*pb.TaggedAnnotationGroupCollection] {
-				return RE.FromIOEither[Deps](
-					F.Pipe3(
-						// Step 1: Extract annotation IDs and delete them
-						F.Pipe2(
-							ctx.Inventory,
-							extractAnnotationIDs,
-							A.Map(deleteAnnotationIOE(deps.AnnotationClient)),
-						),
+	return RE.FromIOEither[Deps](
+		F.Pipe3(
+			F.Pipe2(
+				ctx.Inventory,
+				extractAnnotationIDs,
+				A.Map(deleteAnnotationIOE(ctx.Deps.AnnotationClient)),
+			),
+			IOE.SequenceArray[error, string],
+			IOE.Chain(
+				func(_ []string) IOE.IOEither[error, []string] {
+					return F.Pipe3(
+						ctx.Inventory,
+						extractGroupIDs,
+						A.Map(deleteGroupIOE(ctx.Deps.AnnotationClient)),
 						IOE.SequenceArray[error, string],
-						// Step 2: Extract group IDs and delete them
-						IOE.Chain(
-							func(_ []string) IOE.IOEither[error, []string] {
-								return F.Pipe3(
-									ctx.Inventory,
-									extractGroupIDs,
-									A.Map(
-										deleteGroupIOE(deps.AnnotationClient),
-									),
-									IOE.SequenceArray[error, string],
-								)
-							},
-						),
-						// Step 3: Return original collection
-						IOE.Map[error](
-							func(_ []string) *pb.TaggedAnnotationGroupCollection {
-								return ctx.Inventory
-							},
-						),
-					),
-				)
-			},
+					)
+				},
+			),
+			IOE.Map[error](func(_ []string) *pb.TaggedAnnotationGroupCollection {
+				return ctx.Inventory
+			}),
 		),
 	)
 }
 
-// createAnnotationGroupRE creates annotation group from context using Reader
+// createAnnotationGroupRE creates annotation group from context
 func createAnnotationGroupRE(
 	ctx PipelineContext,
 ) Processing[[]string] {
-	return F.Pipe1(
-		RE.Ask[Deps, error](),
-		RE.Chain(func(deps Deps) Processing[[]string] {
-			return RE.FromIOEither[Deps](
-				F.Pipe1(
-					IOE.TryCatchError(func() ([]string, error) {
-						_, err := deps.AnnotationClient.CreateAnnotationGroup(
-							context.Background(),
-							&pb.AnnotationIdList{
-								Ids: ctx.AnnotationIDs,
-							},
-						)
-						return ctx.AnnotationIDs, err
-					}),
-					IOE.MapLeft[[]string](func(err error) error {
-						return fmt.Errorf(
-							"failed to create annotation group: %w",
-							err,
-						)
-					}),
-				),
-			)
-		}),
+	return RE.FromIOEither[Deps](
+		F.Pipe1(
+			IOE.TryCatchError(func() ([]string, error) {
+				_, err := ctx.Deps.AnnotationClient.CreateAnnotationGroup(
+					context.Background(),
+					&pb.AnnotationIdList{
+						Ids: ctx.AnnotationIDs,
+					},
+				)
+				return ctx.AnnotationIDs, err
+			}),
+			IOE.MapLeft[[]string](func(err error) error {
+				return fmt.Errorf("failed to create annotation group: %w", err)
+			}),
+		),
 	)
 }
 
-// markInventoryExistenceRE marks inventory as existing from context using Reader
+// markInventoryExistenceRE marks inventory as existing from context
 func markInventoryExistenceRE(
 	ctx PipelineContext,
 ) Processing[string] {
@@ -437,29 +377,21 @@ func markInventoryExistenceRE(
 			},
 		},
 	}
-	return F.Pipe1(
-		RE.Ask[Deps, error](),
-		RE.Chain(func(deps Deps) Processing[string] {
-			return RE.FromIOEither[Deps](
-				F.Pipe2(
-					IOE.TryCatchError(func() (*pb.TaggedAnnotation, error) {
-						return deps.AnnotationClient.CreateAnnotation(
-							context.Background(),
-							input,
-						)
-					}),
-					IOE.MapLeft[*pb.TaggedAnnotation](func(err error) error {
-						return fmt.Errorf(
-							"failed to mark inventory existence: %w",
-							err,
-						)
-					}),
-					IOE.Map[error](func(_ *pb.TaggedAnnotation) string {
-						return ctx.PlasmidID
-					}),
-				),
-			)
-		}),
+	return RE.FromIOEither[Deps](
+		F.Pipe2(
+			IOE.TryCatchError(func() (*pb.TaggedAnnotation, error) {
+				return ctx.Deps.AnnotationClient.CreateAnnotation(
+					context.Background(),
+					input,
+				)
+			}),
+			IOE.MapLeft[*pb.TaggedAnnotation](func(err error) error {
+				return fmt.Errorf("failed to mark inventory existence: %w", err)
+			}),
+			IOE.Map[error](func(_ *pb.TaggedAnnotation) string {
+				return ctx.PlasmidID
+			}),
+		),
 	)
 }
 
@@ -521,7 +453,6 @@ func ProcessInventory(
 }
 
 // foldRowsWithSemigroup streams over rows one at a time, folding with Semigroup
-// This processes rows lazily without loading all into memory
 func foldRowsWithSemigroup(
 	deps Deps,
 	rows *sql.Rows,
@@ -529,31 +460,22 @@ func foldRowsWithSemigroup(
 	return IOE.TryCatchError(func() (InventoryProcessingSummary, error) {
 		defer rows.Close()
 
-		// Initial accumulator (identity for Semigroup)
 		summary := InventoryProcessingSummary{}
 		semigroup := InventorySummarySemigroup()
 
-		// Stream over rows, folding one at a time
 		for rows.Next() {
-			var record InventoryRecord
-			if err := rows.Scan(
-				&record.PlasmidName,
-				&record.Location,
-			); err != nil {
+			ctx := PipelineContext{Deps: deps}
+			if err := rows.Scan(&ctx.PlasmidName, &ctx.Location); err != nil {
 				scanError := InventoryProcessingSummary{
 					ErrorCount: 1,
-					Errors: []string{fmt.Sprintf(
-						"scan error: %v",
-						err,
-					)},
+					Errors:     []string{fmt.Sprintf("scan error: %v", err)},
 				}
 				summary = semigroup.Concat(summary, scanError)
 				continue
 			}
-			rowSummary := processRowToSummary(deps, record)
+			rowSummary := processRowToSummary(ctx)
 			summary = semigroup.Concat(summary, rowSummary)
 		}
-		// Check for iteration errors
 		if err := rows.Err(); err != nil {
 			return summary, fmt.Errorf("error iterating rows: %w", err)
 		}
@@ -574,47 +496,34 @@ var onProcessError = F.Curry2(
 		return InventoryProcessingSummary{
 			ErrorCount: 1,
 			Errors: []string{
-				fmt.Sprintf(
-					"%s: %v",
-					name,
-					err,
-				),
+				fmt.Sprintf("%s: %v", name, err),
 			},
 		}
 	},
 )
 
-// runLookup applies deps to a Processing[Option] pipeline and converts to Either.
-func runLookup(
-	deps Deps,
-) func(Processing[O.Option[*stock.Plasmid]]) E.Either[error, O.Option[*stock.Plasmid]] {
-	return func(p Processing[O.Option[*stock.Plasmid]]) E.Either[error, O.Option[*stock.Plasmid]] {
-		return fputil.ToEither(p(deps))
-	}
-}
-
 // foldPlasmidOption branches on the Option: None skips, Some runs the inventory pipeline.
 func foldPlasmidOption(
-	deps Deps,
-	record InventoryRecord,
+	ctx PipelineContext,
 ) func(O.Option[*stock.Plasmid]) E.Either[error, InventoryProcessingSummary] {
 	return O.Fold(
 		func() E.Either[error, InventoryProcessingSummary] {
 			return E.Right[error](InventoryProcessingSummary{})
 		},
 		func(plasmid *stock.Plasmid) E.Either[error, InventoryProcessingSummary] {
-			return processFoundPlasmid(deps, record, plasmid.Data.Id)
+			ctx.PlasmidID = plasmid.Data.Id
+			return processFoundPlasmid(ctx)
 		},
 	)
 }
 
-// runProcessing applies deps to a Processing pipeline, runs the IO, and maps to summary.
+// runProcessing applies ctx to a Processing pipeline, runs the IO, and maps to summary.
 func runProcessing(
-	deps Deps,
+	ctx PipelineContext,
 ) func(Processing[string]) E.Either[error, InventoryProcessingSummary] {
 	return func(pipeline Processing[string]) E.Either[error, InventoryProcessingSummary] {
 		return F.Pipe2(
-			pipeline(deps),
+			pipeline(ctx.Deps),
 			fputil.ToEither[error, string],
 			E.Map[error](onProcessSuccess),
 		)
@@ -623,16 +532,7 @@ func runProcessing(
 
 // processFoundPlasmid runs the full inventory pipeline for a known plasmid ID.
 // Called from the Some branch of O.Fold in processRowToSummary.
-func processFoundPlasmid(
-	deps Deps,
-	record InventoryRecord,
-	plasmidID string,
-) E.Either[error, InventoryProcessingSummary] {
-	ctx := PipelineContext{
-		PlasmidName: record.PlasmidName,
-		Location:    record.Location,
-		PlasmidID:   plasmidID,
-	}
+func processFoundPlasmid(ctx PipelineContext) E.Either[error, InventoryProcessingSummary] {
 	return F.Pipe1(
 		F.Pipe5(
 			RE.Of[Deps, error](ctx),
@@ -642,29 +542,19 @@ func processFoundPlasmid(
 			RE.Bind(setGroupCreated, createAnnotationGroupRE),
 			RE.Chain(markInventoryExistenceRE),
 		),
-		runProcessing(deps),
+		runProcessing(ctx),
 	)
 }
 
 // processRowToSummary processes one inventory row and returns a summary.
 // Phase 1: look up plasmid by name → Either[error, Option[*Plasmid]].
 // Phase 2: O.Fold — None skips silently, Some runs processFoundPlasmid.
-func processRowToSummary(
-	deps Deps,
-	record InventoryRecord,
-) InventoryProcessingSummary {
+func processRowToSummary(ctx PipelineContext) InventoryProcessingSummary {
 	return F.Pipe2(
-		// Phase 1: lookup → Either[error, Option[*stock.Plasmid]]
-		F.Pipe2(
-			RE.Of[Deps, error](NewPipelineContext(record)),
-			RE.Chain(listPlasmidsRE),
-			runLookup(deps),
-		),
-		// Phase 2: branch on the Option
-		E.Chain(foldPlasmidOption(deps, record)),
-		// Final fold: Left → error summary, Right → pass through
+		fputil.ToEither(listPlasmidsIOE(ctx)),
+		E.Chain(foldPlasmidOption(ctx)),
 		E.Fold(
-			onProcessError(record.PlasmidName),
+			onProcessError(ctx.PlasmidName),
 			F.Identity[InventoryProcessingSummary],
 		),
 	)
