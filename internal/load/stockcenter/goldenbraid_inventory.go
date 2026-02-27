@@ -323,7 +323,7 @@ func getInventoryRE(
 	ctx PipelineContext,
 ) Processing[*pb.TaggedAnnotationGroupCollection] {
 	filter := fmt.Sprintf(
-		"entry_id==%s;tag==%s;ontology==%s",
+		"entry_id===%s;tag===%s;ontology===%s",
 		ctx.PlasmidID,
 		regsc.InvLocationTag,
 		regsc.PlasmidInvOntO,
