@@ -323,6 +323,29 @@ func TestProcessRow(t *testing.T) {
 	mockStock.AssertExpectations(t)
 }
 
+func TestProcessRowSkipsWhenPlasmidNotFound(t *testing.T) {
+	mockStock := new(InventoryMockStockClient)
+	mockAnno := new(InventoryMockAnnotationClient)
+	deps := Deps{
+		StockClient:      mockStock,
+		AnnotationClient: mockAnno,
+	}
+	record := InventoryRecord{PlasmidName: "pMissing", Location: "Box99"}
+
+	// ListPlasmids returns empty collection — plasmid not in stock
+	mockStock.On("ListPlasmids", mock.Anything, mock.Anything, mock.Anything).
+		Return(&stock.PlasmidCollection{}, nil).Once()
+
+	summary := processRowToSummary(deps, record)
+
+	// Silent skip: neither success nor error
+	require.Equal(t, 0, summary.ErrorCount)
+	require.Equal(t, 0, summary.SuccessCount)
+	mockStock.AssertExpectations(t)
+	// Annotation client must never be reached on the None branch
+	mockAnno.AssertNotCalled(t, "ListAnnotationGroups")
+}
+
 func TestFileSQLQuery(t *testing.T) {
 	// pTest1 matches by Plasmid Name directly
 	// pTest2 matches via Synonym (pAlias2 in inventory)
