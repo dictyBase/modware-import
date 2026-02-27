@@ -225,9 +225,11 @@ func getInventoryRE(
 					)
 				},
 			),
-			IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](func(err error) error {
-				return fmt.Errorf("error checking inventory: %w", err)
-			}),
+			IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](
+				func(err error) error {
+					return fmt.Errorf("error checking inventory: %w", err)
+				},
+			),
 		),
 	)
 }
@@ -333,9 +335,11 @@ func deleteInventoryIfExistsRE(
 					)
 				},
 			),
-			IOE.Map[error](func(_ []string) *pb.TaggedAnnotationGroupCollection {
-				return ctx.Inventory
-			}),
+			IOE.Map[error](
+				func(_ []string) *pb.TaggedAnnotationGroupCollection {
+					return ctx.Inventory
+				},
+			),
 		),
 	)
 }
@@ -473,8 +477,10 @@ func foldRowsWithSemigroup(
 				summary = semigroup.Concat(summary, scanError)
 				continue
 			}
-			rowSummary := processRowToSummary(ctx)
-			summary = semigroup.Concat(summary, rowSummary)
+			summary = semigroup.Concat(
+				summary,
+				processRowToSummary(ctx),
+			)
 		}
 		if err := rows.Err(); err != nil {
 			return summary, fmt.Errorf("error iterating rows: %w", err)
@@ -532,7 +538,9 @@ func runProcessing(
 
 // processFoundPlasmid runs the full inventory pipeline for a known plasmid ID.
 // Called from the Some branch of O.Fold in processRowToSummary.
-func processFoundPlasmid(ctx PipelineContext) E.Either[error, InventoryProcessingSummary] {
+func processFoundPlasmid(
+	ctx PipelineContext,
+) E.Either[error, InventoryProcessingSummary] {
 	return F.Pipe1(
 		F.Pipe5(
 			RE.Of[Deps, error](ctx),
@@ -550,8 +558,10 @@ func processFoundPlasmid(ctx PipelineContext) E.Either[error, InventoryProcessin
 // Phase 1: look up plasmid by name → Either[error, Option[*Plasmid]].
 // Phase 2: O.Fold — None skips silently, Some runs processFoundPlasmid.
 func processRowToSummary(ctx PipelineContext) InventoryProcessingSummary {
-	return F.Pipe2(
-		fputil.ToEither(listPlasmidsIOE(ctx)),
+	return F.Pipe4(
+		ctx,
+		listPlasmidsIOE,
+		fputil.ToEither,
 		E.Chain(foldPlasmidOption(ctx)),
 		E.Fold(
 			onProcessError(ctx.PlasmidName),
