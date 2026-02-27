@@ -54,7 +54,6 @@ type Processing[A any] = RE.ReaderIOEither[Deps, error, A]
 type PipelineContext struct {
 	PlasmidName      string
 	Location         string
-	NameContext      *PlasmidNameContext
 	PlasmidID        string
 	Inventory        *pb.TaggedAnnotationGroupCollection
 	InventoryDeleted bool
@@ -87,29 +86,6 @@ type InventoryProcessingSummary struct {
 	ErrorCount    int
 	ExpectedCount int
 	Errors        []string
-}
-
-type PlasmidNameContext struct {
-	Name string
-	Resp *stock.PlasmidCollection
-}
-
-// setPlasmidContext updates context with API lookup result
-func setPlasmidContext(
-	nameCtx PlasmidNameContext,
-) func(PipelineContext) PipelineContext {
-	return func(ctx PipelineContext) PipelineContext {
-		ctx.NameContext = &nameCtx
-		return ctx
-	}
-}
-
-// setPlasmidID updates context with validated plasmid ID
-func setPlasmidID(id string) func(PipelineContext) PipelineContext {
-	return func(ctx PipelineContext) PipelineContext {
-		ctx.PlasmidID = id
-		return ctx
-	}
 }
 
 // setInventory updates context with existing inventory
@@ -161,13 +137,13 @@ func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
 	)
 }
 
-// listPlasmidsRE calls API and maps result to PlasmidNameContext using Reader
+// listPlasmidsRE calls ListPlasmids and returns an Option: None if not found, Some(first) if found.
 func listPlasmidsRE(
 	ctx PipelineContext,
-) Processing[PlasmidNameContext] {
+) Processing[O.Option[*stock.Plasmid]] {
 	return F.Pipe1(
 		RE.Ask[Deps, error](),
-		RE.Chain(func(deps Deps) Processing[PlasmidNameContext] {
+		RE.Chain(func(deps Deps) Processing[O.Option[*stock.Plasmid]] {
 			return RE.FromIOEither[Deps](
 				F.Pipe2(
 					IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
@@ -191,73 +167,10 @@ func listPlasmidsRE(
 							)
 						},
 					),
-					IOE.Map[error](
-						func(resp *stock.PlasmidCollection) PlasmidNameContext {
-							return PlasmidNameContext{
-								Name: ctx.PlasmidName,
-								Resp: resp,
-							}
-						},
-					),
+					IOE.Map[error](collectionToOption),
 				),
 			)
 		}),
-	)
-}
-
-func hasSinglePlasmid(ctx PlasmidNameContext) bool {
-	return len(ctx.Resp.Data) == 1
-}
-
-func plasmidCountError(ctx PlasmidNameContext) error {
-	return fmt.Errorf(
-		"expected 1 plasmid for %s, found %d",
-		ctx.Name,
-		len(ctx.Resp.Data),
-	)
-}
-
-func firstPlasmidID(ctx PlasmidNameContext) string {
-	return ctx.Resp.Data[0].Id
-}
-
-// requireNameContext converts nullable pointer to Either using fp-go patterns
-func requireNameContext(
-	ctx PipelineContext,
-) E.Either[error, PlasmidNameContext] {
-	return F.Pipe2(
-		O.FromNillable(ctx.NameContext),
-		O.Map(func(nc *PlasmidNameContext) PlasmidNameContext { return *nc }),
-		E.FromOption[PlasmidNameContext](func() error {
-			return fmt.Errorf(
-				"nameContext not populated for plasmid %s",
-				ctx.PlasmidName,
-			)
-		}),
-	)
-}
-
-// validatePlasmidResponseRE validates plasmid response and extracts ID using pure Either logic
-func validatePlasmidResponseRE(
-	ctx PipelineContext,
-) Processing[string] {
-	return RE.FromIOEither[Deps](
-		IOE.FromEither(
-			F.Pipe2(
-				requireNameContext(ctx),
-				E.Chain(
-					func(nc PlasmidNameContext) E.Either[error, PlasmidNameContext] {
-						return E.FromPredicate(
-							hasSinglePlasmid,
-							plasmidCountError,
-						)(
-							nc,
-						)
-					},
-				),
-				E.Map[error](firstPlasmidID),
-			),
-		),
 	)
 }
 
@@ -529,21 +442,18 @@ func markInventoryExistenceRE(
 		RE.Chain(func(deps Deps) Processing[string] {
 			return RE.FromIOEither[Deps](
 				F.Pipe2(
-					// 1. Perform the IO operation
 					IOE.TryCatchError(func() (*pb.TaggedAnnotation, error) {
 						return deps.AnnotationClient.CreateAnnotation(
 							context.Background(),
 							input,
 						)
 					}),
-					// 2. Handle errors
 					IOE.MapLeft[*pb.TaggedAnnotation](func(err error) error {
 						return fmt.Errorf(
 							"failed to mark inventory existence: %w",
 							err,
 						)
 					}),
-					// 3. Map success to the desired output (PlasmidID)
 					IOE.Map[error](func(_ *pb.TaggedAnnotation) string {
 						return ctx.PlasmidID
 					}),
@@ -674,26 +584,88 @@ var onProcessError = F.Curry2(
 	},
 )
 
-// processRowToSummary processes one row and returns a summary with injected dependencies
+// runLookup applies deps to a Processing[Option] pipeline and converts to Either.
+func runLookup(
+	deps Deps,
+) func(Processing[O.Option[*stock.Plasmid]]) E.Either[error, O.Option[*stock.Plasmid]] {
+	return func(p Processing[O.Option[*stock.Plasmid]]) E.Either[error, O.Option[*stock.Plasmid]] {
+		return fputil.ToEither(p(deps))
+	}
+}
+
+// foldPlasmidOption branches on the Option: None skips, Some runs the inventory pipeline.
+func foldPlasmidOption(
+	deps Deps,
+	record InventoryRecord,
+) func(O.Option[*stock.Plasmid]) E.Either[error, InventoryProcessingSummary] {
+	return O.Fold(
+		func() E.Either[error, InventoryProcessingSummary] {
+			return E.Right[error](InventoryProcessingSummary{})
+		},
+		func(plasmid *stock.Plasmid) E.Either[error, InventoryProcessingSummary] {
+			return processFoundPlasmid(deps, record, plasmid.Data.Id)
+		},
+	)
+}
+
+// runProcessing applies deps to a Processing pipeline, runs the IO, and maps to summary.
+func runProcessing(
+	deps Deps,
+) func(Processing[string]) E.Either[error, InventoryProcessingSummary] {
+	return func(pipeline Processing[string]) E.Either[error, InventoryProcessingSummary] {
+		return F.Pipe2(
+			pipeline(deps),
+			fputil.ToEither[error, string],
+			E.Map[error](onProcessSuccess),
+		)
+	}
+}
+
+// processFoundPlasmid runs the full inventory pipeline for a known plasmid ID.
+// Called from the Some branch of O.Fold in processRowToSummary.
+func processFoundPlasmid(
+	deps Deps,
+	record InventoryRecord,
+	plasmidID string,
+) E.Either[error, InventoryProcessingSummary] {
+	ctx := PipelineContext{
+		PlasmidName: record.PlasmidName,
+		Location:    record.Location,
+		PlasmidID:   plasmidID,
+	}
+	return F.Pipe1(
+		F.Pipe5(
+			RE.Of[Deps, error](ctx),
+			RE.Bind(setInventory, getInventoryRE),
+			RE.Bind(setInventoryDeleted, deleteInventoryIfExistsRE),
+			RE.Bind(setAnnotationIDs, createInventoryAnnotationsRE),
+			RE.Bind(setGroupCreated, createAnnotationGroupRE),
+			RE.Chain(markInventoryExistenceRE),
+		),
+		runProcessing(deps),
+	)
+}
+
+// processRowToSummary processes one inventory row and returns a summary.
+// Phase 1: look up plasmid by name → Either[error, Option[*Plasmid]].
+// Phase 2: O.Fold — None skips silently, Some runs processFoundPlasmid.
 func processRowToSummary(
 	deps Deps,
 	record InventoryRecord,
 ) InventoryProcessingSummary {
-	return F.Pipe9(
-		RE.Of[Deps, error](NewPipelineContext(record)),
-		RE.Bind(setPlasmidContext, listPlasmidsRE),
-		RE.Bind(setPlasmidID, validatePlasmidResponseRE),
-		RE.Bind(setInventory, getInventoryRE),
-		RE.Bind(setInventoryDeleted, deleteInventoryIfExistsRE),
-		RE.Bind(setAnnotationIDs, createInventoryAnnotationsRE),
-		RE.Bind(setGroupCreated, createAnnotationGroupRE),
-		RE.Chain(markInventoryExistenceRE),
-		func(r Processing[string]) E.Either[error, string] {
-			return fputil.ToEither(r(deps))
-		},
+	return F.Pipe2(
+		// Phase 1: lookup → Either[error, Option[*stock.Plasmid]]
+		F.Pipe2(
+			RE.Of[Deps, error](NewPipelineContext(record)),
+			RE.Chain(listPlasmidsRE),
+			runLookup(deps),
+		),
+		// Phase 2: branch on the Option
+		E.Chain(foldPlasmidOption(deps, record)),
+		// Final fold: Left → error summary, Right → pass through
 		E.Fold(
 			onProcessError(record.PlasmidName),
-			onProcessSuccess,
+			F.Identity[InventoryProcessingSummary],
 		),
 	)
 }

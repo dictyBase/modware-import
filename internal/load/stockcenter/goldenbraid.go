@@ -316,30 +316,6 @@ func processPlasmid(
 	)
 }
 
-// collectionToOption converts PlasmidCollection to Option[Plasmid]
-func collectionToOption(
-	collection *stock.PlasmidCollection,
-) O.Option[*stock.Plasmid] {
-	return F.Pipe2(
-		collection.Data,
-		A.Head[*stock.PlasmidCollection_Data], // Returns Option - None if empty
-		O.Map(convertCollectionDataToPlasmid), // Transform if Some
-	)
-}
-
-// convertCollectionDataToPlasmid converts collection data to full Plasmid message
-func convertCollectionDataToPlasmid(
-	data *stock.PlasmidCollection_Data,
-) *stock.Plasmid {
-	return &stock.Plasmid{
-		Data: &stock.Plasmid_Data{
-			Type:       data.Type,
-			Id:         data.Id,
-			Attributes: data.Attributes,
-		},
-	}
-}
-
 // openReader opens a CSV file from config and returns a reader wrapped in IOEither
 func openReader(
 	config LoaderConfig,
