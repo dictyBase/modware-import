@@ -129,7 +129,7 @@ func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
 func listPlasmidsIOE(
 	ctx PipelineContext,
 ) IOE.IOEither[error, O.Option[*stock.Plasmid]] {
-	return F.Pipe2(
+	return F.Pipe4(
 		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
 			return ctx.Deps.StockClient.ListPlasmids(
 				context.Background(),
@@ -149,7 +149,11 @@ func listPlasmidsIOE(
 				err,
 			)
 		}),
-		IOE.Map[error](collectionToOption),
+		IOE.Map[error](func(c *stock.PlasmidCollection) []*stock.PlasmidCollection_Data {
+			return c.Data
+		}),
+		IOE.Map[error](A.Head[*stock.PlasmidCollection_Data]),
+		IOE.Map[error](O.Map(convertCollectionDataToPlasmid)),
 	)
 }
 
