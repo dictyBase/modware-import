@@ -499,6 +499,11 @@ func foldRowsWithSemigroup(
 	})
 }
 
+// skipInventory is the O.Fold None branch: plasmid not in stock, nothing to annotate.
+func skipInventory() E.Either[error, InventoryProcessingSummary] {
+	return E.Right[error](InventoryProcessingSummary{})
+}
+
 // onProcessSuccess handles successful processing
 func onProcessSuccess(_ string) InventoryProcessingSummary {
 	return InventoryProcessingSummary{
@@ -558,12 +563,7 @@ func processRowToSummary(ctx PipelineContext) InventoryProcessingSummary {
 		ctx,
 		listPlasmidsIOE,
 		fputil.ToEither,
-		E.Chain(O.Fold(
-			func() E.Either[error, InventoryProcessingSummary] {
-				return E.Right[error](InventoryProcessingSummary{})
-			},
-			processFoundPlasmid(ctx),
-		)),
+		E.Chain(O.Fold(skipInventory, processFoundPlasmid(ctx))),
 		E.Fold(
 			onProcessError(ctx.PlasmidName),
 			F.Identity[InventoryProcessingSummary],
