@@ -181,3 +181,59 @@ lookup-plasmid tag name:
               args:
                 - lookup
     EOF
+
+# Run goldenbraid inventory import job in dev cluster
+run-goldenbraid-inventory tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    kubectl apply -f - <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: goldenbraid-inventory
+      namespace: dev
+    spec:
+      ttlSecondsAfterFinished: 120
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: goldenbraid-inventory
+              image: {{ghcr_image}}:{{tag}}
+              envFrom:
+                - secretRef:
+                    name: minio
+              args:
+                - inventory
+    EOF
+
+# Run goldenbraid inventory import with debug logging
+run-goldenbraid-inventory-debug tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    kubectl apply -f - <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: goldenbraid-inventory-debug
+      namespace: dev
+    spec:
+      ttlSecondsAfterFinished: 300
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: goldenbraid-inventory-debug
+              image: {{ghcr_image}}:{{tag}}
+              envFrom:
+                - secretRef:
+                    name: minio
+              args:
+                - inventory
+                - --log-level
+                - debug
+                - --log-format
+                - text
+    EOF
