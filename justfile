@@ -220,7 +220,7 @@ run-goldenbraid-inventory-debug tag:
       name: goldenbraid-inventory-debug
       namespace: dev
     spec:
-      ttlSecondsAfterFinished: 300
+      ttlSecondsAfterFinished: 120
       template:
         spec:
           restartPolicy: Never
