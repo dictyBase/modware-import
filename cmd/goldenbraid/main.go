@@ -21,7 +21,7 @@ func main() {
 				Action: stockcenter.LoadGoldenBraidInventory,
 				Before: stockcenter.SetClients,
 				Flags: slices.Concat(
-					stockcenter.InputFlags(),
+					stockcenter.InventoryInputFlags(),
 					stockcenter.GoldenBraidInputFlags(),
 					stockcenter.S3Flags(),
 					stockcenter.StockConnectionFlags(),

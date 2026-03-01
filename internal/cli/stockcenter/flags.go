@@ -21,13 +21,13 @@ func StockConnectionFlags() []cli.Flag {
 	}
 }
 
-// InputFlags returns flags for input file configuration
-func InputFlags() []cli.Flag {
+// commonInputFlags returns the common flags for input file configuration with a configurable default value
+func commonInputFlags(value string) []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:  "input",
 			Usage: "Input file path (local path or filename in bucket)",
-			Value: "goldenbraid.csv",
+			Value: value,
 		},
 		&cli.StringFlag{
 			Name:  "input-source",
@@ -45,6 +45,16 @@ func InputFlags() []cli.Flag {
 			Value: "import/data/stockcenter",
 		},
 	}
+}
+
+// InputFlags returns flags for input file configuration
+func InputFlags() []cli.Flag {
+	return commonInputFlags("goldenbraid.csv")
+}
+
+// InventoryInputFlags returns flags for inventory input file configuration
+func InventoryInputFlags() []cli.Flag {
+	return commonInputFlags("goldenbraid_inventory.csv")
 }
 
 // OntologyFlags returns flags for ontology configuration
