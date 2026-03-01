@@ -20,6 +20,8 @@ import (
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/fputil"
 	regsc "github.com/dictyBase/modware-import/internal/registry/stockcenter"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -247,10 +249,14 @@ func getInventoryRE(
 		F.Pipe2(
 			IOE.TryCatchError(
 				func() (*pb.TaggedAnnotationGroupCollection, error) {
-					return ctx.Deps.AnnotationClient.ListAnnotationGroups(
+					result, err := ctx.Deps.AnnotationClient.ListAnnotationGroups(
 						context.Background(),
 						&pb.ListGroupParameters{Filter: filter},
 					)
+					if err != nil && status.Code(err) == codes.NotFound {
+						return &pb.TaggedAnnotationGroupCollection{}, nil
+					}
+					return result, err
 				},
 			),
 			IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](
