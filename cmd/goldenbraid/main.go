@@ -19,7 +19,7 @@ func main() {
 				Name:   "inventory",
 				Usage:  "Load GoldenBraid inventory",
 				Action: stockcenter.LoadGoldenBraidInventory,
-				Before: stockcenter.SetClients,
+				Before: stockcenter.SetAllClients,
 				Flags: slices.Concat(
 					stockcenter.InventoryInputFlags(),
 					stockcenter.GoldenBraidInputFlags(),

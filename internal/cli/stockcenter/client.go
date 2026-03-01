@@ -131,6 +131,35 @@ func SetS3Client(cltx *cli.Context) IOE.IOEither[error, *minio.Client] {
 	)
 }
 
+// SetAllClients sets up stock, annotation, and S3 clients
+// Used by the inventory subcommand which requires all three.
+func SetAllClients(cltx *cli.Context) error {
+	return F.Pipe2(
+		IOE.SequenceArraySeq([]IOE.IOEither[error, any]{
+			F.Pipe2(
+				cltx,
+				SetStockClient,
+				IOE.Map[error](func(conn *grpc.ClientConn) any { return conn }),
+			),
+			F.Pipe2(
+				cltx,
+				SetAnnotationClient,
+				IOE.Map[error](func(conn *grpc.ClientConn) any { return conn }),
+			),
+			F.Pipe2(
+				cltx,
+				SetS3Client,
+				IOE.Map[error](func(client *minio.Client) any { return client }),
+			),
+		}),
+		fputil.ToEither[error, []any],
+		E.Fold(
+			F.Identity[error],
+			F.Constant1[[]any, error](nil),
+		),
+	)
+}
+
 // SetStockAndS3Clients sets up both stock client and S3 client
 // Uses SequenceArraySeq for independent operations that should both succeed
 func SetStockAndS3Clients(cltx *cli.Context) error {
