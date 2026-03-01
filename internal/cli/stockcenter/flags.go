@@ -94,14 +94,15 @@ func S3Flags() []cli.Flag {
 func AnnotationFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
-			Name:  "annotation-grpc-host",
-			Usage: "gRPC host address for annotation service",
-			Value: "annotation-api",
+			Name:    "annotation-grpc-host",
+			Usage:   "gRPC host address for annotation service",
+			Value:   "annotation-api",
+			EnvVars: []string{"ANNOTATION_API_SERVICE_HOST"},
 		},
 		&cli.StringFlag{
-			Name:  "annotation-grpc-port",
-			Usage: "gRPC port for annotation service",
-			Value: "9560",
+			Name:    "annotation-grpc-port",
+			Usage:   "gRPC port for annotation service",
+			EnvVars: []string{"ANNOTATION_API_SERVICE_PORT"},
 		},
 	}
 }
