@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 	"testing"
 
@@ -264,6 +265,7 @@ func TestProcessRow(t *testing.T) {
 	deps := Deps{
 		StockClient:      mockStock,
 		AnnotationClient: mockAnno,
+		Logger:           slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 	ctx := PipelineContext{
 		Deps:        deps,
@@ -328,6 +330,7 @@ func TestProcessRowSkipsWhenPlasmidNotFound(t *testing.T) {
 		Deps: Deps{
 			StockClient:      mockStock,
 			AnnotationClient: mockAnno,
+			Logger:           slog.New(slog.NewTextHandler(io.Discard, nil)),
 		},
 		PlasmidName: "pMissing",
 		Location:    "Box99",

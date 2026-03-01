@@ -10,6 +10,7 @@ import (
 	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
+	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
 	O "github.com/IBM/fp-go/option"
 	RE "github.com/IBM/fp-go/readerioeither"
@@ -112,6 +113,27 @@ func setGroupCreated(_ []string) func(PipelineContext) PipelineContext {
 	}
 }
 
+func logInventoryFilter(slogger *slog.Logger) func(string) IO.IO[struct{}] {
+	return func(filter string) IO.IO[struct{}] {
+		return func() struct{} {
+			slogger.Debug("inventory: ListPlasmids", "filter", filter)
+			return struct{}{}
+		}
+	}
+}
+
+func logExistingInventory(
+	slogger *slog.Logger,
+) func(*pb.TaggedAnnotationGroupCollection) IO.IO[struct{}] {
+	return func(coll *pb.TaggedAnnotationGroupCollection) IO.IO[struct{}] {
+		return func() struct{} {
+			slogger.Debug("inventory: existing inventory check",
+				"group_count", len(coll.GetData()))
+			return struct{}{}
+		}
+	}
+}
+
 func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
 	return S.MakeSemigroup(
 		func(a, b InventoryProcessingSummary) InventoryProcessingSummary {
@@ -129,18 +151,20 @@ func InventorySummarySemigroup() S.Semigroup[InventoryProcessingSummary] {
 func listPlasmidsIOE(
 	ctx PipelineContext,
 ) IOE.IOEither[error, O.Option[*stock.Plasmid]] {
-	return F.Pipe4(
-		IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
-			return ctx.Deps.StockClient.ListPlasmids(
-				context.Background(),
-				&stock.StockParameters{
-					Filter: fmt.Sprintf(
-						"plasmid_name===%s",
-						ctx.PlasmidName,
-					),
-					Limit: plasmidSearchLimit,
-				},
-			)
+	filter := fmt.Sprintf("plasmid_name===%s", ctx.PlasmidName)
+	return F.Pipe6(
+		IOE.Of[error](filter),
+		IOE.ChainFirstIOK[error](logInventoryFilter(ctx.Deps.Logger)),
+		IOE.Chain(func(_ string) IOE.IOEither[error, *stock.PlasmidCollection] {
+			return IOE.TryCatchError(func() (*stock.PlasmidCollection, error) {
+				return ctx.Deps.StockClient.ListPlasmids(
+					context.Background(),
+					&stock.StockParameters{
+						Filter: filter,
+						Limit:  plasmidSearchLimit,
+					},
+				)
+			})
 		}),
 		IOE.MapLeft[*stock.PlasmidCollection](func(err error) error {
 			return fmt.Errorf(
@@ -220,7 +244,7 @@ func getInventoryRE(
 		regsc.PlasmidInvOntO,
 	)
 	return RE.FromIOEither[Deps](
-		F.Pipe1(
+		F.Pipe2(
 			IOE.TryCatchError(
 				func() (*pb.TaggedAnnotationGroupCollection, error) {
 					return ctx.Deps.AnnotationClient.ListAnnotationGroups(
@@ -234,6 +258,7 @@ func getInventoryRE(
 					return fmt.Errorf("error checking inventory: %w", err)
 				},
 			),
+			IOE.ChainFirstIOK[error](logExistingInventory(ctx.Deps.Logger)),
 		),
 	)
 }
@@ -503,11 +528,6 @@ func foldRowsWithSemigroup(
 	})
 }
 
-// skipInventory is the O.Fold None branch: plasmid not in stock, nothing to annotate.
-func skipInventory() E.Either[error, InventoryProcessingSummary] {
-	return E.Right[error](InventoryProcessingSummary{})
-}
-
 // onProcessSuccess handles successful processing
 func onProcessSuccess(_ string) InventoryProcessingSummary {
 	return InventoryProcessingSummary{
@@ -545,6 +565,11 @@ func runProcessing(
 var processFoundPlasmid = F.Curry2(
 	func(ctx PipelineContext, plasmid *stock.Plasmid) E.Either[error, InventoryProcessingSummary] {
 		ctx.PlasmidID = plasmid.Data.Id
+		ctx.Deps.Logger.Debug("inventory: processing plasmid",
+			"plasmid_name", ctx.PlasmidName,
+			"plasmid_id", ctx.PlasmidID,
+			"location", ctx.Location,
+		)
 		return F.Pipe1(
 			F.Pipe5(
 				RE.Of[Deps, error](ctx),
@@ -561,15 +586,26 @@ var processFoundPlasmid = F.Curry2(
 
 // processRowToSummary processes one inventory row and returns a summary.
 // Phase 1: look up plasmid by name → Either[error, Option[*Plasmid]].
-// Phase 2: O.Fold — None skips silently, Some calls processFoundPlasmid(ctx) directly.
+// Phase 2: O.Fold — None skips with a debug log, Some calls processFoundPlasmid(ctx).
 func processRowToSummary(ctx PipelineContext) InventoryProcessingSummary {
 	return F.Pipe4(
 		ctx,
 		listPlasmidsIOE,
 		fputil.ToEither,
-		E.Chain(O.Fold(skipInventory, processFoundPlasmid(ctx))),
+		E.Chain(O.Fold(
+			func() E.Either[error, InventoryProcessingSummary] {
+				ctx.Deps.Logger.Debug("inventory: skipping, plasmid not in stock",
+					"plasmid_name", ctx.PlasmidName)
+				return E.Of[error](InventoryProcessingSummary{})
+			},
+			processFoundPlasmid(ctx),
+		)),
 		E.Fold(
-			onProcessError(ctx.PlasmidName),
+			func(err error) InventoryProcessingSummary {
+				ctx.Deps.Logger.Error("inventory: processing error",
+					"plasmid_name", ctx.PlasmidName, "error", err)
+				return F.Pipe1(err, onProcessError(ctx.PlasmidName))
+			},
 			F.Identity[InventoryProcessingSummary],
 		),
 	)
