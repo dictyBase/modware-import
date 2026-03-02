@@ -14,9 +14,11 @@ import (
 	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
 	O "github.com/IBM/fp-go/option"
+	P "github.com/IBM/fp-go/predicate"
 	RE "github.com/IBM/fp-go/readerioeither"
 	R "github.com/IBM/fp-go/record"
 	S "github.com/IBM/fp-go/semigroup"
+	T "github.com/IBM/fp-go/tuple"
 	pb "github.com/dictyBase/go-genproto/dictybaseapis/annotation"
 	stock "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/fputil"
@@ -24,6 +26,30 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+)
+
+var (
+	// isNotNil is a reusable predicate that returns true when an error is non-nil.
+	isNotNil = F.Pipe1(
+		EQ.Equals(EQ.FromStrictEquals[error]())(nil),
+		P.Not[error],
+	)
+
+	// isNotFound is a reusable predicate that returns true when an error carries
+	// gRPC status code NotFound.
+	isNotFound = F.Flow2(
+		status.Code,
+		EQ.Equals(EQ.FromStrictEquals[codes.Code]())(codes.NotFound),
+	)
+
+	// onNotFoundError is the O.Fold Some branch: returns an empty collection
+	// with nil error, recovering from a gRPC NotFound signal.
+	onNotFoundError = func(_ error) T.Tuple2[*pb.TaggedAnnotationGroupCollection, error] {
+		return T.MakeTuple2[*pb.TaggedAnnotationGroupCollection, error](
+			&pb.TaggedAnnotationGroupCollection{},
+			nil,
+		)
+	}
 )
 
 const (
@@ -256,20 +282,17 @@ func getInventoryRE(
 						context.Background(),
 						&pb.ListGroupParameters{Filter: filter},
 					)
-					isNotFound := F.Flow2(
-						status.Code,
-						EQ.Equals(EQ.FromStrictEquals[codes.Code]())(codes.NotFound),
+					output := F.Pipe2(
+						err,
+						O.FromPredicate(P.And(isNotFound)(isNotNil)),
+						O.Fold(
+							func() T.Tuple2[*pb.TaggedAnnotationGroupCollection, error] {
+								return T.MakeTuple2(result, err)
+							},
+							onNotFoundError,
+						),
 					)
-					optErr := F.Pipe1(err, O.FromPredicate(isNotFound))
-					return O.Fold(
-							F.Constant(result),
-							F.Constant1[error, *pb.TaggedAnnotationGroupCollection](
-								&pb.TaggedAnnotationGroupCollection{},
-							),
-						)(optErr), O.Fold(
-							F.Constant(err),
-							F.Constant1[error, error](nil),
-						)(optErr)
+					return output.F1, output.F2
 				},
 			),
 			IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](
