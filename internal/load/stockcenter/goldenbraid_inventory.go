@@ -253,10 +253,21 @@ func getInventoryRE(
 						context.Background(),
 						&pb.ListGroupParameters{Filter: filter},
 					)
-					if err != nil && status.Code(err) == codes.NotFound {
-						return &pb.TaggedAnnotationGroupCollection{}, nil
+					isNotFound := func(err error) bool {
+						return status.Code(err) == codes.NotFound
 					}
-					return result, err
+					return F.Ternary(
+							isNotFound,
+							F.Constant1[error, *pb.TaggedAnnotationGroupCollection](
+								&pb.TaggedAnnotationGroupCollection{},
+							),
+							F.Constant1[error, *pb.TaggedAnnotationGroupCollection](result),
+						)(
+							err,
+						), F.Ternary(isNotFound,
+							F.Constant1[error, error](nil),
+							F.Identity[error],
+						)(err)
 				},
 			),
 			IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](
