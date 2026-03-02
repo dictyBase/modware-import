@@ -222,7 +222,6 @@ func fetchPlasmidByName(
 					context.Background(),
 					&stock.StockParameters{
 						Filter: filter,
-						Limit:  1,
 					},
 				)
 			})

@@ -20,7 +20,7 @@ func TestFetchPlasmidByName_ReturnsNoneWhenNotFound(t *testing.T) {
 
 	// Mock: ListPlasmids returns empty collection
 	mockClient.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
-		return p.Limit == 1 && p.Filter == "plasmid_name===nonexistent"
+		return p.Filter == "plasmid_name===nonexistent"
 	}), mock.Anything).
 		Return(&stock.PlasmidCollection{Data: []*stock.PlasmidCollection_Data{}}, nil)
 
@@ -40,7 +40,7 @@ func TestFetchPlasmidByName_ReturnsSomeWhenFound(t *testing.T) {
 
 	// Mock: ListPlasmids returns collection with one plasmid
 	mockClient.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
-		return p.Limit == 1 && p.Filter == "plasmid_name===pTest1"
+		return p.Filter == "plasmid_name===pTest1"
 	}), mock.Anything).
 		Return(&stock.PlasmidCollection{
 			Data: []*stock.PlasmidCollection_Data{
@@ -81,7 +81,7 @@ func TestProcessPlasmid_CreateWhenNotExists(t *testing.T) {
 	}
 
 	mockClient.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
-		return p.Limit == 1 && p.Filter == "plasmid_name===pNew"
+		return p.Filter == "plasmid_name===pNew"
 	}), mock.Anything).
 		Return(&stock.PlasmidCollection{Data: []*stock.PlasmidCollection_Data{}}, nil)
 	mockClient.On("CreatePlasmid", mock.Anything, mock.MatchedBy(func(p *stock.NewPlasmid) bool {
@@ -115,7 +115,7 @@ func TestProcessPlasmid_SkipWhenExists(t *testing.T) {
 	}
 
 	mockClient.On("ListPlasmids", mock.Anything, mock.MatchedBy(func(p *stock.StockParameters) bool {
-		return p.Limit == 1 && p.Filter == "plasmid_name===pExisting"
+		return p.Filter == "plasmid_name===pExisting"
 	}), mock.Anything).
 		Return(&stock.PlasmidCollection{
 			Data: []*stock.PlasmidCollection_Data{
