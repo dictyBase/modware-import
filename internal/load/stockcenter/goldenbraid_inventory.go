@@ -9,6 +9,7 @@ import (
 
 	A "github.com/IBM/fp-go/array"
 	E "github.com/IBM/fp-go/either"
+	EQ "github.com/IBM/fp-go/eq"
 	F "github.com/IBM/fp-go/function"
 	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
@@ -175,9 +176,11 @@ func listPlasmidsIOE(
 				err,
 			)
 		}),
-		IOE.Map[error](func(c *stock.PlasmidCollection) []*stock.PlasmidCollection_Data {
-			return c.Data
-		}),
+		IOE.Map[error](
+			func(c *stock.PlasmidCollection) []*stock.PlasmidCollection_Data {
+				return c.Data
+			},
+		),
 		IOE.Map[error](A.Head[*stock.PlasmidCollection_Data]),
 		IOE.Map[error](O.Map(convertCollectionDataToPlasmid)),
 	)
@@ -253,21 +256,20 @@ func getInventoryRE(
 						context.Background(),
 						&pb.ListGroupParameters{Filter: filter},
 					)
-					isNotFound := func(err error) bool {
-						return status.Code(err) == codes.NotFound
-					}
-					return F.Ternary(
-							isNotFound,
+					isNotFound := F.Flow2(
+						status.Code,
+						EQ.Equals(EQ.FromStrictEquals[codes.Code]())(codes.NotFound),
+					)
+					optErr := F.Pipe1(err, O.FromPredicate(isNotFound))
+					return O.Fold(
+							F.Constant(result),
 							F.Constant1[error, *pb.TaggedAnnotationGroupCollection](
 								&pb.TaggedAnnotationGroupCollection{},
 							),
-							F.Constant1[error, *pb.TaggedAnnotationGroupCollection](result),
-						)(
-							err,
-						), F.Ternary(isNotFound,
+						)(optErr), O.Fold(
+							F.Constant(err),
 							F.Constant1[error, error](nil),
-							F.Identity[error],
-						)(err)
+						)(optErr)
 				},
 			),
 			IOE.MapLeft[*pb.TaggedAnnotationGroupCollection](
@@ -611,8 +613,11 @@ func processRowToSummary(ctx PipelineContext) InventoryProcessingSummary {
 		fputil.ToEither,
 		E.Chain(O.Fold(
 			func() E.Either[error, InventoryProcessingSummary] {
-				ctx.Deps.Logger.Debug("inventory: skipping, plasmid not in stock",
-					"plasmid_name", ctx.PlasmidName)
+				ctx.Deps.Logger.Debug(
+					"inventory: skipping, plasmid not in stock",
+					"plasmid_name",
+					ctx.PlasmidName,
+				)
 				return E.Of[error](InventoryProcessingSummary{})
 			},
 			processFoundPlasmid(ctx),
