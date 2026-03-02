@@ -41,6 +41,7 @@ var (
 		status.Code,
 		EQ.Equals(EQ.FromStrictEquals[codes.Code]())(codes.NotFound),
 	)
+	isTargetError = P.And(isNotFound)(isNotNil)
 
 	// onNotFoundError is the O.Fold Some branch: returns an empty collection
 	// with nil error, recovering from a gRPC NotFound signal.
@@ -284,7 +285,7 @@ func getInventoryRE(
 					)
 					output := F.Pipe2(
 						err,
-						O.FromPredicate(P.And(isNotFound)(isNotNil)),
+						O.FromPredicate(isTargetError),
 						O.Fold(
 							func() T.Tuple2[*pb.TaggedAnnotationGroupCollection, error] {
 								return T.MakeTuple2(result, err)
