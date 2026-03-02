@@ -205,6 +205,12 @@ func listPlasmidsIOE(
 		}),
 		IOE.Map[error](
 			func(c *stock.PlasmidCollection) []*stock.PlasmidCollection_Data {
+				ctx.Deps.Logger.Debug(
+					"inventory: got plasmid collection",
+					"plasmid count",
+					len(c.Data),
+				)
+
 				return c.Data
 			},
 		),
