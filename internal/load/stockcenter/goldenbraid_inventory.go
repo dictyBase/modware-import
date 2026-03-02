@@ -54,8 +54,6 @@ var (
 )
 
 const (
-	plasmidSearchLimit = 1
-
 	inventoryJoinQuery = `
 		SELECT DISTINCT g."Plasmid Name", gi.Location
 		FROM goldenbraid g
@@ -191,7 +189,6 @@ func listPlasmidsIOE(
 					context.Background(),
 					&stock.StockParameters{
 						Filter: filter,
-						Limit:  plasmidSearchLimit,
 					},
 				)
 			})
