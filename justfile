@@ -104,11 +104,11 @@ run-goldenbraid-plasmid-ontology tag ontology_term="vector":
     #!/usr/bin/env bash
     set -euo pipefail
     export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
-    kubectl apply -f - <<EOF
+    kubectl create -f - <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: goldenbraid-plasmid-ontology
+      generateName: goldenbraid-plasmid-ontology-
       namespace: dev
     spec:
       ttlSecondsAfterFinished: 120
@@ -237,3 +237,26 @@ run-goldenbraid-inventory-debug tag:
                 - --log-format
                 - text
     EOF
+
+# Wait for a Kubernetes job to complete, fail, or detect stuck pods.
+# Delegates to the goldenbraid wait-job subcommand
+wait-job name namespace="dev" timeout="60s":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    kubeconfig=$(k3d kubeconfig write k3d-dev-cluster)
+    go run ./cmd/goldenbraid/ wait-job --name {{name}} --namespace {{namespace}} --timeout {{timeout}} --kubeconfig "$kubeconfig"
+
+# Get the logs for a specific job
+job-logs name namespace="dev":
+    #!/usr/bin/env bash
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    kubectl logs job/{{name}} -n {{namespace}}
+
+# Get failure details for a job
+job-debug name namespace="dev":
+    #!/usr/bin/env bash
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    echo "--- Pod Logs ---"
+    kubectl logs job/{{name}} -n {{namespace}} || true
+    echo "--- Job Description ---"
+    kubectl describe job/{{name}} -n {{namespace}}
