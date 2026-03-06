@@ -239,12 +239,12 @@ run-goldenbraid-inventory-debug tag:
     EOF
 
 # Wait for a Kubernetes job to complete, fail, or detect stuck pods.
-# Delegates to the goldenbraid wait-job subcommand
+# Delegates to the k8s wait-job subcommand
 wait-job name namespace="dev" timeout="60s":
     #!/usr/bin/env bash
     set -euo pipefail
     kubeconfig=$(k3d kubeconfig write k3d-dev-cluster)
-    go run ./cmd/goldenbraid/ wait-job --name {{name}} --namespace {{namespace}} --timeout {{timeout}} --kubeconfig "$kubeconfig"
+    go run ./cmd/k8s/ wait-job --name {{name}} --namespace {{namespace}} --timeout {{timeout}} --kubeconfig "$kubeconfig"
 
 # Get the logs for a specific job
 job-logs name namespace="dev":
