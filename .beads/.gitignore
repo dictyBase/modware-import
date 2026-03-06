@@ -47,6 +47,19 @@ beads.left.meta.json
 beads.right.jsonl
 beads.right.meta.json
 
+dolt/
+dolt-access.lock
+# Dolt server management (auto-started by bd)
+dolt-server.pid
+dolt-server.log
+dolt-server.lock
+dolt-server.port
+dolt-server.activity
+dolt-monitor.pid
+
+# Backup data (auto-exported JSONL, local-only)
+backup/
+
 # NOTE: Do NOT add negation patterns (e.g., !issues.jsonl) here.
 # They would override fork protection in .git/info/exclude, allowing
 # contributors to accidentally commit upstream issue databases.
