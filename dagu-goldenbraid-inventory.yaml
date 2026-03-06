@@ -1,25 +1,22 @@
-name: goldenbraid-plasmid-ontology
+name: goldenbraid-inventory
 type: graph
-description: "Orchestrates a plasmid ontology load job in the dev cluster."
+description: "Orchestrates a GoldenBraid inventory import job in the dev cluster."
 params:
   schema:
     type: object
-    required: ["TAG", "ONTOLOGY_TERM"]
+    required: ["TAG"]
     properties:
       TAG:
         type: string
         description: "The Docker image tag to use"
-      ONTOLOGY_TERM:
-        type: string
-        description: "The ontology term to assign (e.g., vector)"
 
 steps:
   - name: submit
     description: "Launch the Kubernetes job"
     command: |
       set -euo pipefail
-      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology ${TAG} ${ONTOLOGY_TERM})
-      echo "$JOB_OUTPUT" | grep -o 'goldenbraid-plasmid-ontology-[a-z0-9]*' | head -n 1
+      JOB_OUTPUT=$(just run-goldenbraid-inventory ${TAG})
+      echo "goldenbraid-inventory"
     output: JOB_NAME
 
   - name: wait
