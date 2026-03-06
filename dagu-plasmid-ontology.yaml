@@ -19,7 +19,9 @@ steps:
     description: "Launch the Kubernetes job"
     command: |
       set -euo pipefail
-      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology ${TAG} ${ONTOLOGY_TERM})
+      # Ensure term is set even if Dagu schema default isn't exported to the shell
+      TERM="${ONTOLOGY_TERM:-vector}"
+      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology ${TAG} ${TERM})
       echo "$JOB_OUTPUT" | grep -o 'goldenbraid-plasmid-ontology-[a-z0-9]*' | head -n 1
     output: JOB_NAME
 
