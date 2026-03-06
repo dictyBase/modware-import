@@ -16,7 +16,7 @@ steps:
     command: |
       set -euo pipefail
       JOB_OUTPUT=$(just run-goldenbraid-inventory ${TAG})
-      echo "goldenbraid-inventory"
+      echo "$JOB_OUTPUT" | grep -o 'goldenbraid-inventory[a-z0-9-]*' | head -n 1
     output: JOB_NAME
 
   - name: wait
