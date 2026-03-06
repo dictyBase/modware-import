@@ -14,7 +14,7 @@ require (
 	github.com/emirpasic/gods v1.18.1
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/fatih/color v1.15.0 // indirect
-	github.com/go-git/go-git/v5 v5.16.5
+	github.com/go-git/go-git/v5 v5.17.0
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/golang/protobuf v1.5.4
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -31,16 +31,16 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.51.0
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/grpc v1.79.1
 	google.golang.org/protobuf v1.36.11
-	k8s.io/api v0.35.1
-	k8s.io/apimachinery v0.35.1
-	k8s.io/client-go v0.35.1
+	k8s.io/api v0.35.2
+	k8s.io/apimachinery v0.35.2
+	k8s.io/client-go v0.35.2
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 )
@@ -48,9 +48,9 @@ require (
 require (
 	buf.build/go/protovalidate v1.1.3
 	github.com/IBM/fp-go v1.1.84
-	github.com/IBM/fp-go/v2 v2.2.19
+	github.com/IBM/fp-go/v2 v2.2.32
 	github.com/PuerkitoBio/goquery v1.11.0
-	github.com/alicebob/miniredis/v2 v2.36.1
+	github.com/alicebob/miniredis/v2 v2.37.0
 	github.com/arangodb/go-driver v1.6.9
 	github.com/cockroachdb/pebble v1.1.5
 	github.com/deckarep/golang-set/v2 v2.8.0
@@ -66,7 +66,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.40.0
 	github.com/urfave/cli/v2 v2.27.7
-	github.com/xuri/excelize/v2 v2.10.0
+	github.com/xuri/excelize/v2 v2.10.1
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/sync v0.19.0
 )
@@ -117,7 +117,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
-	github.com/go-git/go-billy/v5 v5.6.2 // indirect
+	github.com/go-git/go-billy/v5 v5.8.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
@@ -181,8 +181,8 @@ require (
 	github.com/prometheus/common v0.67.1 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/richardlehane/mscfb v1.0.4 // indirect
-	github.com/richardlehane/msoleps v1.0.4 // indirect
+	github.com/richardlehane/mscfb v1.0.6 // indirect
+	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/rickar/cal/v2 v2.1.27 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
