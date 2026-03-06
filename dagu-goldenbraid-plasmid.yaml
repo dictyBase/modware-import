@@ -19,7 +19,7 @@ steps:
     command: |
       set -euo pipefail
       JOB_OUTPUT=$(just run-goldenbraid ${TAG} ${EMAIL})
-      echo "goldenbraid-plasmid"
+      echo "$JOB_OUTPUT" | grep -o 'goldenbraid-plasmid[a-z0-9-]*' | head -n 1
     output: JOB_NAME
 
   - name: wait
