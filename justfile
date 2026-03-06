@@ -249,14 +249,15 @@ wait-job name namespace="dev" timeout="60s":
 # Get the logs for a specific job
 job-logs name namespace="dev":
     #!/usr/bin/env bash
+    set -euo pipefail
     export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
-    kubectl logs job/{{name}} -n {{namespace}}
+    go run ./cmd/k8s/ job-logs --name {{name}} --namespace {{namespace}} --follow
 
 # Get failure details for a job
 job-debug name namespace="dev":
     #!/usr/bin/env bash
     export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
     echo "--- Pod Logs ---"
-    kubectl logs job/{{name}} -n {{namespace}} || true
+    go run ./cmd/k8s/ job-logs --name {{name}} --namespace {{namespace}} || true
     echo "--- Job Description ---"
     kubectl describe job/{{name}} -n {{namespace}}
