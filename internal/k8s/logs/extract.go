@@ -20,14 +20,18 @@ func sortPodsDesc(pods []corev1.Pod) []corev1.Pod {
         return sorted
 }
 
-// ExtractLatestPod uses functional pipelines to sort and safely retrieve the newest pod from a PodList.
-func ExtractLatestPod(pods *corev1.PodList) IOE.IOEither[error, corev1.Pod] {
-        return F.Pipe3(
-                pods.Items,
+// ExtractLatestPod uses functional pipelines to sort and safely retrieve the newest pod from the LogContext.
+func ExtractLatestPod(ctx LogContext) IOE.IOEither[error, LogContext] {
+        return F.Pipe4(
+                ctx.Pods.Items,
                 sortPodsDesc,
                 A.Head[corev1.Pod],
                 IOE.FromOption[corev1.Pod](func() error {
                         return fmt.Errorf("no pods found for job")
+                }),
+                IOE.Map[error](func(pod corev1.Pod) LogContext {
+                        ctx.PodName = pod.Name
+                        return ctx
                 }),
         )
 }

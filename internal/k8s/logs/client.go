@@ -21,26 +21,42 @@ func CreateK8sClient(p Params) IOE.IOEither[error, kubernetes.Interface] {
 		IOE.TryCatchError(func() (*rest.Config, error) {
 			return clientcmd.BuildConfigFromFlags("", p.Kubeconfig)
 		}),
-		IOE.Chain(func(cfg *rest.Config) IOE.IOEither[error, kubernetes.Interface] {
-			return IOE.TryCatchError(func() (kubernetes.Interface, error) {
-				return kubernetes.NewForConfig(cfg)
-			})
-		}),
-		IOE.MapLeft[kubernetes.Interface](fperrors.OnError("failed to create k8s client")),
+		IOE.Chain(
+			func(cfg *rest.Config) IOE.IOEither[error, kubernetes.Interface] {
+				return IOE.TryCatchError(func() (kubernetes.Interface, error) {
+					return kubernetes.NewForConfig(cfg)
+				})
+			},
+		),
+		IOE.MapLeft[kubernetes.Interface](
+			fperrors.OnError("failed to create k8s client"),
+		),
 	)
 }
 
 // FetchJobPods performs a single K8s API call to list pods matching the job-name label.
 // No retry loop — the downstream ExtractLatestPod reports "no pods found" if the list is empty.
-func FetchJobPods(ctx LogContext) IOE.IOEither[error, *corev1.PodList] {
-	return F.Pipe1(
+func FetchJobPods(ctx LogContext) IOE.IOEither[error, LogContext] {
+	return F.Pipe2(
 		IOE.TryCatchError(func() (*corev1.PodList, error) {
-			return ctx.Client.CoreV1().Pods(ctx.Namespace).List(
-				ctx.Context,
-				metav1.ListOptions{LabelSelector: fmt.Sprintf("job-name=%s", ctx.Name)},
-			)
+			return ctx.Client.CoreV1().Pods(ctx.Namespace).
+				List(
+					ctx.Context,
+					metav1.ListOptions{
+						LabelSelector: fmt.Sprintf(
+							"job-name=%s",
+							ctx.Name,
+						),
+					},
+				)
 		}),
-		IOE.MapLeft[*corev1.PodList](fperrors.OnError("failed to list job pods")),
+		IOE.MapLeft[*corev1.PodList](
+			fperrors.OnError("failed to list job pods"),
+		),
+		IOE.Map[error](func(pods *corev1.PodList) LogContext {
+			ctx.Pods = pods
+			return ctx
+		}),
 	)
 }
 
@@ -48,9 +64,13 @@ func FetchJobPods(ctx LogContext) IOE.IOEither[error, *corev1.PodList] {
 func StreamPodLogs(ctx LogContext) IOE.IOEither[error, LogContext] {
 	return F.Pipe1(
 		IOE.TryCatchError(func() (io.ReadCloser, error) {
-			req := ctx.Client.CoreV1().Pods(ctx.Namespace).GetLogs(ctx.PodName, &corev1.PodLogOptions{
-				Follow: ctx.Follow,
-			})
+			req := ctx.Client.CoreV1().
+				Pods(ctx.Namespace).
+				GetLogs(
+					ctx.PodName,
+					&corev1.PodLogOptions{
+						Follow: ctx.Follow,
+					})
 			return req.Stream(ctx.Context)
 		}),
 		IOE.Chain(func(stream io.ReadCloser) IOE.IOEither[error, LogContext] {
