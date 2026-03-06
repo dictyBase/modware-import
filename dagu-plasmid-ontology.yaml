@@ -1,0 +1,34 @@
+name: goldenbraid-plasmid-ontology
+type: graph
+description: "Orchestrates a plasmid ontology load job in the dev cluster."
+params:
+  - TAG: latest
+  - ONTOLOGY_TERM: vector
+
+steps:
+  - name: submit
+    description: "Launch the Kubernetes job"
+    command: |
+      set -euo pipefail
+      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology ${TAG} ${ONTOLOGY_TERM})
+      echo "$JOB_OUTPUT" | grep -o 'goldenbraid-plasmid-ontology-[a-z0-9]*' | head -n 1
+    output: JOB_NAME
+
+  - name: wait
+    description: "Wait for Kubernetes to finish execution"
+    depends: [submit]
+    command: just wait-job ${JOB_NAME}
+
+  - name: get-logs
+    description: "Fetch and print job output"
+    depends: [wait]
+    command: just job-logs ${JOB_NAME}
+
+handler_on:
+  failure:
+    command: |
+      if [ -n "${JOB_NAME:-}" ]; then
+        just job-debug "${JOB_NAME}"
+      else
+        echo "Job submission failed before a name could be captured."
+      fi
