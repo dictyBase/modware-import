@@ -4,7 +4,7 @@ description: "Orchestrates a plasmid ontology load job in the dev cluster."
 params:
   schema:
     type: object
-    required: ["TAG", "ONTOLOGY_TERM"]
+    required: ["TAG"]
     properties:
       TAG:
         type: string
@@ -12,6 +12,7 @@ params:
       ONTOLOGY_TERM:
         type: string
         description: "The ontology term to assign (e.g., vector)"
+        default: "vector"
 
 steps:
   - name: submit
