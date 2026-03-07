@@ -243,8 +243,8 @@ run-goldenbraid-inventory-debug tag:
 wait-job name namespace="dev" timeout="60s":
     #!/usr/bin/env bash
     set -euo pipefail
-    kubeconfig=$(k3d kubeconfig write k3d-dev-cluster)
-    go run ./cmd/k8s/ wait-job --name {{name}} --namespace {{namespace}} --timeout {{timeout}} --kubeconfig "$kubeconfig"
+    export KUBECONFIG=$(k3d kubeconfig write k3d-dev-cluster)
+    go run ./cmd/k8s/ wait-job --name {{name}} --namespace {{namespace}} --timeout {{timeout}} 
 
 # Get the logs for a specific job
 job-logs name namespace="dev":
