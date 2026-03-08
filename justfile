@@ -43,113 +43,76 @@ list:
     docker images | grep {{ image }}
 
 # Run goldenbraid plasmid import job in dev cluster
-run-goldenbraid tag email k8s_namespace="dev": check-kubeconfig
+run-goldenbraid tag email k8s_namespace="dev" debug="false": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
-    apiVersion: batch/v1
-    kind: Job
-    metadata:
-      generateName: goldenbraid-plasmid-
-      namespace: {{ k8s_namespace }}
-    spec:
-      ttlSecondsAfterFinished: 120
-      template:
-        spec:
-          restartPolicy: Never
-          containers:
-            - name: goldenbraid-plasmid
-              image: {{ ghcr_image }}:{{ tag }}
-              envFrom:
-                - secretRef:
-                    name: minio
-              args:
-                - plasmid
-                - --user-email
-                - {{ email }}
-    EOF
-
-# Run goldenbraid plasmid import with debug logging (diagnostic)
-run-goldenbraid-debug tag email k8s_namespace="dev": check-kubeconfig
-    #!/usr/bin/env bash
-    set -euo pipefail
-    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
-    apiVersion: batch/v1
-    kind: Job
-    metadata:
-      generateName: goldenbraid-plasmid-debug-
-      namespace: {{ k8s_namespace }}
-    spec:
-      ttlSecondsAfterFinished: 300
-      template:
-        spec:
-          restartPolicy: Never
-          containers:
-            - name: goldenbraid-plasmid-debug
-              image: {{ ghcr_image }}:{{ tag }}
-              envFrom:
-                - secretRef:
-                    name: minio
-              args:
-                - plasmid
-                - --user-email
-                - {{ email }}
-                - --log-level
+    ttl="{{ if debug == "true" { "300" } else { "120" } }}"
+    gen_name="{{ if debug == "true" { "goldenbraid-plasmid-debug-" } else { "goldenbraid-plasmid-" } }}"
+    container_name="{{ if debug == "true" { "goldenbraid-plasmid-debug" } else { "goldenbraid-plasmid" } }}"
+    debug_args=""
+    if [ "{{ debug }}" == "true" ]; then
+        debug_args="- --log-level
                 - debug
                 - --log-format
-                - text
+                - text"
+    fi
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      generateName: ${gen_name}
+      namespace: {{ k8s_namespace }}
+    spec:
+      ttlSecondsAfterFinished: ${ttl}
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: ${container_name}
+              image: {{ ghcr_image }}:{{ tag }}
+              envFrom:
+                - secretRef:
+                    name: minio
+              args:
+                - plasmid
+                - --user-email
+                - {{ email }}
+                ${debug_args}
     EOF
 
 # Run goldenbraid plasmid-ontology job in dev cluster (assigns ontology term to all plasmids)
-run-goldenbraid-plasmid-ontology tag ontology_term="vector" k8s_namespace="dev": check-kubeconfig
+run-goldenbraid-plasmid-ontology tag ontology_term="vector" k8s_namespace="dev" debug="false": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
-    apiVersion: batch/v1
-    kind: Job
-    metadata:
-      generateName: goldenbraid-plasmid-ontology-
-      namespace: {{ k8s_namespace }}
-    spec:
-      ttlSecondsAfterFinished: 120
-      template:
-        spec:
-          restartPolicy: Never
-          containers:
-            - name: goldenbraid-plasmid-ontology
-              image: {{ ghcr_image }}:{{ tag }}
-              args:
-                - plasmid-ontology
-                - --ontology-term
-                - {{ ontology_term }}
-    EOF
-
-# Run goldenbraid plasmid-ontology with debug logging
-run-goldenbraid-plasmid-ontology-debug tag ontology_term="vector" k8s_namespace="dev": check-kubeconfig
-    #!/usr/bin/env bash
-    set -euo pipefail
-    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
-    apiVersion: batch/v1
-    kind: Job
-    metadata:
-      generateName: goldenbraid-plasmid-ontology-debug-
-      namespace: {{ k8s_namespace }}
-    spec:
-      ttlSecondsAfterFinished: 300
-      template:
-        spec:
-          restartPolicy: Never
-          containers:
-            - name: goldenbraid-plasmid-ontology-debug
-              image: {{ ghcr_image }}:{{ tag }}
-              args:
-                - plasmid-ontology
-                - --ontology-term
-                - {{ ontology_term }}
-                - --log-level
+    ttl="{{ if debug == "true" { "300" } else { "120" } }}"
+    gen_name="{{ if debug == "true" { "goldenbraid-plasmid-ontology-debug-" } else { "goldenbraid-plasmid-ontology-" } }}"
+    container_name="{{ if debug == "true" { "goldenbraid-plasmid-ontology-debug" } else { "goldenbraid-plasmid-ontology" } }}"
+    debug_args=""
+    if [ "{{ debug }}" == "true" ]; then
+        debug_args="- --log-level
                 - debug
                 - --log-format
-                - text
+                - text"
+    fi
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      generateName: ${gen_name}
+      namespace: {{ k8s_namespace }}
+    spec:
+      ttlSecondsAfterFinished: ${ttl}
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: ${container_name}
+              image: {{ ghcr_image }}:{{ tag }}
+              args:
+                - plasmid-ontology
+                - --ontology-term
+                - {{ ontology_term }}
+                ${debug_args}
     EOF
 
 # Look up a GoldenBraid plasmid by exact name (uses goldenbraid-list image)
@@ -181,57 +144,39 @@ lookup-plasmid tag name k8s_namespace="dev": check-kubeconfig
     EOF
 
 # Run goldenbraid inventory import job in dev cluster
-run-goldenbraid-inventory tag k8s_namespace="dev": check-kubeconfig
+run-goldenbraid-inventory tag k8s_namespace="dev" debug="false": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
-    apiVersion: batch/v1
-    kind: Job
-    metadata:
-      generateName: goldenbraid-inventory-
-      namespace: {{ k8s_namespace }}
-    spec:
-      ttlSecondsAfterFinished: 120
-      template:
-        spec:
-          restartPolicy: Never
-          containers:
-            - name: goldenbraid-inventory
-              image: {{ ghcr_image }}:{{ tag }}
-              envFrom:
-                - secretRef:
-                    name: minio
-              args:
-                - inventory
-    EOF
-
-# Run goldenbraid inventory import with debug logging
-run-goldenbraid-inventory-debug tag k8s_namespace="dev": check-kubeconfig
-    #!/usr/bin/env bash
-    set -euo pipefail
-    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
-    apiVersion: batch/v1
-    kind: Job
-    metadata:
-      generateName: goldenbraid-inventory-debug-
-      namespace: {{ k8s_namespace }}
-    spec:
-      ttlSecondsAfterFinished: 120
-      template:
-        spec:
-          restartPolicy: Never
-          containers:
-            - name: goldenbraid-inventory-debug
-              image: {{ ghcr_image }}:{{ tag }}
-              envFrom:
-                - secretRef:
-                    name: minio
-              args:
-                - inventory
-                - --log-level
+    ttl="{{ if debug == "true" { "300" } else { "120" } }}"
+    gen_name="{{ if debug == "true" { "goldenbraid-inventory-debug-" } else { "goldenbraid-inventory-" } }}"
+    container_name="{{ if debug == "true" { "goldenbraid-inventory-debug" } else { "goldenbraid-inventory" } }}"
+    debug_args=""
+    if [ "{{ debug }}" == "true" ]; then
+        debug_args="- --log-level
                 - debug
                 - --log-format
-                - text
+                - text"
+    fi
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      generateName: ${gen_name}
+      namespace: {{ k8s_namespace }}
+    spec:
+      ttlSecondsAfterFinished: ${ttl}
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: ${container_name}
+              image: {{ ghcr_image }}:{{ tag }}
+              envFrom:
+                - secretRef:
+                    name: minio
+              args:
+                - inventory
+                ${debug_args}
     EOF
 
 # Wait for a Kubernetes job to complete, fail, or detect stuck pods.
