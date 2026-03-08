@@ -10,7 +10,7 @@ ghcr_image := "ghcr.io/" + image
 
 [private]
 check-kubeconfig:
-    @echo "Using KUBECONFIG={{ env('KUBECONFIG') }}"
+    @echo "Using KUBECONFIG={{ env('KUBECONFIG') }}" >&2
 
 # Build the docker image for the target platform
 build tag="latest":
@@ -46,11 +46,11 @@ list:
 run-goldenbraid tag email k8s_namespace="dev": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl apply -f - <<EOF
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: goldenbraid-plasmid
+      generateName: goldenbraid-plasmid-
       namespace: {{ k8s_namespace }}
     spec:
       ttlSecondsAfterFinished: 120
@@ -73,11 +73,11 @@ run-goldenbraid tag email k8s_namespace="dev": check-kubeconfig
 run-goldenbraid-debug tag email k8s_namespace="dev": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl apply -f - <<EOF
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: goldenbraid-plasmid-debug
+      generateName: goldenbraid-plasmid-debug-
       namespace: {{ k8s_namespace }}
     spec:
       ttlSecondsAfterFinished: 300
@@ -104,7 +104,7 @@ run-goldenbraid-debug tag email k8s_namespace="dev": check-kubeconfig
 run-goldenbraid-plasmid-ontology tag ontology_term="vector" k8s_namespace="dev": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl create -f - <<EOF
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
@@ -128,11 +128,11 @@ run-goldenbraid-plasmid-ontology tag ontology_term="vector" k8s_namespace="dev":
 run-goldenbraid-plasmid-ontology-debug tag ontology_term="vector" k8s_namespace="dev": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl apply -f - <<EOF
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: goldenbraid-plasmid-ontology-debug
+      generateName: goldenbraid-plasmid-ontology-debug-
       namespace: {{ k8s_namespace }}
     spec:
       ttlSecondsAfterFinished: 300
@@ -156,11 +156,11 @@ run-goldenbraid-plasmid-ontology-debug tag ontology_term="vector" k8s_namespace=
 lookup-plasmid tag name k8s_namespace="dev": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl apply -f - <<EOF
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: goldenbraid-lookup
+      generateName: goldenbraid-lookup-
       namespace: {{ k8s_namespace }}
     spec:
       ttlSecondsAfterFinished: 120
@@ -184,11 +184,11 @@ lookup-plasmid tag name k8s_namespace="dev": check-kubeconfig
 run-goldenbraid-inventory tag k8s_namespace="dev": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl apply -f - <<EOF
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: goldenbraid-inventory
+      generateName: goldenbraid-inventory-
       namespace: {{ k8s_namespace }}
     spec:
       ttlSecondsAfterFinished: 120
@@ -209,11 +209,11 @@ run-goldenbraid-inventory tag k8s_namespace="dev": check-kubeconfig
 run-goldenbraid-inventory-debug tag k8s_namespace="dev": check-kubeconfig
     #!/usr/bin/env bash
     set -euo pipefail
-    kubectl apply -f - <<EOF
+    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
-      name: goldenbraid-inventory-debug
+      generateName: goldenbraid-inventory-debug-
       namespace: {{ k8s_namespace }}
     spec:
       ttlSecondsAfterFinished: 120
