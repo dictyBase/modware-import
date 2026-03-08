@@ -1,16 +1,16 @@
 package logs
 
 import (
-        E "github.com/IBM/fp-go/v2/either"
-        F "github.com/IBM/fp-go/v2/function"
-        IOE "github.com/IBM/fp-go/v2/ioeither"
-        "github.com/urfave/cli/v2"
+	E "github.com/IBM/fp-go/v2/either"
+	F "github.com/IBM/fp-go/v2/function"
+	IOE "github.com/IBM/fp-go/v2/ioeither"
+	"github.com/urfave/cli/v2"
 )
 
 func toEither[ER, A any](
-        ioe IOE.IOEither[ER, A],
+	ioe IOE.IOEither[ER, A],
 ) E.Either[ER, A] {
-        return ioe()
+	return ioe()
 }
 
 // JobLogsAction is the urfave/cli v2 action for the job-logs subcommand.
@@ -23,22 +23,22 @@ func toEither[ER, A any](
 //  5. Stream the logs from that pod directly to stdout
 //  6. Fold the Either into a standard Go error
 func JobLogsAction(c *cli.Context) error {
-        return F.Pipe6(
-                IOE.Of[error](Params{
-                        Name:       c.String("name"),
-                        Namespace:  c.String("namespace"),
-                        Kubeconfig: c.String("kubeconfig"),
-                        Follow:     c.Bool("follow"),
-                        Context:    c.Context,
-                }),
-                IOE.Bind(SetClient, CreateK8sClient),
-                IOE.Chain(FetchJobPods),
-                IOE.Chain(ExtractLatestPod),
-                IOE.Chain(StreamPodLogs),
-                toEither[error, LogContext],
-                E.Fold(
-                        F.Identity[error],
-                        func(_ LogContext) error { return nil },
-                ),
-        )
+	return F.Pipe6(
+		IOE.Of[error](Params{
+			Name:       c.String("name"),
+			Namespace:  c.String("namespace"),
+			Kubeconfig: c.String("kubeconfig"),
+			Follow:     c.Bool("follow"),
+			Context:    c.Context,
+		}),
+		IOE.Bind(SetClient, CreateK8sClient),
+		IOE.Chain(FetchJobPods),
+		IOE.Chain(ExtractLatestPod),
+		IOE.Chain(StreamPodLogs),
+		toEither[error, LogContext],
+		E.Fold(
+			F.Identity[error],
+			func(_ LogContext) error { return nil },
+		),
+	)
 }
