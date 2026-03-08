@@ -1,6 +1,6 @@
 name: goldenbraid-plasmid-ontology
 type: graph
-description: "Orchestrates a plasmid ontology load job in the dev cluster."
+description: "Orchestrates a plasmid ontology load job"
 params:
   schema:
     type: object
@@ -13,6 +13,29 @@ params:
         type: string
         description: "The ontology term to assign (e.g., vector)"
         default: "vector"
+      ENV:
+        type: string
+        description: "Target environment (dev, staging, production)"
+        default: "dev"
+      NAMESPACE:
+        type: string
+        description: "Kubernetes namespace"
+        default: "dev"
+      KUBE_CFG:
+        type: string
+        description: "Path to kubeconfig file (required for non-dev)"
+        default: ""
+
+env:
+  - KUBECONFIG: >-
+      `if [ -n '${KUBE_CFG}' ]; then
+        echo '${KUBE_CFG}';
+      elif [ '${ENV}' = 'dev' ]; then
+        k3d kubeconfig write k3d-dev-cluster;
+      else
+        echo 'ERROR: KUBE_CFG must be provided for ${ENV} environment' >&2;
+        exit 1;
+      fi`
 
 steps:
   - name: submit
@@ -21,25 +44,25 @@ steps:
       set -euo pipefail
       # Ensure term is set even if Dagu schema default isn't exported to the shell
       TERM="${ONTOLOGY_TERM:-vector}"
-      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology ${TAG} ${TERM})
+      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology ${TAG} ${TERM} k8s_namespace=${NAMESPACE})
       echo "$JOB_OUTPUT" | grep -o 'goldenbraid-plasmid-ontology-[a-z0-9]*' | head -n 1
     output: JOB_NAME
 
   - name: wait
     description: "Wait for Kubernetes to finish execution"
     depends: [submit]
-    command: just wait-job ${JOB_NAME}
+    command: just wait-job ${JOB_NAME} k8s_namespace=${NAMESPACE}
 
   - name: get-logs
     description: "Fetch and print job output"
     depends: [wait]
-    command: just job-logs ${JOB_NAME}
+    command: just job-logs ${JOB_NAME} k8s_namespace=${NAMESPACE}
 
 handler_on:
   failure:
     command: |
       if [ -n "${JOB_NAME:-}" ]; then
-        just job-debug "${JOB_NAME}"
+        just job-debug "${JOB_NAME}" k8s_namespace="${NAMESPACE:-dev}"
       else
         echo "Job submission failed before a name could be captured."
       fi
