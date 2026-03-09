@@ -38,6 +38,10 @@ push-ghcr-multi tag="latest":
     echo $GITHUB_REGISTRY_TOKEN | docker login ghcr.io -u {{ github_user }} --password-stdin
     docker buildx build --platform {{ platform_multi }} -f build/package/Dockerfile.goldenbraid -t {{ ghcr_image }}:{{ tag }} --push .
 
+# Show parameters for a Dagu workflow
+dagu-params file:
+    yq -r '.params.schema.properties | to_entries | .[] | .key + " = " + (.value.default // "(required)") + "  # " + (.value.description // "")' {{ file }}
+
 # List images
 list:
     docker images | grep {{ image }}
