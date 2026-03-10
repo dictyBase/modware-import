@@ -2,36 +2,15 @@ name: goldenbraid-inventory
 type: graph
 description: "Orchestrates a GoldenBraid inventory import job"
 params:
-  schema:
-    type: object
-    required: ["TAG"]
-    properties:
-      TAG:
-        type: string
-        description: "The Docker image tag to use"
-      ENV:
-        type: string
-        description: "Target environment (dev, staging, production)"
-        default: "dev"
-      NAMESPACE:
-        type: string
-        description: "Kubernetes namespace"
-        default: "dev"
-      KUBE_CFG:
-        type: string
-        description: "Path to kubeconfig file (required for non-dev)"
-        default: ""
+  schema: "./schemas/goldenbraid-inventory-params.json"
+  values:
+    ENV: dev
+    NAMESPACE: dev
+    KUBE_CFG: ""
 
 env:
-  - KUBECONFIG: >-
-      `if [ -n '${KUBE_CFG}' ]; then
-        echo '${KUBE_CFG}';
-      elif [ '${ENV}' = 'dev' ]; then
-        k3d kubeconfig write k3d-dev-cluster;
-      else
-        echo 'ERROR: KUBE_CFG must be provided for ${ENV} environment' >&2;
-        exit 1;
-      fi`
+  - KUBECONFIG: "`[ -n '${KUBE_CFG}' ] && echo '${KUBE_CFG}' || { k3d kubeconfig get k3d-dev-cluster > /tmp/kubeconfig-k3d-dev.yaml && echo /tmp/kubeconfig-k3d-dev.yaml; }`"
+
 
 steps:
   - name: submit
