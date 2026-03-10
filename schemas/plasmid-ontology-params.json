@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["TAG"],
+  "properties": {
+    "TAG": {
+      "type": "string",
+      "description": "The Docker image tag to use"
+    },
+    "ONTOLOGY_TERM": {
+      "type": "string",
+      "description": "The ontology term to assign (e.g., vector)",
+      "default": "vector"
+    },
+    "ENV": {
+      "type": "string",
+      "description": "Target environment (dev, staging, production)",
+      "default": "dev",
+      "enum": ["dev", "staging", "production"]
+    },
+    "NAMESPACE": {
+      "type": "string",
+      "description": "Kubernetes namespace",
+      "default": "dev"
+    },
+    "KUBE_CFG": {
+      "type": "string",
+      "description": "Path to kubeconfig file (required for non-dev)",
+      "default": ""
+    }
+  }
+}
