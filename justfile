@@ -88,7 +88,7 @@ run-goldenbraid tag email k8s_namespace="dev" debug="false": check-kubeconfig
     EOF
 
 # Run goldenbraid plasmid-ontology job in dev cluster (assigns ontology term to all plasmids)
-run-goldenbraid-plasmid-ontology tag ontology_term="vector" k8s_namespace="dev" debug="false": check-kubeconfig
+run-goldenbraid-plasmid-ontology tag k8s_config ontology_term="vector" k8s_namespace="dev" debug="false": 
     #!/usr/bin/env bash
     set -euo pipefail
     ttl="{{ if debug == "true" { "300" } else { "120" } }}"
@@ -101,7 +101,7 @@ run-goldenbraid-plasmid-ontology tag ontology_term="vector" k8s_namespace="dev" 
                 - --log-format
                 - text"
     fi
-    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
+    kubectl create -f - --kubeconfig {{ k8s_config }} -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
@@ -189,21 +189,21 @@ run-goldenbraid-inventory tag k8s_namespace="dev" debug="false": check-kubeconfi
 # Wait for a Kubernetes job to complete, fail, or detect stuck pods.
 
 # Delegates to the k8s wait-job subcommand
-wait-job name k8s_namespace="dev" timeout="60s": check-kubeconfig
+wait-job name k8s_config k8s_namespace="dev" timeout="60s":
     #!/usr/bin/env bash
     set -euo pipefail
-    go run ./cmd/k8s/ wait-job --name {{ name }} --namespace {{ k8s_namespace }} --timeout {{ timeout }} 
+    go run ./cmd/k8s/ wait-job --name {{ name }} --kubeconfig {{  k8s_config }} --namespace {{ k8s_namespace }} --timeout {{ timeout }} 
 
 # Get the logs for a specific job
-job-logs name k8s_namespace="dev": check-kubeconfig
+job-logs name k8s_config k8s_namespace="dev":
     #!/usr/bin/env bash
     set -euo pipefail
-    go run ./cmd/k8s/ job-logs --name {{ name }} --namespace {{ k8s_namespace }} --follow
+    go run ./cmd/k8s/ job-logs --name {{ name }} --kubeconfig {{ k8s_config }} --namespace {{ k8s_namespace }} --follow
 
 # Get failure details for a job
-job-debug name k8s_namespace="dev": check-kubeconfig
+job-debug name k8s_config k8s_namespace="dev": 
     #!/usr/bin/env bash
     echo "--- Pod Logs ---"
-    go run ./cmd/k8s/ job-logs --name {{ name }} --namespace {{ k8s_namespace }} || true
+    go run ./cmd/k8s/ job-logs --name {{ name }} --kubeconfig {{ k8s_config }} --namespace {{ k8s_namespace }} || true
     echo "--- Job Description ---"
-    kubectl describe job/{{ name }} -n {{ k8s_namespace }}
+    kubectl describe job/{{ name }} --kubeconfig {{ k8s_config }} -n {{ k8s_namespace }}
