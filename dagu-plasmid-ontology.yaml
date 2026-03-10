@@ -9,45 +9,59 @@ params:
     NAMESPACE: dev
     KUBE_CFG: ""
 
-dotenv:
-  - /tmp/dagu-goldenbraid.env
-
 steps:
+  - id: k8s-generate 
+    name: k8s-generate 
+    description: "setup kubernetes config file"
+    output: KPATH
+    command: |
+      set -euo pipefail
+      if [ -n "${KUBE_CFG:-}" ]; then
+        echo "${KUBE_CFG}"
+      elif [ "${ENV}" = 'dev' ]; then
+        KTEMP=`mktemp`
+        k3d kubeconfig get k3d-dev-cluster > ${KTEMP} 
+        echo ${KTEMP}
+      else
+        echo "ERROR: KUBE_CFG must be provided for ${ENV} environment" 
+        exit 1
+      fi
+    
   - name: submit
+    depends: [k8s-generate]
     description: "Launch the Kubernetes job"
     command: |
       set -euo pipefail
-      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology ${TAG} ${ONTOLOGY_TERM} k8s_namespace=${NAMESPACE})
+      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology "${TAG}" "${KPATH}" "${ONTOLOGY_TERM}" "${NAMESPACE}")
       echo "$JOB_OUTPUT"
     output: JOB_NAME
 
   - name: wait
+    id: wait
     description: "Wait for Kubernetes to finish execution"
     depends: [submit]
-    command: just wait-job ${JOB_NAME} k8s_namespace=${NAMESPACE}
+    command: just wait-job ${JOB_NAME} ${KPATH} ${NAMESPACE}
+    continue_on:
+      failure: true
 
   - name: get-logs
     description: "Fetch and print job output"
     depends: [wait]
-    command: just job-logs ${JOB_NAME} k8s_namespace=${NAMESPACE}
+    preconditions:
+      - condition: "${wait.exit_code}"
+        expected: "0"
+    command: just job-logs ${JOB_NAME} ${KPATH} ${NAMESPACE}
 
-handler_on:
-  init:
-    command: |
-      set -euo pipefail
-      if [ -n '${KUBE_CFG}' ]; then
-        echo "KUBECONFIG=${KUBE_CFG}" > /tmp/dagu-goldenbraid.env
-      elif [ '${ENV}' = 'dev' ]; then
-        k3d kubeconfig get k3d-dev-cluster > /tmp/kubeconfig-k3d-dev.yaml
-        echo "KUBECONFIG=/tmp/kubeconfig-k3d-dev.yaml" > /tmp/dagu-goldenbraid.env
-      else
-        echo "ERROR: KUBE_CFG must be provided for ${ENV} environment" >&2
-        exit 1
-      fi
-  failure:
+  - name: debug-on-failure
+    description: "Fetch debug info on failure"
+    depends: [wait]
+    preconditions:
+      - condition: "${wait.exit_code}"
+        expected: "0"
+        negate: true
     command: |
       if [ -n "${JOB_NAME:-}" ]; then
-        just job-debug "${JOB_NAME}" k8s_namespace="${NAMESPACE:-dev}"
+        just job-debug "${JOB_NAME}" "${KPATH}" "${NAMESPACE:-dev}"
       else
         echo "Job submission failed before a name could be captured."
       fi
