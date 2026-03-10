@@ -40,7 +40,10 @@ push-ghcr-multi tag="latest":
 
 # Show parameters for a Dagu workflow
 dagu-params file:
-    yq -r '.params.schema.properties | to_entries | .[] | .key + " = " + (.value.default // "(required)") + "  # " + (.value.description // "")' {{ file }}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    schema=$(yq -r '.params.schema' {{ file }})
+    jq -r '.properties | to_entries | .[] | .key + " = " + (.value.default // "(required)" | tostring) + "  # " + (.value.description // "")' "$schema"
 
 # List images
 list:

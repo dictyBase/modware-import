@@ -2,49 +2,22 @@ name: goldenbraid-plasmid-ontology
 type: graph
 description: "Orchestrates a plasmid ontology load job"
 params:
-  schema:
-    type: object
-    required: ["TAG"]
-    properties:
-      TAG:
-        type: string
-        description: "The Docker image tag to use"
-      ONTOLOGY_TERM:
-        type: string
-        description: "The ontology term to assign (e.g., vector)"
-        default: "vector"
-      ENV:
-        type: string
-        description: "Target environment (dev, staging, production)"
-        default: "dev"
-      NAMESPACE:
-        type: string
-        description: "Kubernetes namespace"
-        default: "dev"
-      KUBE_CFG:
-        type: string
-        description: "Path to kubeconfig file (required for non-dev)"
-        default: ""
+  schema: "./schemas/plasmid-ontology-params.json"
+  values:
+    ONTOLOGY_TERM: vector
+    ENV: dev
+    NAMESPACE: dev
+    KUBE_CFG: ""
 
-env:
-  - KUBECONFIG: >-
-      `if [ -n '${KUBE_CFG}' ]; then
-        echo '${KUBE_CFG}';
-      elif [ '${ENV}' = 'dev' ]; then
-        k3d kubeconfig write k3d-dev-cluster;
-      else
-        echo 'ERROR: KUBE_CFG must be provided for ${ENV} environment' >&2;
-        exit 1;
-      fi`
+dotenv:
+  - /tmp/dagu-goldenbraid.env
 
 steps:
   - name: submit
     description: "Launch the Kubernetes job"
     command: |
       set -euo pipefail
-      # Ensure term is set even if Dagu schema default isn't exported to the shell
-      TERM="${ONTOLOGY_TERM:-vector}"
-      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology ${TAG} ${TERM} k8s_namespace=${NAMESPACE})
+      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology ${TAG} ${ONTOLOGY_TERM} k8s_namespace=${NAMESPACE})
       echo "$JOB_OUTPUT"
     output: JOB_NAME
 
@@ -59,6 +32,18 @@ steps:
     command: just job-logs ${JOB_NAME} k8s_namespace=${NAMESPACE}
 
 handler_on:
+  init:
+    command: |
+      set -euo pipefail
+      if [ -n '${KUBE_CFG}' ]; then
+        echo "KUBECONFIG=${KUBE_CFG}" > /tmp/dagu-goldenbraid.env
+      elif [ '${ENV}' = 'dev' ]; then
+        k3d kubeconfig get k3d-dev-cluster > /tmp/kubeconfig-k3d-dev.yaml
+        echo "KUBECONFIG=/tmp/kubeconfig-k3d-dev.yaml" > /tmp/dagu-goldenbraid.env
+      else
+        echo "ERROR: KUBE_CFG must be provided for ${ENV} environment" >&2
+        exit 1
+      fi
   failure:
     command: |
       if [ -n "${JOB_NAME:-}" ]; then
