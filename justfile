@@ -50,7 +50,7 @@ list:
     docker images | grep {{ image }}
 
 # Run goldenbraid plasmid import job in dev cluster
-run-goldenbraid tag email k8s_namespace="dev" debug="false": check-kubeconfig
+run-goldenbraid tag k8s_config email k8s_namespace="dev" debug="false":
     #!/usr/bin/env bash
     set -euo pipefail
     ttl="{{ if debug == "true" { "300" } else { "120" } }}"
@@ -63,7 +63,7 @@ run-goldenbraid tag email k8s_namespace="dev" debug="false": check-kubeconfig
                 - --log-format
                 - text"
     fi
-    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
+    kubectl create -f - --kubeconfig {{ k8s_config }} -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
@@ -151,7 +151,7 @@ lookup-plasmid tag name k8s_namespace="dev": check-kubeconfig
     EOF
 
 # Run goldenbraid inventory import job in dev cluster
-run-goldenbraid-inventory tag k8s_namespace="dev" debug="false": check-kubeconfig
+run-goldenbraid-inventory tag k8s_config k8s_namespace="dev" debug="false":
     #!/usr/bin/env bash
     set -euo pipefail
     ttl="{{ if debug == "true" { "300" } else { "120" } }}"
@@ -164,7 +164,7 @@ run-goldenbraid-inventory tag k8s_namespace="dev" debug="false": check-kubeconfi
                 - --log-format
                 - text"
     fi
-    kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
+    kubectl create -f - --kubeconfig {{ k8s_config }} -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
     metadata:
