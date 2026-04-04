@@ -14,7 +14,7 @@ require (
 	github.com/emirpasic/gods v1.18.1
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/fatih/color v1.15.0 // indirect
-	github.com/go-git/go-git/v5 v5.17.1
+	github.com/go-git/go-git/v5 v5.17.2
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/golang/protobuf v1.5.4
 	github.com/json-iterator/go v1.1.12 // indirect
