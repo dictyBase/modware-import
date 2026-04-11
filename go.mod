@@ -56,7 +56,7 @@ require (
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/google/uuid v1.6.0
-	github.com/hasura/go-graphql-client v0.15.1
+	github.com/hasura/go-graphql-client v0.16.0
 	github.com/jellydator/ttlcache/v3 v3.4.0
 	github.com/nao1215/filesql v0.12.0
 	github.com/redis/go-redis/v9 v9.18.0
@@ -92,7 +92,7 @@ require (
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
-	github.com/coder/websocket v1.8.13 // indirect
+	github.com/coder/websocket v1.8.14 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
