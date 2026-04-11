@@ -62,7 +62,7 @@ require (
 	github.com/redis/go-redis/v9 v9.18.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.42.0
-	github.com/testcontainers/testcontainers-go/modules/minio v0.41.0
+	github.com/testcontainers/testcontainers-go/modules/minio v0.42.0
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/xuri/excelize/v2 v2.10.1
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
