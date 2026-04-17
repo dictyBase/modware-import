@@ -1,3 +1,5 @@
+// Package stockcenter provides CLI flag definitions for the stockcenter import
+// command.
 package stockcenter
 
 import (
