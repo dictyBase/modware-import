@@ -9,7 +9,7 @@ params:
     KUBE_CFG: ""
 
 steps:
-  - id: k8s-generate 
+  - id: k8s_generate 
     name: k8s-generate 
     description: "setup kubernetes config file"
     output: KPATH
