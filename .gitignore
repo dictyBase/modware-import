@@ -43,3 +43,4 @@ eco.obo
 ecodemap.txt
 goldenbraid-data
 .worktrees/
+kubeconfig.yaml
