@@ -19,8 +19,8 @@ github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4 h1:vdT7QwBh
 github.com/Gurpartap/logrus-stack v0.0.0-20170710170904-89c00d8a28f4/go.mod h1:SvXOG8ElV28oAiG9zv91SDe5+9PfIr7PPccpr8YyXNs=
 github.com/IBM/fp-go v1.1.84 h1:Uq8SWCpRLVuatOcJveCHOn0RHGN0UxYNugAcdlFl3P4=
 github.com/IBM/fp-go v1.1.84/go.mod h1:xQx8D6UU4EDtyYmR99rVYVyLpC4rNYXLl/l5ye8KfrE=
-github.com/IBM/fp-go/v2 v2.3.11 h1:2qLp1LQtfQ5fN9JjU0dSKHz5Hng7OuJw+4SoyV7wSE8=
-github.com/IBM/fp-go/v2 v2.3.11/go.mod h1:31fvaJMCf6hnuysAj8QLZmVaqsSK2Zaua1aBU7EQuHQ=
+github.com/IBM/fp-go/v2 v2.3.16 h1:Oorn76oqRcYOUUPkQ3otrJVitZdRXq3UQdd+BrtfGFM=
+github.com/IBM/fp-go/v2 v2.3.16/go.mod h1:31fvaJMCf6hnuysAj8QLZmVaqsSK2Zaua1aBU7EQuHQ=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c h1:RGWPOewvKIROun94nF7v2cua9qP+thov/7M50KEoeSU=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=
