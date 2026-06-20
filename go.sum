@@ -482,8 +482,8 @@ github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca h1:Ld/zXl5t4+D6
 github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca/go.mod h1:u2MKkTVTVJWe5D1rCvame8WqhBd88EuIwODJZ1VHCPM=
 github.com/testcontainers/testcontainers-go v0.43.0 h1:oEQx5MW2DGd9z3AeEQfB2lPM0eLs7ztyaGRu75bFo5A=
 github.com/testcontainers/testcontainers-go v0.43.0/go.mod h1:+VxkT2NQnKOZPKi6praMuMKYHYyOGXr0XSBSlSMCzFo=
-github.com/testcontainers/testcontainers-go/modules/minio v0.42.0 h1:8yTWNv8ALG7JQHYvm1n9PegH0uJT7dRtWNHf6eQeTRs=
-github.com/testcontainers/testcontainers-go/modules/minio v0.42.0/go.mod h1:bcjonmVMA/aEzxFFIh/FRwSkeZ+fnxwvkGN/Z4EiW28=
+github.com/testcontainers/testcontainers-go/modules/minio v0.43.0 h1:d9dS1Imdfx6igdtPGWjXCa6b2KMZ0htoGL+R9BwEgZI=
+github.com/testcontainers/testcontainers-go/modules/minio v0.43.0/go.mod h1:iwIN88h7gMLORcKk2/CCTmTKYAoLBTurOGUfZ4IKVA4=
 github.com/tiendc/go-deepcopy v1.7.2 h1:Ut2yYR7W9tWjTQitganoIue4UGxZwCcJy3orjrrIj44=
 github.com/tiendc/go-deepcopy v1.7.2/go.mod h1:4bKjNC2r7boYOkD2IOuZpYjmlDdzjbpTRyCx+goBCJQ=
 github.com/tklauser/go-sysconf v0.3.16 h1:frioLaCQSsF5Cy1jgRBrzr6t502KIIwQ0MArYICU0nA=
