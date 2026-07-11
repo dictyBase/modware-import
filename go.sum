@@ -364,8 +364,8 @@ github.com/mwitkow/go-proto-validators v0.3.0 h1:2WkInbIheqmDevK9h0S/K6f0Os/HlTP
 github.com/mwitkow/go-proto-validators v0.3.0/go.mod h1:ej0Qp0qMgHN/KtDyUt+Q1/tA7a5VarXUOUxD+oeD30w=
 github.com/nao1215/fileparser v0.5.2 h1:IXhH5m3UJf/TMidfTcVen8CSlZ4KEFEgBz6+2o+5KMs=
 github.com/nao1215/fileparser v0.5.2/go.mod h1:Jb16QbtYfgzQ2BR+UOVNSa1WeKMP2o+xnwBYFUNAG2Y=
-github.com/nao1215/filesql v0.17.0 h1:Df+BFPEl582Gx/hiKy61+0jRv4rNG6PV1d1OH9SUgpw=
-github.com/nao1215/filesql v0.17.0/go.mod h1:0T8HiaObjG4oTR8O+qHSN8vN2fcqn26xeJStvtE82K4=
+github.com/nao1215/filesql v0.17.2 h1:UYRhDgtzytWVlITVXw3//wc0lVyxQb9Xe9hpfYqDX5Y=
+github.com/nao1215/filesql v0.17.2/go.mod h1:83+ne68S+HKb7f93Nl2draIM26gl9tnQp+EpsgWXgss=
 github.com/ncruces/go-strftime v1.0.0 h1:HMFp8mLCTPp341M/ZnA4qaf7ZlsbTc+miZjCLOFAw7w=
 github.com/ncruces/go-strftime v1.0.0/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls=
 github.com/nxadm/tail v1.4.4 h1:DQuhQpB1tVlglWS2hLQ5OV6B5r8aGxSrPc5Qo6uTN78=
