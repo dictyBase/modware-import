@@ -4,12 +4,12 @@ namespace      := "dictybase"
 github_user    := "sba964"
 platform       := "linux/amd64"
 platform_multi := "linux/amd64,linux/arm64"
-image          := namespace + "/modware-import"
+image          := namespace + "/modware-dataloader"
 ghcr_image     := "ghcr.io/" + image
 
 set default-list := true
 
-load-content tag k8s_config s3_bucket_path s3_bucket="dictybase" k8s_namespace="dev" debug="false":
+load tag k8s_config s3_bucket_path s3_bucket="dictybase" k8s_namespace="dev" debug="false":
     #!/usr/bin/env bash
     set -euo pipefail
     ttl="{{ if debug == "true" { "300" } else { "120" } }}"
