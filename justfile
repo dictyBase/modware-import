@@ -1,5 +1,5 @@
-mod goldenbraid "justfiles/goldenbraid.just"
-mod content "justfiles/content.just"
+mod goldenbraid "just-modules/goldenbraid.just"
+mod content "just-modules/content.just"
 
 set default-list := true
 
