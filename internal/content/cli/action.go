@@ -208,8 +208,9 @@ func createStoreContent(
 
 func namespaceMap() map[string]string {
 	return map[string]string{
-		"dfp": "frontpage",
-		"dsc": "stockcenter",
+		"dfp":  "frontpage",
+		"dsc":  "stockcenter",
+		"news": "news",
 	}
 }
 
