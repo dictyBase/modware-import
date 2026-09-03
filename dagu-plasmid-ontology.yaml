@@ -32,7 +32,7 @@ steps:
     description: "Launch the Kubernetes job"
     command: |
       set -euo pipefail
-      JOB_OUTPUT=$(just run-goldenbraid-plasmid-ontology "${TAG}" "${KPATH}" "${ONTOLOGY_TERM}" "${NAMESPACE}")
+      JOB_OUTPUT=$(just goldenbraid::run-goldenbraid-plasmid-ontology "${TAG}" "${KPATH}" "${ONTOLOGY_TERM}" "${NAMESPACE}")
       echo "$JOB_OUTPUT"
     output: JOB_NAME
 
