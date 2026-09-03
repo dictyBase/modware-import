@@ -31,7 +31,7 @@ steps:
     description: "Launch the Kubernetes job"
     command: |
       set -euo pipefail
-      JOB_OUTPUT=$(just goldenbraid run-goldenbraid-inventory "${TAG}" "${KPATH}" "${NAMESPACE}")
+      JOB_OUTPUT=$(just goldenbraid::run-goldenbraid-inventory "${TAG}" "${KPATH}" "${NAMESPACE}")
       echo "$JOB_OUTPUT"
     output: JOB_NAME
 
