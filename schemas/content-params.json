@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["TAG", "S3_BUCKET_PATH"],
+  "properties": {
+    "TAG": {
+      "type": "string",
+      "description": "The Docker image tag to use"
+    },
+    "S3_BUCKET_PATH": {
+      "type": "string",
+      "description": "Path inside the S3 bucket for input content files"
+    },
+    "S3_BUCKET": {
+      "type": "string",
+      "description": "S3 bucket name",
+      "default": "dictybase"
+    },
+    "ENV": {
+      "type": "string",
+      "description": "Target environment (dev, staging, production)",
+      "default": "dev",
+      "enum": ["dev", "staging", "production"]
+    },
+    "NAMESPACE": {
+      "type": "string",
+      "description": "Kubernetes namespace",
+      "default": "dev"
+    },
+    "KUBE_CFG": {
+      "type": "string",
+      "description": "Path to kubeconfig file (required for non-dev)",
+      "default": ""
+    }
+  }
+}
