@@ -5,6 +5,13 @@ set default-list := true
 
 # Wait for a Kubernetes job to complete, fail, or detect stuck pods.
 
+# Show parameters for a Dagu workflow
+dagu-params file:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    schema=$(yq -r '.params.schema' {{ file }})
+    jq -r '.properties | to_entries | .[] | .key + " = " + (.value.default // "(required)" | tostring) + "  # " + (.value.description // "")' "$schema"
+
 # Delegates to the k8s wait-job subcommand
 wait-job name k8s_config k8s_namespace="dev" timeout="60s":
     #!/usr/bin/env bash
