@@ -71,9 +71,9 @@ load tag k8s_config s3_bucket_path s3_bucket="dictybase" k8s_namespace="dev" deb
                     name: minio
               args:
                 - content-data
+                ${debug_args}
                 - --s3-bucket
                 - {{ s3_bucket }}
                 - --s3-bucket-path
                 - {{ s3_bucket_path }}
-                ${debug_args}
     EOF
