@@ -40,7 +40,7 @@ push-ghcr-multi tag="latest":
     docker buildx build --platform {{ platform_multi }} -f build/package/Dockerfile.goldenbraid -t {{ ghcr_image }}:{{ tag }} --push .
 
 # List images
-list:
+list-images:
     docker images | grep {{ image }}
 
 # Run goldenbraid plasmid import job in dev cluster
