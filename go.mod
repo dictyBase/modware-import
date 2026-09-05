@@ -50,7 +50,7 @@ require (
 	github.com/IBM/fp-go v1.1.84
 	github.com/IBM/fp-go/v2 v2.3.122
 	github.com/PuerkitoBio/goquery v1.12.0
-	github.com/alicebob/miniredis/v2 v2.38.0
+	github.com/alicebob/miniredis/v2 v2.39.0
 	github.com/arangodb/go-driver v1.6.9
 	github.com/cockroachdb/pebble v1.1.5
 	github.com/deckarep/golang-set/v2 v2.9.0
