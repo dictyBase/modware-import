@@ -1,9 +1,12 @@
-name: goldenbraid-inventory
+name: content-data
 type: graph
-description: "Orchestrates a GoldenBraid inventory import job"
+description: "Orchestrates a content data import job"
 params:
-  schema: "./schemas/goldenbraid-inventory-params.json"
+  schema: "./schemas/content-params.json"
   values:
+    TAG: ""
+    S3_BUCKET_PATH: ""
+    S3_BUCKET: dictybase
     ENV: dev
     NAMESPACE: dev
     KUBE_CFG: ""
@@ -31,7 +34,7 @@ steps:
     description: "Launch the Kubernetes job"
     command: |
       set -euo pipefail
-      JOB_OUTPUT=$(just goldenbraid::run-goldenbraid-inventory "${TAG}" "${KPATH}" "${NAMESPACE}")
+      JOB_OUTPUT=$(just content::load "${TAG}" "${KPATH}" "${S3_BUCKET_PATH}" "${S3_BUCKET}" "${NAMESPACE}")
       echo "$JOB_OUTPUT"
     output: JOB_NAME
 
