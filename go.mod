@@ -46,7 +46,7 @@ require (
 )
 
 require (
-	buf.build/go/protovalidate v1.3.0
+	buf.build/go/protovalidate v1.4.0
 	github.com/IBM/fp-go v1.1.84
 	github.com/IBM/fp-go/v2 v2.3.122
 	github.com/PuerkitoBio/goquery v1.13.0
@@ -65,13 +65,14 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/minio v0.44.0
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/xuri/excelize/v2 v2.11.0
-	golang.org/x/exp v0.0.0-20260529124908-c761662dc8c9
+	golang.org/x/exp v0.0.0-20260820142414-ca536658362e
 	golang.org/x/sync v0.22.0
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260709200747-435963d16310.1 // indirect
-	cel.dev/expr v0.25.2 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.1 // indirect
+	cel.dev/cel-go v0.32.0 // indirect
+	cel.dev/expr v0.25.3 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/DataDog/zstd v1.4.5 // indirect
@@ -122,7 +123,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/cel-go v0.30.0 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/igrmk/treemap/v2 v2.0.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -208,8 +208,8 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
@@ -226,4 +226,4 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-go 1.25.13
+go 1.26.0
