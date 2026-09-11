@@ -274,9 +274,9 @@ func TestRealServer_MultipleOperations(t *testing.T) {
 	updateReq := &stockpb.StrainUpdate{
 		Data: &stockpb.StrainUpdate_Data{
 			Id:   created.Data.Id,
-			Type: "strain",
+			Type: strainType,
 			Attributes: &stockpb.StrainUpdateAttributes{
-				UpdatedBy: "updater@dictybase.org",
+				UpdatedBy: updaterEmail,
 				Label:     "updated label",
 			},
 		},

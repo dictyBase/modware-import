@@ -31,7 +31,8 @@ func setupMinioContainer(t *testing.T) *s3TestFixture {
 	ctx := context.Background()
 
 	// Start MinIO testcontainer using official API
-	minioContainer, err := tcminio.Run(ctx,
+	minioContainer, err := tcminio.Run(
+		ctx,
 		"minio/minio:RELEASE.2024-01-16T16-07-38Z",
 		tcminio.WithUsername("minioadmin"),
 		tcminio.WithPassword("minioadmin"),

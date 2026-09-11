@@ -556,7 +556,8 @@ func foldRowsWithSemigroup(
 							"scan error: %v",
 							err,
 						)},
-					})
+					},
+				)
 				continue
 			}
 			summary = semigroup.Concat(
@@ -611,7 +612,8 @@ func runProcessing(
 var processFoundPlasmid = F.Curry2(
 	func(ctx PipelineContext, plasmid *stock.Plasmid) E.Either[error, InventoryProcessingSummary] {
 		ctx.PlasmidID = plasmid.Data.Id
-		ctx.Deps.Logger.Debug("inventory: processing plasmid",
+		ctx.Deps.Logger.Debug(
+			"inventory: processing plasmid",
 			"plasmid_name", ctx.PlasmidName,
 			"plasmid_id", ctx.PlasmidID,
 			"location", ctx.Location,

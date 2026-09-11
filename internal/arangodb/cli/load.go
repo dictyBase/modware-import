@@ -16,6 +16,8 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const collectionKey = "collection"
+
 // HandleS3ObjectParams contains parameters for handleS3Object function
 type HandleS3ObjectParams struct {
 	Context   *cli.Context
@@ -42,13 +44,14 @@ type ProcessS3ObjectParams struct {
 // GenericResponse represents a generic JSON structure
 type GenericResponse struct {
 	Results []struct {
-		Items []interface{} `json:"items"`
+		Items []any `json:"items"`
 	} `json:"results"`
 }
 
 func buildArangoImportCmd(params BuildArangoImportParams) *exec.Cmd {
 	// #nosec G204 -- Using CLI context values that are validated by the CLI framework
-	return exec.Command("arangoimport",
+	return exec.Command(
+		"arangoimport",
 		"--server.endpoint", fmt.Sprintf("http+tcp://%s:%s",
 			params.Context.String("arangodb-host"),
 			params.Context.String("arangodb-port")),
@@ -133,14 +136,14 @@ func importToArangoDB(
 		FilePath:   outputFile,
 	})
 	params.Log.WithFields(logrus.Fields{
-		"collection": collection,
-		"input_file": outputFile,
+		collectionKey: collection,
+		"input_file":  outputFile,
 	}).Info("starting import to ArangoDB")
 	if err := runArangoImport(cmd); err != nil {
 		return err
 	}
 	params.Log.WithFields(logrus.Fields{
-		"collection": collection,
+		collectionKey: collection,
 	}).Info("successfully imported data to ArangoDB")
 	return nil
 }
@@ -157,7 +160,7 @@ func handleS3Object(params HandleS3ObjectParams) error {
 
 	params.Log.WithFields(logrus.Fields{
 		"file":        params.Object.Key,
-		"collection":  collection,
+		collectionKey: collection,
 		"output_file": outputFile,
 	}).Info("processing file for import")
 
@@ -167,7 +170,7 @@ func handleS3Object(params HandleS3ObjectParams) error {
 
 	if params.Context.Bool("skip-import") {
 		params.Log.WithFields(logrus.Fields{
-			"collection": collection,
+			collectionKey: collection,
 		}).Info("skipping ArangoDB import due to skip-import flag")
 		return nil
 	}
@@ -259,7 +262,7 @@ func processItems(decoder *json.Decoder, encoder *json.Encoder) error {
 
 	// Process each item in the array
 	for decoder.More() {
-		var item interface{}
+		var item any
 		if err := decoder.Decode(&item); err != nil {
 			return fmt.Errorf("error decoding item: %w", err)
 		}

@@ -69,8 +69,8 @@ func processLegacyPoolResult(
 
 	if resultError != nil {
 		params.logger.WithFields(logrus.Fields{
-			"job_id": jobID,
-			"error":  resultError,
+			jobIDKey: jobID,
+			errorKey: resultError,
 		}).Error("Legacy query failed")
 		return
 	}
@@ -102,9 +102,9 @@ func updateGrpcMetrics(
 		params.metrics.SuccessCount++
 		params.metrics.mu.Unlock()
 		params.logger.WithFields(logrus.Fields{
-			"gene_id":         result.GeneID,
+			geneIDKey:         result.GeneID,
 			"processed_count": result.ProcessedCount,
-			"skipped_count":   result.SkippedCount,
+			skippedCountKey:   result.SkippedCount,
 		}).Infof(
 			"Successfully processed gene %s: %s",
 			result.GeneID,
@@ -132,8 +132,8 @@ func bridgeArangoToLegacyPool(params *bridgeArangoToLegacyPoolParams) {
 			params.metrics.JobsSubmittedToLegacyPool++
 			params.metrics.mu.Unlock()
 			params.logger.WithFields(logrus.Fields{
-				"gene_id": gene.GeneID,
-				"stage":   "submitted_to_legacy_pool",
+				geneIDKey: gene.GeneID,
+				stageKey:  "submitted_to_legacy_pool",
 			}).Debug("Gene submitted for legacy query")
 		}
 	}
@@ -213,9 +213,9 @@ func processGeneProductSlice(
 	params.metrics.mu.Unlock()
 
 	params.logger.WithFields(logrus.Fields{
-		"gene_id":       geneID,
+		geneIDKey:       geneID,
 		"product_count": len(geneProducts),
-		"stage":         "submitted_to_batch_grpc_pool",
+		stageKey:        "submitted_to_batch_grpc_pool",
 	}).Debug("Gene products batch submitted for gRPC update")
 }
 
@@ -284,17 +284,17 @@ func reportGeneProductProgress(params *reportGeneProductProgressParams) {
 		isComplete := params.metrics.IsComplete()
 
 		params.logger.WithFields(logrus.Fields{
-			"read_from_db":       params.metrics.TotalFetchedFromArango,
-			"total_processed":    params.metrics.TotalProcessed,
-			"success_count":      params.metrics.SuccessCount,
-			"error_count":        params.metrics.ErrorCount,
-			"skipped_count":      params.metrics.SkippedCount,
-			"processing_rate":    fmt.Sprintf("%.2f genes/sec", rate),
-			"elapsed_time":       elapsed.String(),
+			readFromDBKey:        params.metrics.TotalFetchedFromArango,
+			totalProcessedKey:    params.metrics.TotalProcessed,
+			successCountKey:      params.metrics.SuccessCount,
+			errorCountKey:        params.metrics.ErrorCount,
+			skippedCountKey:      params.metrics.SkippedCount,
+			processingRateKey:    fmt.Sprintf("%.2f genes/sec", rate),
+			elapsedTimeKey:       elapsed.String(),
 			"legacy_submitted":   params.metrics.JobsSubmittedToLegacyPool,
 			"legacy_completed":   params.metrics.JobsCompletedFromLegacyPool,
-			"grpc_submitted":     params.metrics.JobsSubmittedToGrpcPool,
-			"grpc_completed":     params.metrics.JobsCompletedFromGrpcPool,
+			grpcSubmittedKey:     params.metrics.JobsSubmittedToGrpcPool,
+			grpcCompletedKey:     params.metrics.JobsCompletedFromGrpcPool,
 			"all_arango_fetched": params.metrics.AllArangoDocsFetched,
 			"is_complete":        isComplete,
 		}).Info(message)

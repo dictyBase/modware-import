@@ -138,11 +138,12 @@ func createStrain(
 		context.Background(),
 		&pb.ExistingStrain{
 			Data: &pb.ExistingStrain_Data{
-				Type:       "strain",
+				Type:       strainType,
 				Id:         strain.ID,
 				Attributes: attr,
 			},
-		})
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("error in creating strain %s %s", strain.ID, err)
 	}
@@ -160,11 +161,12 @@ func updateStrain(
 		context.Background(),
 		&pb.StrainUpdate{
 			Data: &pb.StrainUpdate_Data{
-				Type:       "strain",
+				Type:       strainType,
 				Id:         strain.ID,
 				Attributes: attr,
 			},
-		})
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("error in updating strain %s %s", strain.ID, err)
 	}
@@ -219,9 +221,10 @@ func populateStrainUpdateAttributes(
 func logFinalCount(logger logrus.FieldLogger, count int) {
 	logger.WithFields(
 		logrus.Fields{
-			"type":  "annotations",
-			"stock": "strains",
-			"event": "load",
-			"count": count,
-		}).Infof("loaded strain annotations")
+			logTypeKey:  "annotations",
+			logStockKey: "strains",
+			logEventKey: evLoad,
+			logCountKey: count,
+		},
+	).Infof("loaded strain annotations")
 }

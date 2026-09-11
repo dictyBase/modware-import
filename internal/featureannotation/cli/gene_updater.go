@@ -82,7 +82,7 @@ func newAppConfigFromCliContext(
 		AQLQuery:             cltx.String("aql-query"),
 		ArangoUser:           cltx.String("arangodb-user"), // For authorship
 		NumProcessingWorkers: cltx.Int("processing-workers"),
-		NumGrpcWorkers:       cltx.Int("grpc-workers"),
+		NumGrpcWorkers:       cltx.Int(grpcWorkersFlagName),
 		Logger:               logger,
 		Metrics: &ProcessingMetrics{
 			StartTime: time.Now(),
@@ -109,16 +109,16 @@ func reportProgress(
 			rate = float64(metrics.TotalProcessed) / elapsed.Seconds()
 		}
 		logger.WithFields(logrus.Fields{
-			"read_from_db":    metrics.TotalFetchedFromArango,
-			"total_processed": metrics.TotalProcessed,
-			"success_count":   metrics.SuccessCount,
-			"error_count":     metrics.ErrorCount,
-			"processing_rate": fmt.Sprintf("%.2f genes/sec", rate),
-			"elapsed_time":    elapsed.String(),
+			readFromDBKey:     metrics.TotalFetchedFromArango,
+			totalProcessedKey: metrics.TotalProcessed,
+			successCountKey:   metrics.SuccessCount,
+			errorCountKey:     metrics.ErrorCount,
+			processingRateKey: fmt.Sprintf("%.2f genes/sec", rate),
+			elapsedTimeKey:    elapsed.String(),
 			"html_submitted":  metrics.JobsSubmittedToHTMLPool,
 			"html_completed":  metrics.JobsCompletedFromHTMLPool,
-			"grpc_submitted":  metrics.JobsSubmittedToGrpcPool,
-			"grpc_completed":  metrics.JobsCompletedFromGrpcPool,
+			grpcSubmittedKey:  metrics.JobsSubmittedToGrpcPool,
+			grpcCompletedKey:  metrics.JobsCompletedFromGrpcPool,
 		}).Info(message)
 	}
 
@@ -185,7 +185,8 @@ func RunGeneUpdater(cltx *cli.Context) error {
 	grpcUpdatePool := concurrent.NewPool(
 		grpcUpdateWorkerFunc(
 			config,
-			registry.GetFeatureAnnotationAPIClient()),
+			registry.GetFeatureAnnotationAPIClient(),
+		),
 		concurrent.WithWorkers[ProcessedGeneData, GrpcUpdateResult](
 			config.NumGrpcWorkers,
 		),

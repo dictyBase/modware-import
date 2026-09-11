@@ -19,7 +19,7 @@ func onStatsError(err error) T.Tuple2[GeneCountStats, error] {
 }
 
 func onStatsSuccess(stats GeneCountStats) T.Tuple2[GeneCountStats, error] {
-	return T.MakeTuple2(stats, (error)(nil))
+	return T.MakeTuple2(stats, error(nil))
 }
 
 func handleOutput(output T.Tuple2[GeneCountStats, error]) error {

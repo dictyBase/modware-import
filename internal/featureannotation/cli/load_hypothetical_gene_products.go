@@ -127,7 +127,8 @@ var (
 					returnSkippedAction,
 				),
 			)
-		})
+		},
+	)
 )
 
 // GeneProcessingAction represents the action taken for a gene
@@ -217,7 +218,7 @@ func handleAnnotationNotFound(
 			Attributes: &pb.FeatureAnnotationAttributes{
 				Name: ctx.GeneID,
 				Properties: []*pb.TagProperty{{
-					Tag:       "product",
+					Tag:       productTag,
 					Value:     HypotheticalProteinProduct,
 					CreatedBy: ctx.Config.User,
 					CreatedAt: timestamppb.Now(),
@@ -252,7 +253,7 @@ func addProductTag(
 			&pb.AddTagRequest{
 				Id: gctx.GeneID,
 				Tag: &pb.TagPropertyCreate{
-					Tag:       "product",
+					Tag:       productTag,
 					Value:     HypotheticalProteinProduct,
 					CreatedBy: gctx.Config.User,
 					CreatedAt: timestamppb.Now(),
@@ -393,7 +394,7 @@ func aggregateResults(results []GeneProcessingResult) ProcessingStats {
 func LoadHypotheticalGeneProducts(c *cli.Context) error {
 	params := &LoadHypotheticalGeneProductsParams{
 		Client: registry.GetFeatureAnnotationAPIClient(),
-		User:   c.String("user"),
+		User:   c.String(userFlagName),
 	}
 
 	// Configure Either loggers (Left=error to stderr, Right=success to stdout)
@@ -408,7 +409,7 @@ func LoadHypotheticalGeneProducts(c *cli.Context) error {
 	// IOEither pipeline with structured logging, then Either logging + fold to error
 	return F.Pipe3(
 		F.Pipe7(
-			IOE.Of[error](c.String("input")),
+			IOE.Of[error](c.String(inputFlagName)),
 			IOE.ChainFirst(
 				IOE.LogJSON[string](
 					"Starting hypothetical gene products loading:\n%s",
@@ -446,7 +447,7 @@ func stripBOM(s string) string {
 // isHypotheticalProductTag checks if a tag property is the hypothetical protein
 // product
 func isHypotheticalProductTag(tag *pb.TagProperty) bool {
-	return tag.Tag == "product" && tag.Value == HypotheticalProteinProduct
+	return tag.Tag == productTag && tag.Value == HypotheticalProteinProduct
 }
 
 // returnSkippedAction returns GeneSkipped action (used in Fold)

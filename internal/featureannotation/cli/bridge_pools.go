@@ -72,8 +72,8 @@ func bridgeArangoToHTMLPool(
 			metrics.JobsSubmittedToHTMLPool++
 			metrics.mu.Unlock()
 			logger.WithFields(logrus.Fields{
-				"job_id": arangoDoc.ID,
-				"stage":  "submitted_to_html_pool",
+				jobIDKey: arangoDoc.ID,
+				stageKey: "submitted_to_html_pool",
 			}).Debug("Job submitted for HTML processing")
 		}
 	}
@@ -109,8 +109,8 @@ func bridgeHTMLToGrpcPool(
 			metrics.mu.Unlock()
 			if result.Error != nil {
 				logger.WithFields(logrus.Fields{
-					"job_id": result.JobID,
-					"error":  result.Error,
+					jobIDKey: result.JobID,
+					errorKey: result.Error,
 				}).Debug("HTML processing failed for job")
 				logger.Errorf(
 					"HTML processing error for job %s: %v",
@@ -120,17 +120,17 @@ func bridgeHTMLToGrpcPool(
 				continue
 			}
 			logger.WithFields(logrus.Fields{
-				"job_id":  result.JobID,
-				"gene_id": result.Output.GeneID,
+				jobIDKey:  result.JobID,
+				geneIDKey: result.Output.GeneID,
 			}).Debug("HTML processing successful for job, submitting to gRPC pool")
 			grpcUpdatePool.Submit(result.Output)
 			metrics.mu.Lock()
 			metrics.JobsSubmittedToGrpcPool++
 			metrics.mu.Unlock()
 			logger.WithFields(logrus.Fields{
-				"job_id":  result.JobID,
-				"gene_id": result.Output.GeneID,
-				"stage":   "submitted_to_grpc_pool",
+				jobIDKey:  result.JobID,
+				geneIDKey: result.Output.GeneID,
+				stageKey:  stageSubmittedToGRPCPool,
 			}).Debug("Job submitted for gRPC update")
 		case err, ok := <-htmlProcessingPool.Errors():
 			if !ok {

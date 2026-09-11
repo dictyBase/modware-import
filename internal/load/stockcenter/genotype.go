@@ -39,7 +39,8 @@ func LoadGeno(_ *cobra.Command, _ []string) error {
 				user:     regs.DefaultUser,
 				ontology: regs.DictyAnnoOntology,
 				value:    geno.Genotype,
-			})
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -58,14 +59,15 @@ func LoadGeno(_ *cobra.Command, _ []string) error {
 	}
 	logger.WithFields(
 		logrus.Fields{
-			"type":    "genotype",
-			"stock":   "strain",
-			"event":   "load",
-			"count":   count,
-			"read":    rct,
-			"created": nct,
-			"updated": uct,
-		}).Infof("loaded strain genotypes")
+			logTypeKey:  "genotype",
+			logStockKey: strainType,
+			logEventKey: evLoad,
+			logCountKey: count,
+			logReadKey:  rct,
+			"created":   nct,
+			"updated":   uct,
+		},
+	).Infof("loaded strain genotypes")
 	return nil
 }
 
@@ -76,7 +78,8 @@ func NewOrReloadGeno(client pb.TaggedAnnotationServiceClient, p *genoArgs) (Stat
 			Tag:      p.tag,
 			EntryId:  p.id,
 			Ontology: p.ontology,
-		})
+		},
+	)
 	switch {
 	case err == nil: // exists, so check and update
 		if p.value == ta.Data.Attributes.Value {

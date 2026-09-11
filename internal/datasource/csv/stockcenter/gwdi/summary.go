@@ -39,11 +39,11 @@ func summInterUpDown(orientation string) string {
 	b.WriteString("Genome Wide Dictyostelium Insertion bank (GWDI) intergenic mutant,")
 	b.WriteString(" insertion is within 500 bp of start codon;")
 	b.WriteString(" nearest gene %s is ")
-	b.WriteString(
-		fmt.Sprintf(
-			"%s of the insertions site (%s strand)",
-			orientation, strand,
-		))
+	fmt.Fprintf(
+		&b,
+		"%s of the insertions site (%s strand)",
+		orientation, strand,
+	)
 	b.WriteString(" insertion at position %s, %s")
 	b.WriteString(" %s at genomic sites; %s orientation.")
 	return b.String()

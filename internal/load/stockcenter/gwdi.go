@@ -23,8 +23,8 @@ import (
 
 func LoadGwdi(_ *cobra.Command, _ []string) error {
 	logger := registry.GetLogger().WithFields(logrus.Fields{
-		"type":  "gwdi",
-		"stock": "strain",
+		logTypeKey:  "gwdi",
+		logStockKey: strainType,
 	})
 	if viper.GetBool("gwdi-prune") {
 		gd := &gwdiDel{
@@ -153,8 +153,8 @@ func loadingCount(logger *logrus.Entry, counter chan int) {
 		c += v
 	}
 	logger.WithFields(logrus.Fields{
-		"type":  "counter",
-		"count": c,
+		logTypeKey:  "counter",
+		logCountKey: c,
 	}).Infof("loaded gwdi strains")
 }
 
@@ -220,7 +220,8 @@ func (gd *gwdiDel) strainsForDeletion() ([]string, error) {
 				Cursor: cursor,
 				Limit:  config.DefaultCSVWorkerPoolSize,
 				Filter: "name=~GWDI_",
-			})
+			},
+		)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				break
@@ -242,8 +243,8 @@ func (gd *gwdiDel) queueIDs(sc *pb.StrainCollection) []string {
 	for _, scData := range sc.Data {
 		ids = append(ids, scData.Id)
 		gd.logger.WithFields(logrus.Fields{
-			"event": "queue",
-			"id":    scData.Id,
+			logEventKey: "queue",
+			"id":        scData.Id,
 		}).Debug("queued gwdi strain for pruning")
 	}
 	return ids
@@ -255,7 +256,8 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 		&annotation.ListParameters{
 			Limit:  config.DefaultCSVWorkerPoolSize,
 			Filter: fmt.Sprintf("entry_id===%s", id),
-		})
+		},
+	)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return nil
@@ -272,7 +274,8 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 			&annotation.DeleteAnnotationRequest{
 				Id:    ta.Id,
 				Purge: true,
-			})
+			},
+		)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				continue
@@ -285,9 +288,9 @@ func (gd *gwdiDel) deleteAnno(id string) error {
 		}
 	}
 	gd.logger.WithFields(logrus.Fields{
-		"event": "delete",
-		"id":    id,
-		"count": len(tac.Data),
+		logEventKey: evDelete,
+		"id":        id,
+		logCountKey: len(tac.Data),
 	}).Debug("remove gwdi strain annotations")
 	return nil
 }
@@ -308,8 +311,8 @@ func (gd *gwdiDel) execute(id string) error {
 		)
 	}
 	gd.logger.WithFields(logrus.Fields{
-		"event": "delete",
-		"id":    id,
+		logEventKey: evDelete,
+		"id":        id,
 	}).Debug("remove gwdi strain")
 	return gd.deleteAnno(id)
 }
@@ -353,8 +356,8 @@ func (gc *gwdiCreate) execute(gwdi *stockcenter.Strain) error {
 		return err
 	}
 	gc.logger.WithFields(logrus.Fields{
-		"event": "create",
-		"id":    strain.Data.Id,
+		logEventKey: evCreate,
+		"id":        strain.Data.Id,
 	}).Debug("new gwdi strain record")
 	return nil
 }
@@ -443,7 +446,7 @@ func (gc *gwdiCreate) createGwdi(
 		context.Background(),
 		&pb.NewStrain{
 			Data: &pb.NewStrain_Data{
-				Type:       "strain",
+				Type:       strainType,
 				Attributes: attr,
 			},
 		},

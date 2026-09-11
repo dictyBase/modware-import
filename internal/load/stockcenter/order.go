@@ -95,7 +95,8 @@ OUTER:
 						Items:     items,
 					},
 				},
-			})
+			},
+		)
 		if err != nil {
 			return fmt.Errorf(
 				"error in loading order for items %s and user %s",

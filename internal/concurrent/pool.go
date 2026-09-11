@@ -112,6 +112,7 @@ func NewPool[I, O any](
 	workerFunc WorkerFunc[I, O],
 	options ...PoolOption[I, O],
 ) *Pool[I, O] {
+	//#nosec G118 -- cancel is stored in Pool.cancelFunc and invoked by Close.
 	ctx, cancel := context.WithCancel(context.Background())
 
 	pool := &Pool[I, O]{
@@ -162,7 +163,7 @@ func (p *Pool[I, O]) Start() {
 }
 
 // Submit adds a job to the pool
-func (p *Pool[I, O]) Submit(payload I, meta ...map[string]interface{}) {
+func (p *Pool[I, O]) Submit(payload I, meta ...map[string]any) {
 	job := Job[I]{
 		ID:      uuid.NewString(),
 		Payload: payload,
