@@ -369,13 +369,10 @@ pAlias2,Box2`
 	invReader := io.NopCloser(strings.NewReader(invCSV))
 	ctx := context.Background()
 
-	builder, err := filesql.NewBuilder().
+	db, err := filesql.NewBuilder().
 		AddReader(invReader, "goldenbraid_inventory", filesql.FileTypeCSV).
 		AddReader(gbReader, "goldenbraid", filesql.FileTypeCSV).
-		Build(ctx)
-	require.NoError(t, err)
-
-	db, err := builder.Open(ctx)
+		Open(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 

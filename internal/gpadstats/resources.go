@@ -29,14 +29,9 @@ func closeConfig(config StatsLoaderConfig) {
 func builder(config StatsLoaderConfig) IOE.IOEither[error, StatsLoaderConfig] {
 	return IOE.TryCatchError(func() (StatsLoaderConfig, error) {
 		ctx := context.Background()
-		validatedBuilder, err := filesql.NewBuilder().
+		db, err := filesql.NewBuilder().
 			AddReader(config.Reader, "gpad", filesql.FileTypeTSV).
-			Build(ctx)
-		if err != nil {
-			closeConfig(config)
-			return config, err
-		}
-		db, err := validatedBuilder.Open(ctx)
+			Open(ctx)
 		if err != nil {
 			closeConfig(config)
 			return config, err
