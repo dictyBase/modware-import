@@ -263,7 +263,8 @@ func handleCreateFeatureAnnotation(
 					strippedPropertyToTagProperty,
 				),
 			},
-		})
+		},
+	)
 	if createErr != nil {
 		result.Message = fmt.Sprintf(
 			"failed to CreateFeatureAnnotation after not found: %v",
@@ -329,7 +330,8 @@ func grpcUpdateWorkerFunc(
 		featAnno, err := grpcClient.GetFeatureAnnotation(
 			ctx, &fanno.FeatureAnnotationId{
 				Id: processedData.GeneID,
-			})
+			},
+		)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				return handleCreateFeatureAnnotation(

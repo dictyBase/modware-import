@@ -93,12 +93,12 @@ func NewStrainBuilder() *StrainBuilder {
 	return &StrainBuilder{
 		req: &stockpb.NewStrain{
 			Data: &stockpb.NewStrain_Data{
-				Type: "strain",
+				Type: strainType,
 				Attributes: &stockpb.NewStrainAttributes{
-					CreatedBy: "test@dictybase.org",
-					UpdatedBy: "test@dictybase.org",
+					CreatedBy: creatorEmail,
+					UpdatedBy: creatorEmail,
 					Depositor: "Test Depositor",
-					Species:   "Dictyostelium discoideum",
+					Species:   ddSpecies,
 					Label:     "default-label", // Add default label for validation
 				},
 			},
@@ -139,10 +139,10 @@ func NewPlasmidBuilder() *PlasmidBuilder {
 	return &PlasmidBuilder{
 		req: &stockpb.NewPlasmid{
 			Data: &stockpb.NewPlasmid_Data{
-				Type: "plasmid",
+				Type: plasmidType,
 				Attributes: &stockpb.NewPlasmidAttributes{
-					CreatedBy: "test@dictybase.org",
-					UpdatedBy: "test@dictybase.org",
+					CreatedBy: creatorEmail,
+					UpdatedBy: creatorEmail,
 					Depositor: "Test Depositor",
 				},
 			},
@@ -171,14 +171,14 @@ func TestCreateAndGetStrain(t *testing.T) {
 	// Create strain
 	req := NewStrainBuilder().
 		WithLabel("axeA2 axeB2").
-		WithDepositor("Costanza").
+		WithDepositor(depositorCostanza).
 		Build()
 
 	created, err := fix.client.CreateStrain(ctx, req)
 	require.NoError(t, err)
 	require.Regexp(t, `^DBS\d{7}$`, created.Data.Id)
 	require.Equal(t, "axeA2 axeB2", created.Data.Attributes.Label)
-	require.Equal(t, "Costanza", created.Data.Attributes.Depositor)
+	require.Equal(t, depositorCostanza, created.Data.Attributes.Depositor)
 	require.Equal(
 		t,
 		"general strain",
@@ -213,9 +213,9 @@ func TestUpdateStrain(t *testing.T) {
 	updateReq := &stockpb.StrainUpdate{
 		Data: &stockpb.StrainUpdate_Data{
 			Id:   created.Data.Id,
-			Type: "strain",
+			Type: strainType,
 			Attributes: &stockpb.StrainUpdateAttributes{
-				UpdatedBy: "updater@dictybase.org",
+				UpdatedBy: updaterEmail,
 				Label:     "updated label",
 				Summary:   "Added summary",
 			},
@@ -228,7 +228,8 @@ func TestUpdateStrain(t *testing.T) {
 	require.Equal(t, "updated label", updated.Data.Attributes.Label)
 	require.Equal(t, "Added summary", updated.Data.Attributes.Summary)
 	require.True(t, updated.Data.Attributes.UpdatedAt.AsTime().After(
-		created.Data.Attributes.UpdatedAt.AsTime()))
+		created.Data.Attributes.UpdatedAt.AsTime(),
+	))
 }
 
 // TestLoadStrain tests loading a strain with a specific ID
@@ -242,32 +243,32 @@ func TestLoadStrain(t *testing.T) {
 	now := timestamppb.Now()
 	loadReq := &stockpb.ExistingStrain{
 		Data: &stockpb.ExistingStrain_Data{
-			Type: "strain",
-			Id:   "DBS9999999",
+			Type: strainType,
+			Id:   testStockID,
 			Attributes: &stockpb.ExistingStrainAttributes{
 				CreatedAt: now,
 				UpdatedAt: now,
-				CreatedBy: "test@dictybase.org",
-				UpdatedBy: "test@dictybase.org",
+				CreatedBy: creatorEmail,
+				UpdatedBy: creatorEmail,
 				Depositor: "Loaded Depositor",
 				Label:     "loaded strain",
-				Species:   "Dictyostelium discoideum",
+				Species:   ddSpecies,
 			},
 		},
 	}
 
 	loaded, err := fix.client.LoadStrain(ctx, loadReq)
 	require.NoError(t, err)
-	require.Equal(t, "DBS9999999", loaded.Data.Id)
+	require.Equal(t, testStockID, loaded.Data.Id)
 	require.Equal(t, "loaded strain", loaded.Data.Attributes.Label)
 
 	// Verify it can be retrieved
 	retrieved, err := fix.client.GetStrain(
 		ctx,
-		&stockpb.StockId{Id: "DBS9999999"},
+		&stockpb.StockId{Id: testStockID},
 	)
 	require.NoError(t, err)
-	require.Equal(t, "DBS9999999", retrieved.Data.Id)
+	require.Equal(t, testStockID, retrieved.Data.Id)
 }
 
 // TestRemoveStrain tests strain deletion
@@ -336,9 +337,9 @@ func TestUpdatePlasmid(t *testing.T) {
 	updateReq := &stockpb.PlasmidUpdate{
 		Data: &stockpb.PlasmidUpdate_Data{
 			Id:   created.Data.Id,
-			Type: "plasmid",
+			Type: plasmidType,
 			Attributes: &stockpb.PlasmidUpdateAttributes{
-				UpdatedBy: "updater@dictybase.org",
+				UpdatedBy: updaterEmail,
 				Name:      "updated plasmid",
 				Summary:   "Updated summary",
 			},
@@ -360,13 +361,13 @@ func TestLoadPlasmid(t *testing.T) {
 	now2 := timestamppb.Now()
 	loadReq := &stockpb.ExistingPlasmid{
 		Data: &stockpb.ExistingPlasmid_Data{
-			Type: "plasmid",
+			Type: plasmidType,
 			Id:   "DBP8888888",
 			Attributes: &stockpb.ExistingPlasmidAttributes{
 				CreatedAt: now2,
 				UpdatedAt: now2,
-				CreatedBy: "test@dictybase.org",
-				UpdatedBy: "test@dictybase.org",
+				CreatedBy: creatorEmail,
+				UpdatedBy: creatorEmail,
 				Depositor: "Plasmid Depositor",
 				Name:      "loaded plasmid",
 			},
@@ -418,9 +419,9 @@ func TestListStrains_FilterByDepositor(t *testing.T) {
 		depositor string
 		label     string
 	}{
-		{"Costanza", "strain1"},
-		{"Costanza", "strain2"},
-		{"Benes", "strain3"},
+		{depositorCostanza, "strain1"},
+		{depositorCostanza, "strain2"},
+		{depositorBenes, "strain3"},
 	}
 
 	for _, s := range strains {
@@ -442,7 +443,7 @@ func TestListStrains_FilterByDepositor(t *testing.T) {
 	require.Len(t, result.Data, 2)
 
 	for _, strain := range result.Data {
-		require.Equal(t, "Costanza", strain.Attributes.Depositor)
+		require.Equal(t, depositorCostanza, strain.Attributes.Depositor)
 	}
 }
 
@@ -455,8 +456,8 @@ func TestListStrains_FilterBySpecies(t *testing.T) {
 
 	// Create strains with different species
 	species := []string{
-		"Dictyostelium discoideum",
-		"Dictyostelium discoideum",
+		ddSpecies,
+		ddSpecies,
 		"Dictyostelium purpureum",
 	}
 
@@ -493,10 +494,10 @@ func TestListStrains_ComplexFilter(t *testing.T) {
 		label     string
 		species   string
 	}{
-		{"Costanza", "axe mutant", "Dictyostelium discoideum"},
-		{"Costanza", "wild type", "Dictyostelium discoideum"},
-		{"Benes", "axe mutant", "Dictyostelium discoideum"},
-		{"Benes", "car mutant", "Dictyostelium purpureum"},
+		{depositorCostanza, "axe mutant", ddSpecies},
+		{depositorCostanza, "wild type", ddSpecies},
+		{depositorBenes, "axe mutant", ddSpecies},
+		{depositorBenes, "car mutant", "Dictyostelium purpureum"},
 	}
 
 	for _, tc := range testCases {
@@ -517,7 +518,7 @@ func TestListStrains_ComplexFilter(t *testing.T) {
 	result, err := fix.client.ListStrains(ctx, params)
 	require.NoError(t, err)
 	require.Len(t, result.Data, 1)
-	require.Equal(t, "Costanza", result.Data[0].Attributes.Depositor)
+	require.Equal(t, depositorCostanza, result.Data[0].Attributes.Depositor)
 	require.Contains(t, result.Data[0].Attributes.Label, "axe")
 }
 
@@ -582,7 +583,7 @@ func TestListStrains_PaginationWithFilter(t *testing.T) {
 	for i := 1; i <= 15; i++ {
 		_, err := fix.client.CreateStrain(ctx,
 			NewStrainBuilder().
-				WithDepositor("Costanza").
+				WithDepositor(depositorCostanza).
 				WithLabel(fmt.Sprintf("costanza%02d", i)).
 				Build())
 		require.NoError(t, err)
@@ -591,7 +592,7 @@ func TestListStrains_PaginationWithFilter(t *testing.T) {
 	for i := 1; i <= 10; i++ {
 		_, err := fix.client.CreateStrain(ctx,
 			NewStrainBuilder().
-				WithDepositor("Benes").
+				WithDepositor(depositorBenes).
 				WithLabel(fmt.Sprintf("benes%02d", i)).
 				Build())
 		require.NoError(t, err)
@@ -614,7 +615,7 @@ func TestListStrains_PaginationWithFilter(t *testing.T) {
 
 	// All results should be Costanza
 	for _, strain := range append(page1.Data, page2.Data...) {
-		require.Equal(t, "Costanza", strain.Attributes.Depositor)
+		require.Equal(t, depositorCostanza, strain.Attributes.Depositor)
 	}
 }
 
@@ -715,28 +716,28 @@ func TestCreateStrain_ValidationErrors(t *testing.T) {
 			mutate: func(req *stockpb.NewStrain) {
 				req.Data.Attributes.CreatedBy = "not-an-email"
 			},
-			errString: "email",
+			errString: errEmailSubstr,
 		},
 		{
 			name: "invalid email - updated_by",
 			mutate: func(req *stockpb.NewStrain) {
 				req.Data.Attributes.UpdatedBy = "invalid"
 			},
-			errString: "email",
+			errString: errEmailSubstr,
 		},
 		{
 			name: "missing required field - depositor",
 			mutate: func(req *stockpb.NewStrain) {
 				req.Data.Attributes.Depositor = ""
 			},
-			errString: "empty string",
+			errString: errEmptyString,
 		},
 		{
 			name: "missing required field - species",
 			mutate: func(req *stockpb.NewStrain) {
 				req.Data.Attributes.Species = ""
 			},
-			errString: "empty string",
+			errString: errEmptyString,
 		},
 	}
 
@@ -769,14 +770,14 @@ func TestCreatePlasmid_ValidationErrors(t *testing.T) {
 			mutate: func(req *stockpb.NewPlasmid) {
 				req.Data.Attributes.CreatedBy = "bad-email"
 			},
-			errString: "email",
+			errString: errEmailSubstr,
 		},
 		{
 			name: "missing depositor",
 			mutate: func(req *stockpb.NewPlasmid) {
 				req.Data.Attributes.Depositor = ""
 			},
-			errString: "empty string",
+			errString: errEmptyString,
 		},
 	}
 
@@ -799,7 +800,7 @@ func TestGetStrain_NotFound(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := fix.client.GetStrain(ctx, &stockpb.StockId{Id: "DBS9999999"})
+	_, err := fix.client.GetStrain(ctx, &stockpb.StockId{Id: testStockID})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "not found")
 
@@ -834,10 +835,10 @@ func TestUpdateStrain_NotFound(t *testing.T) {
 
 	updateReq := &stockpb.StrainUpdate{
 		Data: &stockpb.StrainUpdate_Data{
-			Id:   "DBS9999999",
-			Type: "strain",
+			Id:   testStockID,
+			Type: strainType,
 			Attributes: &stockpb.StrainUpdateAttributes{
-				UpdatedBy: "test@dictybase.org",
+				UpdatedBy: creatorEmail,
 				Label:     "updated",
 			},
 		},
@@ -855,7 +856,7 @@ func TestRemoveStock_NotFound(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := fix.client.RemoveStock(ctx, &stockpb.StockId{Id: "DBS9999999"})
+	_, err := fix.client.RemoveStock(ctx, &stockpb.StockId{Id: testStockID})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "not found")
 }
@@ -925,7 +926,7 @@ func TestListStrains_FilterNoMatches(t *testing.T) {
 
 	// Create some strains
 	_, err := fix.client.CreateStrain(ctx,
-		NewStrainBuilder().WithDepositor("Costanza").Build())
+		NewStrainBuilder().WithDepositor(depositorCostanza).Build())
 	require.NoError(t, err)
 
 	// Filter that matches nothing
@@ -964,7 +965,7 @@ func TestListStrainsByIds_NonExistentIDs(t *testing.T) {
 	result, err := fix.client.ListStrainsByIds(
 		ctx,
 		&stockpb.StockIdList{
-			Id: []string{"DBS9999997", "DBS9999998", "DBS9999999"},
+			Id: []string{"DBS9999997", "DBS9999998", testStockID},
 		},
 	)
 

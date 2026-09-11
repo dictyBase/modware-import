@@ -33,7 +33,7 @@ func LoadPlasmidInv(_ *cobra.Command, _ []string) error {
 			err:    err,
 			client: client,
 			logger: logger,
-			loader: "inventory",
+			loader: inventoryType,
 		})
 		if err != nil {
 			return err
@@ -49,21 +49,23 @@ func LoadPlasmidInv(_ *cobra.Command, _ []string) error {
 		}
 		logger.WithFields(
 			logrus.Fields{
-				"type":  "inventory",
-				"stock": "plasmid",
-				"event": "create",
-				"id":    id,
-				"count": len(invSlice),
-			}).Debugf("created inventories")
+				logTypeKey:  inventoryType,
+				logStockKey: plasmidType,
+				logEventKey: evCreate,
+				"id":        id,
+				logCountKey: len(invSlice),
+			},
+		).Debugf("created inventories")
 		invCount += len(invSlice)
 	}
 	logger.WithFields(
 		logrus.Fields{
-			"type":  "inventory",
-			"stock": "plasmids",
-			"event": "load",
-			"count": invCount,
-		}).Infof("loaded inventories")
+			logTypeKey:  inventoryType,
+			logStockKey: "plasmids",
+			logEventKey: evLoad,
+			logCountKey: invCount,
+		},
+	).Infof("loaded inventories")
 	return nil
 }
 
@@ -83,11 +85,12 @@ func cacheInvByPlasmidID(
 		if len(inv.PhysicalLocation) == 0 {
 			logger.WithFields(
 				logrus.Fields{
-					"type":   "inventory",
-					"stock":  "plasmid",
-					"event":  "skip",
-					"output": inv.RecordLine,
-				}).Warnf("skipped the record")
+					logTypeKey:  inventoryType,
+					logStockKey: plasmidType,
+					logEventKey: "skip",
+					"output":    inv.RecordLine,
+				},
+			).Warnf("skipped the record")
 			continue
 		}
 		if invSlice, ok := invMap[inv.PlasmidID]; ok {

@@ -183,11 +183,11 @@ func validateMaxFileSize(fl validator.FieldLevel) bool {
 // ValidateGeneData is the main action function for gene data validation
 func ValidateGeneData(c *cli.Context) error {
 	params := GeneValidationParams{
-		InputFile:    c.String("input"),
+		InputFile:    c.String(inputFlagName),
 		OutputReport: c.String("output-report"),
 		GraphQLURL:   c.String("graphql-url"),
 		Timeout:      c.Int("timeout"),
-		Workers:      c.Int("workers"),
+		Workers:      c.Int(workersFlagName),
 	}
 
 	// Enhanced validation with better error context
@@ -347,7 +347,8 @@ func processRecordsConcurrently(
 						Client:  sharedClient,
 						Record:  record,
 						Context: gctx,
-					})
+					},
+				)
 				return nil
 			}
 		})

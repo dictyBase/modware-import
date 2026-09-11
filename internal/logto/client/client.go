@@ -212,6 +212,7 @@ func (clnt *Client) CreateUser(
 	user *APIUsersPostReq,
 ) (string, error) {
 	var userID string
+	//#nosec G117 -- user payload intentionally carries a password field for the API request.
 	content, err := json.Marshal(user)
 	if err != nil {
 		return userID, fmt.Errorf("error in converting to json %s", err)

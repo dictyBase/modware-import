@@ -17,8 +17,8 @@ func LoadPheno(_ *cobra.Command, _ []string) error {
 	pr := stockcenter.NewPhenotypeReader(registry.GetReader(regs.PhenoReader))
 	client := regs.GetAnnotationAPIClient()
 	logger := registry.GetLogger().WithFields(logrus.Fields{
-		"type":  "phenotype",
-		"stock": "strain",
+		logTypeKey:  phenotypeType,
+		logStockKey: strainType,
 	})
 	phenoMap, err := processPhenotype(&processPhenoArgs{
 		pr:     pr,
@@ -41,7 +41,7 @@ func LoadPheno(_ *cobra.Command, _ []string) error {
 			err:    err,
 			client: client,
 			logger: logger,
-			loader: "phenotype",
+			loader: phenotypeType,
 		})
 		if err != nil {
 			return err
@@ -55,15 +55,15 @@ func LoadPheno(_ *cobra.Command, _ []string) error {
 			return err
 		}
 		logger.WithFields(logrus.Fields{
-			"event": "create",
-			"id":    id,
-			"count": len(phenoSlice),
+			logEventKey: evCreate,
+			"id":        id,
+			logCountKey: len(phenoSlice),
 		}).Debug("created phenotypes")
 		count += len(phenoSlice)
 	}
 	logger.WithFields(logrus.Fields{
-		"event": "load",
-		"count": count,
+		logEventKey: evLoad,
+		logCountKey: count,
 	}).Info("loaded phenotypes")
 	return nil
 }
@@ -172,8 +172,8 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 			tag:      pheno.Observation,
 			ontology: regs.PhenoOntology,
 			id:       pheno.StrainID,
-			stock:    "strain",
-			loader:   "phenotype",
+			stock:    strainType,
+			loader:   phenotypeType,
 		})
 		if err != nil {
 			return phenoMap, err
@@ -188,8 +188,8 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 				tag:      pheno.Assay,
 				ontology: regs.AssayOntology,
 				id:       pheno.StrainID,
-				stock:    "strain",
-				loader:   "phenotype",
+				stock:    strainType,
+				loader:   phenotypeType,
 			})
 			if err != nil {
 				return phenoMap, err
@@ -206,8 +206,8 @@ func processPhenotype(args *processPhenoArgs) (map[string][]*stockcenter.Phenoty
 		readCount++
 	}
 	args.logger.WithFields(logrus.Fields{
-		"event": "read",
-		"count": readCount,
+		logEventKey: evRead,
+		logCountKey: readCount,
 	}).Info("read all record")
 	return phenoMap, nil
 }
@@ -218,5 +218,6 @@ func getPhenotype(args *getPhenoArgs) (*pb.TaggedAnnotationGroupCollection, erro
 		&pb.ListGroupParameters{
 			Filter: fmt.Sprintf("entry_id==%s;ontology==%s", args.id, args.ontology),
 			Limit:  config.DefaultBatchSize,
-		})
+		},
+	)
 }

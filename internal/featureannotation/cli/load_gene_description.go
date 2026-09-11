@@ -54,10 +54,10 @@ type handleNewGeneDescFromCsvParams struct {
 func LoadGeneDescription(c *cli.Context) error {
 	// Validate CLI parameters
 	params := LoadGeneDescriptionParams{
-		InputFile: c.String("input"),
-		Workers:   c.Int("workers"),
-		BatchSize: c.Int("batch-size"),
-		User:      c.String("user"),
+		InputFile: c.String(inputFlagName),
+		Workers:   c.Int(workersFlagName),
+		BatchSize: c.Int(batchSizeFlagName),
+		User:      c.String(userFlagName),
 	}
 
 	if err := ValidateStruct(params); err != nil {
@@ -377,7 +377,7 @@ func processGeneDescriptionResults(
 		if result.Error != nil {
 			logger.WithFields(logrus.Fields{
 				"job-id": result.JobID,
-				"error":  result.Error,
+				errorKey: result.Error,
 			}).Error("error loading gene description")
 			errorCount++
 		} else {

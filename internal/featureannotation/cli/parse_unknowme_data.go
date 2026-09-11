@@ -88,7 +88,7 @@ func NewParsingConfig(opts ...ParsingOption) *ParsingConfig {
 // DDB_G entries with their corresponding gene product and description information
 func ParseUnknowmeData(cliCtx *cli.Context) error {
 	params := ParseUnknowmeDataParams{
-		InputFiles:            cliCtx.StringSlice("input"),
+		InputFiles:            cliCtx.StringSlice(inputFlagName),
 		GeneProductOutput:     cliCtx.String("gene-product-output"),
 		GeneDescriptionOutput: cliCtx.String("gene-description-output"),
 	}

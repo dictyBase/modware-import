@@ -15,6 +15,15 @@ const (
 	pubmedIDModulo     = 90000000 // Modulo value for PubMed IDs
 )
 
+// String constants for mock annotation attributes.
+const (
+	geneType         = "gene"
+	functionTag      = "function"
+	testCreatorEmail = "test@dictybase.org"
+	curatorEmail     = "curator@dictybase.org"
+	adminEmail       = "admin@dictybase.org"
+)
+
 // GenerateFeatureAnnotations creates a set of realistic mock feature annotations
 func GenerateFeatureAnnotations() []*feature.FeatureAnnotation {
 	now := timestamppb.New(time.Now())
@@ -30,7 +39,7 @@ func GenerateFeatureAnnotations() []*feature.FeatureAnnotation {
 
 func createActAAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation {
 	return &feature.FeatureAnnotation{
-		Type: "gene",
+		Type: geneType,
 		Id:   "DDB_G0267398",
 		Attributes: &feature.FeatureAnnotationAttributes{
 			Name:     "actA",
@@ -42,15 +51,15 @@ func createActAAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 			Pubmed: []string{"12345678", "87654321"},
 			Properties: []*feature.TagProperty{
 				{
-					Tag:       "function",
+					Tag:       functionTag,
 					Value:     "cytoskeleton organization",
-					CreatedBy: "test@dictybase.org",
+					CreatedBy: testCreatorEmail,
 					CreatedAt: now,
 				},
 				{
 					Tag:       "location",
 					Value:     "cytoplasm",
-					CreatedBy: "test@dictybase.org",
+					CreatedBy: testCreatorEmail,
 					CreatedAt: now,
 				},
 			},
@@ -63,7 +72,7 @@ func createActAAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 				},
 			},
 		},
-		CreatedBy:  "test@dictybase.org",
+		CreatedBy:  testCreatorEmail,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		IsObsolete: false,
@@ -72,7 +81,7 @@ func createActAAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 
 func createMyoBAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation {
 	return &feature.FeatureAnnotation{
-		Type: "gene",
+		Type: geneType,
 		Id:   "DDB_G0275199",
 		Attributes: &feature.FeatureAnnotationAttributes{
 			Name:     "myoB",
@@ -83,15 +92,15 @@ func createMyoBAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 			Pubmed: []string{"11223344"},
 			Properties: []*feature.TagProperty{
 				{
-					Tag:       "function",
+					Tag:       functionTag,
 					Value:     "motor activity",
-					CreatedBy: "curator@dictybase.org",
+					CreatedBy: curatorEmail,
 					CreatedAt: now,
 				},
 				{
 					Tag:       "pathway",
 					Value:     "cell motility",
-					CreatedBy: "curator@dictybase.org",
+					CreatedBy: curatorEmail,
 					CreatedAt: now,
 				},
 			},
@@ -104,7 +113,7 @@ func createMyoBAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 				},
 			},
 		},
-		CreatedBy:  "curator@dictybase.org",
+		CreatedBy:  curatorEmail,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		IsObsolete: false,
@@ -113,7 +122,7 @@ func createMyoBAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 
 func createPakAAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation {
 	return &feature.FeatureAnnotation{
-		Type: "gene",
+		Type: geneType,
 		Id:   "DDB_G0282525",
 		Attributes: &feature.FeatureAnnotationAttributes{
 			Name:     "pakA",
@@ -125,20 +134,20 @@ func createPakAAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 			Pubmed: []string{"33445566", "77889900"},
 			Properties: []*feature.TagProperty{
 				{
-					Tag:       "function",
+					Tag:       functionTag,
 					Value:     "protein serine/threonine kinase activity",
-					CreatedBy: "admin@dictybase.org",
+					CreatedBy: adminEmail,
 					CreatedAt: now,
 				},
 				{
 					Tag:       "regulation",
 					Value:     "positive regulation of cell migration",
-					CreatedBy: "admin@dictybase.org",
+					CreatedBy: adminEmail,
 					CreatedAt: now,
 				},
 			},
 		},
-		CreatedBy:  "admin@dictybase.org",
+		CreatedBy:  adminEmail,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		IsObsolete: false,
@@ -147,7 +156,7 @@ func createPakAAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 
 func createRasGAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation {
 	return &feature.FeatureAnnotation{
-		Type: "gene",
+		Type: geneType,
 		Id:   "DDB_G0283471",
 		Attributes: &feature.FeatureAnnotationAttributes{
 			Name:     "rasG",
@@ -158,20 +167,20 @@ func createRasGAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 			Pubmed: []string{"55667788"},
 			Properties: []*feature.TagProperty{
 				{
-					Tag:       "function",
+					Tag:       functionTag,
 					Value:     "GTPase activity",
-					CreatedBy: "test@dictybase.org",
+					CreatedBy: testCreatorEmail,
 					CreatedAt: now,
 				},
 				{
 					Tag:       "domain",
 					Value:     "Ras family",
-					CreatedBy: "test@dictybase.org",
+					CreatedBy: testCreatorEmail,
 					CreatedAt: now,
 				},
 			},
 		},
-		CreatedBy:  "test@dictybase.org",
+		CreatedBy:  testCreatorEmail,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		IsObsolete: false,
@@ -180,7 +189,7 @@ func createRasGAnnotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation
 
 func createDiscoidin1Annotation(now *timestamppb.Timestamp) *feature.FeatureAnnotation {
 	return &feature.FeatureAnnotation{
-		Type: "gene",
+		Type: geneType,
 		Id:   "DDB_G0291234",
 		Attributes: &feature.FeatureAnnotationAttributes{
 			Name:     "discoidin1",
@@ -191,20 +200,20 @@ func createDiscoidin1Annotation(now *timestamppb.Timestamp) *feature.FeatureAnno
 			Pubmed: []string{"99887766"},
 			Properties: []*feature.TagProperty{
 				{
-					Tag:       "function",
+					Tag:       functionTag,
 					Value:     "carbohydrate binding",
-					CreatedBy: "curator@dictybase.org",
+					CreatedBy: curatorEmail,
 					CreatedAt: now,
 				},
 				{
 					Tag:       "expression",
 					Value:     "developmentally regulated",
-					CreatedBy: "curator@dictybase.org",
+					CreatedBy: curatorEmail,
 					CreatedAt: now,
 				},
 			},
 		},
-		CreatedBy:  "curator@dictybase.org",
+		CreatedBy:  curatorEmail,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		IsObsolete: false,
@@ -225,7 +234,7 @@ func GenerateRandomFeatureAnnotation() *feature.FeatureAnnotation {
 	now := timestamppb.New(time.Now())
 
 	return &feature.FeatureAnnotation{
-		Type: "gene",
+		Type: geneType,
 		Id:   id,
 		Attributes: &feature.FeatureAnnotationAttributes{
 			Name: geneNames[time.Now().UnixNano()%int64(len(geneNames))],
@@ -237,14 +246,14 @@ func GenerateRandomFeatureAnnotation() *feature.FeatureAnnotation {
 			},
 			Properties: []*feature.TagProperty{
 				{
-					Tag:       "function",
+					Tag:       functionTag,
 					Value:     functions[time.Now().UnixNano()%int64(len(functions))],
-					CreatedBy: "test@dictybase.org",
+					CreatedBy: testCreatorEmail,
 					CreatedAt: now,
 				},
 			},
 		},
-		CreatedBy:  "test@dictybase.org",
+		CreatedBy:  testCreatorEmail,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		IsObsolete: false,
@@ -254,9 +263,9 @@ func GenerateRandomFeatureAnnotation() *feature.FeatureAnnotation {
 // ValidEmails returns a list of valid email addresses for testing
 func ValidEmails() []string {
 	return []string{
-		"test@dictybase.org",
-		"curator@dictybase.org",
-		"admin@dictybase.org",
+		testCreatorEmail,
+		curatorEmail,
+		adminEmail,
 		"user@dictybase.org",
 		"researcher@dictybase.org",
 	}

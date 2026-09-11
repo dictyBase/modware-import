@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -10,6 +11,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+const tagKey = "tag"
 
 // MemoryStorage implements FeatureAnnotationStorage using in-memory maps
 type MemoryStorage struct {
@@ -205,8 +208,8 @@ func (m *MemoryStorage) AddTag(id string, tag *feature.TagProperty) error {
 	)
 
 	m.logger.WithFields(logrus.Fields{
-		"id":  id,
-		"tag": tag.Tag,
+		"id":   id,
+		tagKey: tag.Tag,
 	}).Debug("Added tag to feature annotation")
 
 	return nil
@@ -309,8 +312,8 @@ func (m *MemoryStorage) UpdateTag(
 		if existingTag.Tag == tagName {
 			annotation.Attributes.Properties[i] = tag
 			m.logger.WithFields(logrus.Fields{
-				"id":  id,
-				"tag": tagName,
+				"id":   id,
+				tagKey: tagName,
 			}).Debug("Updated tag in feature annotation")
 			return nil
 		}
@@ -351,8 +354,8 @@ func (m *MemoryStorage) RemoveTag(id string, tagName string) error {
 				annotation.Attributes.Properties[i+1:]...,
 			)
 			m.logger.WithFields(logrus.Fields{
-				"id":  id,
-				"tag": tagName,
+				"id":   id,
+				tagKey: tagName,
 			}).Debug("Removed tag from feature annotation")
 			return nil
 		}
@@ -407,7 +410,7 @@ func (m *MemoryStorage) RemoveTags(id string, tag string, value string) error {
 
 	m.logger.WithFields(logrus.Fields{
 		"id":    id,
-		"tag":   tag,
+		tagKey:  tag,
 		"value": value,
 	}).Debug("Removed tag from feature annotation")
 
@@ -532,12 +535,7 @@ func (m *MemoryStorage) removeIndexes(annotation *feature.FeatureAnnotation) {
 
 // Helper functions
 func (m *MemoryStorage) containsString(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, item)
 }
 
 func (m *MemoryStorage) removeString(slice []string, item string) []string {

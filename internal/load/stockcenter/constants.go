@@ -18,3 +18,30 @@ const (
 	synTag       = "synonym"
 	val          = "novalue"
 )
+
+// Logging field keys shared across the stockcenter loaders.
+const (
+	logTypeKey   = "type"
+	logStockKey  = "stock"
+	logEventKey  = "event"
+	logCountKey  = "count"
+	logReadKey   = "read"
+	logFolderKey = "folder"
+	logBucketKey = "bucket"
+)
+
+// Event values recorded under the "event" log field.
+const (
+	evLoad   = "load"
+	evCreate = "create"
+	evDelete = "delete"
+	evRead   = "read"
+)
+
+// Stock type values used in content attributes and log fields.
+const (
+	plasmidType   = "plasmid"
+	strainType    = "strain"
+	inventoryType = "inventory"
+	phenotypeType = "phenotype"
+)

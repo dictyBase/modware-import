@@ -11,13 +11,15 @@ import (
 
 const annoDateLayout = "2006-01-02 15:04:05"
 
+const jakobEmail = "jf31@columbia.edu"
+
 var annMap = map[string]string{
-	"jf":             "jf31@columbia.edu",
-	"CGM_DDB_JAKOB":  "jf31@columbia.edu",
+	"jf":             jakobEmail,
+	"CGM_DDB_JAKOB":  jakobEmail,
 	"CGM_DDB_PASC":   "pgaudet@northwestern.edu",
-	"CGM_DDB_STEPHY": "jf31@columbia.edu",
-	"ah":             "jf31@columbia.edu",
-	"sm":             "jf31@columbia.edu",
+	"CGM_DDB_STEPHY": jakobEmail,
+	"ah":             jakobEmail,
+	"sm":             jakobEmail,
 	"CGM_DDB_MARC":   "m-vincelli@northwestern.edu",
 	"CGM_DDB_PFEY":   "pfey@northwestern.edu",
 	"CGM_DDB_BOBD":   "robert-dodson@northwestern.edu",

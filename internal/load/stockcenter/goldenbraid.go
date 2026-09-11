@@ -160,7 +160,8 @@ func logListResponse(
 ) func(*stock.PlasmidCollection) IO.IO[struct{}] {
 	return func(coll *stock.PlasmidCollection) IO.IO[struct{}] {
 		return func() struct{} {
-			slogger.Debug("ListPlasmids response",
+			slogger.Debug(
+				"ListPlasmids response",
 				"data_count", len(coll.GetData()),
 				"total", coll.GetMeta().GetTotal(),
 			)
@@ -184,7 +185,7 @@ func logDecision(msg string, slogger *slog.Logger) func(string) IO.IO[struct{}] 
 func buildNewPlasmidRequest(ctx *source.GoldenBraidContext) *stock.NewPlasmid {
 	return &stock.NewPlasmid{
 		Data: &stock.NewPlasmid_Data{
-			Type: "plasmid",
+			Type: plasmidType,
 			Attributes: &stock.NewPlasmidAttributes{
 				Name:      ctx.Name,
 				CreatedBy: ctx.User,
@@ -326,8 +327,8 @@ func openReader(
 				return cfg.Cmd.String("input-source")
 			},
 			map[string]func(LoaderConfig) IOE.IOEither[error, LoaderConfig]{
-				"folder": openGoldenBraidFileReader,
-				"bucket": openGoldenBraidS3Reader,
+				logFolderKey: openGoldenBraidFileReader,
+				logBucketKey: openGoldenBraidS3Reader,
 			},
 			defaultGoldenBraidReader,
 		),
@@ -545,7 +546,8 @@ func LoadGoldenBraidCli(cmd *cli.Context) error {
 		fputil.ToEither[error, GoldenBraidProcessingResult],
 		E.Fold(
 			onGoldenBraidSummaryError,
-			onGoldenBraidSummarySuccess),
+			onGoldenBraidSummarySuccess,
+		),
 	)
 
 	return handleGoldenBraidSummaryOutput(slogger, output)
@@ -560,7 +562,7 @@ func onGoldenBraidSummaryError(
 func onGoldenBraidSummarySuccess(
 	summary GoldenBraidProcessingResult,
 ) T.Tuple2[GoldenBraidProcessingResult, error] {
-	return T.MakeTuple2(summary, (error)(nil))
+	return T.MakeTuple2(summary, error(nil))
 }
 
 func handleGoldenBraidSummaryOutput(

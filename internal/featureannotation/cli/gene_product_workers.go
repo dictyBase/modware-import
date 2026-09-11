@@ -29,7 +29,7 @@ func legacyDBQueryWorkerFunc(
 		legacyDB := registry.GetLegacyArangodbConnection()
 		cursor, err := legacyDB.SearchRows(
 			GeneProductQuery,
-			map[string]interface{}{
+			map[string]any{
 				"feature_id": gene.FeatureID,
 			},
 		)
@@ -109,7 +109,8 @@ func batchGeneProductGrpcWorkerFunc(
 			geneProducts,
 			func(gp ProcessedGeneProduct) bool {
 				return gp.GeneProduct != ""
-			})
+			},
+		)
 		result := BatchGeneProductResult{
 			GeneID:         geneProducts[0].GeneID,
 			Success:        false,
@@ -174,19 +175,23 @@ func handleExistingFeatAnnoWithMulti(
 			collection.CurriedFilter(
 				func(prop *fanno.TagProperty) bool {
 					return prop.Tag == GeneProductTag
-				}),
+				},
+			),
 			collection.CurriedMap(
 				func(prop *fanno.TagProperty) string {
 					return prop.Value
-				}),
-		)...)
+				},
+			),
+		)...,
+	)
 
 	// Filter new products that don't already exist
 	newProducts := collection.Filter(
 		validProducts,
 		func(product ProcessedGeneProduct) bool {
 			return !existingSet.Contains(product.GeneProduct)
-		})
+		},
+	)
 
 	return len(newProducts) > 0, newProducts
 }
@@ -281,7 +286,8 @@ func handleUpdateFeatAnnoWithMulti(
 				CreatedBy: resolveCreatorFromCreatedBy(product.CreatedBy),
 				CreatedAt: timestamppb.New(product.CreatedOn),
 			}
-		})
+		},
+	)
 	_, err := grpcClient.AddTags(ctx, &fanno.AddTagsRequest{
 		Id:   existingAnnotation.Id,
 		Tags: newProperties,

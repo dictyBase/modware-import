@@ -133,7 +133,7 @@ func updatePlasmidTerm(
 ) IOE.IOEither[error, *stockpb.Plasmid] {
 	input := &stockpb.PlasmidUpdate{
 		Data: &stockpb.PlasmidUpdate_Data{
-			Type: "plasmid",
+			Type: plasmidType,
 			Id:   ctx.Plasmid.Id,
 			Attributes: &stockpb.PlasmidUpdateAttributes{
 				UpdatedBy:            regsc.DefaultUser,
@@ -176,7 +176,8 @@ func processBatch(
 		A.Map(updatePlasmidTerm), // Process each context (point-free!)
 		A.Map(fputil.ToEither[error, *stockpb.Plasmid]),
 		A.Map(E.Fold(updateErrorSummary, updateSuccessSummary)),
-		A.Reduce(StatsSemigroup().Concat,
+		A.Reduce(
+			StatsSemigroup().Concat,
 			F.Pipe2(plasmids, countPlasmids, createInitialStats),
 		),
 	)
@@ -196,7 +197,8 @@ func LoadPlasmidOntologyCli(cmd *cli.Context) error {
 		StartTime: time.Now(),
 	}
 
-	slogger.Info("Starting plasmid ontology update",
+	slogger.Info(
+		"Starting plasmid ontology update",
 		"target_term", term,
 		"batch_size", batchSize,
 	)
@@ -247,7 +249,8 @@ func handleOntologyOutput(
 		)
 		return joinedErrors
 	}
-	slogger.Log(context.Background(), slog.LevelInfo,
+	slogger.Log(
+		context.Background(), slog.LevelInfo,
 		"Plasmid ontology update complete",
 		"processed", stats.ProcessedCount,
 		"updated", stats.UpdatedCount,

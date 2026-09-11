@@ -119,11 +119,11 @@ func (m *GeneProductMetrics) IsComplete() bool {
 			"all_arango_fetched":   m.AllArangoDocsFetched,
 			"legacy_submitted":     m.JobsSubmittedToLegacyPool,
 			"legacy_completed":     m.JobsCompletedFromLegacyPool,
-			"grpc_submitted":       m.JobsSubmittedToGrpcPool,
-			"grpc_completed":       m.JobsCompletedFromGrpcPool,
-			"total_processed":      m.TotalProcessed,
+			grpcSubmittedKey:       m.JobsSubmittedToGrpcPool,
+			grpcCompletedKey:       m.JobsCompletedFromGrpcPool,
+			totalProcessedKey:      m.TotalProcessed,
 			"total_fetched_arango": m.TotalFetchedFromArango,
-			"skipped_count":        m.SkippedCount,
+			skippedCountKey:        m.SkippedCount,
 		}).Debug("Completion conditions met")
 	}
 
@@ -214,7 +214,7 @@ func newGeneProductConfigFromCliContext(
 	return GeneProductAppConfig{
 		LegacyDatabase:   cltx.String("legacy-database"),
 		NumLegacyWorkers: cltx.Int("legacy-workers"),
-		NumGrpcWorkers:   cltx.Int("grpc-workers"),
+		NumGrpcWorkers:   cltx.Int(grpcWorkersFlagName),
 		Logger:           logger,
 		Metrics: &GeneProductMetrics{
 			StartTime: time.Now(),

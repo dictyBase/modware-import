@@ -11,6 +11,11 @@ import (
 const (
 	genoTmpl = `axeA1,axeB1,axeC1,%s,[bsRcas],bsR`
 	mutant   = "mutant"
+
+	catgMutation             = "CATG"
+	unintegratedGenomicDNA   = "unintegrated genomic DNA"
+	mutantTypeProperty       = "mutant type"
+	endogenousInsertionValue = "endogenous insertion"
 )
 
 var (
@@ -21,9 +26,9 @@ var (
 var insrMap = map[string]string{
 	"G1": "GATC",
 	"G2": "GATC",
-	"C4": "CATG",
-	"C6": "CATG",
-	"C8": "CATG",
+	"C4": catgMutation,
+	"C6": catgMutation,
+	"C8": catgMutation,
 }
 
 var chrMap = map[string]string{
@@ -33,9 +38,9 @@ var chrMap = map[string]string{
 	"DDB0187328": "DDB0187328",
 	"DDB0189305": "DDB0189305",
 	"DDB0169550": "mitochondrial DNA",
-	"DDB0215018": "unintegrated genomic DNA",
-	"DDB0220052": "unintegrated genomic DNA",
-	"DDB0215151": "unintegrated genomic DNA",
+	"DDB0215018": unintegratedGenomicDNA,
+	"DDB0220052": unintegratedGenomicDNA,
+	"DDB0215151": unintegratedGenomicDNA,
 	"DDB0237465": "extrachromosomal ribosomal RNA",
 	"DDB0232428": "chr 1",
 	"DDB0232429": "chr 2",
@@ -75,8 +80,8 @@ func defaultStrain() *Strain {
 		},
 		Properties: map[string]*tsource.StockProp{
 			regs.DictyAnnoOntology: {
-				Property: "mutant type",
-				Value:    "endogenous insertion",
+				Property: mutantTypeProperty,
+				Value:    endogenousInsertionValue,
 			},
 			regs.DictyMutagenesisOntology: {
 				Property: "mutagenesis method",
@@ -110,7 +115,7 @@ func genelessMutantAnnotation(r []string) *Strain {
 	strain.Genotype = fmt.Sprintf(genoTmpl, strain.Label)
 	strain.Characters[2] = mutant
 	strain.Properties[regs.DictyAnnoOntology] = &tsource.StockProp{
-		Property: "mutant type",
+		Property: mutantTypeProperty,
 		Value:    "exogenous insertion",
 	}
 	return strain
@@ -241,8 +246,8 @@ func intragenicSingleAnnotation(r []string) *Strain {
 func singleNaAnnotation(r []string) *Strain {
 	strain := genelessMutantAnnotation(r)
 	strain.Properties[regs.DictyAnnoOntology] = &tsource.StockProp{
-		Property: "mutant type",
-		Value:    "endogenous insertion",
+		Property: mutantTypeProperty,
+		Value:    endogenousInsertionValue,
 	}
 	strain.Summary = fmt.Sprintf(
 		summaryIntraSingle(),
@@ -255,8 +260,8 @@ func singleNaAnnotation(r []string) *Strain {
 func multipleNaAnnotation(r []string) *Strain {
 	strain := genelessMutantAnnotation(r)
 	strain.Properties[regs.DictyAnnoOntology] = &tsource.StockProp{
-		Property: "mutant type",
-		Value:    "endogenous insertion",
+		Property: mutantTypeProperty,
+		Value:    endogenousInsertionValue,
 	}
 	strain.Summary = fmt.Sprintf(
 		summaryNAMultiple(),
