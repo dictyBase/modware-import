@@ -1,10 +1,10 @@
-FROM golang:1.25-bullseye AS builder
+FROM golang:1.26-trixie AS builder
 LABEL maintainer="Siddhartha Basu <siddhartha-basu@northwestern.edu>"
 ENV CGO_ENABLED=0 \
 	GOOS=linux \
 	GOARCH=amd64
 RUN apt-get -qq update \
-	&& apt-get -yqq install upx git
+	&& apt-get -yqq install upx-ucl git
 # install mage
 RUN git clone https://github.com/magefile/mage \
 	&& cd mage \
