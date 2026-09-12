@@ -9,24 +9,10 @@ ghcr_image     := "ghcr.io/" + image
 
 set default-list := true
 
-# Build for GitHub Container Registry
-build-ghcr tag="latest":
-    docker buildx build --platform {{ platform }} -f build/package/Dockerfile.dataloader -t {{ ghcr_image }}:{{ tag }} .
-
-# Push to GitHub Container Registry
-push-ghcr tag="latest":
-    echo $GITHUB_REGISTRY_TOKEN | docker login ghcr.io -u {{ github_user }} --password-stdin
-    docker buildx build --platform {{ platform }} -f build/package/Dockerfile.dataloader -t {{ ghcr_image }}:{{ tag }} --push .
-
 # Push multi-arch image to GitHub Container Registry
 push-ghcr-multi tag="latest":
     echo $GITHUB_REGISTRY_TOKEN | docker login ghcr.io -u {{ github_user }} --password-stdin
     docker buildx build --platform {{ platform_multi }} -f build/package/Dockerfile.dataloader -t {{ ghcr_image }}:{{ tag }} --push .
-
-# List images
-list-images:
-    docker images | grep {{ ghcr_image }}
-
 load tag k8s_config s3_bucket_path s3_bucket="dictybase" k8s_namespace="dev" debug="false":
     #!/usr/bin/env bash
     set -euo pipefail
