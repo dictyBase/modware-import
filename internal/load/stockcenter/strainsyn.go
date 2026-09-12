@@ -174,9 +174,10 @@ func getContext() context.Context {
 func logProcessedSynonyms(pcount int, logger *logrus.Entry) {
 	logger.WithFields(
 		logrus.Fields{
-			"type":  "synonym",
-			"stock": "strain",
-			"event": "load",
-			"count": pcount,
-		}).Infof("loaded strain synonym")
+			logTypeKey:  "synonym",
+			logStockKey: strainType,
+			logEventKey: evLoad,
+			logCountKey: pcount,
+		},
+	).Infof("loaded strain synonym")
 }

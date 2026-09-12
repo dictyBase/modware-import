@@ -48,23 +48,12 @@ func closeInventoryConfig(config InventoryLoaderConfig) {
 	}
 }
 
-// buildInventorySQL creates and validates a filesql builder from two readers:
-// goldenbraid_inventory (inventory CSV) and goldenbraid (plasmid CSV).
-func buildInventorySQL(
-	ctx DBBuildContext,
-) IOE.IOEither[error, DBBuildContext] {
-	return F.Pipe1(
-		IOE.TryCatchError(func() (*filesql.DBBuilder, error) {
-			return filesql.NewBuilder().
-				AddReader(ctx.Reader, "goldenbraid_inventory", filesql.FileTypeCSV).
-				AddReader(ctx.GoldenBraidReader, "goldenbraid", filesql.FileTypeCSV).
-				Build(ctx.Context)
-		}),
-		IOE.Map[error](func(builder *filesql.DBBuilder) DBBuildContext {
-			ctx.Builder = builder
-			return ctx
-		}),
-	)
+// inventoryFileSQLBuilder constructs a filesql builder from the two
+// inventory readers. Construction is infallible; errors surface at Open.
+func inventoryFileSQLBuilder(config InventoryLoaderConfig) *filesql.DBBuilder {
+	return filesql.NewBuilder().
+		AddReader(config.Reader, "goldenbraid_inventory", filesql.FileTypeCSV).
+		AddReader(config.GoldenBraidReader, "goldenbraid", filesql.FileTypeCSV)
 }
 
 // openInventoryDB opens a database connection from a validated builder
@@ -79,14 +68,14 @@ func openInventoryDB(
 func inventoryBuilder(
 	config InventoryLoaderConfig,
 ) InventoryLoaderIOE {
-	return F.Pipe4(
+	return F.Pipe3(
 		DBBuildContext{
 			Reader:            config.Reader,
 			GoldenBraidReader: config.GoldenBraidReader,
 			Context:           context.Background(),
+			Builder:           inventoryFileSQLBuilder(config),
 		},
-		buildInventorySQL,
-		IOE.Chain(openInventoryDB),
+		openInventoryDB,
 		IOE.MapLeft[*sql.DB](func(err error) error {
 			return fmt.Errorf(
 				"failed to build inventory database: %w",
@@ -238,11 +227,12 @@ func InventoryBuilderFromFile(
 					return cfg.Cmd.String("input-source")
 				},
 				map[string]func(InventoryLoaderConfig) InventoryLoaderIOE{
-					"folder": invLoaderFromFile,
-					"bucket": invLoaderFromS3Bucket,
+					logFolderKey: invLoaderFromFile,
+					logBucketKey: invLoaderFromS3Bucket,
 				},
 				defaultInvLoader,
-			)),
+			),
+		),
 		// Step 2: open goldenbraid plasmid file → sets GoldenBraidReader
 		IOE.Chain(
 			F.Switch(
@@ -250,11 +240,12 @@ func InventoryBuilderFromFile(
 					return cfg.Cmd.String("input-source")
 				},
 				map[string]func(InventoryLoaderConfig) InventoryLoaderIOE{
-					"folder": gbLoaderFromFile,
-					"bucket": gbLoaderFromS3Bucket,
+					logFolderKey: gbLoaderFromFile,
+					logBucketKey: gbLoaderFromS3Bucket,
 				},
 				defaultInvLoader,
-			)),
+			),
+		),
 		// Step 3: build filesql DB from both readers
 		IOE.Chain(inventoryBuilder),
 	)

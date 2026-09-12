@@ -273,7 +273,7 @@ func createPlasmidAPI(
 			context.Background(),
 			&pb.ExistingPlasmid{
 				Data: &pb.ExistingPlasmid_Data{
-					Type:       "plasmid",
+					Type:       plasmidType,
 					Id:         plasmid.ID,
 					Attributes: attr,
 				},
@@ -302,7 +302,7 @@ func updatePlasmidAPI(
 			context.Background(),
 			&pb.PlasmidUpdate{
 				Data: &pb.PlasmidUpdate_Data{
-					Type:       "plasmid",
+					Type:       plasmidType,
 					Id:         plasmid.ID,
 					Attributes: attr,
 				},
@@ -475,12 +475,12 @@ func logFinalStats(logger *logrus.Entry, result ProcessingResult) {
 
 	logger.WithFields(
 		logrus.Fields{
-			"type":    "annotations",
-			"stock":   "plasmid",
-			"event":   "load",
-			"success": successCount,
-			"errors":  errorCount,
-			"total":   successCount + errorCount,
+			logTypeKey:  "annotations",
+			logStockKey: plasmidType,
+			logEventKey: evLoad,
+			"success":   successCount,
+			"errors":    errorCount,
+			"total":     successCount + errorCount,
 		},
 	).Infof(
 		"loaded plasmid annotations: %d succeeded, %d failed",

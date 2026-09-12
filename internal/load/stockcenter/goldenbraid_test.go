@@ -45,7 +45,7 @@ func TestFetchPlasmidByName_ReturnsSomeWhenFound(t *testing.T) {
 		Return(&stock.PlasmidCollection{
 			Data: []*stock.PlasmidCollection_Data{
 				{
-					Type: "plasmid",
+					Type: plasmidType,
 					Id:   "DBP0001",
 					Attributes: &stock.PlasmidAttributes{
 						Name: "pTest1",
@@ -74,7 +74,7 @@ func TestProcessPlasmid_CreateWhenNotExists(t *testing.T) {
 		Name:         "pNew",
 		Summary:      "A test plasmid",
 		User:         "test@example.com",
-		PlasmidType:  "plasmid",
+		PlasmidType:  plasmidType,
 		Depositor:    "depositor@example.com",
 		Genes:        O.None[[]string](),
 		Publications: O.None[[]string](),
@@ -108,7 +108,7 @@ func TestProcessPlasmid_SkipWhenExists(t *testing.T) {
 		Name:         "pExisting",
 		Summary:      "An existing plasmid",
 		User:         "test@example.com",
-		PlasmidType:  "plasmid",
+		PlasmidType:  plasmidType,
 		Depositor:    "depositor@example.com",
 		Genes:        O.None[[]string](),
 		Publications: O.None[[]string](),
@@ -120,7 +120,7 @@ func TestProcessPlasmid_SkipWhenExists(t *testing.T) {
 		Return(&stock.PlasmidCollection{
 			Data: []*stock.PlasmidCollection_Data{
 				{
-					Type: "plasmid",
+					Type: plasmidType,
 					Id:   "DBPExisting",
 					Attributes: &stock.PlasmidAttributes{
 						Name: "pExisting",

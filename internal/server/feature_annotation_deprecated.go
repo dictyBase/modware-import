@@ -27,8 +27,8 @@ func (s *FeatureAnnotationServer) UpdateTag(
 	req *feature.UpdateTagRequest, //nolint:staticcheck // SA1019: deprecated but maintained for backward compatibility
 ) (*feature.FeatureAnnotation, error) {
 	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,      //nolint:staticcheck // SA1019: deprecated field access
-		"tag": req.Tag.Tag, //nolint:staticcheck // SA1019: deprecated field access
+		"id":   req.Id,      //nolint:staticcheck // SA1019: deprecated field access
+		tagKey: req.Tag.Tag, //nolint:staticcheck // SA1019: deprecated field access
 	}).Debug("UpdateTag called")
 
 	// Validate request
@@ -49,8 +49,8 @@ func (s *FeatureAnnotationServer) UpdateTag(
 	//nolint:staticcheck // SA1019: deprecated field access
 	if err := s.storage.UpdateTag(req.Id, req.Tag.Tag, tag); err != nil {
 		s.logger.WithError(err).WithFields(logrus.Fields{
-			"id":  req.Id,      //nolint:staticcheck // SA1019: deprecated field access
-			"tag": req.Tag.Tag, //nolint:staticcheck // SA1019: deprecated field access
+			"id":   req.Id,      //nolint:staticcheck // SA1019: deprecated field access
+			tagKey: req.Tag.Tag, //nolint:staticcheck // SA1019: deprecated field access
 		}).Error("Failed to update tag")
 		return nil, err
 	}
@@ -64,8 +64,8 @@ func (s *FeatureAnnotationServer) UpdateTag(
 	}
 
 	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,      //nolint:staticcheck // SA1019: deprecated field access
-		"tag": req.Tag.Tag, //nolint:staticcheck // SA1019: deprecated field access
+		"id":   req.Id,      //nolint:staticcheck // SA1019: deprecated field access
+		tagKey: req.Tag.Tag, //nolint:staticcheck // SA1019: deprecated field access
 	}).Info("Updated tag in feature annotation")
 
 	return annotation, nil
@@ -79,8 +79,8 @@ func (s *FeatureAnnotationServer) RemoveTag(
 	req *feature.RemoveTagRequest, //nolint:staticcheck // SA1019: deprecated but maintained for backward compatibility
 ) (*feature.FeatureAnnotation, error) {
 	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,  //nolint:staticcheck // SA1019: deprecated field access
-		"tag": req.Tag, //nolint:staticcheck // SA1019: deprecated field access
+		"id":   req.Id,  //nolint:staticcheck // SA1019: deprecated field access
+		tagKey: req.Tag, //nolint:staticcheck // SA1019: deprecated field access
 	}).Debug("RemoveTag called")
 
 	if req.Id == "" { //nolint:staticcheck // SA1019: deprecated field access
@@ -96,8 +96,8 @@ func (s *FeatureAnnotationServer) RemoveTag(
 		req.Tag,
 	); err != nil { //nolint:staticcheck // SA1019: deprecated field access
 		s.logger.WithError(err).WithFields(logrus.Fields{
-			"id":  req.Id,  //nolint:staticcheck // SA1019: deprecated field access
-			"tag": req.Tag, //nolint:staticcheck // SA1019: deprecated field access
+			"id":   req.Id,  //nolint:staticcheck // SA1019: deprecated field access
+			tagKey: req.Tag, //nolint:staticcheck // SA1019: deprecated field access
 		}).Error("Failed to remove tag")
 		return nil, err
 	}
@@ -111,8 +111,8 @@ func (s *FeatureAnnotationServer) RemoveTag(
 	}
 
 	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,  //nolint:staticcheck // SA1019: deprecated field access
-		"tag": req.Tag, //nolint:staticcheck // SA1019: deprecated field access
+		"id":   req.Id,  //nolint:staticcheck // SA1019: deprecated field access
+		tagKey: req.Tag, //nolint:staticcheck // SA1019: deprecated field access
 	}).Info("Removed tag from feature annotation")
 
 	return annotation, nil

@@ -32,7 +32,8 @@ func LoadStrainProp(_ *cobra.Command, _ []string) error {
 			// it is loaded by the synonym loader
 			continue
 		default:
-			logger.Warnf("property %s is not recognized, record is not loaded",
+			logger.Warnf(
+				"property %s is not recognized, record is not loaded",
 				prop.Property,
 			)
 			continue
@@ -47,16 +48,17 @@ func LoadStrainProp(_ *cobra.Command, _ []string) error {
 		if err != nil {
 			return err
 		}
-		logger.Debugf("loaded strain %s property with prop %s and value %s",
+		logger.Debugf(
+			"loaded strain %s property with prop %s and value %s",
 			prop.ID, prop.Property, prop.Value,
 		)
 		pcount++
 	}
 	logger.WithFields(logrus.Fields{
-		"type":  "property",
-		"stock": "strain",
-		"event": "load",
-		"count": pcount,
+		logTypeKey:  "property",
+		logStockKey: strainType,
+		logEventKey: evLoad,
+		logCountKey: pcount,
 	}).Infof("loaded strain properties")
 	return nil
 }

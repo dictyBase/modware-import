@@ -9,6 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	testUniprotID = "P12345"
+	testGeneID    = "DDB_G0123456"
+)
+
 func setupMiniredis(t *testing.T) (*miniredis.Miniredis, *redis.Client) {
 	mr, err := miniredis.Run()
 	if err != nil {
@@ -39,8 +44,8 @@ func TestRedisUniprotLoader_Load(t *testing.T) {
 			name: "Single UniprotMap",
 			maps: []UniprotMap{
 				{
-					UniprotID: "P12345",
-					GeneID:    "DDB_G0123456",
+					UniprotID: testUniprotID,
+					GeneID:    testGeneID,
 					GeneSym:   []string{"geneA", "geneB"},
 				},
 			},
@@ -49,8 +54,8 @@ func TestRedisUniprotLoader_Load(t *testing.T) {
 			name: "Multiple UniprotMaps",
 			maps: []UniprotMap{
 				{
-					UniprotID: "P12345",
-					GeneID:    "DDB_G0123456",
+					UniprotID: testUniprotID,
+					GeneID:    testGeneID,
 					GeneSym:   []string{"geneA", "geneB"},
 				},
 				{
@@ -105,8 +110,8 @@ func TestRedisUniprotLoader_Load_Error(t *testing.T) {
 
 	err := loader.Load([]UniprotMap{
 		{
-			UniprotID: "P12345",
-			GeneID:    "DDB_G0123456",
+			UniprotID: testUniprotID,
+			GeneID:    testGeneID,
 			GeneSym:   []string{"geneA"},
 		},
 	})
@@ -133,11 +138,11 @@ func TestRedisUniprotLoader_Load_DuplicateEntries(t *testing.T) {
 
 	maps := []UniprotMap{
 		{
-			UniprotID: "P12345",
-			GeneID:    "DDB_G0123456",
+			UniprotID: testUniprotID,
+			GeneID:    testGeneID,
 		},
 		{
-			UniprotID: "P12345",
+			UniprotID: testUniprotID,
 			GeneID:    "DDB_G0123457",
 		},
 		{
@@ -158,7 +163,7 @@ func TestRedisUniprotLoader_Load_DuplicateEntries(t *testing.T) {
 	ctx := context.Background()
 
 	// Check that the last entry overwrites the previous one for UniprotID -> GeneID
-	geneID, err := client.HGet(ctx, UniprotCacheKey, "P12345").Result()
+	geneID, err := client.HGet(ctx, UniprotCacheKey, testUniprotID).Result()
 	assert.NoError(t, err)
 	assert.Equal(t, "DDB_G0123457", geneID)
 

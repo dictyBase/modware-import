@@ -44,7 +44,7 @@ type handleNewGenePdtFromCsvParams struct {
 func LoadGeneProduct(c *cli.Context) error {
 	logger := registry.GetLogger()
 	client := registry.GetFeatureAnnotationAPIClient()
-	user := c.String("user")
+	user := c.String(userFlagName)
 
 	workerFunc := func(
 		ctx context.Context,
@@ -61,9 +61,9 @@ func LoadGeneProduct(c *cli.Context) error {
 
 	processor := concurrent.NewBatchProcessor(
 		workerFunc,
-		c.Int("batch-size"),
+		c.Int(batchSizeFlagName),
 		concurrent.WithWorkers[GeneProduct, *pb.FeatureAnnotation](
-			c.Int("workers"),
+			c.Int(workersFlagName),
 		),
 	)
 
@@ -73,7 +73,7 @@ func LoadGeneProduct(c *cli.Context) error {
 	go func() {
 		defer processor.Close()
 		streamGeneProductsFromCSVFiles(
-			c.StringSlice("input"),
+			c.StringSlice(inputFlagName),
 			processor,
 			logger,
 		)
@@ -408,7 +408,7 @@ func processResults(
 		if result.Error != nil {
 			logger.WithFields(logrus.Fields{
 				"job-id": result.JobID,
-				"error":  result.Error,
+				errorKey: result.Error,
 			}).Error("error loading gene product")
 			errorCount++
 		} else {

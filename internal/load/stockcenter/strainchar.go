@@ -44,11 +44,11 @@ func LoadStrainChar(_ *cobra.Command, _ []string) error {
 		)
 	}
 	logger.WithFields(logrus.Fields{
-		"type":  "characteristic",
-		"stock": "strain",
-		"event": "load",
-		"count": count,
-		"found": found,
+		logTypeKey:  "characteristic",
+		logStockKey: strainType,
+		logEventKey: evLoad,
+		logCountKey: count,
+		"found":     found,
 	}).Infof("loaded strain characteristics")
 	return nil
 }

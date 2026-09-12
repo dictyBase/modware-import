@@ -74,9 +74,9 @@ func setupPipeline(cltx *cli.Context) SetupConfig {
 		DBH:            registry.GetArangodbConnection(),
 		CSVFilePath:    registry.GetCSVFilePath(),
 		CollectionName: cltx.String("collection"),
-		BatchSize:      cltx.Int("batch-size"),
+		BatchSize:      cltx.Int(batchSizeFlagName),
 		Delimiter:      cltx.String("delimiter"),
-		Workers:        cltx.Int("workers"),
+		Workers:        cltx.Int(workersFlagName),
 	}
 }
 
@@ -195,7 +195,7 @@ func submitBatchAndLog(
 		len(featurePropIDs),
 	)
 	dbErr := params.Setup.DBH.Do(updateAQLQuery,
-		map[string]interface{}{
+		map[string]any{
 			"featureprop_ids": featurePropIDs,
 			"values":          values,
 			"@collection":     params.Setup.CollectionName,
@@ -223,10 +223,7 @@ func submitBatchAndLog(
 func processSingleRecordAndValidate(
 	params *ProcessSingleRecordParams,
 ) (map[string]string, bool) {
-	maxIndex := params.FeaturePropIDIndex
-	if params.ValueIndex > maxIndex {
-		maxIndex = params.ValueIndex
-	}
+	maxIndex := max(params.FeaturePropIDIndex, params.ValueIndex)
 	if len(params.Record) <= maxIndex {
 		params.Logger.Warnf(
 			"skipping row %d with insufficient fields (expected at least %d): %v",
@@ -282,7 +279,8 @@ func processCSVRecords(procCtx ProcessingContext) PipelineResult {
 				ValueIndex:         procCtx.ValueIndex,
 				RowNumForLogging:   rowNum - 1, // rowNum is 1-based for data rows, and incremented before this call
 				Logger:             logger,
-			})
+			},
+		)
 		if !isValid {
 			continue
 		}

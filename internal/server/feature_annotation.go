@@ -17,6 +17,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const tagKey = "tag"
+
 // FeatureAnnotationServer implements the FeatureAnnotationService gRPC interface
 type FeatureAnnotationServer struct {
 	feature.UnimplementedFeatureAnnotationServiceServer
@@ -227,8 +229,8 @@ func (s *FeatureAnnotationServer) AddTag(
 	}
 
 	s.logger.WithFields(logrus.Fields{
-		"id":  req.Id,
-		"tag": req.Tag.Tag,
+		"id":   req.Id,
+		tagKey: req.Tag.Tag,
 	}).Info("Added tag to feature annotation")
 
 	return annotation, nil
@@ -313,7 +315,7 @@ func (s *FeatureAnnotationServer) RemoveTags(
 
 	s.logger.WithFields(logrus.Fields{
 		"id":    req.Id,
-		"tag":   req.Tag,
+		tagKey:  req.Tag,
 		"value": req.Value,
 	}).Info("Removed tag from feature annotation")
 

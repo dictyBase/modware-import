@@ -16,8 +16,8 @@ import (
 func LoadStrainInv(_ *cobra.Command, _ []string) error {
 	ir := stockcenter.NewTsvStrainInventoryReader(registry.GetReader(regs.InvReader))
 	logger := registry.GetLogger().WithFields(logrus.Fields{
-		"type":  "inventory",
-		"stock": "strain",
+		logTypeKey:  inventoryType,
+		logStockKey: strainType,
 	})
 	invMap, err := cacheInvByStrainID(ir, logger)
 	if err != nil {
@@ -33,7 +33,7 @@ func LoadStrainInv(_ *cobra.Command, _ []string) error {
 			err:    err,
 			client: client,
 			logger: logger,
-			loader: "inventory",
+			loader: inventoryType,
 		})
 		if err != nil {
 			return err
@@ -48,15 +48,15 @@ func LoadStrainInv(_ *cobra.Command, _ []string) error {
 			return err
 		}
 		logger.WithFields(logrus.Fields{
-			"event": "create",
-			"id":    id,
-			"count": len(invSlice),
+			logEventKey: evCreate,
+			"id":        id,
+			logCountKey: len(invSlice),
 		}).Debug("created inventories")
 		invCount += len(invSlice)
 	}
 	logger.WithFields(logrus.Fields{
-		"event": "load",
-		"count": invCount,
+		logEventKey: evLoad,
+		logCountKey: invCount,
 	}).Info("loaded inventories")
 	return nil
 }
@@ -77,9 +77,9 @@ func cacheInvByStrainID(
 		}
 		if len(inv.PhysicalLocation) == 0 || len(inv.VialColor) == 0 {
 			logger.WithFields(logrus.Fields{
-				"event":  "skip record",
-				"output": inv.RecordLine,
-				"id":     inv.StrainID,
+				logEventKey: "skip record",
+				"output":    inv.RecordLine,
+				"id":        inv.StrainID,
 			}).Warn("skipped the record")
 			continue
 		}
@@ -91,8 +91,8 @@ func cacheInvByStrainID(
 		readCount++
 	}
 	logger.WithFields(logrus.Fields{
-		"event": "read",
-		"count": readCount,
+		logEventKey: evRead,
+		logCountKey: readCount,
 	}).Debug("read all record")
 	return invMap, nil
 }

@@ -11,7 +11,7 @@ type BatchProcessor[I, O any] struct {
 	BatchSize    int
 	batchCount   int
 	currentBatch []I
-	currentMeta  []map[string]interface{}
+	currentMeta  []map[string]any
 	batchMutex   sync.Mutex // For thread-safe batch operations
 }
 
@@ -25,7 +25,7 @@ func NewBatchProcessor[I, O any](
 		pool:         NewPool(workerFunc, options...),
 		BatchSize:    batchSize,
 		currentBatch: make([]I, 0, batchSize),
-		currentMeta:  make([]map[string]interface{}, 0, batchSize),
+		currentMeta:  make([]map[string]any, 0, batchSize),
 	}
 }
 
@@ -93,7 +93,7 @@ func (bp *BatchProcessor[I, O]) AddBatch(items []I) int {
 // AddBatchWithMeta adds multiple items to the processor with the same metadata
 func (bp *BatchProcessor[I, O]) AddBatchWithMeta(
 	items []I,
-	meta map[string]interface{},
+	meta map[string]any,
 ) int {
 	if len(items) == 0 {
 		return 0
@@ -128,14 +128,14 @@ func (bp *BatchProcessor[I, O]) submitCurrentBatchLocked() {
 	copy(batch, bp.currentBatch)
 
 	// Copy the metadata as well
-	meta := make([]map[string]interface{}, len(bp.currentMeta))
+	meta := make([]map[string]any, len(bp.currentMeta))
 	copy(meta, bp.currentMeta)
 
 	// Submit each item in the batch with its associated metadata
 	for i, item := range batch {
 		itemMeta := meta[i]
 		if itemMeta == nil {
-			itemMeta = map[string]interface{}{
+			itemMeta = map[string]any{
 				"batch_number": bp.batchCount,
 				"batch_size":   len(batch),
 			}
@@ -149,7 +149,7 @@ func (bp *BatchProcessor[I, O]) submitCurrentBatchLocked() {
 
 	// Reset the current batch and metadata
 	bp.currentBatch = make([]I, 0, bp.BatchSize)
-	bp.currentMeta = make([]map[string]interface{}, 0, bp.BatchSize)
+	bp.currentMeta = make([]map[string]any, 0, bp.BatchSize)
 	bp.batchCount++
 }
 
@@ -223,6 +223,7 @@ func NewPipeline[I, O, R any](
 	processor *BatchProcessor[I, O],
 	resultHandler func(context.Context, <-chan Result[O]) R,
 ) *Pipeline[I, O, R] {
+	//#nosec G118 -- cancel is stored in Pipeline.cancelFunc and invoked by Close/Stop.
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Pipeline[I, O, R]{
 		Processor:     processor,

@@ -25,13 +25,14 @@ func validateAnnoTag(args *validateTagArgs) (bool, error) {
 		if status.Code(err) == codes.NotFound {
 			args.logger.WithFields(
 				logrus.Fields{
-					"type":     args.loader,
-					"stock":    args.stock,
-					"tag":      args.tag,
-					"ontology": args.ontology,
-					"id":       args.id,
-					"event":    "non-existent tag",
-				}).Warn("tag does not exist")
+					logTypeKey:  args.loader,
+					logStockKey: args.stock,
+					"tag":       args.tag,
+					"ontology":  args.ontology,
+					"id":        args.id,
+					logEventKey: "non-existent tag",
+				},
+			).Warn("tag does not exist")
 			return false, nil
 		}
 		return false, errors.Errorf("error in tag lookup %s", err)
@@ -39,13 +40,14 @@ func validateAnnoTag(args *validateTagArgs) (bool, error) {
 	if tag.IsObsolete {
 		args.logger.WithFields(
 			logrus.Fields{
-				"type":     args.loader,
-				"stock":    args.stock,
-				"tag":      args.tag,
-				"ontology": args.ontology,
-				"id":       args.id,
-				"event":    "obsolete tag",
-			}).Warn("tag is obsolete")
+				logTypeKey:  args.loader,
+				logStockKey: args.stock,
+				"tag":       args.tag,
+				"ontology":  args.ontology,
+				"id":        args.id,
+				logEventKey: "obsolete tag",
+			},
+		).Warn("tag is obsolete")
 		return false, nil
 	}
 	return true, nil
@@ -121,7 +123,8 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 			Tag:      args.tag,
 			EntryId:  args.id,
 			Ontology: args.ontology,
-		})
+		},
+	)
 	switch {
 	case err == nil:
 		errVal = nil
@@ -139,7 +142,7 @@ func findOrCreateAnnoWithStatus(args *createAnnoArgs) (bool, error) {
 		} else {
 			create = true
 		}
-	case err != nil:
+	default:
 		errVal = errors.Errorf(
 			"error in finding annotation %s for id %s %s",
 			args.tag,
@@ -157,7 +160,8 @@ func findOrCreateAnno(args *createAnnoArgs) (*pb.TaggedAnnotation, error) {
 			Tag:      args.tag,
 			EntryId:  args.id,
 			Ontology: args.ontology,
-		})
+		},
+	)
 	switch {
 	case err == nil:
 		return ta, nil
@@ -197,7 +201,8 @@ func getInventory(
 				"entry_id==%s;tag==%s;ontology==%s",
 				id, regs.InvLocationTag, onto,
 			),
-		})
+		},
+	)
 }
 
 func delAnnotationGroup(
@@ -252,21 +257,21 @@ func handleAnnoRetrieval(args *annoParams) (bool, error) {
 		}
 		found = false
 		args.logger.WithFields(logrus.Fields{
-			"event": "get",
-			"id":    args.id,
+			logEventKey: "get",
+			"id":        args.id,
 		}).Debugf("no %s", args.loader)
 		return found, nil
 	}
 	args.logger.WithFields(logrus.Fields{
-		"event": "get",
-		"id":    args.id,
+		logEventKey: "get",
+		"id":        args.id,
 	}).Debugf("retrieved %s", args.loader)
 	if err := delAnnotationGroup(args.client, args.gc); err != nil {
 		return found, err
 	}
 	args.logger.WithFields(logrus.Fields{
-		"event": "delete",
-		"id":    args.id,
+		logEventKey: evDelete,
+		"id":        args.id,
 	}).Debugf("deleted %s", args.loader)
 	return found, nil
 }

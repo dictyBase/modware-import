@@ -13,7 +13,7 @@ import (
 func createTestPlasmidData(id string, property string) *stockpb.PlasmidCollection_Data {
 	return &stockpb.PlasmidCollection_Data{
 		Id:   id,
-		Type: "plasmid",
+		Type: plasmidType,
 		Attributes: &stockpb.PlasmidAttributes{
 			DictyPlasmidProperty: property,
 		},

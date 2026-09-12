@@ -83,7 +83,7 @@ func newFeatureAnnotationConfigFromCliContext(
 ) FeatureAnnotationAppConfig {
 	return FeatureAnnotationAppConfig{
 		NumPubmedWorkers: cltx.Int("pubmed-workers"),
-		NumGrpcWorkers:   cltx.Int("grpc-workers"),
+		NumGrpcWorkers:   cltx.Int(grpcWorkersFlagName),
 		Logger:           logger,
 		Metrics: &FeatureAnnotationMetrics{
 			StartTime: time.Now(),
@@ -116,9 +116,7 @@ func RunFeatureAnnotationLoader(cltx *cli.Context) error {
 	pubmedFetchPool := setupPubmedFetchPool(mainCtx, config, client)
 	annotationCreatePool := setupAnnotationCreatePool(mainCtx, config, client)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		bridgeGenesToPubmedPool(&bridgeGenesToPubmedPoolParams{
 			ctx:        mainCtx,
 			genesChan:  genesFromQueryChan,
@@ -126,11 +124,9 @@ func RunFeatureAnnotationLoader(cltx *cli.Context) error {
 			metrics:    config.Metrics,
 			logger:     logger,
 		})
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		bridgePubmedToGrpcPool(&bridgePubmedToGrpcPoolParams{
 			ctx:        mainCtx,
 			pubmedPool: pubmedFetchPool,
@@ -138,29 +134,25 @@ func RunFeatureAnnotationLoader(cltx *cli.Context) error {
 			metrics:    config.Metrics,
 			logger:     logger,
 		})
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		handleAnnotationGrpcResults(&handleAnnotationGrpcResultsParams{
 			ctx:      mainCtx,
 			grpcPool: annotationCreatePool,
 			metrics:  config.Metrics,
 			logger:   logger,
 		})
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		reportAnnotationProgress(&reportAnnotationProgressParams{
 			ctx:        mainCtx,
 			metrics:    config.Metrics,
 			logger:     logger,
 			mainCancel: mainCancel,
 		})
-	}()
+	})
 
 	logger.Debug("Waiting for all goroutines to complete...")
 	wg.Wait()
@@ -297,8 +289,8 @@ func bridgeGenesToPubmedPool(params *bridgeGenesToPubmedPoolParams) {
 			params.metrics.JobsSubmittedToPubmedPool++
 			params.metrics.mu.Unlock()
 			params.logger.WithFields(logrus.Fields{
-				"gene_id": gene.GeneID,
-				"stage":   "submitted_to_pubmed_pool",
+				geneIDKey: gene.GeneID,
+				stageKey:  "submitted_to_pubmed_pool",
 			}).Debug("Gene submitted for pubmed fetching")
 		}
 	}
@@ -331,8 +323,8 @@ func bridgePubmedToGrpcPool(params *bridgePubmedToGrpcPoolParams) {
 
 			if result.Error != nil {
 				params.logger.WithFields(logrus.Fields{
-					"job_id": result.JobID,
-					"error":  result.Error,
+					jobIDKey: result.JobID,
+					errorKey: result.Error,
 				}).Error("Pubmed fetching failed")
 				continue
 			}
@@ -341,8 +333,8 @@ func bridgePubmedToGrpcPool(params *bridgePubmedToGrpcPoolParams) {
 			params.metrics.JobsSubmittedToGrpcPool++
 			params.metrics.mu.Unlock()
 			params.logger.WithFields(logrus.Fields{
-				"gene_id": result.Output.GeneID,
-				"stage":   "submitted_to_grpc_pool",
+				geneIDKey: result.Output.GeneID,
+				stageKey:  stageSubmittedToGRPCPool,
 			}).Debug("Gene with pubmeds submitted for gRPC creation")
 		case err, ok := <-params.pubmedPool.Errors():
 			if !ok {
@@ -435,16 +427,16 @@ func reportAnnotationProgress(params *reportAnnotationProgressParams) {
 			rate = float64(params.metrics.TotalProcessed) / elapsed.Seconds()
 		}
 		params.logger.WithFields(logrus.Fields{
-			"read_from_db":     params.metrics.TotalFetchedFromArango,
-			"total_processed":  params.metrics.TotalProcessed,
-			"success_count":    params.metrics.SuccessCount,
-			"error_count":      params.metrics.ErrorCount,
-			"processing_rate":  fmt.Sprintf("%.2f genes/sec", rate),
-			"elapsed_time":     elapsed.String(),
+			readFromDBKey:      params.metrics.TotalFetchedFromArango,
+			totalProcessedKey:  params.metrics.TotalProcessed,
+			successCountKey:    params.metrics.SuccessCount,
+			errorCountKey:      params.metrics.ErrorCount,
+			processingRateKey:  fmt.Sprintf("%.2f genes/sec", rate),
+			elapsedTimeKey:     elapsed.String(),
 			"pubmed_submitted": params.metrics.JobsSubmittedToPubmedPool,
 			"pubmed_completed": params.metrics.JobsCompletedFromPubmedPool,
-			"grpc_submitted":   params.metrics.JobsSubmittedToGrpcPool,
-			"grpc_completed":   params.metrics.JobsCompletedFromGrpcPool,
+			grpcSubmittedKey:   params.metrics.JobsSubmittedToGrpcPool,
+			grpcCompletedKey:   params.metrics.JobsCompletedFromGrpcPool,
 		}).Info(message)
 	}
 
@@ -529,7 +521,8 @@ func pubmedFetcherWorkerFunc(
 				gene.GeneID,
 			)
 		} else {
-			logger.Debugf("Feature %d has PubMed reference: %v",
+			logger.Debugf(
+				"Feature %d has PubMed reference: %v",
 				gene.FeatureID,
 				pubmedIDs,
 			)

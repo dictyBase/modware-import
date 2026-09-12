@@ -46,24 +46,24 @@ func GeneDescriptionFromCsvFlag() []cli.Flag {
 func LoadGeneProductFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringSliceFlag{
-			Name:     "input",
+			Name:     inputFlagName,
 			Aliases:  []string{"i"},
 			Usage:    "one or more input CSV files with gene products (must exist and be readable)",
 			Required: true,
 		},
 		&cli.IntFlag{
-			Name:  "workers",
+			Name:  workersFlagName,
 			Usage: "number of concurrent workers for loading (1-50)",
 			Value: DefaultWorkers,
 		},
 		&cli.IntFlag{
-			Name:  "batch-size",
+			Name:  batchSizeFlagName,
 			Usage: "batch size for loading (1-1000)",
 			Value: DefaultBatchSize,
 		},
 		&cli.StringFlag{
-			Name:     "user",
-			Usage:    "email address of the user running the load",
+			Name:     userFlagName,
+			Usage:    userEmailUsage,
 			Required: true,
 		},
 	}
@@ -75,24 +75,24 @@ func LoadGeneProductFlag() []cli.Flag {
 func LoadGeneDescriptionFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
-			Name:     "input",
+			Name:     inputFlagName,
 			Aliases:  []string{"i"},
 			Usage:    "input CSV file with gene descriptions (must exist and be readable)",
 			Required: true,
 		},
 		&cli.IntFlag{
-			Name:  "workers",
+			Name:  workersFlagName,
 			Usage: "number of concurrent workers for loading (1-50)",
 			Value: DefaultWorkers,
 		},
 		&cli.IntFlag{
-			Name:  "batch-size",
+			Name:  batchSizeFlagName,
 			Usage: "batch size for loading (1-1000)",
 			Value: DefaultBatchSize,
 		},
 		&cli.StringFlag{
-			Name:     "user",
-			Usage:    "email address of the user running the load",
+			Name:     userFlagName,
+			Usage:    userEmailUsage,
 			Required: true,
 		},
 	}
@@ -174,10 +174,10 @@ func LoadFeatureAnnotationFlag() []cli.Flag {
 				EnvVars: []string{"PUBMED_WORKERS"},
 			},
 			&cli.IntFlag{
-				Name:    "grpc-workers",
+				Name:    grpcWorkersFlagName,
 				Value:   DefaultGRPCWorkers,
 				Usage:   "Number of gRPC create workers",
-				EnvVars: []string{"GRPC_WORKERS"},
+				EnvVars: []string{grpcWorkersEnvVar},
 			},
 		},
 	)
@@ -203,12 +203,12 @@ func LoadCSVToArangodbFlag() []cli.Flag {
 			Value: ",",
 		},
 		&cli.IntFlag{
-			Name:  "batch-size",
+			Name:  batchSizeFlagName,
 			Usage: "Number of documents to update in a single batch",
 			Value: DefaultCSVBatchSize,
 		},
 		&cli.IntFlag{
-			Name:  "workers",
+			Name:  workersFlagName,
 			Usage: "Number of concurrent workers for batch processing",
 			Value: DefaultCSVWorkers,
 		},
@@ -233,10 +233,10 @@ func GeneUpdaterFlags() []cli.Flag {
 			EnvVars: []string{"PROCESSING_WORKERS"},
 		},
 		&cli.IntFlag{
-			Name:    "grpc-workers",
+			Name:    grpcWorkersFlagName,
 			Value:   DefaultGRPCWorkers,
-			Usage:   "Number of gRPC update workers",
-			EnvVars: []string{"GRPC_WORKERS"},
+			Usage:   grpcWorkersUsage,
+			EnvVars: []string{grpcWorkersEnvVar},
 		},
 	}
 	return slices.Concat(
@@ -262,10 +262,10 @@ func GeneProductUpdaterFlags() []cli.Flag {
 			EnvVars: []string{"LEGACY_WORKERS"},
 		},
 		&cli.IntFlag{
-			Name:    "grpc-workers", // This flag was already in GeneUpdaterFlags, ensure consistency or rename if needed
+			Name:    grpcWorkersFlagName, // This flag was already in GeneUpdaterFlags, ensure consistency or rename if needed
 			Value:   DefaultGRPCWorkers,
-			Usage:   "Number of gRPC update workers",
-			EnvVars: []string{"GRPC_WORKERS"},
+			Usage:   grpcWorkersUsage,
+			EnvVars: []string{grpcWorkersEnvVar},
 		},
 	}
 
@@ -283,10 +283,10 @@ func SynonymLoaderFlags() []cli.Flag {
 		featureAnnotationGrpcFlags(),
 		[]cli.Flag{
 			&cli.IntFlag{
-				Name:    "grpc-workers",
+				Name:    grpcWorkersFlagName,
 				Value:   DefaultSynonymGRPCWorkers,
-				Usage:   "Number of gRPC update workers",
-				EnvVars: []string{"GRPC_WORKERS"},
+				Usage:   grpcWorkersUsage,
+				EnvVars: []string{grpcWorkersEnvVar},
 			},
 		},
 	)
@@ -297,7 +297,7 @@ func SynonymLoaderFlags() []cli.Flag {
 func ParseUnknowmeDataFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringSliceFlag{
-			Name:     "input",
+			Name:     inputFlagName,
 			Aliases:  []string{"i"},
 			Usage:    "one or more input HTML files to parse (must exist and be readable)",
 			Required: true,
@@ -322,7 +322,7 @@ func ParseUnknowmeDataFlags() []cli.Flag {
 func ValidateGeneDataFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
-			Name:     "input",
+			Name:     inputFlagName,
 			Aliases:  []string{"i"},
 			Usage:    "input CSV file with gene descriptions (must exist, be readable, and under 50MB)",
 			Required: true,
@@ -344,7 +344,7 @@ func ValidateGeneDataFlags() []cli.Flag {
 			Value: DefaultValidationTimeoutSecs,
 		},
 		&cli.IntFlag{
-			Name:  "workers",
+			Name:  workersFlagName,
 			Usage: "number of concurrent workers for validation (1-20 workers)",
 			Value: DefaultValidationWorkers,
 		},
@@ -357,14 +357,14 @@ func LoadHypotheticalGeneProductsFlags() []cli.Flag {
 	return slices.Concat(
 		[]cli.Flag{
 			&cli.StringFlag{
-				Name:     "input",
+				Name:     inputFlagName,
 				Aliases:  []string{"i"},
 				Usage:    "input text file with gene IDs (one per line, must exist and be readable)",
 				Required: true,
 			},
 			&cli.StringFlag{
-				Name:     "user",
-				Usage:    "email address of the user running the load",
+				Name:     userFlagName,
+				Usage:    userEmailUsage,
 				Required: true,
 			},
 		},

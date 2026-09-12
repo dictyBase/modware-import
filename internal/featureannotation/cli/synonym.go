@@ -70,7 +70,7 @@ func (m *SynonymMetrics) isPrimaryComplete() bool {
 	allArangoFetched := m.AllArangoDocsFetched
 	grpcPoolDrained := m.JobsCompletedFromGrpcPool >= m.JobsSubmittedToGrpcPool
 	allProcessed := (m.TotalFetchedFromArango == 0) ||
-		(m.TotalProcessed >= (m.TotalFetchedFromArango))
+		(m.TotalProcessed >= m.TotalFetchedFromArango)
 
 	return allArangoFetched && grpcPoolDrained && allProcessed
 }
@@ -199,7 +199,7 @@ func newSynonymConfigFromCliContext(
 	logger *logrus.Entry,
 ) SynonymAppConfig {
 	return SynonymAppConfig{
-		NumGrpcWorkers: cltx.Int("grpc-workers"),
+		NumGrpcWorkers: cltx.Int(grpcWorkersFlagName),
 		Logger:         logger,
 		Metrics: &SynonymMetrics{
 			StartTime: time.Now(),
@@ -311,8 +311,8 @@ func bridgeSynonymsToGrpcPool(params *bridgeSynonymsToGrpcPoolParams) {
 			params.metrics.JobsSubmittedToGrpcPool++
 			params.metrics.mu.Unlock()
 			params.logger.WithFields(logrus.Fields{
-				"gene_id": syn.GeneID,
-				"stage":   "submitted_to_grpc_pool",
+				geneIDKey: syn.GeneID,
+				stageKey:  stageSubmittedToGRPCPool,
 			}).Debug("Synonym data submitted for gRPC update")
 		}
 	}
@@ -392,15 +392,15 @@ func reportSynonymProgress(params *reportSynonymProgressParams) {
 			rate = float64(params.metrics.TotalProcessed) / elapsed.Seconds()
 		}
 		params.logger.WithFields(logrus.Fields{
-			"read_from_db":    params.metrics.TotalFetchedFromArango,
-			"total_processed": params.metrics.TotalProcessed,
-			"success_count":   params.metrics.SuccessCount,
+			readFromDBKey:     params.metrics.TotalFetchedFromArango,
+			totalProcessedKey: params.metrics.TotalProcessed,
+			successCountKey:   params.metrics.SuccessCount,
 			"not_found_count": params.metrics.NotFoundCount,
-			"error_count":     params.metrics.ErrorCount,
-			"processing_rate": fmt.Sprintf("%.2f genes/sec", rate),
-			"elapsed_time":    elapsed.String(),
-			"grpc_submitted":  params.metrics.JobsSubmittedToGrpcPool,
-			"grpc_completed":  params.metrics.gRPCJobsCompleted(),
+			errorCountKey:     params.metrics.ErrorCount,
+			processingRateKey: fmt.Sprintf("%.2f genes/sec", rate),
+			elapsedTimeKey:    elapsed.String(),
+			grpcSubmittedKey:  params.metrics.JobsSubmittedToGrpcPool,
+			grpcCompletedKey:  params.metrics.gRPCJobsCompleted(),
 		}).Info(message)
 	}
 
@@ -463,7 +463,8 @@ func grpcSynonymWorkerFunc(
 		}
 
 		existingSynonyms := mapset.NewSet(
-			featAnno.Attributes.Synonyms...)
+			featAnno.Attributes.Synonyms...,
+		)
 		newSynonyms := collection.Filter(
 			synData.Synonyms,
 			func(synonym string) bool {
