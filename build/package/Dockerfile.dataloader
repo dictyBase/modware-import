@@ -1,24 +1,31 @@
-FROM golang:1.26-trixie AS builder
-ENV CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
+# Build Stage
+FROM --platform=$BUILDPLATFORM golang:1.26-trixie AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+
+ENV CGO_ENABLED=0
+
 RUN apt-get -qq update \
     && apt-get -yqq install upx-ucl git
+
 WORKDIR /go/modware-import
+
 COPY go.mod ./
 COPY go.sum ./
-COPY magefile.go ./
 RUN go mod download
-ADD cmd cmd
-ADD internal internal
-RUN go build  \
-    -a \
+
+COPY cmd/ ./cmd/
+COPY internal/ ./internal/
+
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
     -ldflags "-s -w -extldflags '-static'" \
-    -installsuffix cgo \
     -tags netgo \
-    -o dataloader \
-    cmd/loader/main.go
-RUN upx -q -9 dataloader
+    -o /usr/local/bin/dataloader \
+    ./cmd/loader
+
+RUN upx -q -9 /usr/local/bin/dataloader
 
 FROM arangodb:3.11.6
-COPY --from=builder /go/modware-import/dataloader /usr/local/bin/
+COPY --from=builder /usr/local/bin/dataloader /usr/local/bin/dataloader
+ENTRYPOINT ["/usr/local/bin/dataloader"]
