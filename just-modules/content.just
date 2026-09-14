@@ -51,17 +51,21 @@ push-ghcr-multi tag="latest":
 # Launch a content-data import job in the target cluster.
 # S3 credentials come from the minio secret keys user/pass; the content API host
 # and port are injected by the content-api Service link in the job namespace.
+# Images: --registry auto pulls the local ghcr image for dev and the Docker Hub
+# image everywhere else; pass ghcr|docker to override.
 # Usage: just content::load --tag <tag> --k8s-config <path> --s3-bucket-path <path>
-#        [--s3-bucket dictybase] [--k8s-namespace dev] [--debug false]
+#        [--env dev] [--registry auto] [--s3-bucket dictybase] [--k8s-namespace dev] [--debug false]
 [arg("tag", long="tag", short="t", help="Image tag to run (required)")]
 [arg("k8s_config", long="k8s-config", short="c", help="Path to the kubeconfig file (required)")]
 [arg("s3_bucket_path", long="s3-bucket-path", short="p", help="Path inside the S3 bucket for input content files (required)")]
+[arg("env", long="env", short="e", pattern="dev|staging|production", help="Target environment (default dev)")]
+[arg("registry", long="registry", short="r", pattern="auto|ghcr|docker", help="Image registry: auto picks ghcr for dev and Docker Hub otherwise")]
 [arg("s3_bucket", long="s3-bucket", short="b", help="S3 bucket name (default dictybase)")]
 [arg("k8s_namespace", long="k8s-namespace", short="n", help="Kubernetes namespace (default dev)")]
 [arg("debug", long="debug", short="d", pattern="true|false", help="Debug logging and a longer job TTL")]
 [group('content-jobs')]
 [no-cd]
-load tag="" k8s_config="" s3_bucket_path="" s3_bucket="dictybase" k8s_namespace="dev" debug="false":
+load tag="" k8s_config="" s3_bucket_path="" env="dev" registry="auto" s3_bucket="dictybase" k8s_namespace="dev" debug="false":
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -73,6 +77,19 @@ load tag="" k8s_config="" s3_bucket_path="" s3_bucket="dictybase" k8s_namespace=
         echo "Pass --tag <tag> --k8s-config <path> --s3-bucket-path <path>." >&2
         exit 1
     fi
+
+    env="{{ env }}"
+    registry="{{ registry }}"
+    if [ "${registry}" = "auto" ]; then
+        if [ "${env}" = "dev" ]; then
+            registry="ghcr"
+        else
+            registry="docker"
+        fi
+    fi
+
+    image_ref="{{ image }}:${tag}"
+    [ "${registry}" = "ghcr" ] && image_ref="{{ ghcr_image }}:${tag}"
 
     if [ "{{ debug }}" = "true" ]; then
         ttl="300"
@@ -89,6 +106,8 @@ load tag="" k8s_config="" s3_bucket_path="" s3_bucket="dictybase" k8s_namespace=
         debug_args=""
     fi
 
+    echo "Submitting content-data job (${image_ref}, namespace {{ k8s_namespace }}, env ${env})" >&2
+
     kubectl create -f - --kubeconfig "${k8s_config}" -o jsonpath='{.metadata.name}' <<EOF
     apiVersion: batch/v1
     kind: Job
@@ -102,7 +121,7 @@ load tag="" k8s_config="" s3_bucket_path="" s3_bucket="dictybase" k8s_namespace=
           restartPolicy: Never
           containers:
             - name: ${container_name}
-              image: {{ ghcr_image }}:${tag}
+              image: ${image_ref}
               env:
                 - name: ACCESS_KEY
                   valueFrom:
