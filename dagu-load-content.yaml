@@ -34,7 +34,7 @@ steps:
     description: "Launch the Kubernetes job"
     command: |
       set -euo pipefail
-      JOB_OUTPUT=$(just content::load --tag "${TAG}" --k8s-config "${KPATH}" --s3-bucket-path "${S3_BUCKET_PATH}" --s3-bucket "${S3_BUCKET}" --k8s-namespace "${NAMESPACE}")
+      JOB_OUTPUT=$(just content::load --tag "${TAG}" --k8s-config "${KPATH}" --s3-bucket-path "${S3_BUCKET_PATH}" --env "${ENV}" --s3-bucket "${S3_BUCKET}" --k8s-namespace "${NAMESPACE}")
       echo "$JOB_OUTPUT"
     output: JOB_NAME
 
