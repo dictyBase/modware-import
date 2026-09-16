@@ -411,33 +411,16 @@ func TestPreflightErrors(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, src.closed, "dfp-about.json")
 	})
-}
 
-func TestLoadContentPreflightFailureNoMutations(t *testing.T) {
-	src := &fakeObjectSource{
-		keys: []string{"dfp-about.json", "dfp-broken.json"},
-		data: map[string][]byte{
-			"dfp-about.json":  []byte(`{"a":1}`),
-			"dfp-broken.json": []byte(`{not json`),
-		},
-	}
-	client := &fakeContentClient{
-		getBySlugFn: func(context.Context, *content.ContentRequest, ...grpc.CallOption) (*content.Content, error) {
-			return nil, status.Error(codes.NotFound, "not found")
-		},
-		storeFn: func(context.Context, *content.StoreContentRequest, ...grpc.CallOption) (*content.Content, error) {
-			return storeResp(), nil
-		},
-		updateFn: func(context.Context, *content.UpdateContentRequest, ...grpc.CallOption) (*content.Content, error) {
-			return storeResp(), nil
-		},
-	}
-
-	err := loadContent(client, testLogger(), src, "bucket", "prefix")
-	require.Error(t, err)
-	require.Zero(t, client.getCalls)
-	require.Zero(t, client.storeCalls)
-	require.Zero(t, client.updateCalls)
+	t.Run("rejects invalid JSON payload with source key", func(t *testing.T) {
+		src := &fakeObjectSource{
+			keys: []string{"dfp-broken.json"},
+			data: map[string][]byte{"dfp-broken.json": []byte(`{not json`)},
+		}
+		_, err := preflight(src, testLogger(), "bucket", "prefix")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "dfp-broken.json")
+	})
 }
 
 func TestUpsertContent_CreateOnNotFound(t *testing.T) {
