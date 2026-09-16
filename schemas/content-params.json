@@ -31,6 +31,12 @@
       "type": "string",
       "description": "Path to kubeconfig file (required for non-dev)",
       "default": ""
+    },
+    "DEBUG": {
+      "type": "string",
+      "description": "Debug logging (debug log level, text format) and a longer job TTL",
+      "default": "false",
+      "enum": ["true", "false"]
     }
   }
 }
