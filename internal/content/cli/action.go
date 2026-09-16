@@ -2,17 +2,14 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"path"
 	"regexp"
+	"sort"
 	"strings"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	A "github.com/IBM/fp-go/array"
-	Fn "github.com/IBM/fp-go/function"
-	O "github.com/IBM/fp-go/option"
 	"github.com/dictyBase/go-genproto/dictybaseapis/content"
 	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -20,9 +17,14 @@ import (
 	"github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 var noncharReg = regexp.MustCompile("[^a-z0-9]+")
+
+const updatedBy = "pfey@northwestern.edu"
 
 func Slugify(name string) string {
 	return strings.Trim(
@@ -31,179 +33,221 @@ func Slugify(name string) string {
 	)
 }
 
+// sourceItem is a validated S3 object ready for upsert.
+type sourceItem struct {
+	key       string
+	name      string
+	namespace string
+	slug      string
+	payload   string
+}
+
+// objectSource abstracts the S3 operations needed by the loader so preflight
+// can be tested without a live MinIO client.
+type objectSource interface {
+	list(bucket, prefix string, doneCh <-chan struct{}) <-chan minio.ObjectInfo
+	stat(bucket, key string) (minio.ObjectInfo, error)
+	get(bucket, key string) (io.ReadCloser, error)
+}
+
+type minioObjectSource struct {
+	client *minio.Client
+}
+
+func (s minioObjectSource) list(
+	bucket, prefix string, doneCh <-chan struct{},
+) <-chan minio.ObjectInfo {
+	return s.client.ListObjects(bucket, prefix, true, doneCh)
+}
+
+func (s minioObjectSource) stat(bucket, key string) (minio.ObjectInfo, error) {
+	return s.client.StatObject(bucket, key, minio.StatObjectOptions{})
+}
+
+func (s minioObjectSource) get(bucket, key string) (io.ReadCloser, error) {
+	return s.client.GetObject(bucket, key, minio.GetObjectOptions{})
+}
+
 func LoadContent(cltx *cli.Context) error {
 	logger := registry.GetLogger()
 	s3Client := registry.GetS3Client()
 	client := regsc.GetContentAPIClient()
 
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-	s3Objects := listS3Objects(cltx, s3Client, doneCh)
-
-	for cinfo := range s3Objects {
-		err := processS3Object(cltx, logger, s3Client, client, cinfo)
-		if err != nil {
-			return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
-		}
-	}
-
-	return nil
-}
-
-func listS3Objects(
-	cltx *cli.Context,
-	s3Client *minio.Client,
-	doneCh chan struct{},
-) <-chan minio.ObjectInfo {
-	return s3Client.ListObjects(
+	src := minioObjectSource{client: s3Client}
+	err := loadContent(
+		client,
+		logger,
+		src,
 		cltx.String("s3-bucket"),
 		cltx.String("s3-bucket-path"),
-		true,
-		doneCh,
-	)
-}
-
-func processS3Object(
-	cltx *cli.Context,
-	logger *logrus.Entry,
-	s3Client *minio.Client,
-	client content.ContentServiceClient,
-	cinfo minio.ObjectInfo,
-) error {
-	sinfo, err := s3Client.StatObject(
-		cltx.String("s3-bucket"), cinfo.Key, minio.StatObjectOptions{},
 	)
 	if err != nil {
-		return fmt.Errorf(
-			"error in getting information for object %s %s",
-			sinfo.Key,
-			err,
-		)
+		return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 	}
-	logger.Infof("read content file %s", sinfo.Key)
-
-	jsonContent, err := getContent(cltx, s3Client, sinfo)
-	if err != nil {
-		return err
-	}
-
-	name, namespace := nameAndNamespace(sinfo.Key)
-	slug := Slugify(fmt.Sprintf("%s %s", namespace, name))
-
-	err = storeOrUpdateContent(
-		client,
-		slug,
-		name,
-		namespace,
-		jsonContent,
-		logger,
-		sinfo,
-	)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func getContent(
-	cltx *cli.Context,
-	s3Client *minio.Client,
-	sinfo minio.ObjectInfo,
-) ([]byte, error) {
-	obj, err := s3Client.GetObject(
-		cltx.String("s3-bucket"), sinfo.Key, minio.GetObjectOptions{},
-	)
+// loadContent runs preflight (no API mutations) then mutates sequentially in
+// deterministic key order.
+func loadContent(
+	client content.ContentServiceClient,
+	logger *logrus.Entry,
+	src objectSource,
+	bucket, prefix string,
+) error {
+	items, err := preflight(src, bucket, prefix)
 	if err != nil {
-		return nil, fmt.Errorf("error in getting object %s", err)
+		return err
 	}
-	jsonContent, err := io.ReadAll(obj)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error in reading content for file %s %s",
-			sinfo.Key,
-			err,
-		)
+	for _, item := range items {
+		if err := upsertContent(client, logger, item); err != nil {
+			return err
+		}
 	}
-
-	return jsonContent, nil
+	return nil
 }
 
-func storeOrUpdateContent(
-	client content.ContentServiceClient,
-	slug, name, namespace string,
-	jsonContent []byte,
-	logger *logrus.Entry,
-	sinfo minio.ObjectInfo,
-) error {
-	_, err := client.GetContentBySlug(
-		context.Background(),
-		&content.ContentRequest{
-			Slug: slug,
-		},
-	)
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return createStoreContent(
-				client,
-				name,
-				namespace,
-				string(jsonContent),
+// preflight drains the S3 listing, validates every object, and derives slugs.
+// It returns before any content API mutation if any check fails.
+func preflight(src objectSource, bucket, prefix string) ([]sourceItem, error) {
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+
+	var infos []minio.ObjectInfo
+	for info := range src.list(bucket, prefix, doneCh) {
+		if info.Err != nil {
+			return nil, fmt.Errorf("error listing object %s: %w", info.Key, info.Err)
+		}
+		infos = append(infos, info)
+	}
+
+	sort.Slice(infos, func(i, j int) bool { return infos[i].Key < infos[j].Key })
+
+	items := make([]sourceItem, 0, len(infos))
+	bySlug := map[string][]string{}
+	for _, info := range infos {
+		item, err := preflightItem(src, bucket, info.Key)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+		bySlug[item.slug] = append(bySlug[item.slug], item.key)
+	}
+
+	for slug, keys := range bySlug {
+		if len(keys) > 1 {
+			return nil, fmt.Errorf(
+				"duplicate slug %q from keys %s",
 				slug,
-				logger,
-				sinfo,
+				strings.Join(keys, ", "),
 			)
 		}
-		return fmt.Errorf(
-			"error in fetching content %s %s %s %s",
-			sinfo.Key,
-			name,
-			namespace,
-			err,
+	}
+
+	return items, nil
+}
+
+// preflightItem validates a single object key without mutating the content API.
+func preflightItem(src objectSource, bucket, key string) (sourceItem, error) {
+	name, namespace, err := parseSourceKey(key)
+	if err != nil {
+		return sourceItem{}, err
+	}
+
+	if _, err := src.stat(bucket, key); err != nil {
+		return sourceItem{}, fmt.Errorf(
+			"error getting information for object %s: %w", key, err,
 		)
 	}
-	logger.Infof("found existing content %s %s %s", sinfo.Key, name, namespace)
 
+	reader, err := src.get(bucket, key)
+	if err != nil {
+		return sourceItem{}, fmt.Errorf("error getting object %s: %w", key, err)
+	}
+	payload, err := readAllAndClose(reader, key)
+	if err != nil {
+		return sourceItem{}, err
+	}
+
+	if err := validatePayload(key, payload); err != nil {
+		return sourceItem{}, err
+	}
+
+	slug := Slugify(fmt.Sprintf("%s %s", namespace, name))
+	if slug == "" {
+		return sourceItem{}, fmt.Errorf("empty slug derived from object %s", key)
+	}
+
+	return sourceItem{
+		key:       key,
+		name:      name,
+		namespace: namespace,
+		slug:      slug,
+		payload:   string(payload),
+	}, nil
+}
+
+// readAllAndClose reads the object body and closes it on every path, surfacing
+// a close error only when no earlier error occurred.
+func readAllAndClose(reader io.ReadCloser, key string) (payload []byte, err error) {
+	defer func() {
+		if cerr := reader.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("error closing object %s: %w", key, cerr)
+		}
+	}()
+	payload, err = io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("error reading content for object %s: %w", key, err)
+	}
+	return payload, nil
+}
+
+// validatePayload requires a non-empty payload that is valid JSON of any shape.
+func validatePayload(key string, payload []byte) error {
+	if strings.TrimSpace(string(payload)) == "" {
+		return fmt.Errorf("empty content payload for object %s", key)
+	}
+	if !json.Valid(payload) {
+		return fmt.Errorf("invalid JSON payload for object %s", key)
+	}
 	return nil
 }
 
-func createStoreContent(
-	client content.ContentServiceClient,
-	name, namespace, jsonContent, slug string,
-	logger *logrus.Entry,
-	sinfo minio.ObjectInfo,
-) error {
-	nct, err := client.StoreContent(
-		context.Background(),
-		&content.StoreContentRequest{
-			Data: &content.StoreContentRequest_Data{
-				Attributes: &content.NewContentAttributes{
-					Name:      name,
-					Namespace: namespace,
-					CreatedBy: "pfey@northwestern.edu",
-					Content:   jsonContent,
-					Slug:      slug,
-				},
-			},
-		},
-	)
-	if err != nil {
-		return fmt.Errorf(
-			"error in creating content %s %s %s %s",
-			sinfo.Key,
-			name,
-			namespace,
-			err,
+// parseSourceKey validates the basename grammar
+// `<dfp|dsc|news>-<nonempty name>.<nonempty extension>` and returns the
+// mapped namespace with the parsed name.
+func parseSourceKey(key string) (name, namespace string, err error) {
+	base := path.Base(key)
+
+	stem, ext, ok := strings.Cut(base, ".")
+	if !ok || stem == "" {
+		return "", "", fmt.Errorf(
+			"malformed object key %s: missing file extension", key,
 		)
 	}
-	logger.Infof(
-		"created content %s %s %s",
-		sinfo.Key,
-		nct.Data.Attributes.Name,
-		nct.Data.Attributes.Namespace,
-	)
+	if ext == "" {
+		return "", "", fmt.Errorf(
+			"malformed object key %s: empty file extension", key,
+		)
+	}
 
-	return nil
+	prefix, name, ok := strings.Cut(stem, "-")
+	if !ok {
+		return "", "", fmt.Errorf(
+			"malformed object key %s: missing namespace prefix", key,
+		)
+	}
+	ns, exists := namespaceMap()[prefix]
+	if !exists {
+		return "", "", fmt.Errorf(
+			"malformed object key %s: unknown namespace prefix %q", key, prefix,
+		)
+	}
+	if name == "" {
+		return "", "", fmt.Errorf("malformed object key %s: missing name", key)
+	}
+
+	return name, ns, nil
 }
 
 func namespaceMap() map[string]string {
@@ -214,18 +258,174 @@ func namespaceMap() map[string]string {
 	}
 }
 
-func nameAndNamespace(input string) (string, string) {
-	output := Fn.Pipe4(
-		strings.Split(input, "/"),
-		A.Last,
-		O.Map(func(val string) []string { return strings.Split(val, ".") }),
-		O.Map(func(val []string) string { return val[0] }),
-		O.Map(func(val string) []string {
-			str := strings.Split(val, "-")
-			return []string{str[0], strings.Join(str[1:], "-")}
-		}),
+// upsertContent creates, updates, or skips a single content record.
+func upsertContent(
+	client content.ContentServiceClient,
+	logger *logrus.Entry,
+	item sourceItem,
+) error {
+	existing, err := client.GetContentBySlug(
+		context.Background(),
+		&content.ContentRequest{Slug: item.slug},
 	)
-	data, _ := O.Unwrap(output)
-	nsmap := namespaceMap()
-	return data[1], nsmap[data[0]]
+	if err == nil {
+		return applyExistingContent(client, logger, item, existing)
+	}
+	if status.Code(err) == codes.NotFound {
+		return createContent(client, logger, item)
+	}
+	return fmt.Errorf(
+		"error fetching content %s (slug %s): %w",
+		item.key,
+		item.slug,
+		err,
+	)
+}
+
+// applyExistingContent compares stored content against the fetched payload and
+// updates only when they differ.
+func applyExistingContent(
+	client content.ContentServiceClient,
+	logger *logrus.Entry,
+	item sourceItem,
+	existing *content.Content,
+) error {
+	id, stored, err := existingRecord(existing)
+	if err != nil {
+		return fmt.Errorf(
+			"invalid existing content %s (slug %s): %w",
+			item.key,
+			item.slug,
+			err,
+		)
+	}
+	if stored == item.payload {
+		logger.Infof("unchanged/skipped content %s (slug %s)", item.key, item.slug)
+		return nil
+	}
+	return updateContent(client, logger, item, id)
+}
+
+func createContent(
+	client content.ContentServiceClient,
+	logger *logrus.Entry,
+	item sourceItem,
+) error {
+	resp, err := client.StoreContent(
+		context.Background(),
+		&content.StoreContentRequest{
+			Data: &content.StoreContentRequest_Data{
+				Attributes: &content.NewContentAttributes{
+					Name:      item.name,
+					Namespace: item.namespace,
+					CreatedBy: updatedBy,
+					Content:   item.payload,
+					Slug:      item.slug,
+				},
+			},
+		},
+	)
+	if status.Code(err) == codes.AlreadyExists {
+		return refetchAfterRace(client, logger, item)
+	}
+	if err != nil {
+		return fmt.Errorf(
+			"error creating content %s (slug %s): %w",
+			item.key,
+			item.slug,
+			err,
+		)
+	}
+	if resp == nil || resp.Data == nil || resp.Data.Attributes == nil {
+		return fmt.Errorf(
+			"invalid create response for content %s (slug %s): missing data or attributes",
+			item.key,
+			item.slug,
+		)
+	}
+	logger.Infof("created content %s (slug %s)", item.key, item.slug)
+	return nil
+}
+
+func updateContent(
+	client content.ContentServiceClient,
+	logger *logrus.Entry,
+	item sourceItem,
+	id int64,
+) error {
+	resp, err := client.UpdateContent(
+		context.Background(),
+		&content.UpdateContentRequest{
+			Id: id,
+			Data: &content.UpdateContentRequest_Data{
+				Attributes: &content.ExistingContentAttributes{
+					UpdatedBy: updatedBy,
+					Content:   item.payload,
+				},
+			},
+			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"content"}},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"error updating content %s (slug %s): %w",
+			item.key,
+			item.slug,
+			err,
+		)
+	}
+	if resp == nil || resp.Data == nil || resp.Data.Attributes == nil {
+		return fmt.Errorf(
+			"invalid update response for content %s (slug %s): missing data or attributes",
+			item.key,
+			item.slug,
+		)
+	}
+	logger.Infof("updated content %s (slug %s)", item.key, item.slug)
+	return nil
+}
+
+// refetchAfterRace re-fetches the slug after a concurrent create and applies
+// the existing-record comparison/update logic.
+func refetchAfterRace(
+	client content.ContentServiceClient,
+	logger *logrus.Entry,
+	item sourceItem,
+) error {
+	existing, err := client.GetContentBySlug(
+		context.Background(),
+		&content.ContentRequest{Slug: item.slug},
+	)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return fmt.Errorf(
+				"content %s (slug %s) disappeared after concurrent create: %w",
+				item.key,
+				item.slug,
+				err,
+			)
+		}
+		return fmt.Errorf(
+			"error refetching content %s (slug %s) after concurrent create: %w",
+			item.key,
+			item.slug,
+			err,
+		)
+	}
+	return applyExistingContent(client, logger, item, existing)
+}
+
+// existingRecord validates a successful Get response and returns the record id
+// and stored content string.
+func existingRecord(resp *content.Content) (int64, string, error) {
+	if resp == nil || resp.Data == nil {
+		return 0, "", fmt.Errorf("missing data in response")
+	}
+	if resp.Data.Attributes == nil {
+		return 0, "", fmt.Errorf("missing attributes in response")
+	}
+	if resp.Data.Id <= 0 {
+		return 0, "", fmt.Errorf("invalid record id %d in response", resp.Data.Id)
+	}
+	return resp.Data.Id, resp.Data.Attributes.Content, nil
 }
