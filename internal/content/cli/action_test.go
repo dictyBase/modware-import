@@ -8,6 +8,7 @@ import (
 	"github.com/dictyBase/go-genproto/dictybaseapis/content"
 	"github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -146,12 +147,12 @@ func TestValidatePayload(t *testing.T) {
 type fakeObjectSource struct {
 	keys      []string
 	listErrs  map[string]error
-	statErrs  map[string]error
 	data      map[string][]byte
 	getErrs   map[string]error
 	readErrs  map[string]error
 	closeErrs map[string]error
 	closed    []string
+	getCalls  []string
 }
 
 func (f *fakeObjectSource) list(
@@ -171,14 +172,8 @@ func (f *fakeObjectSource) list(
 	return ch
 }
 
-func (f *fakeObjectSource) stat(_, key string) (minio.ObjectInfo, error) {
-	if err := f.statErrs[key]; err != nil {
-		return minio.ObjectInfo{}, err
-	}
-	return minio.ObjectInfo{Key: key}, nil
-}
-
 func (f *fakeObjectSource) get(_, key string) (io.ReadCloser, error) {
+	f.getCalls = append(f.getCalls, key)
 	if err := f.getErrs[key]; err != nil {
 		return nil, err
 	}
@@ -272,6 +267,13 @@ func testLogger() *logrus.Entry {
 	return logrus.NewEntry(logger)
 }
 
+func testLoggerWithHook() (*logrus.Entry, *test.Hook) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+	hook := test.NewLocal(logger)
+	return logrus.NewEntry(logger), hook
+}
+
 func testItem() sourceItem {
 	return sourceItem{
 		key:       "dfp-about.json",
@@ -295,17 +297,19 @@ func storeResp() *content.Content {
 	}
 }
 
-func TestPreflightOrdering(t *testing.T) {
-	t.Run("sorts objects deterministically by key", func(t *testing.T) {
+func TestPreflightListing(t *testing.T) {
+	t.Run("preserves listing order", func(t *testing.T) {
 		src := &fakeObjectSource{
-			keys: []string{"z/dsc-later.json", "a/dfp-first.json", "m/news-item.json"},
+			keys: []string{"a/dfp-first.json", "m/news-item.json", "z/dsc-later.json"},
 			data: map[string][]byte{
-				"z/dsc-later.json": []byte(`{"z":1}`),
 				"a/dfp-first.json": []byte(`{"a":1}`),
 				"m/news-item.json": []byte(`{"m":1}`),
+				"z/dsc-later.json": []byte(`{"z":1}`),
 			},
 		}
-		items, err := preflight(src, "bucket", "prefix")
+
+		items, err := preflight(src, testLogger(), "bucket", "prefix")
+
 		require.NoError(t, err)
 		require.Len(t, items, 3)
 		require.Equal(t, "a/dfp-first.json", items[0].key)
@@ -319,25 +323,39 @@ func TestPreflightOrdering(t *testing.T) {
 			keys: []string{"dfp-about.json"},
 			data: map[string][]byte{"dfp-about.json": []byte(payload)},
 		}
-		items, err := preflight(src, "bucket", "prefix")
+		items, err := preflight(src, testLogger(), "bucket", "prefix")
 		require.NoError(t, err)
 		require.Len(t, items, 1)
 		require.Equal(t, payload, items[0].payload)
 	})
 
-	t.Run("rejects duplicate slugs and reports both keys", func(t *testing.T) {
+	t.Run("skips duplicate slug without fetching its body", func(t *testing.T) {
+		firstKey := "a/dfp-about.json"
+		duplicateKey := "b/dfp-about.json"
 		src := &fakeObjectSource{
-			keys: []string{"a/dfp-about.json", "b/dfp-about.json"},
+			// listing order decides the winner; the fake emits keys in slice order
+			keys: []string{firstKey, duplicateKey},
 			data: map[string][]byte{
-				"a/dfp-about.json": []byte(`{"a":1}`),
-				"b/dfp-about.json": []byte(`{"b":1}`),
+				firstKey: []byte(`{"a":1}`),
+			},
+			getErrs: map[string]error{
+				duplicateKey: io.ErrUnexpectedEOF,
 			},
 		}
-		_, err := preflight(src, "bucket", "prefix")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "duplicate slug")
-		require.Contains(t, err.Error(), "a/dfp-about.json")
-		require.Contains(t, err.Error(), "b/dfp-about.json")
+		logger, hook := testLoggerWithHook()
+
+		items, err := preflight(src, logger, "bucket", "prefix")
+
+		require.NoError(t, err)
+		require.Len(t, items, 1)
+		require.Equal(t, firstKey, items[0].key)
+		require.Equal(t, []string{firstKey}, src.getCalls)
+
+		require.Len(t, hook.Entries, 1)
+		require.Equal(t, logrus.WarnLevel, hook.LastEntry().Level)
+		require.Contains(t, hook.LastEntry().Message, "duplicate slug")
+		require.Contains(t, hook.LastEntry().Message, "frontpage-about")
+		require.Contains(t, hook.LastEntry().Message, duplicateKey)
 	})
 }
 
@@ -347,17 +365,7 @@ func TestPreflightErrors(t *testing.T) {
 			keys:     []string{"dfp-about.json"},
 			listErrs: map[string]error{"dfp-about.json": io.ErrUnexpectedEOF},
 		}
-		_, err := preflight(src, "bucket", "prefix")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "dfp-about.json")
-	})
-
-	t.Run("surfaces stat error with source key", func(t *testing.T) {
-		src := &fakeObjectSource{
-			keys:     []string{"dfp-about.json"},
-			statErrs: map[string]error{"dfp-about.json": io.ErrUnexpectedEOF},
-		}
-		_, err := preflight(src, "bucket", "prefix")
+		_, err := preflight(src, testLogger(), "bucket", "prefix")
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "dfp-about.json")
 	})
@@ -367,7 +375,7 @@ func TestPreflightErrors(t *testing.T) {
 			keys:    []string{"dfp-about.json"},
 			getErrs: map[string]error{"dfp-about.json": io.ErrUnexpectedEOF},
 		}
-		_, err := preflight(src, "bucket", "prefix")
+		_, err := preflight(src, testLogger(), "bucket", "prefix")
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "dfp-about.json")
 	})
@@ -377,7 +385,7 @@ func TestPreflightErrors(t *testing.T) {
 			keys: []string{"dfp-about.json"},
 			data: map[string][]byte{"dfp-about.json": []byte(`{"a":1}`)},
 		}
-		_, err := preflight(src, "bucket", "prefix")
+		_, err := preflight(src, testLogger(), "bucket", "prefix")
 		require.NoError(t, err)
 		require.Contains(t, src.closed, "dfp-about.json")
 	})
@@ -388,7 +396,7 @@ func TestPreflightErrors(t *testing.T) {
 			data:     map[string][]byte{"dfp-about.json": []byte(`{"a":1}`)},
 			readErrs: map[string]error{"dfp-about.json": io.ErrUnexpectedEOF},
 		}
-		_, err := preflight(src, "bucket", "prefix")
+		_, err := preflight(src, testLogger(), "bucket", "prefix")
 		require.Error(t, err)
 		require.Contains(t, src.closed, "dfp-about.json")
 	})
@@ -399,7 +407,7 @@ func TestPreflightErrors(t *testing.T) {
 			data:      map[string][]byte{"dfp-about.json": []byte(`{"a":1}`)},
 			closeErrs: map[string]error{"dfp-about.json": io.ErrUnexpectedEOF},
 		}
-		_, err := preflight(src, "bucket", "prefix")
+		_, err := preflight(src, testLogger(), "bucket", "prefix")
 		require.Error(t, err)
 		require.Contains(t, src.closed, "dfp-about.json")
 	})
