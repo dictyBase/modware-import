@@ -7,9 +7,9 @@ import (
 	"io"
 	"path"
 	"regexp"
-	"sort"
 	"strings"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/dictyBase/go-genproto/dictybaseapis/content"
 	"github.com/dictyBase/modware-import/internal/config"
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -46,7 +46,6 @@ type sourceItem struct {
 // can be tested without a live MinIO client.
 type objectSource interface {
 	list(bucket, prefix string, doneCh <-chan struct{}) <-chan minio.ObjectInfo
-	stat(bucket, key string) (minio.ObjectInfo, error)
 	get(bucket, key string) (io.ReadCloser, error)
 }
 
@@ -58,10 +57,6 @@ func (s minioObjectSource) list(
 	bucket, prefix string, doneCh <-chan struct{},
 ) <-chan minio.ObjectInfo {
 	return s.client.ListObjects(bucket, prefix, true, doneCh)
-}
-
-func (s minioObjectSource) stat(bucket, key string) (minio.ObjectInfo, error) {
-	return s.client.StatObject(bucket, key, minio.StatObjectOptions{})
 }
 
 func (s minioObjectSource) get(bucket, key string) (io.ReadCloser, error) {
@@ -88,14 +83,14 @@ func LoadContent(cltx *cli.Context) error {
 }
 
 // loadContent runs preflight (no API mutations) then mutates sequentially in
-// deterministic key order.
+// source listing order.
 func loadContent(
 	client content.ContentServiceClient,
 	logger *logrus.Entry,
 	src objectSource,
 	bucket, prefix string,
 ) error {
-	items, err := preflight(src, bucket, prefix)
+	items, err := preflight(src, logger, bucket, prefix)
 	if err != nil {
 		return err
 	}
@@ -107,69 +102,49 @@ func loadContent(
 	return nil
 }
 
-// preflight drains the S3 listing, validates every object, and derives slugs.
-// It returns before any content API mutation if any check fails.
-func preflight(src objectSource, bucket, prefix string) ([]sourceItem, error) {
+// preflight streams the S3 listing, keeps the first item per slug in listing
+// order, and retrieves plus validates only those survivors. It performs no
+// content API mutation and returns before any mutation when a non-duplicate
+// check fails. Duplicates are warned about and skipped, never fetched.
+func preflight(
+	src objectSource, logger *logrus.Entry, bucket, prefix string,
+) ([]sourceItem, error) {
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 
-	var infos []minio.ObjectInfo
+	var items []sourceItem
+	seen := mapset.NewSet[string]()
 	for info := range src.list(bucket, prefix, doneCh) {
 		if info.Err != nil {
 			return nil, fmt.Errorf("error listing object %s: %w", info.Key, info.Err)
 		}
-		infos = append(infos, info)
-	}
-
-	sort.Slice(infos, func(i, j int) bool { return infos[i].Key < infos[j].Key })
-
-	items := make([]sourceItem, 0, len(infos))
-	bySlug := map[string][]string{}
-	for _, info := range infos {
-		item, err := preflightItem(src, bucket, info.Key)
+		item, err := sourceItemFromKey(info.Key)
 		if err != nil {
 			return nil, err
 		}
-		items = append(items, item)
-		bySlug[item.slug] = append(bySlug[item.slug], item.key)
-	}
-
-	for slug, keys := range bySlug {
-		if len(keys) > 1 {
-			return nil, fmt.Errorf(
-				"duplicate slug %q from keys %s",
-				slug,
-				strings.Join(keys, ", "),
+		if !seen.Add(item.slug) {
+			logger.Warnf(
+				"duplicate slug %q from key %s; skipping",
+				item.slug,
+				item.key,
 			)
+			continue
 		}
+		read, err := readSourceItem(src, bucket, item)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, read)
 	}
 
 	return items, nil
 }
 
-// preflightItem validates a single object key without mutating the content API.
-func preflightItem(src objectSource, bucket, key string) (sourceItem, error) {
+// sourceItemFromKey derives item identity from the object key alone; no S3 I/O
+// and no body is required, which is why dedupe can precede retrieval.
+func sourceItemFromKey(key string) (sourceItem, error) {
 	name, namespace, err := parseSourceKey(key)
 	if err != nil {
-		return sourceItem{}, err
-	}
-
-	if _, err := src.stat(bucket, key); err != nil {
-		return sourceItem{}, fmt.Errorf(
-			"error getting information for object %s: %w", key, err,
-		)
-	}
-
-	reader, err := src.get(bucket, key)
-	if err != nil {
-		return sourceItem{}, fmt.Errorf("error getting object %s: %w", key, err)
-	}
-	payload, err := readAllAndClose(reader, key)
-	if err != nil {
-		return sourceItem{}, err
-	}
-
-	if err := validatePayload(key, payload); err != nil {
 		return sourceItem{}, err
 	}
 
@@ -183,8 +158,28 @@ func preflightItem(src objectSource, bucket, key string) (sourceItem, error) {
 		name:      name,
 		namespace: namespace,
 		slug:      slug,
-		payload:   string(payload),
 	}, nil
+}
+
+// readSourceItem retrieves and validates a single survivor item's body.
+func readSourceItem(
+	src objectSource, bucket string, item sourceItem,
+) (sourceItem, error) {
+	reader, err := src.get(bucket, item.key)
+	if err != nil {
+		return sourceItem{}, fmt.Errorf("error getting object %s: %w", item.key, err)
+	}
+	payload, err := readAllAndClose(reader, item.key)
+	if err != nil {
+		return sourceItem{}, err
+	}
+	if err := validatePayload(item.key, payload); err != nil {
+		return sourceItem{}, err
+	}
+
+	item.payload = string(payload)
+
+	return item, nil
 }
 
 // readAllAndClose reads the object body and closes it on every path, surfacing
