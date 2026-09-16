@@ -122,7 +122,7 @@ func preflight(
 		if err != nil {
 			return nil, err
 		}
-		if !seen.Add(item.slug) {
+		if seen.Contains(item.slug) {
 			logger.Warnf(
 				"duplicate slug %q from key %s; skipping",
 				item.slug,
@@ -130,6 +130,7 @@ func preflight(
 			)
 			continue
 		}
+		seen.Add(item.slug)
 		read, err := readSourceItem(src, bucket, item)
 		if err != nil {
 			return nil, err
