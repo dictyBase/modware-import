@@ -665,38 +665,3 @@ func TestUpsertContent_UpdateError(t *testing.T) {
 	require.Contains(t, err.Error(), item.slug)
 	require.Zero(t, client.storeCalls)
 }
-
-func TestUpsertContent_InvalidMutationResponses(t *testing.T) {
-	t.Run("store response missing data", func(t *testing.T) {
-		client := &fakeContentClient{
-			getBySlugFn: func(context.Context, *content.ContentRequest, ...grpc.CallOption) (*content.Content, error) {
-				return nil, status.Error(codes.NotFound, "not found")
-			},
-			storeFn: func(context.Context, *content.StoreContentRequest, ...grpc.CallOption) (*content.Content, error) {
-				return &content.Content{}, nil
-			},
-		}
-		err := upsertContent(client, testLogger(), testItem())
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "dfp-about.json")
-	})
-
-	t.Run("update response missing attributes", func(t *testing.T) {
-		client := &fakeContentClient{
-			getBySlugFn: func(context.Context, *content.ContentRequest, ...grpc.CallOption) (*content.Content, error) {
-				return &content.Content{
-					Data: &content.ContentData{
-						Id:         7,
-						Attributes: &content.ContentAttributes{Content: "old"},
-					},
-				}, nil
-			},
-			updateFn: func(context.Context, *content.UpdateContentRequest, ...grpc.CallOption) (*content.Content, error) {
-				return &content.Content{Data: &content.ContentData{Id: 7}}, nil
-			},
-		}
-		err := upsertContent(client, testLogger(), testItem())
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "dfp-about.json")
-	})
-}

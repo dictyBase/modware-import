@@ -307,7 +307,7 @@ func createContent(
 	logger *logrus.Entry,
 	item sourceItem,
 ) error {
-	resp, err := client.StoreContent(
+	_, err := client.StoreContent(
 		context.Background(),
 		&content.StoreContentRequest{
 			Data: &content.StoreContentRequest_Data{
@@ -332,13 +332,6 @@ func createContent(
 			err,
 		)
 	}
-	if resp == nil || resp.Data == nil || resp.Data.Attributes == nil {
-		return fmt.Errorf(
-			"invalid create response for content %s (slug %s): missing data or attributes",
-			item.key,
-			item.slug,
-		)
-	}
 	logger.Infof("created content %s (slug %s)", item.key, item.slug)
 	return nil
 }
@@ -349,7 +342,7 @@ func updateContent(
 	item sourceItem,
 	id int64,
 ) error {
-	resp, err := client.UpdateContent(
+	_, err := client.UpdateContent(
 		context.Background(),
 		&content.UpdateContentRequest{
 			Id: id,
@@ -368,13 +361,6 @@ func updateContent(
 			item.key,
 			item.slug,
 			err,
-		)
-	}
-	if resp == nil || resp.Data == nil || resp.Data.Attributes == nil {
-		return fmt.Errorf(
-			"invalid update response for content %s (slug %s): missing data or attributes",
-			item.key,
-			item.slug,
 		)
 	}
 	logger.Infof("updated content %s (slug %s)", item.key, item.slug)
