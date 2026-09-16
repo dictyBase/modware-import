@@ -63,40 +63,24 @@ func (s minioObjectSource) get(bucket, key string) (io.ReadCloser, error) {
 	return s.client.GetObject(bucket, key, minio.GetObjectOptions{})
 }
 
+// LoadContent runs preflight (no API mutations) then mutates sequentially in
+// source listing order.
 func LoadContent(cltx *cli.Context) error {
 	logger := registry.GetLogger()
 	s3Client := registry.GetS3Client()
 	client := regsc.GetContentAPIClient()
 
 	src := minioObjectSource{client: s3Client}
-	err := loadContent(
-		client,
-		logger,
-		src,
-		cltx.String("s3-bucket"),
-		cltx.String("s3-bucket-path"),
-	)
+	bucket := cltx.String("s3-bucket")
+	prefix := cltx.String("s3-bucket-path")
+
+	items, err := preflight(src, logger, bucket, prefix)
 	if err != nil {
 		return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 	}
-	return nil
-}
-
-// loadContent runs preflight (no API mutations) then mutates sequentially in
-// source listing order.
-func loadContent(
-	client content.ContentServiceClient,
-	logger *logrus.Entry,
-	src objectSource,
-	bucket, prefix string,
-) error {
-	items, err := preflight(src, logger, bucket, prefix)
-	if err != nil {
-		return err
-	}
 	for _, item := range items {
 		if err := upsertContent(client, logger, item); err != nil {
-			return err
+			return cli.Exit(err.Error(), config.DefaultRetryBackoffFactor)
 		}
 	}
 	return nil
