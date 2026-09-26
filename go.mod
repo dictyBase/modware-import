@@ -54,7 +54,7 @@ require (
 	github.com/arangodb/go-driver v1.6.9
 	github.com/cockroachdb/pebble v1.1.5
 	github.com/deckarep/golang-set/v2 v2.9.0
-	github.com/go-playground/validator/v10 v10.30.4
+	github.com/go-playground/validator/v10 v10.30.5
 	github.com/google/uuid v1.6.0
 	github.com/hasura/go-graphql-client v0.16.0
 	github.com/jellydator/ttlcache/v3 v3.4.1
