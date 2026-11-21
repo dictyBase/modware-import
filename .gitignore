@@ -44,3 +44,4 @@ ecodemap.txt
 goldenbraid-data
 .worktrees/
 kubeconfig.yaml
+/worktrees
