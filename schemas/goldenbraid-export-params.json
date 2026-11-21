@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["TAG", "INPUT", "OUTPUT"],
+  "properties": {
+    "TAG": {
+      "type": "string",
+      "description": "The Docker image tag to use"
+    },
+    "INPUT": {
+      "type": "string",
+      "description": "Input .dna, .zip, or folder. local path or s3://bucket/key"
+    },
+    "OUTPUT": {
+      "type": "string",
+      "description": "Output root. local path or s3://bucket/prefix"
+    },
+    "ENV": {
+      "type": "string",
+      "description": "Target environment (dev, staging, production)",
+      "default": "dev",
+      "enum": ["dev", "staging", "production"]
+    },
+    "NAMESPACE": {
+      "type": "string",
+      "description": "Kubernetes namespace",
+      "default": "dev"
+    },
+    "KUBE_CFG": {
+      "type": "string",
+      "description": "Path to kubeconfig file (required for non-dev)",
+      "default": ""
+    }
+  }
+}
