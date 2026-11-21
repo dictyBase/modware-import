@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"slices"
+
+	A "github.com/IBM/fp-go/v2/array"
+	"github.com/dictyBase/modware-import/internal/goldenbraid/gbcli"
 
 	"github.com/dictyBase/modware-import/internal/cli/stockcenter"
 	loader "github.com/dictyBase/modware-import/internal/load/stockcenter"
@@ -20,7 +22,7 @@ func main() { //nolint:funlen
 				Usage:  "Load GoldenBraid inventory",
 				Action: stockcenter.LoadGoldenBraidInventory,
 				Before: stockcenter.SetAllClients,
-				Flags: slices.Concat(
+				Flags: A.ArrayConcatAll(
 					stockcenter.InventoryInputFlags(),
 					stockcenter.GoldenBraidInputFlags(),
 					stockcenter.S3Flags(),
@@ -34,7 +36,7 @@ func main() { //nolint:funlen
 				Usage:  "Load GoldenBraid plasmid CSV data",
 				Action: loader.LoadGoldenBraidCli,
 				Before: stockcenter.SetStockAndS3Clients,
-				Flags: slices.Concat(
+				Flags: A.ArrayConcatAll(
 					stockcenter.InputFlags(),
 					stockcenter.GoldenBraidInputFlags(),
 					stockcenter.S3Flags(),
@@ -66,11 +68,17 @@ func main() { //nolint:funlen
 				Usage:  "Update plasmids with ontology term",
 				Action: loader.LoadPlasmidOntologyCli,
 				Before: stockcenter.SetStockClientWrapper,
-				Flags: slices.Concat(
+				Flags: A.ArrayConcatAll(
 					stockcenter.StockConnectionFlags(),
 					stockcenter.OntologyFlags(),
 					stockcenter.LoggingFlags(),
 				),
+			},
+			{
+				Name:   "export",
+				Usage:  "Export GoldenBraid assemblies to FASTA, GenBank, and SVG",
+				Action: gbcli.RunExport,
+				Flags:  gbcli.ExportFlags(),
 			},
 		},
 	}
