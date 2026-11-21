@@ -47,20 +47,13 @@ func ExportFlags() []cli.Flag {
 
 // RunExport runs the export pipeline for one CLI invocation.
 func RunExport(c *cli.Context) error {
-	return F.Pipe4(
-		c,
-		toExportState,
-		gbexport.Pipeline,
-		ioeutils.ToEither[error, gbexport.State],
-		E.ToError[gbexport.State],
-	)
-}
-
-func toExportState(c *cli.Context) gbexport.State {
-	return F.Pipe2(
+	return F.Pipe5(
 		stateEdits,
 		A.Flap[En.Endomorphism[gbexport.State]](c),
 		En.Reduce[gbexport.State],
+		gbexport.Pipeline,
+		ioeutils.ToEither[error, gbexport.State],
+		E.ToError[gbexport.State],
 	)
 }
 
