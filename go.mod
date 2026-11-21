@@ -46,7 +46,7 @@ require (
 )
 
 require (
-	buf.build/go/protovalidate v1.4.0
+	buf.build/go/protovalidate v1.4.1
 	github.com/IBM/fp-go v1.1.84
 	github.com/IBM/fp-go/v2 v2.13.2
 	github.com/PuerkitoBio/goquery v1.13.0
@@ -70,8 +70,8 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.1 // indirect
-	cel.dev/cel-go v0.32.0 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2 // indirect
+	cel.dev/cel-go v0.33.2 // indirect
 	cel.dev/expr v0.25.3 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20261006220739-8c912ac31dd4 // indirect
