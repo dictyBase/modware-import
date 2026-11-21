@@ -19,7 +19,7 @@ const (
 )
 
 // jsonIndex represents the JSON structure for filtering
-type jsonIndex map[string]interface{}
+type jsonIndex map[string]any
 
 // buildStrainJSONIndex creates a JSON index from a strain for filtering
 func buildStrainJSONIndex(strain *stock.Strain) jsonIndex {
@@ -118,7 +118,7 @@ func deserializePlasmid(data []byte) (*stock.Plasmid, error) {
 }
 
 // serializeJSON serializes a value to JSON bytes
-func serializeJSON(value interface{}) ([]byte, error) {
+func serializeJSON(value any) ([]byte, error) {
 	jsonBytes, err := json.Marshal(value)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal JSON: %w", err)

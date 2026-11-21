@@ -105,7 +105,7 @@ type listReqFeedback struct {
 
 type tableFieldReq struct {
 	tableFieldRes
-	Params map[string]interface{}
+	Params map[string]any
 }
 
 func uncurriedSearchUser(email string, wrsp WorkspaceResp) int {
@@ -188,7 +188,7 @@ func onJSONPayloadSuccess(resp []byte) jsonPayload {
 }
 
 func uncurriedResToReqTableWithParams(
-	params map[string]interface{},
+	params map[string]any,
 	req tableFieldRes,
 ) tableFieldReq {
 	return tableFieldReq{

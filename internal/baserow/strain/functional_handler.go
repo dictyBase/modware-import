@@ -142,7 +142,7 @@ func genmodID(loader *StrainLoader) E.Either[error, int] {
 
 func characteristicIDs(loader *StrainLoader) E.Either[error, []int] {
 	charIDs := make([]int, 0)
-	for _, charac := range strings.Split(loader.Annotation.Characteristic(), ",") {
+	for charac := range strings.SplitSeq(loader.Annotation.Characteristic(), ",") {
 		cid, err := loader.TableManager.SearchRows(
 			common.ProcessOntologyTermID(charac),
 			loader.OntologyTableMap["strainchar-ontology-table"],

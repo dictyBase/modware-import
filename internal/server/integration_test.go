@@ -172,7 +172,7 @@ func TestListFeatureAnnotationsByPubmedId(t *testing.T) {
 	// Create annotations with the same PubMed ID
 	pubmedID := "99999999"
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		createReq := &feature.NewFeatureAnnotation{
 			Type: "gene",
 			Id:   fmt.Sprintf("TEST_PUBMED_%d", i),
@@ -206,7 +206,7 @@ func TestListFeatureAnnotationsByDOI(t *testing.T) {
 	// Create annotations with the same DOI
 	doi := "10.1000/test.2023.999"
 
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		createReq := &feature.NewFeatureAnnotation{
 			Type: "gene",
 			Id:   fmt.Sprintf("TEST_DOI_%d", i),

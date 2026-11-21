@@ -73,7 +73,7 @@ func (tkm *TokenManager) RefreshTokenURL() string {
 func (tkm *TokenManager) FreshToken() (string, error) {
 	var empty string
 	tokenPayload := F.Pipe2(
-		map[string]interface{}{
+		map[string]any{
 			"refresh_token": tkm.refreshToken,
 		},
 		J.Marshal,
@@ -90,7 +90,7 @@ func (tkm *TokenManager) FreshToken() (string, error) {
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, refreshTokenRes, tokenReqFeedback](
+		E.Fold(
 			onTokenResError, onTokenResSuccess,
 		),
 	)

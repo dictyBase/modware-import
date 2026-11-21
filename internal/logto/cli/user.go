@@ -41,7 +41,7 @@ func FixedLenRandomInt(length int) string {
 	num := []byte("123456789")
 	byt := make([]byte, 0)
 	alen := len(num)
-	for idx := 0; idx < length; idx++ {
+	for range length {
 		pos, _ := RandomInt(alen)
 		byt = append(byt, num[pos])
 	}
@@ -56,7 +56,7 @@ func FixedLenRandomString(length int) string {
 	)
 	byt := make([]byte, 0)
 	alen := len(alphanum)
-	for idx := 0; idx < length; idx++ {
+	for range length {
 		pos, _ := RandomInt(alen)
 		byt = append(byt, alphanum[pos])
 	}

@@ -25,19 +25,19 @@ func (pheno *PhenotypeTableManager) FieldNames() []string {
 
 func (pheno *PhenotypeTableManager) LinkFieldChangeSpecs(
 	idMaps map[string]int,
-) map[string]map[string]interface{} {
-	paramsMap := make(map[string]map[string]interface{})
-	paramsMap["phenotype_id"] = map[string]interface{}{
+) map[string]map[string]any {
+	paramsMap := make(map[string]map[string]any)
+	paramsMap["phenotype_id"] = map[string]any{
 		"name":              "phenotype_id",
 		"type":              "link_row",
 		"link_row_table_id": idMaps["phenotype-ontology-table"],
 	}
-	paramsMap["assay_id"] = map[string]interface{}{
+	paramsMap["assay_id"] = map[string]any{
 		"name":              "assay_id",
 		"type":              "link_row",
 		"link_row_table_id": idMaps["assay-ontology-table"],
 	}
-	paramsMap["environment_id"] = map[string]interface{}{
+	paramsMap["environment_id"] = map[string]any{
 		"name":              "environment_id",
 		"type":              "link_row",
 		"link_row_table_id": idMaps["env-ontology-table"],
@@ -46,17 +46,17 @@ func (pheno *PhenotypeTableManager) LinkFieldChangeSpecs(
 	return paramsMap
 }
 
-func (pheno *PhenotypeTableManager) FieldChangeSpecs() map[string]map[string]interface{} {
-	paramsMap := make(map[string]map[string]interface{})
-	paramsMap["annotation_id"] = map[string]interface{}{
+func (pheno *PhenotypeTableManager) FieldChangeSpecs() map[string]map[string]any {
+	paramsMap := make(map[string]map[string]any)
+	paramsMap["annotation_id"] = map[string]any{
 		"name": "annotation_id",
 		"type": "uuid",
 	}
-	paramsMap["deleted"] = map[string]interface{}{
+	paramsMap["deleted"] = map[string]any{
 		"name": "deleted",
 		"type": "boolean",
 	}
-	paramsMap["last_modified"] = map[string]interface{}{
+	paramsMap["last_modified"] = map[string]any{
 		"name":              "last_modified",
 		"type":              "created_on",
 		"date_format":       "US",
@@ -64,7 +64,7 @@ func (pheno *PhenotypeTableManager) FieldChangeSpecs() map[string]map[string]int
 		"date_time_format":  "12",
 		"date_show_tzinfo":  "true",
 	}
-	paramsMap["created_on"] = map[string]interface{}{
+	paramsMap["created_on"] = map[string]any{
 		"name":              "created_on",
 		"type":              "date",
 		"date_format":       "US",
@@ -72,22 +72,22 @@ func (pheno *PhenotypeTableManager) FieldChangeSpecs() map[string]map[string]int
 		"date_time_format":  "12",
 		"date_show_tzinfo":  "true",
 	}
-	paramsMap["assigned_by"] = map[string]interface{}{
+	paramsMap["assigned_by"] = map[string]any{
 		"name":                   "assigned_by",
 		"type":                   "multiple_collaborators",
 		"notify_user_when_added": "false",
 	}
-	paramsMap["phenotype_term"] = map[string]interface{}{
+	paramsMap["phenotype_term"] = map[string]any{
 		"name":    "phenotype_term",
 		"type":    "formula",
 		"formula": "lookup('phenotype_id','name')",
 	}
-	paramsMap["environment_term"] = map[string]interface{}{
+	paramsMap["environment_term"] = map[string]any{
 		"name":    "environment_term",
 		"type":    "formula",
 		"formula": "lookup('environment_id','name')",
 	}
-	paramsMap["assay_term"] = map[string]interface{}{
+	paramsMap["assay_term"] = map[string]any{
 		"name":    "assay_term",
 		"type":    "formula",
 		"formula": "lookup('assay_id','name')",

@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 
 	A "github.com/IBM/fp-go/array"
 	J "github.com/IBM/fp-go/json"
 	O "github.com/IBM/fp-go/option"
 
 	"github.com/dictyBase/modware-import/internal/collection"
-	"golang.org/x/exp/slices"
 
 	"github.com/dictyBase/modware-import/internal/baserow/client"
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
@@ -26,7 +26,7 @@ import (
 
 type FieldDefinition interface {
 	FieldNames() []string
-	FieldDefs() map[string]interface{}
+	FieldDefs() map[string]any
 }
 
 type TableManager struct {
@@ -85,7 +85,7 @@ func (tbm *TableManager) SearchRows(param string, tableID int) (int, error) {
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, listRowsResp, fieldsReqFeedback](
+		E.Fold(
 			onFieldsReqFeedbackError,
 			onListRowsReqFeedbackSuccess,
 		),
@@ -103,7 +103,7 @@ func (tbm *TableManager) TableNameToID(name string) (int, error) {
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, []tableFieldRes, fieldsReqFeedback](
+		E.Fold(
 			onFieldsReqFeedbackError,
 			onTablesReqFeedbackSuccess(name),
 		),
@@ -123,8 +123,8 @@ func (tbm *TableManager) CreateTableURL() string {
 func (tbm *TableManager) CreateTable(
 	table string, fields []string,
 ) (*client.Table, error) {
-	var row []interface{}
-	params := map[string]interface{}{
+	var row []any
+	params := map[string]any{
 		"name":             table,
 		"data":             append(row, fields),
 		"first_row_header": "true",
@@ -145,7 +145,7 @@ func (tbm *TableManager) CreateTable(
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, tableFieldRes, fieldsReqFeedback](
+		E.Fold(
 			onFieldsReqFeedbackError,
 			onTableCreateFeedbackSuccess,
 		),
@@ -181,7 +181,7 @@ func (tbm *TableManager) ListTableFields(
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, []tableFieldRes, fieldsReqFeedback](
+		E.Fold(
 			onFieldsReqFeedbackError,
 			onFieldsReqFeedbackSuccess,
 		),
@@ -244,7 +244,7 @@ func (tbm *OntologyTableManager) CheckAllTableFields(
 func (tbm *TableManager) UpdateField(
 	tbl *client.Table,
 	field string,
-	updateSpec map[string]interface{},
+	updateSpec map[string]any,
 ) (string, error) {
 	var empty string
 	fields, err := tbm.ListTableFields(tbl)
@@ -255,7 +255,7 @@ func (tbm *TableManager) UpdateField(
 		fields,
 		A.FindFirst(HasField(field)),
 		O.Map(ResToReqTableWithParams(updateSpec)),
-		O.Fold[tableFieldReq](
+		O.Fold(
 			onFieldDelReqFeedbackNone,
 			tbm.onFieldUpdateReqFeedbackSome,
 		),
@@ -276,7 +276,7 @@ func (tbm *TableManager) RemoveField(
 		fields,
 		A.FindFirst(HasField(req)),
 		O.Map(ResToReqTable),
-		O.Fold[tableFieldReq](
+		O.Fold(
 			onFieldDelReqFeedbackNone,
 			tbm.onFieldDelReqFeedbackSome,
 		),
@@ -305,7 +305,7 @@ func (tbm *TableManager) onFieldUpdateReqFeedbackSome(
 
 	return F.Pipe1(
 		resp(),
-		E.Fold[error, tableFieldUpdateResponse, fieldsReqFeedback](
+		E.Fold(
 			onFieldsReqFeedbackError,
 			onFieldUpdateReqFeedbackSuccess,
 		),
@@ -324,7 +324,7 @@ func (tbm *TableManager) onFieldDelReqFeedbackSome(
 
 	return F.Pipe1(
 		resp(),
-		E.Fold[error, tableFieldDelResponse, fieldsReqFeedback](
+		E.Fold(
 			onFieldsReqFeedbackError,
 			onFieldDelReqFeedbackSuccess,
 		),

@@ -28,7 +28,7 @@ func fixedLenRandomString(length int) string {
 	)
 	byt := make([]byte, 0)
 	alen := len(alphanum)
-	for i := 0; i < length; i++ {
+	for range length {
 		pos, _ := randomInt(alen)
 		byt = append(byt, alphanum[pos])
 	}

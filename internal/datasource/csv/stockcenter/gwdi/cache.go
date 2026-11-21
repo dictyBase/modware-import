@@ -103,7 +103,7 @@ func (b *leveldbListCache) StartBatch() {
 
 func (b *leveldbListCache) AppendToBatch(k, v []byte) {
 	b.batch.Put(
-		[]byte(fmt.Sprintf("%s/{LIST}/%s", string(k), b.node.Generate().String())),
+		fmt.Appendf(nil, "%s/{LIST}/%s", string(k), b.node.Generate().String()),
 		v,
 	)
 }

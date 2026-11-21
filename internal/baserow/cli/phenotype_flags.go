@@ -38,7 +38,7 @@ func LoadPhenoToTableFlag() []cli.Flag {
 }
 
 func phenoToTableFlag() []cli.Flag {
-	return A.ArrayConcatAll[cli.Flag](
+	return A.ArrayConcatAll(
 		tableCreationFlags(),
 		spreadsheetFlag(),
 		phenoOntologyTableFlags(),

@@ -33,19 +33,19 @@ func (strn *StrainTableManager) FieldNames() []string {
 
 func (strn *StrainTableManager) LinkFieldChangeSpecs(
 	idMaps map[string]int,
-) map[string]map[string]interface{} {
-	paramsMap := make(map[string]map[string]interface{})
-	paramsMap["strain_characteristics_id"] = map[string]interface{}{
+) map[string]map[string]any {
+	paramsMap := make(map[string]map[string]any)
+	paramsMap["strain_characteristics_id"] = map[string]any{
 		"name":              "strain_characteristics_id",
 		"type":              "link_row",
 		"link_row_table_id": idMaps["strainchar-ontology-table"],
 	}
-	paramsMap["genetic_modification_id"] = map[string]interface{}{
+	paramsMap["genetic_modification_id"] = map[string]any{
 		"name":              "genetic_modification_id",
 		"type":              "link_row",
 		"link_row_table_id": idMaps["genetic-mod-ontology-table"],
 	}
-	paramsMap["mutagenesis_method_id"] = map[string]interface{}{
+	paramsMap["mutagenesis_method_id"] = map[string]any{
 		"name":              "mutagenesis_method_id",
 		"type":              "link_row",
 		"link_row_table_id": idMaps["mutagenesis-method-ontology-table"],
@@ -54,13 +54,13 @@ func (strn *StrainTableManager) LinkFieldChangeSpecs(
 	return paramsMap
 }
 
-func (strn *StrainTableManager) FieldChangeSpecs() map[string]map[string]interface{} {
-	paramsMap := make(map[string]map[string]interface{})
-	paramsMap["annotation_id"] = map[string]interface{}{
+func (strn *StrainTableManager) FieldChangeSpecs() map[string]map[string]any {
+	paramsMap := make(map[string]map[string]any)
+	paramsMap["annotation_id"] = map[string]any{
 		"name": "annotation_id",
 		"type": "uuid",
 	}
-	paramsMap["last_modified"] = map[string]interface{}{
+	paramsMap["last_modified"] = map[string]any{
 		"name":              "last_modified",
 		"type":              "created_on",
 		"date_format":       "US",
@@ -68,7 +68,7 @@ func (strn *StrainTableManager) FieldChangeSpecs() map[string]map[string]interfa
 		"date_time_format":  "12",
 		"date_show_tzinfo":  "true",
 	}
-	paramsMap["created_on"] = map[string]interface{}{
+	paramsMap["created_on"] = map[string]any{
 		"name":              "created_on",
 		"type":              "date",
 		"date_format":       "US",
@@ -76,27 +76,27 @@ func (strn *StrainTableManager) FieldChangeSpecs() map[string]map[string]interfa
 		"date_time_format":  "12",
 		"date_show_tzinfo":  "true",
 	}
-	paramsMap["assigned_by"] = map[string]interface{}{
+	paramsMap["assigned_by"] = map[string]any{
 		"name":                   "assigned_by",
 		"type":                   "multiple_collaborators",
 		"notify_user_when_added": "false",
 	}
-	paramsMap["strain_characteristics"] = map[string]interface{}{
+	paramsMap["strain_characteristics"] = map[string]any{
 		"name":    "strain_characteristics",
 		"type":    "formula",
 		"formula": "lookup('strain_characteristics_id','name')",
 	}
-	paramsMap["mutagenesis_method"] = map[string]interface{}{
+	paramsMap["mutagenesis_method"] = map[string]any{
 		"name":    "mutagenesis_method",
 		"type":    "formula",
 		"formula": "lookup('mutagenesis_method_id','name')",
 	}
-	paramsMap["genetic_modification"] = map[string]interface{}{
+	paramsMap["genetic_modification"] = map[string]any{
 		"name":    "genetic_modification",
 		"type":    "formula",
 		"formula": "lookup('genetic_modification_id','name')",
 	}
-	paramsMap["depositor"] = map[string]interface{}{
+	paramsMap["depositor"] = map[string]any{
 		"name": "depositor",
 		"type": "email",
 	}

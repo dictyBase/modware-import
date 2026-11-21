@@ -32,12 +32,12 @@ func allContainerStatuses(pod corev1.Pod) []corev1.ContainerStatus {
 }
 
 // toStuckReason extracts a stuck reason from a ContainerStatus if one exists.
-// Uses O.FromNillable to safely handle the nullable Waiting pointer.
+// Uses O.FromNillable2 to safely handle the nullable Waiting pointer.
 func toStuckReason(cs corev1.ContainerStatus) O.Option[string] {
 	return F.Pipe3(
 		cs.State.Waiting,
-		O.FromNillable,
-		O.Map(func(w *corev1.ContainerStateWaiting) string { return w.Reason }),
+		O.FromNillable2,
+		O.Map(func(w corev1.ContainerStateWaiting) string { return w.Reason }),
 		O.Chain(O.FromPredicate(isStuckReason)),
 	)
 }

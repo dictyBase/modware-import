@@ -10,7 +10,7 @@ import (
 
 func updateFieldDefs(
 	tbm *database.TableManager,
-	defs map[string]map[string]interface{},
+	defs map[string]map[string]any,
 	tbl *client.Table,
 	logger *logrus.Entry,
 ) error {
