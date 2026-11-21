@@ -49,7 +49,7 @@ require (
 	buf.build/go/protovalidate v1.4.1
 	github.com/IBM/fp-go v1.1.84
 	github.com/IBM/fp-go/v2 v2.13.2
-	github.com/PuerkitoBio/goquery v1.13.0
+	github.com/PuerkitoBio/goquery v1.14.0
 	github.com/alicebob/miniredis/v2 v2.40.0
 	github.com/arangodb/go-driver v1.6.9
 	github.com/cockroachdb/pebble v1.1.5
@@ -79,7 +79,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
 	github.com/andybalholm/brotli v1.2.7 // indirect
-	github.com/andybalholm/cascadia v1.3.4 // indirect
+	github.com/andybalholm/cascadia v1.3.5 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
