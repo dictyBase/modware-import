@@ -13,6 +13,7 @@ import (
 	N "github.com/IBM/fp-go/v2/number"
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	O "github.com/IBM/fp-go/v2/option"
+	ORD "github.com/IBM/fp-go/v2/ord"
 	PR "github.com/IBM/fp-go/v2/pair"
 	P "github.com/IBM/fp-go/v2/predicate"
 	R "github.com/IBM/fp-go/v2/record"
@@ -115,6 +116,8 @@ var (
 	fullSite              = F.Flow2(siteL.Simplified.Get, predord.NotEqualStr("1"))
 	featureLocationChoice = P.Fold(joinLocation, firstLocation)
 	featureRangeChoice    = P.Fold(normalFeatureRange, wrappedFeatureRange)
+	intGt                 = ORD.Gt(predord.IntOrd)
+	isWrappedRange        = F.Flow2(startPastEnd, intGt(0))
 	complementDirection   = MO.Match(
 		false,
 		[]O.Kleisli[string, bool]{MO.Const(reverseFeature, true)},
@@ -250,8 +253,10 @@ func splitFeatureRange(record genbank.Genbank, bounds rangeBounds) []genbank.Loc
 		PR.Merge(En.Read[rangeBounds]), featureRangeChoice(isWrappedRange))
 }
 
-func isWrappedRange(bounds rangeBounds) bool {
-	return boundsL.Start.Get(bounds) > boundsL.End.Get(bounds)
+// startPastEnd is how far the range start lies after its end. It is
+// positive for a range that crosses the origin.
+func startPastEnd(bounds rangeBounds) int {
+	return boundsL.Start.Get(bounds) - boundsL.End.Get(bounds)
 }
 
 func normalFeatureRange(bounds rangeBounds) []genbank.Location {

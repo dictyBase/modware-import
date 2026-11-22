@@ -16,11 +16,13 @@ import (
 	N "github.com/IBM/fp-go/v2/number"
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	O "github.com/IBM/fp-go/v2/option"
+	ORD "github.com/IBM/fp-go/v2/ord"
 	PR "github.com/IBM/fp-go/v2/pair"
 	P "github.com/IBM/fp-go/v2/predicate"
 	R "github.com/IBM/fp-go/v2/record"
 	S "github.com/IBM/fp-go/v2/string"
 	"github.com/bebop/poly/io/genbank"
+	predord "github.com/dictyBase/fp-go-loom/predicate/ord"
 
 	PL "github.com/dictyBase/modware-import/internal/goldenbraid/polylens"
 	"github.com/dictyBase/modware-import/internal/goldenbraid/seqmodel"
@@ -92,6 +94,17 @@ type (
 )
 
 var (
+	float64Gt   = ORD.Gt(predord.Float64Ord)
+	intGeq      = ORD.Geq(predord.IntOrd)
+	hasName     = F.Flow3(stateL.Record.Get, fullName.Get, S.IsNonEmpty)
+	hasSequence = F.Flow2(sequenceLength, P.IsNonZero[int]())
+	// validConfig accepts a size wide enough for the label margins and
+	// a label column, and a label limit that is not negative.
+	validConfig = F.Pipe2(
+		F.Flow2(marginRoom, float64Gt(0)),
+		P.And(F.Flow2(labelColumnWidth, float64Gt(0))),
+		P.And(F.Flow2(stateMaxLabels.Get, intGeq(0))),
+	)
 	documentL = MakesvgDocumentLenses()
 	circleL   = MakesvgCircleLenses()
 	pathL     = MakesvgPathLenses()
@@ -253,11 +266,6 @@ func Render(input RenderInput) E.Either[error, []byte] {
 	)
 }
 
-func hasName(s renderState) bool {
-	record := stateL.Record.Get(s)
-	return fullName.Get(record) != ""
-}
-func hasSequence(s renderState) bool { return sequenceLength(s) > 0 }
 func isCircular(s renderState) bool {
 	return F.Pipe2(s, stateL.Record.Get, circular.Get)
 }
@@ -268,11 +276,14 @@ func sequenceLength(s renderState) int {
 	return len(sequence)
 }
 
-func validConfig(s renderState) bool {
-	cfg := stateL.Config.Get(s)
-	size := float64(configL.Size.Get(cfg))
-	columnWidth := size/half - size*radiusFraction - labelLeaderGapPx - LabelMarginPx
-	return size > LabelMarginPx*half && columnWidth > 0 && configL.MaxLabels.Get(cfg) >= 0
+// marginRoom is the map size left after both label margins.
+func marginRoom(s renderState) float64 { return sizePx(s) - LabelMarginPx*half }
+
+// labelColumnWidth is the width left for label text on one side of
+// the map.
+func labelColumnWidth(s renderState) float64 {
+	size := sizePx(s)
+	return size/half - size*radiusFraction - labelLeaderGapPx - LabelMarginPx
 }
 
 func validLocations(s renderState) bool {
@@ -456,12 +467,9 @@ func featureLabel(s renderState, item featureLayout) svgText {
 }
 
 func labelWidth(s renderState, item featureLayout) float64 {
-	cfg := stateL.Config.Get(s)
-	size := float64(configL.Size.Get(cfg))
-	available := size/half - size*radiusFraction - labelLeaderGapPx - LabelMarginPx
 	text := labelText(item)
 	estimated := float64(utf8.RuneCountInString(text)) * glyphWidthPx
-	return math.Min(available, estimated)
+	return math.Min(labelColumnWidth(s), estimated)
 }
 
 func centerLabel(s renderState) svgText {

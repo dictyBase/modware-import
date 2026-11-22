@@ -18,6 +18,7 @@ import (
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	O "github.com/IBM/fp-go/v2/option"
+	ORD "github.com/IBM/fp-go/v2/ord"
 	PR "github.com/IBM/fp-go/v2/pair"
 	P "github.com/IBM/fp-go/v2/predicate"
 	S "github.com/IBM/fp-go/v2/string"
@@ -64,8 +65,65 @@ var (
 		func(o fileblob.Options, value bool) fileblob.Options { o.CreateDir = value; return o },
 	)
 
-	isDNAExt = predord.StrEq(dnaExt)
-	isZipExt = predord.StrEq(zipExt)
+	isDNAExt     = predord.StrEq(dnaExt)
+	isZipExt     = predord.StrEq(zipExt)
+	isDNAKind    = predord.StrEq(typeDNA)
+	isZipKind    = predord.StrEq(typeZip)
+	isDirKind    = predord.StrEq(typeDir)
+	isFileScheme = predord.StrEq(schemeFile)
+	isS3Scheme   = predord.StrEq(schemeS3)
+	intLeq       = ORD.Leq(predord.IntOrd)
+
+	// isLocalScheme accepts a file scheme and a path with no scheme.
+	isLocalScheme = F.Pipe1(isFileScheme, P.Or(S.IsEmpty))
+	isLocalURL    = F.Flow2(urlScheme, isLocalScheme)
+	isS3URL       = F.Flow2(urlScheme, isS3Scheme)
+	// isAutoType accepts an empty input type and "auto".
+	isAutoType = F.Pipe1(predord.StrEq(typeAuto), P.Or(S.IsEmpty))
+	// isExplicitType accepts the dna, zip, and dir input types.
+	isExplicitType = F.Pipe2(isDNAKind, P.Or(isZipKind), P.Or(isDirKind))
+
+	isFileLocation = F.Flow2(locL.Scheme.Get, isFileScheme)
+	isDirLocation  = F.Flow2(locL.Kind.Get, isDirKind)
+	// isLocalFile accepts a local input that is not a directory.
+	isLocalFile = F.Pipe1(isFileLocation, P.And(P.Not(isDirLocation)))
+
+	// isAppleDouble matches the "._" resource files that macOS adds.
+	isAppleDouble = F.Bind2nd(strings.HasPrefix, appleDoublePrefix)
+	hasDNAExt     = F.Flow2(path.Ext, F.Bind2nd(strings.EqualFold, dnaExt))
+	// selectableName accepts a .dna file name that is not an AppleDouble file.
+	selectableName = F.Pipe1(hasDNAExt, P.And(P.Not(isAppleDouble)))
+
+	withinFolderDepth = F.Flow3(
+		memberName,
+		F.Bind2nd(strings.Count, keySeparator),
+		intLeq(maxFolderDepth),
+	)
+	inMacMetadata = F.Flow2(
+		memberName,
+		F.Bind2nd(strings.HasPrefix, macMetadataDir+keySeparator),
+	)
+	hasSelectableBase = F.Flow3(memberName, path.Base, selectableName)
+	// selectableMember keeps .dna files at the archive root and one folder deep.
+	selectableMember = F.Pipe3(
+		P.Not(isMemberDir),
+		P.And(withinFolderDepth),
+		P.And(P.Not(inMacMetadata)),
+		P.And(hasSelectableBase),
+	)
+
+	isMacMetadataName   = predord.StrEq(macMetadataDir)
+	isMacMetadataFolder = F.Flow4(
+		objectKey,
+		F.Bind2nd(strings.TrimSuffix, keySeparator),
+		path.Base,
+		isMacMetadataName,
+	)
+	// isListedFolder accepts a listed folder that is not __MACOSX.
+	isListedFolder   = F.Pipe1(isObjectDir, P.And(P.Not(isMacMetadataFolder)))
+	hasSelectableKey = F.Flow3(objectKey, path.Base, selectableName)
+	// selectableObject accepts a listed .dna file.
+	selectableObject = F.Pipe1(P.Not(isObjectDir), P.And(hasSelectableKey))
 
 	// locationOf builds a location from a parsed URL by its scheme.
 	locationOf = MO.Match(
@@ -157,8 +215,8 @@ var (
 			F.Constant1[runState](targetL.Options.Set(writeOptions())),
 		}),
 	)
-	isLocalTarget = F.Flow2(targetL.Scheme.Get, predord.StrEq(schemeFile))
-	isS3Target    = F.Flow2(targetL.Scheme.Get, predord.StrEq(schemeS3))
+	isLocalTarget = F.Flow2(targetL.Scheme.Get, isFileScheme)
+	isS3Target    = F.Flow2(targetL.Scheme.Get, isS3Scheme)
 	// openTarget opens a directory bucket for a file target and an S3
 	// bucket for an s3 target.
 	openTarget = MO.Match(
@@ -181,9 +239,9 @@ var (
 		F.Flow2(stemOf, sourceL.Stem.Set),
 	})
 
-	isDNAInput = F.Flow2(runKind.Get, predord.StrEq(typeDNA))
-	isZipInput = F.Flow2(runKind.Get, predord.StrEq(typeZip))
-	isDirInput = F.Flow2(runKind.Get, predord.StrEq(typeDir))
+	isDNAInput = F.Flow2(runKind.Get, isDNAKind)
+	isZipInput = F.Flow2(runKind.Get, isZipKind)
+	isDirInput = F.Flow2(runKind.Get, isDirKind)
 	// selectSources lists the sources of a single file, an archive, or a
 	// directory input.
 	selectSources = MO.Match(
@@ -366,19 +424,7 @@ func skipMetadataFiles(o fileblob.Options) fileblob.Options {
 	return o
 }
 
-func isLocalURL(u *url.URL) bool { return u.Scheme == "" || u.Scheme == schemeFile }
-
-func isAutoType(kind string) bool { return kind == "" || kind == typeAuto }
-
-func isExplicitType(kind string) bool {
-	return kind == typeDNA || kind == typeZip || kind == typeDir
-}
-
-func isLocalFile(loc location) bool {
-	return locL.Scheme.Get(loc) == schemeFile && locL.Kind.Get(loc) != typeDir
-}
-
-func isS3URL(u *url.URL) bool { return u.Scheme == schemeS3 }
+func urlScheme(u *url.URL) string { return u.Scheme }
 
 func urlHost(u *url.URL) string { return u.Host }
 
@@ -462,18 +508,7 @@ func archiveFiles(archive *zip.Reader) []*zip.File { return archive.File }
 
 func memberName(member *zip.File) string { return member.Name }
 
-// selectableMember keeps .dna files at the archive root and one folder deep.
-func selectableMember(member *zip.File) bool {
-	name := memberName(member)
-	depth, base := strings.Count(name, keySeparator), path.Base(name)
-	return !member.FileInfo().IsDir() && depth <= maxFolderDepth &&
-		!strings.HasPrefix(name, macMetadataDir+keySeparator) && selectableName(base)
-}
-
-func selectableName(base string) bool {
-	ext := path.Ext(base)
-	return !strings.HasPrefix(base, appleDoublePrefix) && strings.EqualFold(ext, dnaExt)
-}
+func isMemberDir(member *zip.File) bool { return member.FileInfo().IsDir() }
 
 func stemOf(key string) string {
 	base := path.Base(key)
@@ -542,17 +577,7 @@ func listOptions(prefix string) blob.ListOptions {
 
 func objectKey(object *blob.ListObject) string { return object.Key }
 
-func isListedFolder(object *blob.ListObject) bool {
-	key := objectKey(object)
-	folder := strings.TrimSuffix(key, keySeparator)
-	return object.IsDir && path.Base(folder) != macMetadataDir
-}
-
-func selectableObject(object *blob.ListObject) bool {
-	key := objectKey(object)
-	base := path.Base(key)
-	return !object.IsDir && selectableName(base)
-}
+func isObjectDir(object *blob.ListObject) bool { return object.IsDir }
 
 // markDuplicates flags each indexed source whose stem appears before its
 // index in sorted.

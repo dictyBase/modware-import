@@ -45,6 +45,8 @@ var (
 	genBankSpec = PR.MakePair(GenBankDir, genBankExt)
 	svgSpec     = PR.MakePair(SVGDir, svgExt)
 
+	isNilError      = P.IsZero[error]()
+	isArchiveMember = F.Flow2(jobMember.Get, P.IsNonZero[*zip.File]())
 	rejectDuplicate = E.FromPredicate(
 		P.Not(jobDuplicate.Get),
 		F.Constant1[fileJob](ErrDuplicateStem),
@@ -182,10 +184,6 @@ func (job fileJob) logFailure(err error) IOE.IOEither[error, IO.Void] {
 func wrapExportError(job fileJob, err error) error {
 	return fmt.Errorf("export %q: %w", jobKey.Get(job), err)
 }
-
-func isNilError(err error) bool { return err == nil }
-
-func isArchiveMember(job fileJob) bool { return jobMember.Get(job) != nil }
 
 func readArchiveMember(job fileJob) IOE.IOEither[error, []byte] {
 	return F.Pipe4(

@@ -14,6 +14,7 @@ import (
 	ORD "github.com/IBM/fp-go/v2/ord"
 	PR "github.com/IBM/fp-go/v2/pair"
 	P "github.com/IBM/fp-go/v2/predicate"
+	S "github.com/IBM/fp-go/v2/string"
 	"github.com/bebop/poly/io/genbank"
 	predord "github.com/dictyBase/fp-go-loom/predicate/ord"
 
@@ -37,6 +38,7 @@ var (
 	)
 	sideChoice     = P.Fold(F.Constant1[float64](rightSide), F.Constant1[float64](leftSide))
 	stateSize      = F.Pipe1(stateL.Config, L.Compose[renderState](configL.Size))
+	hasLabel       = F.Flow2(labelText, S.IsNonEmpty)
 	stateMaxLabels = F.Pipe1(stateL.Config, L.Compose[renderState](configL.MaxLabels))
 	labelSides     = []string{leftSide, rightSide}
 	// An occupied ring equal to the candidate moves the candidate one ring inward.
@@ -253,8 +255,6 @@ func labelText(item featureLayout) string {
 	attributes := PL.FeatureAttributes.Get(feature)
 	return attributes["label"]
 }
-
-func hasLabel(item featureLayout) bool { return labelText(item) != "" }
 
 func layoutLabels(s renderState) []featureLayout {
 	return F.Pipe5(

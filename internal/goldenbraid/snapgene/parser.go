@@ -15,6 +15,7 @@ import (
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	O "github.com/IBM/fp-go/v2/option"
 	PR "github.com/IBM/fp-go/v2/pair"
+	P "github.com/IBM/fp-go/v2/predicate"
 	R "github.com/IBM/fp-go/v2/record"
 	S "github.com/IBM/fp-go/v2/string"
 	"github.com/bebop/poly/io/genbank"
@@ -142,7 +143,7 @@ func Parse(in ParseInput) E.Either[error, ParseResult] {
 			stateL.Record.Set,
 			F.Flow5(
 				stateL.Packets.Get,
-				A.Filter(F.Flow2(packetL.ID.Get, predordByteDNA)),
+				A.Filter(F.Flow2(packetL.ID.Get, isDNAID)),
 				A.Head[Packet],
 				E.FromOption[Packet](F.Constant(ErrMissingDNAPacket)),
 				E.Chain(decodeDNA),
@@ -178,7 +179,8 @@ func validateBases(body []byte) E.Either[error, genbank.Genbank] {
 	)
 }
 
-func isCircularBody(body []byte) bool { return body[0]&circularFlag != 0 }
+// circularBits keeps the circular flag bit of the DNA packet flags byte.
+func circularBits(body []byte) byte { return body[0] & circularFlag }
 
 func sequenceBases(body []byte) string { return string(body[1:]) }
 
@@ -379,6 +381,7 @@ func transformedText(notes []notesXML) string {
 }
 
 var (
+	isCircularBody   = F.Flow2(circularBits, P.IsNonZero[byte]())
 	isFeaturesPacket = F.Flow2(packetL.ID.Get, isFeaturesID)
 	isPrimersPacket  = F.Flow2(packetL.ID.Get, isPrimersID)
 	isNotesPacket    = F.Flow2(packetL.ID.Get, isNotesID)

@@ -12,6 +12,7 @@ import (
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	PR "github.com/IBM/fp-go/v2/pair"
+	P "github.com/IBM/fp-go/v2/predicate"
 	endoutils "github.com/dictyBase/fp-go-loom/endomorphism"
 	"gocloud.dev/blob"
 
@@ -28,7 +29,7 @@ var (
 	runPrimers   = F.Pipe1(runParams, L.Compose[runState](paramsL.ShowPrimers))
 	runOutputKey = F.Pipe1(runL.Output, L.Compose[runState](locL.Key))
 
-	failOnPartial = E.FromPredicate(F.Flow2(stateFailed.Get, isZero), partialFailure)
+	failOnPartial = E.FromPredicate(F.Flow2(stateFailed.Get, P.IsZero[int]()), partialFailure)
 	jobEdits      = []func(PR.Pair[runState, source]) En.Endomorphism[fileJob]{
 		F.Flow3(PR.Head[runState, source], runCtx.Get, jobL.Ctx.Set),
 		F.Flow3(PR.Head[runState, source], runLogger.Get, jobL.Logger.Set),
@@ -126,8 +127,6 @@ func jobsOf(r runState) []fileJob {
 func jobFor(r runState, src source) fileJob {
 	return F.Pipe2(src, F.Bind1st(PR.MakePair[runState, source], r), jobOf)
 }
-
-func isZero(n int) bool { return n == 0 }
 
 // partialFailure keeps every per-file cause available to errors.Is.
 func partialFailure(s State) error {

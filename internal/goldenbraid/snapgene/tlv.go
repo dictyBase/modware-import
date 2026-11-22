@@ -1,6 +1,7 @@
 package snapgene
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 
@@ -10,8 +11,11 @@ import (
 	EQ "github.com/IBM/fp-go/v2/eq"
 	F "github.com/IBM/fp-go/v2/function"
 	O "github.com/IBM/fp-go/v2/option"
+	ORD "github.com/IBM/fp-go/v2/ord"
 	PR "github.com/IBM/fp-go/v2/pair"
 	P "github.com/IBM/fp-go/v2/predicate"
+	predarrays "github.com/dictyBase/fp-go-loom/predicate/array"
+	predord "github.com/dictyBase/fp-go-loom/predicate/ord"
 )
 
 // MaxPacketBytes bounds each packet body, not the file size.
@@ -40,11 +44,44 @@ var (
 	ErrMissingDNAPacket = errors.New("missing SnapGene DNA packet")
 	scanL               = MakescanStateLenses()
 	byteEq              = EQ.FromStrictEquals[byte]()
-	predordByteDNA      = F.Pipe1(dnaID, EQ.Equals(byteEq))
+	isDNAID             = F.Pipe1(dnaID, EQ.Equals(byteEq))
+	isCookieID          = F.Pipe1(cookieID, EQ.Equals(byteEq))
 	isFeaturesID        = F.Pipe1(featuresID, EQ.Equals(byteEq))
 	isPrimersID         = F.Pipe1(primersID, EQ.Equals(byteEq))
 	isNotesID           = F.Pipe1(notesID, EQ.Equals(byteEq))
 	atHeader            = P.Fold(E.Of[error, scanState], scanHeader)
+	intGeq              = ORD.Geq(predord.IntOrd)
+	int64Geq            = ORD.Geq(ORD.FromStrictCompare[int64]())
+	uint32Leq           = ORD.Leq(ORD.FromStrictCompare[uint32]())
+
+	// headerFits accepts a state with a full packet header left.
+	headerFits = F.Flow2(bytesLeft, intGeq(packetHeaderBytes))
+	// firstPacketIsCookie accepts any later packet and a first packet
+	// with the cookie tag.
+	firstPacketIsCookie = F.Pipe1(isLaterPacket, P.Or(F.Flow2(packetTag, isCookieID)))
+	isLaterPacket       = F.Flow2(scanL.Next.Get, P.IsNonZero[int]())
+	// packetSizeFits rejects a body larger than MaxPacketBytes.
+	packetSizeFits = F.Flow2(scanL.Size.Get, uint32Leq(MaxPacketBytes))
+	// bodyFits accepts a state that holds the full packet body.
+	bodyFits = F.Flow2(spareBodyBytes, int64Geq(0))
+	// isRetainedID accepts the cookie, DNA, and annotation packet tags.
+	isRetainedID = F.Pipe4(
+		isCookieID,
+		P.Or(isDNAID),
+		P.Or(isFeaturesID),
+		P.Or(isPrimersID),
+		P.Or(isNotesID),
+	)
+	isRetainedPacket = F.Flow2(packetTag, isRetainedID)
+
+	hasCookieID        = F.Flow2(packetL.ID.Get, isCookieID)
+	hasCookieSize      = F.Flow2(packetL.Body.Get, predarrays.LenEq[byte](cookieBytes))
+	hasCookieSignature = F.Flow2(
+		packetL.Body.Get,
+		F.Bind2nd(bytes.HasPrefix, []byte(cookieSignature)),
+	)
+	// cookieMatches accepts a cookie packet of the right size and signature.
+	cookieMatches = F.Pipe2(hasCookieID, P.And(hasCookieSize), P.And(hasCookieSignature))
 	// retainPayload appends only cookie, DNA, and annotation packets.
 	retainPayload = F.Pipe1(
 		isRetainedPacket,
@@ -103,17 +140,8 @@ func scanHeader(s scanState) E.Either[error, scanState] {
 	)
 }
 
-func headerFits(s scanState) bool {
-	data := scanL.Data.Get(s)
-	next := scanL.Next.Get(s)
-	return len(data)-next >= packetHeaderBytes
-}
-
-func firstPacketIsCookie(s scanState) bool {
-	data := scanL.Data.Get(s)
-	next := scanL.Next.Get(s)
-	return next != 0 || data[next] == cookieID
-}
+// bytesLeft counts the bytes from the next packet to the end of data.
+func bytesLeft(s scanState) int { return len(scanL.Data.Get(s)) - scanL.Next.Get(s) }
 
 func packetLength(s scanState) uint32 {
 	data := scanL.Data.Get(s)
@@ -121,13 +149,10 @@ func packetLength(s scanState) uint32 {
 	return binary.BigEndian.Uint32(data[next+1 : next+packetHeaderBytes])
 }
 
-func packetSizeFits(s scanState) bool { return scanL.Size.Get(s) <= MaxPacketBytes }
-
-func bodyFits(s scanState) bool {
-	data := scanL.Data.Get(s)
-	next := scanL.Next.Get(s)
-	size := scanL.Size.Get(s)
-	return int64(len(data)-next-packetHeaderBytes) >= int64(size)
+// spareBodyBytes counts the bytes after the packet body. It is negative
+// when the data ends before the body does.
+func spareBodyBytes(s scanState) int64 {
+	return int64(bytesLeft(s)-packetHeaderBytes) - int64(scanL.Size.Get(s))
 }
 
 func keepPacket(s scanState) scanState {
@@ -140,13 +165,6 @@ func keepPacket(s scanState) scanState {
 
 func nextPacketOffset(s scanState) int {
 	return scanL.Next.Get(s) + packetHeaderBytes + int(scanL.Size.Get(s))
-}
-
-func isRetainedPacket(s scanState) bool {
-	data := scanL.Data.Get(s)
-	next := scanL.Next.Get(s)
-	id := data[next]
-	return id == cookieID || id == dnaID || id == featuresID || id == primersID || id == notesID
 }
 
 func appendPacket(s scanState) scanState {
@@ -172,12 +190,6 @@ func packetBody(s scanState) []byte {
 
 func validCookie(packets []Packet) bool {
 	return F.Pipe2(packets, A.Head[Packet], O.Exists(cookieMatches))
-}
-
-func cookieMatches(packet Packet) bool {
-	body := packetL.Body.Get(packet)
-	return packetL.ID.Get(packet) == cookieID && len(body) == cookieBytes &&
-		string(body[:len(cookieSignature)]) == cookieSignature
 }
 
 var packetEdits = []func(scanState) En.Endomorphism[Packet]{
