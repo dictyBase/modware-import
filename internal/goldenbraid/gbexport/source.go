@@ -442,19 +442,11 @@ func openS3Target(target bucketTarget) IOE.IOEither[error, *blob.Bucket] {
 	)
 }
 
+// closeResource closes an opened bucket or archive member.
 func closeResource[R io.Closer](resource R) IOE.IOEither[error, struct{}] {
 	return IOE.TryCatchError(
 		func() (struct{}, error) { return struct{}{}, resource.Close() },
 	)
-}
-
-// withResource keeps an opened resource alive for use and closes it on
-// success and on failure.
-func withResource[R io.Closer, A any](
-	open IOE.IOEither[error, R],
-	use func(R) IOE.IOEither[error, A],
-) IOE.IOEither[error, A] {
-	return F.Pipe1(use, IOE.WithResource[A](open, closeResource[R]))
 }
 
 func readRef(ref objectRef) IOE.IOEither[error, []byte] {

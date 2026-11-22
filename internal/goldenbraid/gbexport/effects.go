@@ -185,13 +185,18 @@ func wrapExportError(job fileJob, err error) error {
 	return fmt.Errorf("export %q: %w", jobKey.Get(job), err)
 }
 
+// readArchiveMember reads the archive member of job.
 func readArchiveMember(job fileJob) IOE.IOEither[error, []byte] {
-	return F.Pipe4(
-		job,
-		jobMember.Get,
-		openMember,
-		F.Bind2nd(withResource[io.ReadCloser, []byte], readAll),
-		IOE.MapLeft[[]byte](ER.OnError("read archive member %q", jobKey.Get(job))),
+	return F.Pipe2(job, jobMember.Get, readMember)
+}
+
+// readMember opens member, reads all of it, and closes it on success
+// and on failure.
+func readMember(member *zip.File) IOE.IOEither[error, []byte] {
+	return F.Pipe2(
+		readAll,
+		IOE.WithResource[[]byte](openMember(member), closeResource[io.ReadCloser]),
+		IOE.MapLeft[[]byte](ER.OnError("read archive member %q", memberName(member))),
 	)
 }
 

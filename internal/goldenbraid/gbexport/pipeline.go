@@ -71,23 +71,19 @@ func (s State) logSummary() IO.IO[IO.Void] {
 	)
 }
 
-// exportInput keeps the input bucket open while it selects the sources and
-// runs the output scope.
+// exportInput opens the input bucket, exports from it, and closes it on
+// success and on failure.
 func exportInput(r runState) IOE.IOEither[error, State] {
-	return F.Pipe3(
-		r,
-		openInput,
-		F.Bind2nd(withResource[*blob.Bucket, State],
-			F.Bind1st(
-				withInputBucket,
-				r,
-			),
-		),
+	return F.Pipe2(
+		r.exportFromInput,
+		IOE.WithResource[State](openInput(r), closeResource[*blob.Bucket]),
 		IOE.MapLeft[State](ER.OnError("export input")),
 	)
 }
 
-func withInputBucket(r runState, bucket *blob.Bucket) IOE.IOEither[error, State] {
+// exportFromInput selects the sources in the open input bucket and
+// exports them.
+func (r runState) exportFromInput(bucket *blob.Bucket) IOE.IOEither[error, State] {
 	return F.Pipe6(
 		r,
 		runL.InputBucket.Set(bucket),
@@ -99,19 +95,20 @@ func withInputBucket(r runState, bucket *blob.Bucket) IOE.IOEither[error, State]
 	)
 }
 
-// exportOutput opens the output only after the input has sources.
+// exportOutput opens the output bucket, exports into it, and closes it
+// on success and on failure. It runs only after the input has sources.
 func exportOutput(r runState) IOE.IOEither[error, State] {
-	return F.Pipe3(
-		r,
-		openOutput,
-		F.Bind2nd(withResource[*blob.Bucket, State], F.Bind1st(withOutputBucket, r)),
+	return F.Pipe2(
+		r.exportToOutput,
+		IOE.WithResource[State](openOutput(r), closeResource[*blob.Bucket]),
 		IOE.MapLeft[State](ER.OnError("export output")),
 	)
 }
 
-// withOutputBucket exports the sources sequentially and keeps each failure
-// in the summary rather than stopping the batch.
-func withOutputBucket(r runState, bucket *blob.Bucket) IOE.IOEither[error, State] {
+// exportToOutput exports the sources one at a time into the open output
+// bucket and keeps each failure in the summary rather than stopping the
+// batch.
+func (r runState) exportToOutput(bucket *blob.Bucket) IOE.IOEither[error, State] {
 	return F.Pipe6(
 		r,
 		runL.OutputBucket.Set(bucket),
