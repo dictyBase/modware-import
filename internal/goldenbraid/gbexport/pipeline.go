@@ -77,7 +77,12 @@ func exportInput(r runState) IOE.IOEither[error, State] {
 	return F.Pipe3(
 		r,
 		openInput,
-		F.Bind2nd(withResource[*blob.Bucket, State], F.Bind1st(withInputBucket, r)),
+		F.Bind2nd(withResource[*blob.Bucket, State],
+			F.Bind1st(
+				withInputBucket,
+				r,
+			),
+		),
 		IOE.MapLeft[State](ER.OnError("export input")),
 	)
 }
