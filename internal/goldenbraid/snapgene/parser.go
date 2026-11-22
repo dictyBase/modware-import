@@ -194,11 +194,13 @@ func decodeAnnotations(s parseState) parseState {
 	return F.Pipe2(s, stateL.Packets.Get, A.Reduce(decodePacket, s))
 }
 
+// decodePacket adds a features, primers, or notes packet to s and
+// skips every other packet.
 func decodePacket(s parseState, packet Packet) parseState {
 	return F.Pipe1(packet, MO.Match(s, []O.Kleisli[Packet, parseState]{
-		MO.Case(F.Flow2(packetL.ID.Get, isFeaturesID), F.Bind1st(readFeatures, s)),
-		MO.Case(F.Flow2(packetL.ID.Get, isPrimersID), F.Bind1st(readPrimers, s)),
-		MO.Case(F.Flow2(packetL.ID.Get, isNotesID), F.Bind1st(readNotes, s)),
+		MO.Case(isFeaturesPacket, F.Bind1st(readFeatures, s)),
+		MO.Case(isPrimersPacket, F.Bind1st(readPrimers, s)),
+		MO.Case(isNotesPacket, F.Bind1st(readNotes, s)),
 	}))
 }
 
@@ -377,6 +379,9 @@ func transformedText(notes []notesXML) string {
 }
 
 var (
+	isFeaturesPacket = F.Flow2(packetL.ID.Get, isFeaturesID)
+	isPrimersPacket  = F.Flow2(packetL.ID.Get, isPrimersID)
+	isNotesPacket    = F.Flow2(packetL.ID.Get, isNotesID)
 	removeTrademark  = strings.NewReplacer("™", "").Replace
 	commentQualifier = MO.Match(
 		map[string]string{},
