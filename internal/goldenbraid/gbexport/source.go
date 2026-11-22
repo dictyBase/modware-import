@@ -16,7 +16,6 @@ import (
 	ER "github.com/IBM/fp-go/v2/errors"
 	F "github.com/IBM/fp-go/v2/function"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
-	M "github.com/IBM/fp-go/v2/monoid"
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	O "github.com/IBM/fp-go/v2/option"
 	PR "github.com/IBM/fp-go/v2/pair"
@@ -105,11 +104,8 @@ var (
 	)
 
 	// fitInput roots a local file input at its parent directory.
-	fitInput      = F.Pipe1(isLocalFile, P.Fold(F.Identity[location], rootLocalFile))
-	fileRootEdits = []func(location) En.Endomorphism[location]{
-		F.Flow3(locL.Bucket.Get, filepath.Dir, locL.Bucket.Set),
-		F.Flow3(locL.Bucket.Get, filepath.Base, locL.Key.Set),
-	}
+	// Other inputs pass through unchanged.
+	fitInput = F.Pipe1(isLocalFile, P.Fold(F.Identity[location], splitLocalFile))
 
 	s3Endpoint = L.MakeLens(
 		func(o s3.Options) string { return aws.ToString(o.BaseEndpoint) },
@@ -245,9 +241,16 @@ func explicitInputKind(r runState) E.Either[error, string] {
 	return F.Pipe2(r, runType.Get, E.Right[error, string])
 }
 
-// rootLocalFile moves the file name of loc from the bucket to the key.
-func rootLocalFile(loc location) location {
-	return update(loc, fileRootEdits)
+// splitLocalFile turns the local file path held in Bucket into its
+// parent directory (Bucket) and its file name (Key). The path is read
+// once, so the order of the two Set steps does not matter.
+func splitLocalFile(loc location) location {
+	file := locL.Bucket.Get(loc)
+	return F.Pipe2(
+		loc,
+		locL.Bucket.Set(filepath.Dir(file)),
+		locL.Key.Set(filepath.Base(file)),
+	)
 }
 
 // resolveLocations parses the raw input and output locations of r,
@@ -341,16 +344,6 @@ func reserveStems(sources []source) []source {
 		PR.Of[[]source],
 		PR.MapTail[[]source](A.MapWithIndex(PR.MakePair[int, source])),
 		PR.Paired(markDuplicates),
-	)
-}
-
-// update applies edits derived from s to s itself.
-func update[S any](s S, edits []func(S) En.Endomorphism[S]) S {
-	return F.Pipe3(
-		edits,
-		A.Flap[En.Endomorphism[S]](s),
-		M.ConcatAll(En.Monoid[S]()),
-		En.Read(s),
 	)
 }
 
