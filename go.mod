@@ -58,7 +58,7 @@ require (
 	github.com/bebop/poly v0.31.2
 	github.com/cockroachdb/pebble v1.1.5
 	github.com/deckarep/golang-set/v2 v2.9.0
-	github.com/dictyBase/fp-go-loom v0.8.0
+	github.com/dictyBase/fp-go-loom v0.9.0
 	github.com/go-playground/validator/v10 v10.30.6
 	github.com/google/uuid v1.6.0
 	github.com/hasura/go-graphql-client v0.16.0
