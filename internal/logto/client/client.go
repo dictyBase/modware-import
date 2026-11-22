@@ -7,9 +7,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 type Client struct {

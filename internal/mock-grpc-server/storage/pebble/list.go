@@ -166,7 +166,7 @@ func createIndexIterator(db *pebble.DB) (*pebble.Iterator, error) {
 }
 
 // extractIndexData extracts and parses the JSON index data from an iterator entry
-func extractIndexData(iter *pebble.Iterator, _ *pebble.DB) (map[string]interface{}, string) {
+func extractIndexData(iter *pebble.Iterator, _ *pebble.DB) (map[string]any, string) {
 	indexKey := string(iter.Key())
 	stockID := indexKey[len(indexPrefix):]
 
@@ -176,7 +176,7 @@ func extractIndexData(iter *pebble.Iterator, _ *pebble.DB) (map[string]interface
 		return nil, ""
 	}
 
-	var indexMap map[string]interface{}
+	var indexMap map[string]any
 	if err := json.Unmarshal(jsonData, &indexMap); err != nil {
 		return nil, ""
 	}

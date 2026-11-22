@@ -74,7 +74,7 @@ type AndExpression struct {
 }
 
 // Evaluate evaluates the AND expression
-func (expr AndExpression) Evaluate(data map[string]interface{}) bool {
+func (expr AndExpression) Evaluate(data map[string]any) bool {
 	return expr.Left.Evaluate(data) && expr.Right.Evaluate(data)
 }
 
@@ -85,7 +85,7 @@ type OrExpression struct {
 }
 
 // Evaluate evaluates the OR expression
-func (expr OrExpression) Evaluate(data map[string]interface{}) bool {
+func (expr OrExpression) Evaluate(data map[string]any) bool {
 	return expr.Left.Evaluate(data) || expr.Right.Evaluate(data)
 }
 
@@ -93,6 +93,6 @@ func (expr OrExpression) Evaluate(data map[string]interface{}) bool {
 type AlwaysTrueFilter struct{}
 
 // Evaluate always returns true
-func (AlwaysTrueFilter) Evaluate(_ map[string]interface{}) bool {
+func (AlwaysTrueFilter) Evaluate(_ map[string]any) bool {
 	return true
 }

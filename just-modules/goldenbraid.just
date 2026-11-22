@@ -181,3 +181,43 @@ run-goldenbraid-inventory tag k8s_config k8s_namespace="dev" debug="false":
     EOF
 
 
+
+# Run goldenbraid assembly export job in dev cluster
+run-goldenbraid-export tag k8s_config input output k8s_namespace="dev" debug="false":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ttl="{{ if debug == "true" { "300" } else { "120" } }}"
+    gen_name="{{ if debug == "true" { "goldenbraid-export-debug-" } else { "goldenbraid-export-" } }}"
+    container_name="{{ if debug == "true" { "goldenbraid-export-debug" } else { "goldenbraid-export" } }}"
+    debug_args=""
+    if [ "{{ debug }}" == "true" ]; then
+        debug_args="- --log-level
+                - debug
+                - --log-format
+                - text"
+    fi
+    kubectl create -f - --kubeconfig {{ k8s_config }} -o jsonpath='{.metadata.name}' <<EOF
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      generateName: ${gen_name}
+      namespace: {{ k8s_namespace }}
+    spec:
+      ttlSecondsAfterFinished: ${ttl}
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: ${container_name}
+              image: {{ ghcr_image }}:{{ tag }}
+              envFrom:
+                - secretRef:
+                    name: minio
+              args:
+                - export
+                - --input
+                - "{{ input }}"
+                - --output
+                - "{{ output }}"
+                ${debug_args}
+    EOF

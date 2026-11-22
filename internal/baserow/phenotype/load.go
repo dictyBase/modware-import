@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	R "github.com/IBM/fp-go/context/readerioeither"
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
-	"golang.org/x/exp/slices"
 
 	"github.com/dictyBase/modware-import/internal/baserow/common"
 	"github.com/dictyBase/modware-import/internal/baserow/database"

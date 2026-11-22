@@ -54,12 +54,12 @@ func (keyBuilder) typeKey(stockID string) []byte {
 
 // depositorKey returns the reverse index key for depositor
 func (keyBuilder) depositorKey(depositor, stockID string) []byte {
-	return []byte(fmt.Sprintf("%s%s:%s", depositorPrefix, depositor, stockID))
+	return fmt.Appendf(nil, "%s%s:%s", depositorPrefix, depositor, stockID)
 }
 
 // speciesKey returns the reverse index key for species
 func (keyBuilder) speciesKey(species, stockID string) []byte {
-	return []byte(fmt.Sprintf("%s%s:%s", speciesPrefix, species, stockID))
+	return fmt.Appendf(nil, "%s%s:%s", speciesPrefix, species, stockID)
 }
 
 // strainCounterKey returns the key for strain ID counter

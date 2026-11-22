@@ -7,6 +7,10 @@ import (
 	"net"
 	"testing"
 
+	E "github.com/IBM/fp-go/v2/either"
+	F "github.com/IBM/fp-go/v2/function"
+	IO "github.com/IBM/fp-go/v2/io"
+	IOE "github.com/IBM/fp-go/v2/ioeither"
 	stockpb "github.com/dictyBase/go-genproto/dictybaseapis/stock"
 	"github.com/dictyBase/modware-import/internal/mock-grpc-server/service/stock"
 	"github.com/dictyBase/modware-import/internal/mock-grpc-server/storage/pebble"
@@ -60,16 +64,9 @@ func setupStockTest(t *testing.T) *stockTestFixture {
 		}
 	}()
 
-	// Create client with deprecated DialContext for bufconn compatibility
-	//nolint:staticcheck // bufconn requires DialContext
-	conn, err := grpc.DialContext(
-		context.Background(),
-		"bufnet",
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			return lis.Dial()
-		}),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	conn, err := newStockTestConn(func(context.Context, string) (net.Conn, error) {
+		return lis.Dial()
+	})
 	require.NoError(t, err)
 
 	return &stockTestFixture{
@@ -1052,4 +1049,20 @@ func TestConcurrentCreates(t *testing.T) {
 		idMap[id] = true
 	}
 	require.Len(t, idMap, numGoroutines)
+}
+
+// newStockTestConn starts connecting without blocking, using a custom transport.
+func newStockTestConn(
+	dialer func(context.Context, string) (net.Conn, error),
+) (*grpc.ClientConn, error) {
+	// DialContext without WithBlock starts connecting in the background. Preserve
+	// that behavior, and its passthrough resolver, rather than leaving the channel idle.
+	return E.UnwrapError(F.Pipe2(
+		IOE.TryCatchError(func() (*grpc.ClientConn, error) {
+			return grpc.NewClient("passthrough:///bufnet", grpc.WithContextDialer(dialer),
+				grpc.WithTransportCredentials(insecure.NewCredentials()))
+		}),
+		IOE.ChainFirstIOK[error](IO.FromConsumer((*grpc.ClientConn).Connect)),
+		IO.Run[E.Either[error, *grpc.ClientConn]],
+	))
 }

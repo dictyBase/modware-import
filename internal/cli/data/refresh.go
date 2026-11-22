@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/dictyBase/modware-import/internal/registry"
@@ -15,7 +16,6 @@ import (
 	"github.com/dictyBase/modware-import/internal/git"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/exp/slices"
 )
 
 // RefreshCmd updates dictybase data files in S3(minio) storage

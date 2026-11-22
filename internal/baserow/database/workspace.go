@@ -64,7 +64,7 @@ func (wkm *WorkspaceManager) ListWorkspaces() ([]WorkspaceResp, error) {
 	)(context.Background())
 	output := F.Pipe1(
 		resp(),
-		E.Fold[error, []WorkspaceResp, listReqFeedback](
+		E.Fold(
 			onWorkspaceReqFeedbackError,
 			onWorkspaceReqFeedbackSuccess,
 		),

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/dictyBase/modware-import/internal/baserow/httpapi"
 	"github.com/dictyBase/modware-import/internal/datasource/xls/strain"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 )
 
 const ConcurrentStrainLoader = 10

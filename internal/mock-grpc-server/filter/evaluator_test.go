@@ -15,7 +15,7 @@ func TestEvaluateStringEquals(t *testing.T) {
 		Value:    "Costanza",
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"depositor": "Costanza",
 	}
 
@@ -30,7 +30,7 @@ func TestEvaluateStringNotEquals(t *testing.T) {
 		Value:    "Seinfeld",
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"depositor": "Costanza",
 	}
 
@@ -45,7 +45,7 @@ func TestEvaluateStringContains(t *testing.T) {
 		Value:    "axe",
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"label": "axeA2 axeB2 axeC2",
 	}
 
@@ -60,7 +60,7 @@ func TestEvaluateStringNotContains(t *testing.T) {
 		Value:    "xyz",
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"label": "axeA2 axeB2 axeC2",
 	}
 
@@ -75,7 +75,7 @@ func TestEvaluateNumericEquals(t *testing.T) {
 		Value:    "42",
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"quantity": float64(42),
 	}
 
@@ -90,7 +90,7 @@ func TestEvaluateNumericGreaterThan(t *testing.T) {
 		Value:    "10",
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"quantity": float64(42),
 	}
 
@@ -105,7 +105,7 @@ func TestEvaluateNumericLessThan(t *testing.T) {
 		Value:    "100",
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"quantity": float64(42),
 	}
 
@@ -124,7 +124,7 @@ func TestEvaluateDateGreaterOrEqual(t *testing.T) {
 	createdTime := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
 	timestamp := timestamppb.New(createdTime)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"created_at": timestamp.AsTime().Format(time.RFC3339),
 	}
 
@@ -142,7 +142,7 @@ func TestEvaluateDateLess(t *testing.T) {
 	createdTime := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
 	timestamp := timestamppb.New(createdTime)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"created_at": timestamp.AsTime().Format(time.RFC3339),
 	}
 
@@ -157,8 +157,8 @@ func TestEvaluateArrayContains(t *testing.T) {
 		Value:    "important",
 	}
 
-	data := map[string]interface{}{
-		"tags": []interface{}{"urgent", "important", "flagged"},
+	data := map[string]any{
+		"tags": []any{"urgent", "important", "flagged"},
 	}
 
 	result := pred.Evaluate(data)
@@ -172,8 +172,8 @@ func TestEvaluateArrayNotContains(t *testing.T) {
 		Value:    "spam",
 	}
 
-	data := map[string]interface{}{
-		"tags": []interface{}{"urgent", "important", "flagged"},
+	data := map[string]any{
+		"tags": []any{"urgent", "important", "flagged"},
 	}
 
 	result := pred.Evaluate(data)
@@ -187,7 +187,7 @@ func TestEvaluateMissingField(t *testing.T) {
 		Value:    "value",
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"depositor": "Costanza",
 	}
 
@@ -202,7 +202,7 @@ func TestEvaluateTypeMismatch(t *testing.T) {
 		Value:    "10",
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"depositor": "Costanza",
 	}
 
@@ -224,7 +224,7 @@ func TestEvaluateAndExpression(t *testing.T) {
 		},
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"depositor": "Costanza",
 		"species":   "Dictyostelium",
 	}
@@ -247,7 +247,7 @@ func TestEvaluateOrExpression(t *testing.T) {
 		},
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"depositor": "Costanza",
 	}
 
@@ -278,7 +278,7 @@ func TestEvaluateComplexExpression(t *testing.T) {
 	}
 
 	// Test case 1: Matches left side of OR
-	data1 := map[string]interface{}{
+	data1 := map[string]any{
 		"depositor": "Costanza",
 		"species":   "Dictyostelium",
 		"label":     "wild type",
@@ -286,7 +286,7 @@ func TestEvaluateComplexExpression(t *testing.T) {
 	require.True(t, expr.Evaluate(data1))
 
 	// Test case 2: Matches right side of OR
-	data2 := map[string]interface{}{
+	data2 := map[string]any{
 		"depositor": "Seinfeld",
 		"species":   "Other",
 		"label":     "axeA2",
@@ -294,7 +294,7 @@ func TestEvaluateComplexExpression(t *testing.T) {
 	require.True(t, expr.Evaluate(data2))
 
 	// Test case 3: Matches neither
-	data3 := map[string]interface{}{
+	data3 := map[string]any{
 		"depositor": "Seinfeld",
 		"species":   "Other",
 		"label":     "wild type",

@@ -772,10 +772,8 @@ func (s *LevelDBStorage) addIDToList(
 	existingIDs []string,
 	annotationID string,
 ) []string {
-	for _, id := range existingIDs {
-		if id == annotationID {
-			return existingIDs // Already exists
-		}
+	if slices.Contains(existingIDs, annotationID) {
+		return existingIDs // Already exists
 	}
 	return append(existingIDs, annotationID)
 }

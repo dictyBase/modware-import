@@ -64,7 +64,7 @@ func CreatePhenoTableHandler(cltx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(fmt.Sprintf("error in getting table ids %s", err), exitCodeError)
 	}
-	fieldDefs := []map[string]map[string]interface{}{
+	fieldDefs := []map[string]map[string]any{
 		phenoTbl.LinkFieldChangeSpecs(tableIDMaps),
 		phenoTbl.FieldChangeSpecs(),
 	}

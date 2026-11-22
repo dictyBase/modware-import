@@ -17,17 +17,11 @@ type SliceResult struct {
 // CalculateSlice calculates pagination slice boundaries and next cursor
 func CalculateSlice(params SliceParams) SliceResult {
 	start := params.Cursor
-	if start < 0 {
-		start = 0
-	}
-	if start > params.Total {
-		start = params.Total
-	}
+	start = max(start, 0)
+	start = min(start, params.Total)
 
 	end := start + params.Limit
-	if end > params.Total {
-		end = params.Total
-	}
+	end = min(end, params.Total)
 
 	// Calculate next cursor
 	nextCursor := int64(0)
