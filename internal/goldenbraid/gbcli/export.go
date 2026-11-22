@@ -9,6 +9,7 @@ import (
 	E "github.com/IBM/fp-go/v2/either"
 	En "github.com/IBM/fp-go/v2/endomorphism"
 	F "github.com/IBM/fp-go/v2/function"
+	endoutils "github.com/dictyBase/fp-go-loom/endomorphism"
 	ioeutils "github.com/dictyBase/fp-go-loom/ioeitherutils"
 	"github.com/urfave/cli/v2"
 
@@ -36,7 +37,7 @@ var (
 	stateEdits = []func(*cli.Context) En.Endomorphism[gbexport.State]{
 		F.Flow2(cliContext, stateL.Ctx.Set),
 		F.Flow3(logger.GetCliSlogHandler, slog.New, stateL.Logger.Set),
-		F.Flow2(paramsOf, stateL.Params.Set),
+		F.Flow2(endoutils.BuildFrom(paramEdits), stateL.Params.Set),
 	}
 )
 
@@ -47,21 +48,12 @@ func ExportFlags() []cli.Flag {
 
 // RunExport runs the export pipeline for one CLI invocation.
 func RunExport(c *cli.Context) error {
-	return F.Pipe5(
-		stateEdits,
-		A.Flap[En.Endomorphism[gbexport.State]](c),
-		En.Reduce[gbexport.State],
+	return F.Pipe4(
+		c,
+		endoutils.BuildFrom(stateEdits),
 		gbexport.Pipeline,
 		ioeutils.ToEither[error, gbexport.State],
 		E.ToError[gbexport.State],
-	)
-}
-
-func paramsOf(c *cli.Context) gbexport.Params {
-	return F.Pipe2(
-		paramEdits,
-		A.Flap[En.Endomorphism[gbexport.Params]](c),
-		En.Reduce[gbexport.Params],
 	)
 }
 
