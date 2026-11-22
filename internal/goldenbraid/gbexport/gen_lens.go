@@ -1588,15 +1588,14 @@ type bucketTargetLenses struct {
 	Params  __lens.Lens[bucketTarget, Params]
 	Scheme  __lens.Lens[bucketTarget, string]
 	Name    __lens.Lens[bucketTarget, string]
-	Options __lens.Lens[bucketTarget, *fileblob.Options]
+	Options __lens.Lens[bucketTarget, fileblob.Options]
 	Client  __lens.Lens[bucketTarget, *s3.Client]
 	// optional fields
-	CtxO     __lens_option.LensO[bucketTarget, context.Context]
-	ParamsO  __lens_option.LensO[bucketTarget, Params]
-	SchemeO  __lens_option.LensO[bucketTarget, string]
-	NameO    __lens_option.LensO[bucketTarget, string]
-	OptionsO __lens_option.LensO[bucketTarget, *fileblob.Options]
-	ClientO  __lens_option.LensO[bucketTarget, *s3.Client]
+	CtxO    __lens_option.LensO[bucketTarget, context.Context]
+	ParamsO __lens_option.LensO[bucketTarget, Params]
+	SchemeO __lens_option.LensO[bucketTarget, string]
+	NameO   __lens_option.LensO[bucketTarget, string]
+	ClientO __lens_option.LensO[bucketTarget, *s3.Client]
 }
 
 // bucketTargetRefLenses provides [lenses] for accessing fields of [bucketTarget] via a reference to [bucketTarget]
@@ -1608,15 +1607,14 @@ type bucketTargetRefLenses struct {
 	Params  __lens.Lens[*bucketTarget, Params]
 	Scheme  __lens.Lens[*bucketTarget, string]
 	Name    __lens.Lens[*bucketTarget, string]
-	Options __lens.Lens[*bucketTarget, *fileblob.Options]
+	Options __lens.Lens[*bucketTarget, fileblob.Options]
 	Client  __lens.Lens[*bucketTarget, *s3.Client]
 	// optional fields
-	CtxO     __lens_option.LensO[*bucketTarget, context.Context]
-	ParamsO  __lens_option.LensO[*bucketTarget, Params]
-	SchemeO  __lens_option.LensO[*bucketTarget, string]
-	NameO    __lens_option.LensO[*bucketTarget, string]
-	OptionsO __lens_option.LensO[*bucketTarget, *fileblob.Options]
-	ClientO  __lens_option.LensO[*bucketTarget, *s3.Client]
+	CtxO    __lens_option.LensO[*bucketTarget, context.Context]
+	ParamsO __lens_option.LensO[*bucketTarget, Params]
+	SchemeO __lens_option.LensO[*bucketTarget, string]
+	NameO   __lens_option.LensO[*bucketTarget, string]
+	ClientO __lens_option.LensO[*bucketTarget, *s3.Client]
 }
 
 // bucketTargetPrisms provides [prisms] for accessing fields of [bucketTarget]
@@ -1627,7 +1625,7 @@ type bucketTargetPrisms struct {
 	Params  __prism.Prism[bucketTarget, Params]
 	Scheme  __prism.Prism[bucketTarget, string]
 	Name    __prism.Prism[bucketTarget, string]
-	Options __prism.Prism[bucketTarget, *fileblob.Options]
+	Options __prism.Prism[bucketTarget, fileblob.Options]
 	Client  __prism.Prism[bucketTarget, *s3.Client]
 }
 
@@ -1639,7 +1637,7 @@ type bucketTargetRefPrisms struct {
 	Params  __prism.Prism[*bucketTarget, Params]
 	Scheme  __prism.Prism[*bucketTarget, string]
 	Name    __prism.Prism[*bucketTarget, string]
-	Options __prism.Prism[*bucketTarget, *fileblob.Options]
+	Options __prism.Prism[*bucketTarget, fileblob.Options]
 	Client  __prism.Prism[*bucketTarget, *s3.Client]
 }
 
@@ -1669,8 +1667,8 @@ func MakebucketTargetLenses() bucketTargetLenses {
 		"bucketTarget.Name",
 	)
 	lensOptions := __lens.MakeLensWithName(
-		func(s bucketTarget) *fileblob.Options { return s.Options },
-		func(s bucketTarget, v *fileblob.Options) bucketTarget { s.Options = v; return s },
+		func(s bucketTarget) fileblob.Options { return s.Options },
+		func(s bucketTarget, v fileblob.Options) bucketTarget { s.Options = v; return s },
 		"bucketTarget.Options",
 	)
 	lensClient := __lens.MakeLensWithName(
@@ -1683,7 +1681,6 @@ func MakebucketTargetLenses() bucketTargetLenses {
 	lensParamsO := __lens_option.FromIso[bucketTarget](__iso_option.FromZero[Params]())(lensParams)
 	lensSchemeO := __lens_option.FromIso[bucketTarget](__iso_option.FromZero[string]())(lensScheme)
 	lensNameO := __lens_option.FromIso[bucketTarget](__iso_option.FromZero[string]())(lensName)
-	lensOptionsO := __lens_option.FromIso[bucketTarget](__iso_option.FromZero[*fileblob.Options]())(lensOptions)
 	lensClientO := __lens_option.FromIso[bucketTarget](__iso_option.FromZero[*s3.Client]())(lensClient)
 	return bucketTargetLenses{
 		// mandatory lenses
@@ -1694,12 +1691,11 @@ func MakebucketTargetLenses() bucketTargetLenses {
 		Options: lensOptions,
 		Client:  lensClient,
 		// optional lenses
-		CtxO:     lensCtxO,
-		ParamsO:  lensParamsO,
-		SchemeO:  lensSchemeO,
-		NameO:    lensNameO,
-		OptionsO: lensOptionsO,
-		ClientO:  lensClientO,
+		CtxO:    lensCtxO,
+		ParamsO: lensParamsO,
+		SchemeO: lensSchemeO,
+		NameO:   lensNameO,
+		ClientO: lensClientO,
 	}
 }
 
@@ -1728,9 +1724,9 @@ func MakebucketTargetRefLenses() bucketTargetRefLenses {
 		func(s *bucketTarget, v string) *bucketTarget { s.Name = v; return s },
 		"(*bucketTarget).Name",
 	)
-	lensOptions := __lens.MakeLensStrictWithName(
-		func(s *bucketTarget) *fileblob.Options { return s.Options },
-		func(s *bucketTarget, v *fileblob.Options) *bucketTarget { s.Options = v; return s },
+	lensOptions := __lens.MakeLensRefWithName(
+		func(s *bucketTarget) fileblob.Options { return s.Options },
+		func(s *bucketTarget, v fileblob.Options) *bucketTarget { s.Options = v; return s },
 		"(*bucketTarget).Options",
 	)
 	lensClient := __lens.MakeLensStrictWithName(
@@ -1743,7 +1739,6 @@ func MakebucketTargetRefLenses() bucketTargetRefLenses {
 	lensParamsO := __lens_option.FromIso[*bucketTarget](__iso_option.FromZero[Params]())(lensParams)
 	lensSchemeO := __lens_option.FromIso[*bucketTarget](__iso_option.FromZero[string]())(lensScheme)
 	lensNameO := __lens_option.FromIso[*bucketTarget](__iso_option.FromZero[string]())(lensName)
-	lensOptionsO := __lens_option.FromIso[*bucketTarget](__iso_option.FromZero[*fileblob.Options]())(lensOptions)
 	lensClientO := __lens_option.FromIso[*bucketTarget](__iso_option.FromZero[*s3.Client]())(lensClient)
 	return bucketTargetRefLenses{
 		// mandatory lenses
@@ -1754,12 +1749,11 @@ func MakebucketTargetRefLenses() bucketTargetRefLenses {
 		Options: lensOptions,
 		Client:  lensClient,
 		// optional lenses
-		CtxO:     lensCtxO,
-		ParamsO:  lensParamsO,
-		SchemeO:  lensSchemeO,
-		NameO:    lensNameO,
-		OptionsO: lensOptionsO,
-		ClientO:  lensClientO,
+		CtxO:    lensCtxO,
+		ParamsO: lensParamsO,
+		SchemeO: lensSchemeO,
+		NameO:   lensNameO,
+		ClientO: lensClientO,
 	}
 }
 
@@ -1799,10 +1793,9 @@ func MakebucketTargetPrisms() bucketTargetPrisms {
 		},
 		"bucketTarget.Name",
 	)
-	_fromNonZeroOptions := __option.FromNonZero[*fileblob.Options]()
 	_prismOptions := __prism.MakePrismWithName(
-		func(s bucketTarget) __option.Option[*fileblob.Options] { return _fromNonZeroOptions(s.Options) },
-		func(v *fileblob.Options) bucketTarget {
+		func(s bucketTarget) __option.Option[fileblob.Options] { return __option.Some(s.Options) },
+		func(v fileblob.Options) bucketTarget {
 			return bucketTarget{Options: v}
 		},
 		"bucketTarget.Options",
@@ -1861,10 +1854,9 @@ func MakebucketTargetRefPrisms() bucketTargetRefPrisms {
 		},
 		"bucketTarget.Name",
 	)
-	_fromNonZeroOptions := __option.FromNonZero[*fileblob.Options]()
 	_prismOptions := __prism.MakePrismWithName(
-		func(s *bucketTarget) __option.Option[*fileblob.Options] { return _fromNonZeroOptions(s.Options) },
-		func(v *fileblob.Options) *bucketTarget {
+		func(s *bucketTarget) __option.Option[fileblob.Options] { return __option.Some(s.Options) },
+		func(v fileblob.Options) *bucketTarget {
 			return &bucketTarget{Options: v}
 		},
 		"bucketTarget.Options",

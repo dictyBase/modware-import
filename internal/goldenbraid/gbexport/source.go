@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	endoutils "github.com/dictyBase/fp-go-loom/endomorphism"
 	MO "github.com/dictyBase/fp-go-loom/matchopt"
 	predarrays "github.com/dictyBase/fp-go-loom/predicate/array"
 	predord "github.com/dictyBase/fp-go-loom/predicate/ord"
@@ -58,82 +59,57 @@ var (
 		func(o blob.ListOptions) string { return o.Delimiter },
 		func(o blob.ListOptions, value string) blob.ListOptions { o.Delimiter = value; return o },
 	)
-	createDir = L.MakeLens(
+	// fileblobCreateDir reads and sets fileblob.Options.CreateDir.
+	fileblobCreateDir = L.MakeLens(
 		func(o fileblob.Options) bool { return o.CreateDir },
 		func(o fileblob.Options, value bool) fileblob.Options { o.CreateDir = value; return o },
 	)
 
-	// readOptions leaves the local input bucket at the fileblob defaults.
-	readOptions *fileblob.Options
-	// writeOptions creates the output root and writes no metadata sidecars.
-	writeOptions = new(F.Pipe2(fileblob.Options{}, createDir.Set(true), skipSidecars))
+	isDNAExt = predord.StrEq(dnaExt)
+	isZipExt = predord.StrEq(zipExt)
 
-	parseLocation = F.Flow3(
-		E.Eitherize1(url.Parse),
-		E.MapLeft[*url.URL](ER.OnError("parse location")),
-		E.Chain(MO.Match(
-			E.Left[location](ErrUnsupportedScheme),
-			[]O.Kleisli[*url.URL, E.Either[error, location]]{
-				MO.Case(isLocalURL, F.Flow2(localLocation, E.Right[error, location])),
-				MO.Case(isS3URL, F.Flow2(s3Location, E.Right[error, location])),
-			},
-		)),
+	// locationOf builds a location from a parsed URL by its scheme.
+	locationOf = MO.Match(
+		E.Left[location](ErrUnsupportedScheme),
+		[]O.Kleisli[*url.URL, E.Either[error, location]]{
+			MO.Case(isLocalURL, localLocation),
+			MO.Case(isS3URL, s3Location),
+		},
 	)
-	localLocation = F.Bind2nd(build[*url.URL, location], []func(*url.URL) En.Endomorphism[location]{
+	// localLocationOf makes a file location with the URL path as bucket.
+	localLocationOf = endoutils.BuildFrom([]func(*url.URL) En.Endomorphism[location]{
 		F.Constant1[*url.URL](locL.Scheme.Set(schemeFile)),
 		F.Flow2(urlPath, locL.Bucket.Set),
 	})
-	s3Location = F.Bind2nd(build[*url.URL, location], []func(*url.URL) En.Endomorphism[location]{
+	// s3LocationOf makes an s3 location with the URL host as bucket.
+	s3LocationOf = endoutils.BuildFrom([]func(*url.URL) En.Endomorphism[location]{
 		F.Constant1[*url.URL](locL.Scheme.Set(schemeS3)),
 		F.Flow2(urlHost, locL.Bucket.Set),
 		F.Flow3(urlPath, F.Bind2nd(strings.TrimPrefix, keySeparator), locL.Key.Set),
 	})
-	isDNAExt = predord.StrEq(dnaExt)
-	isZipExt = predord.StrEq(zipExt)
-	autoKind = F.Flow4(
-		F.Bind2nd(strings.TrimSuffix, keySeparator),
-		path.Ext,
-		strings.ToLower,
-		MO.Match(typeDir, []O.Kleisli[string, string]{
-			MO.Const(isDNAExt, typeDNA),
-			MO.Const(isZipExt, typeZip),
-		}),
+
+	// kindOfExt maps a lower-case extension to an input kind.
+	kindOfExt = MO.Match(typeDir, []O.Kleisli[string, string]{
+		MO.Const(isDNAExt, typeDNA),
+		MO.Const(isZipExt, typeZip),
+	})
+	isAutoInput     = F.Flow2(runType.Get, isAutoType)
+	isExplicitInput = F.Flow2(runType.Get, isExplicitType)
+	// inputKind infers the kind of an auto input and keeps an explicit one.
+	inputKind = MO.Match(
+		E.Left[string](ErrUnknownInputType),
+		[]O.Kleisli[runState, E.Either[error, string]]{
+			MO.Case(isAutoInput, autoInputKind),
+			MO.Case(isExplicitInput, explicitInputKind),
+		},
 	)
-	inputKind = F.Flow3(
-		PR.Of[runState],
-		PR.BiMap(runType.Get, runRaw.Get),
-		MO.Match(
-			E.Left[string](ErrUnknownInputType),
-			[]O.Kleisli[PR.Pair[string, string], E.Either[error, string]]{
-				MO.Case(
-					F.Flow2(PR.Head[string, string], isAutoType),
-					F.Flow3(PR.Tail[string, string], autoKind, E.Right[error, string]),
-				),
-				MO.Case(
-					F.Flow2(PR.Head[string, string], isExplicitType),
-					F.Flow2(PR.Head[string, string], E.Right[error, string]),
-				),
-			},
-		),
-	)
+
 	// fitInput roots a local file input at its parent directory.
-	fitInput = F.Pipe1(
-		isLocalFile,
-		P.Fold(
-			F.Identity[location],
-			F.Bind2nd(update[location], []func(location) En.Endomorphism[location]{
-				F.Flow3(locL.Bucket.Get, filepath.Dir, locL.Bucket.Set),
-				F.Flow3(locL.Bucket.Get, filepath.Base, locL.Key.Set),
-			}),
-		),
-	)
-	resolveLocations = F.Flow5(
-		E.Of[error, runState],
-		E.Bind(runL.Input.Set, F.Flow2(runRaw.Get, parseLocation)),
-		E.Bind(runKind.Set, inputKind),
-		E.Map[error](runL.Input.Modify(fitInput)),
-		E.Bind(runL.Output.Set, F.Flow2(runOutRaw.Get, parseLocation)),
-	)
+	fitInput      = F.Pipe1(isLocalFile, P.Fold(F.Identity[location], rootLocalFile))
+	fileRootEdits = []func(location) En.Endomorphism[location]{
+		F.Flow3(locL.Bucket.Get, filepath.Dir, locL.Bucket.Set),
+		F.Flow3(locL.Bucket.Get, filepath.Base, locL.Key.Set),
+	}
 
 	s3Endpoint = L.MakeLens(
 		func(o s3.Options) string { return aws.ToString(o.BaseEndpoint) },
@@ -153,12 +129,13 @@ var (
 	)
 	// s3Options sends the bucket name in the URL path so that MinIO
 	// receives it. Only the static access and secret keys apply.
-	s3Options = F.Bind2nd(build[Params, s3.Options], []func(Params) En.Endomorphism[s3.Options]{
+	s3Options = endoutils.BuildFrom([]func(Params) En.Endomorphism[s3.Options]{
 		F.Flow2(paramsL.S3Endpoint.Get, s3Endpoint.Set),
 		F.Flow2(paramsL.S3Region.Get, s3Region.Set),
 		F.Flow2(staticCredentials, s3Credentials.Set),
 		F.Constant1[Params](s3PathStyle.Set(true)),
 	})
+
 	targetL       = MakebucketTargetLenses()
 	runInScheme   = F.Pipe1(runL.Input, L.Compose[runState](locL.Scheme))
 	runInBucket   = F.Pipe1(runL.Input, L.Compose[runState](locL.Bucket))
@@ -168,90 +145,203 @@ var (
 		F.Flow2(runCtx.Get, targetL.Ctx.Set),
 		F.Flow4(runParams.Get, s3Options, newS3Client, targetL.Client.Set),
 	}
+	// inputTarget describes the input bucket of a run. It keeps the
+	// zero fileblob.Options, which are the fileblob defaults.
+	inputTarget = endoutils.BuildFrom(
+		A.ArrayConcatAll(commonTargets, []func(runState) En.Endomorphism[bucketTarget]{
+			F.Flow2(runInScheme.Get, targetL.Scheme.Set),
+			F.Flow2(runInBucket.Get, targetL.Name.Set),
+		}),
+	)
+	// outputTarget describes the output bucket of a run.
+	outputTarget = endoutils.BuildFrom(
+		A.ArrayConcatAll(commonTargets, []func(runState) En.Endomorphism[bucketTarget]{
+			F.Flow2(runOutScheme.Get, targetL.Scheme.Set),
+			F.Flow2(runOutBucket.Get, targetL.Name.Set),
+			F.Constant1[runState](targetL.Options.Set(writeOptions())),
+		}),
+	)
+	isLocalTarget = F.Flow2(targetL.Scheme.Get, predord.StrEq(schemeFile))
+	isS3Target    = F.Flow2(targetL.Scheme.Get, predord.StrEq(schemeS3))
+	// openTarget opens a directory bucket for a file target and an S3
+	// bucket for an s3 target.
 	openTarget = MO.Match(
 		IOE.Left[*blob.Bucket](ErrUnsupportedScheme),
 		[]O.Kleisli[bucketTarget, IOE.IOEither[error, *blob.Bucket]]{
-			MO.Case(F.Flow2(targetL.Scheme.Get, predord.StrEq(schemeFile)), openLocalTarget),
-			MO.Case(F.Flow2(targetL.Scheme.Get, predord.StrEq(schemeS3)), openS3Target),
+			MO.Case(isLocalTarget, openLocalTarget),
+			MO.Case(isS3Target, openS3Target),
 		},
 	)
-	openInput = F.Flow2(
-		F.Bind2nd(
-			build[runState, bucketTarget],
-			A.ArrayConcatAll(commonTargets, []func(runState) En.Endomorphism[bucketTarget]{
-				F.Flow2(runInScheme.Get, targetL.Scheme.Set),
-				F.Flow2(runInBucket.Get, targetL.Name.Set),
-				F.Constant1[runState](targetL.Options.Set(readOptions)),
-			}),
-		),
-		openTarget,
-	)
-	openOutput = F.Flow2(
-		F.Bind2nd(
-			build[runState, bucketTarget],
-			A.ArrayConcatAll(commonTargets, []func(runState) En.Endomorphism[bucketTarget]{
-				F.Flow2(runOutScheme.Get, targetL.Scheme.Set),
-				F.Flow2(runOutBucket.Get, targetL.Name.Set),
-				F.Constant1[runState](targetL.Options.Set(writeOptions)),
-			}),
-		),
-		openTarget,
-	)
 
-	inputRef = F.Bind2nd(build[runState, objectRef], []func(runState) En.Endomorphism[objectRef]{
+	// inputRef points at the input key inside the open input bucket.
+	inputRef = endoutils.BuildFrom([]func(runState) En.Endomorphism[objectRef]{
 		F.Flow2(runL.InputBucket.Get, refL.Bucket.Set),
 		F.Flow2(runCtx.Get, refL.Ctx.Set),
 		F.Flow2(runKey.Get, refL.Key.Set),
 	})
-	newSource = F.Bind2nd(build[string, source], []func(string) En.Endomorphism[source]{
+	// newSource makes a source from an object key.
+	newSource = endoutils.BuildFrom([]func(string) En.Endomorphism[source]{
 		sourceL.Key.Set,
 		F.Flow2(stemOf, sourceL.Stem.Set),
 	})
-	memberSource = F.Flow3(
-		PR.Of[*zip.File],
-		PR.MapHead[*zip.File](F.Flow2(memberName, newSource)),
-		PR.Merge(sourceL.Member.Set),
-	)
-	dirPrefix = F.Flow2(
-		F.Bind2nd(strings.TrimSuffix, keySeparator),
-		strutils.MapNonEmpty(S.Append(keySeparator)),
-	)
-	singleSource  = F.Flow4(runKey.Get, newSource, A.Of[source], IOE.Of[error, []source])
-	archiveSource = F.Flow4(
-		inputRef,
-		readRef,
-		IOE.ChainEitherK(F.Flow2(openArchive, E.MapLeft[*zip.Reader](ER.OnError("open archive")))),
-		IOE.Map[error](F.Flow3(archiveFiles, A.Filter(selectableMember), A.Map(memberSource))),
-	)
-	dirSource = F.Flow3(
-		F.Flow2(inputRef, refL.Key.Modify(dirPrefix)),
-		listTwoLevels,
-		IOE.Map[error](F.Flow2(A.Filter(selectableObject), A.Map(F.Flow2(objectKey, newSource)))),
-	)
+
+	isDNAInput = F.Flow2(runKind.Get, predord.StrEq(typeDNA))
+	isZipInput = F.Flow2(runKind.Get, predord.StrEq(typeZip))
+	isDirInput = F.Flow2(runKind.Get, predord.StrEq(typeDir))
+	// selectSources lists the sources of a single file, an archive, or a
+	// directory input.
 	selectSources = MO.Match(
 		IOE.Left[[]source](ErrUnknownInputType),
 		[]O.Kleisli[runState, IOE.IOEither[error, []source]]{
-			MO.Case(F.Flow2(runKind.Get, predord.StrEq(typeDNA)), singleSource),
-			MO.Case(F.Flow2(runKind.Get, predord.StrEq(typeZip)), archiveSource),
-			MO.Case(F.Flow2(runKind.Get, predord.StrEq(typeDir)), dirSource),
+			MO.Case(isDNAInput, singleSource),
+			MO.Case(isZipInput, archiveSource),
+			MO.Case(isDirInput, dirSource),
 		},
 	)
 	requireSources = E.FromPredicate(
 		F.Flow2(runL.Sources.Get, predarrays.IsNonEmpty[source]()),
 		F.Constant1[runState](ErrNoDNAFiles),
 	)
-	// reserveStems sorts by key and marks every later source of a stem.
-	reserveStems = F.Flow4(
+)
+
+// parseLocation parses raw as a local path or an s3:// URL.
+func parseLocation(raw string) E.Either[error, location] {
+	return F.Pipe3(
+		raw,
+		E.Eitherize1(url.Parse),
+		E.MapLeft[*url.URL](ER.OnError("parse location")),
+		E.Chain(locationOf),
+	)
+}
+
+// localLocation returns the file location of u.
+func localLocation(u *url.URL) E.Either[error, location] {
+	return F.Pipe2(u, localLocationOf, E.Right[error, location])
+}
+
+// s3Location returns the s3 location of u.
+func s3Location(u *url.URL) E.Either[error, location] {
+	return F.Pipe2(u, s3LocationOf, E.Right[error, location])
+}
+
+// autoKind infers the input kind from the extension of raw.
+func autoKind(raw string) string {
+	return F.Pipe4(
+		raw,
+		F.Bind2nd(strings.TrimSuffix, keySeparator),
+		path.Ext,
+		strings.ToLower,
+		kindOfExt,
+	)
+}
+
+// autoInputKind infers the kind from the raw input location of r.
+func autoInputKind(r runState) E.Either[error, string] {
+	return F.Pipe3(r, runRaw.Get, autoKind, E.Right[error, string])
+}
+
+// explicitInputKind returns the input type flag of r.
+func explicitInputKind(r runState) E.Either[error, string] {
+	return F.Pipe2(r, runType.Get, E.Right[error, string])
+}
+
+// rootLocalFile moves the file name of loc from the bucket to the key.
+func rootLocalFile(loc location) location {
+	return update(loc, fileRootEdits)
+}
+
+// resolveLocations parses the raw input and output locations of r,
+// infers the input kind, and roots a local file input at its parent
+// directory. It returns r with Input and Output set, or the first
+// parse or input-type error.
+func resolveLocations(r runState) E.Either[error, runState] {
+	return F.Pipe5(
+		r,
+		E.Of[error, runState],
+		E.Bind(runL.Input.Set, F.Flow2(runRaw.Get, parseLocation)),
+		E.Bind(runKind.Set, inputKind),
+		E.Map[error](runL.Input.Modify(fitInput)),
+		E.Bind(runL.Output.Set, F.Flow2(runOutRaw.Get, parseLocation)),
+	)
+}
+
+// openInput opens the input bucket of r.
+func openInput(r runState) IOE.IOEither[error, *blob.Bucket] {
+	return F.Pipe2(r, inputTarget, openTarget)
+}
+
+// openOutput opens the output bucket of r.
+func openOutput(r runState) IOE.IOEither[error, *blob.Bucket] {
+	return F.Pipe2(r, outputTarget, openTarget)
+}
+
+// singleSource returns the one .dna file input as the only source.
+func singleSource(r runState) IOE.IOEither[error, []source] {
+	return F.Pipe4(r, runKey.Get, newSource, A.Of[source], IOE.Of[error, []source])
+}
+
+// archiveSource reads the zip input and returns its selectable members.
+func archiveSource(r runState) IOE.IOEither[error, []source] {
+	return F.Pipe4(
+		r,
+		inputRef,
+		readRef,
+		IOE.ChainEitherK(openArchive),
+		IOE.Map[error](archiveSources),
+	)
+}
+
+// archiveSources makes a source for every selectable archive member.
+func archiveSources(archive *zip.Reader) []source {
+	return F.Pipe3(archive, archiveFiles, A.Filter(selectableMember), A.Map(memberSource))
+}
+
+// memberSource makes a source for one archive member.
+func memberSource(member *zip.File) source {
+	return F.Pipe3(member, memberName, newSource, sourceL.Member.Set(member))
+}
+
+// dirSource lists the directory input two levels deep and returns its
+// selectable objects.
+func dirSource(r runState) IOE.IOEither[error, []source] {
+	return F.Pipe4(
+		r,
+		inputRef,
+		refL.Key.Modify(dirPrefix),
+		listTwoLevels,
+		IOE.Map[error](objectSources),
+	)
+}
+
+// objectSources makes a source for every selectable listed object.
+func objectSources(objects []*blob.ListObject) []source {
+	return F.Pipe2(objects, A.Filter(selectableObject), A.Map(objectSource))
+}
+
+// objectSource makes a source from the key of a listed object.
+func objectSource(object *blob.ListObject) source {
+	return F.Pipe2(object, objectKey, newSource)
+}
+
+// dirPrefix ends a non-empty directory key with one separator.
+func dirPrefix(key string) string {
+	return F.Pipe2(
+		key,
+		F.Bind2nd(strings.TrimSuffix, keySeparator),
+		strutils.MapNonEmpty(S.Append(keySeparator)),
+	)
+}
+
+// reserveStems sorts the sources by key and flags every source whose
+// stem appears earlier in that order.
+func reserveStems(sources []source) []source {
+	return F.Pipe4(
+		sources,
 		A.SortByKey(S.Ord, sourceL.Key.Get),
 		PR.Of[[]source],
 		PR.MapTail[[]source](A.MapWithIndex(PR.MakePair[int, source])),
 		PR.Paired(markDuplicates),
 	)
-)
-
-// build applies edits derived from s to the zero value of T.
-func build[S, T any](s S, edits []func(S) En.Endomorphism[T]) T {
-	return F.Pipe2(edits, A.Flap[En.Endomorphism[T]](s), En.Reduce[T])
 }
 
 // update applies edits derived from s to s itself.
@@ -264,7 +354,21 @@ func update[S any](s S, edits []func(S) En.Endomorphism[S]) S {
 	)
 }
 
-func skipSidecars(o fileblob.Options) fileblob.Options {
+// writeOptions configures the output bucket. It makes the output
+// directory when it does not exist, and it writes only the artifact
+// files, with no ".attrs" metadata file next to each one.
+func writeOptions() fileblob.Options {
+	return F.Pipe2(
+		fileblob.Options{},
+		fileblobCreateDir.Set(true),
+		skipMetadataFiles,
+	)
+}
+
+// skipMetadataFiles stops fileblob from writing a ".attrs" metadata
+// file next to each object. It is a function and not a lens because
+// the type of fileblob.Options.Metadata is unexported.
+func skipMetadataFiles(o fileblob.Options) fileblob.Options {
 	o.Metadata = fileblob.MetadataDontWrite
 	return o
 }
@@ -302,7 +406,7 @@ func openLocalTarget(target bucketTarget) IOE.IOEither[error, *blob.Bucket] {
 		IOE.TryCatchError(
 			func() (*blob.Bucket, error) {
 				dir, opts := targetL.Name.Get(target), targetL.Options.Get(target)
-				return fileblob.OpenBucket(dir, opts)
+				return fileblob.OpenBucket(dir, &opts)
 			},
 		),
 		IOE.MapLeft[*blob.Bucket](ER.OnError("open bucket %q", targetL.Name.Get(target))),
@@ -350,7 +454,12 @@ func readRef(ref objectRef) IOE.IOEither[error, []byte] {
 	)
 }
 
+// openArchive opens data as a zip archive.
 func openArchive(data []byte) E.Either[error, *zip.Reader] {
+	return F.Pipe2(data, newZipReader, E.MapLeft[*zip.Reader](ER.OnError("open archive")))
+}
+
+func newZipReader(data []byte) E.Either[error, *zip.Reader] {
 	reader, size := bytes.NewReader(data), int64(len(data))
 	archive, err := zip.NewReader(reader, size)
 	return E.TryCatchError(archive, err)
@@ -412,7 +521,7 @@ func listObjects(ref objectRef) IOE.IOEither[error, []*blob.ListObject] {
 		func() ([]*blob.ListObject, error) {
 			bucket, ctx, prefix := refL.Bucket.Get(ref), refL.Ctx.Get(ref), refL.Key.Get(ref)
 			opts := listOptions(prefix)
-			iter := bucket.List(opts)
+			iter := bucket.List(&opts)
 			var objects []*blob.ListObject
 			for {
 				object, err := iter.Next(ctx)
@@ -428,8 +537,14 @@ func listObjects(ref objectRef) IOE.IOEither[error, []*blob.ListObject] {
 	)
 }
 
-func listOptions(prefix string) *blob.ListOptions {
-	return new(F.Pipe2(blob.ListOptions{}, listDelimiter.Set(keySeparator), listPrefix.Set(prefix)))
+// listOptions lists one level under prefix: the delimiter groups
+// deeper keys into folder entries.
+func listOptions(prefix string) blob.ListOptions {
+	return F.Pipe2(
+		blob.ListOptions{},
+		listDelimiter.Set(keySeparator),
+		listPrefix.Set(prefix),
+	)
 }
 
 func objectKey(object *blob.ListObject) string { return object.Key }
@@ -446,22 +561,21 @@ func selectableObject(object *blob.ListObject) bool {
 	return !object.IsDir && selectableName(base)
 }
 
-func markDuplicates(sources []source, indexed []PR.Pair[int, source]) []source {
-	return F.Pipe1(indexed, A.Map(F.Bind1st(markDuplicate, sources)))
+// markDuplicates flags each indexed source whose stem appears before its
+// index in sorted.
+func markDuplicates(sorted []source, indexed []PR.Pair[int, source]) []source {
+	return F.Pipe1(indexed, A.Map(F.Bind1st(markDuplicate, sorted)))
 }
 
-func markDuplicate(sources []source, item PR.Pair[int, source]) source {
-	return F.Pipe2(
-		item,
-		PR.MapHead[source](F.Bind1st(earlierSources, sources)),
-		PR.Paired(flagDuplicate),
+// markDuplicate flags the source of item when a source before its index
+// in sorted has the same stem.
+func markDuplicate(sorted []source, item PR.Pair[int, source]) source {
+	return F.Pipe3(
+		sorted[:PR.Head(item)],
+		A.Any(F.Bind1st(sameStem, PR.Tail(item))),
+		sourceL.Duplicate.Set,
+		En.Read(PR.Tail(item)),
 	)
-}
-
-func earlierSources(sources []source, index int) []source { return sources[:index] }
-
-func flagDuplicate(earlier []source, src source) source {
-	return F.Pipe3(earlier, A.Any(F.Bind1st(sameStem, src)), sourceL.Duplicate.Set, En.Read(src))
 }
 
 func sameStem(first, second source) bool {

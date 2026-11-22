@@ -12,6 +12,7 @@ import (
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	PR "github.com/IBM/fp-go/v2/pair"
+	endoutils "github.com/dictyBase/fp-go-loom/endomorphism"
 	"gocloud.dev/blob"
 
 	"github.com/dictyBase/modware-import/internal/goldenbraid/seqmodel"
@@ -28,12 +29,7 @@ var (
 	runOutputKey = F.Pipe1(runL.Output, L.Compose[runState](locL.Key))
 
 	failOnPartial = E.FromPredicate(F.Flow2(stateFailed.Get, isZero), partialFailure)
-	jobsOf        = F.Flow3(
-		PR.Of[runState],
-		PR.MapTail[runState](runL.Sources.Get),
-		PR.Paired(jobsFor),
-	)
-	jobEdits = []func(PR.Pair[runState, source]) En.Endomorphism[fileJob]{
+	jobEdits      = []func(PR.Pair[runState, source]) En.Endomorphism[fileJob]{
 		F.Flow3(PR.Head[runState, source], runCtx.Get, jobL.Ctx.Set),
 		F.Flow3(PR.Head[runState, source], runLogger.Get, jobL.Logger.Set),
 		F.Flow3(PR.Head[runState, source], runPrimers.Get, jobL.ShowPrimers.Set),
@@ -42,6 +38,8 @@ var (
 		F.Flow3(PR.Head[runState, source], runOutputKey.Get, jobL.Prefix.Set),
 		F.Flow2(PR.Tail[runState, source], jobL.Source.Set),
 	}
+	// jobOf makes the export job of one source of a run.
+	jobOf = endoutils.BuildFrom(jobEdits)
 )
 
 // Pipeline resolves both locations, exports every selected construct one at
@@ -119,14 +117,14 @@ func withOutputBucket(r runState, bucket *blob.Bucket) IOE.IOEither[error, State
 	)
 }
 
-func jobsFor(r runState, sources []source) []fileJob {
-	return F.Pipe1(
-		sources,
-		A.Map(F.Flow2(
-			F.Bind1st(PR.MakePair[runState, source], r),
-			F.Bind2nd(build[PR.Pair[runState, source], fileJob], jobEdits),
-		)),
-	)
+// jobsOf makes one export job for every source of r.
+func jobsOf(r runState) []fileJob {
+	return F.Pipe2(r, runL.Sources.Get, A.Map(F.Bind1st(jobFor, r)))
+}
+
+// jobFor makes the export job of src in run r.
+func jobFor(r runState, src source) fileJob {
+	return F.Pipe2(src, F.Bind1st(PR.MakePair[runState, source], r), jobOf)
 }
 
 func isZero(n int) bool { return n == 0 }

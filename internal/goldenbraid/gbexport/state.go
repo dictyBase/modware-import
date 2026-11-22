@@ -123,7 +123,7 @@ type bucketTarget struct {
 	Params  Params
 	Scheme  string
 	Name    string
-	Options *fileblob.Options
+	Options fileblob.Options
 	Client  *s3.Client
 }
 

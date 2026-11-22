@@ -17,6 +17,7 @@ import (
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	PR "github.com/IBM/fp-go/v2/pair"
 	P "github.com/IBM/fp-go/v2/predicate"
+	endoutils "github.com/dictyBase/fp-go-loom/endomorphism"
 
 	"github.com/dictyBase/modware-import/internal/goldenbraid/seqformat"
 	"github.com/dictyBase/modware-import/internal/goldenbraid/snapgene"
@@ -52,69 +53,46 @@ var (
 		F.Flow3(jobL.Ctx.Get, context.Cause, isNilError),
 		F.Flow2(jobL.Ctx.Get, context.Cause),
 	)
-	readSource = F.Pipe1(
-		isArchiveMember,
-		P.Fold(F.Flow2(jobRef, readRef), readArchiveMember),
-	)
-	jobRef = F.Bind2nd(build[fileJob, objectRef], []func(fileJob) En.Endomorphism[objectRef]{
+	// readSource reads an archive member from memory and any other
+	// source from the input bucket.
+	readSource = F.Pipe1(isArchiveMember, P.Fold(readObject, readArchiveMember))
+	// jobRef points at the source key inside the input bucket.
+	jobRef = endoutils.BuildFrom([]func(fileJob) En.Endomorphism[objectRef]{
 		F.Flow2(jobL.Input.Get, refL.Bucket.Set),
 		F.Flow2(jobL.Ctx.Get, refL.Ctx.Set),
 		F.Flow2(jobKey.Get, refL.Key.Set),
 	})
-	parseJob = F.Flow2(
-		E.Of[error, fileJob],
-		E.Bind(jobL.Result.Set, F.Flow2(
-			F.Bind2nd(
-				build[fileJob, snapgene.ParseInput],
-				[]func(fileJob) En.Endomorphism[snapgene.ParseInput]{
-					F.Flow2(jobKey.Get, parseInputL.SourceFile.Set),
-					F.Flow2(jobStem.Get, parseInputL.Name.Set),
-					F.Flow2(jobL.Data.Get, parseInputL.Data.Set),
-				},
-			),
-			snapgene.Parse,
-		)),
-	)
-	// encodeJob encodes all three artifacts before any write.
-	encodeJob = F.Flow5(
-		E.Of[error, fileJob],
-		E.Map[error](F.Bind2nd(update[fileJob], []func(fileJob) En.Endomorphism[fileJob]{
-			F.Flow2(jobStem.Get, jobBundleStem.Set),
-		})),
-		E.Bind(jobFASTA.Set, F.Flow2(jobRecord.Get, seqformat.ToFASTABytes)),
-		E.Bind(jobGenBank.Set, F.Flow2(jobRecord.Get, seqformat.ToGenBankBytes)),
-		E.Bind(jobSVG.Set, F.Flow2(
-			F.Bind2nd(
-				build[fileJob, svgmap.RenderInput],
-				[]func(fileJob) En.Endomorphism[svgmap.RenderInput]{
-					F.Flow2(jobRecord.Get, renderInputL.Record.Set),
-					F.Flow4(
-						jobL.ShowPrimers.Get,
-						svgmap.WithShowPrimers,
-						A.Of[svgmap.Option],
-						renderInputL.Options.Set,
-					),
-				},
-			),
-			svgmap.Render,
-		)),
-	)
+	// parseInputOf describes the SnapGene data of a job.
+	parseInputOf = endoutils.BuildFrom([]func(fileJob) En.Endomorphism[snapgene.ParseInput]{
+		F.Flow2(jobKey.Get, parseInputL.SourceFile.Set),
+		F.Flow2(jobStem.Get, parseInputL.Name.Set),
+		F.Flow2(jobL.Data.Get, parseInputL.Data.Set),
+	})
+	// renderInputOf describes the map of a parsed job.
+	renderInputOf = endoutils.BuildFrom([]func(fileJob) En.Endomorphism[svgmap.RenderInput]{
+		F.Flow2(jobRecord.Get, renderInputL.Record.Set),
+		F.Flow4(
+			jobL.ShowPrimers.Get,
+			svgmap.WithShowPrimers,
+			A.Of[svgmap.Option],
+			renderInputL.Options.Set,
+		),
+	})
 	// artifactBuilders fix the write order: FASTA, GenBank, then SVG.
 	artifactBuilders = []func(fileJob) artifact{
-		F.Bind2nd(build[fileJob, artifact], []func(fileJob) En.Endomorphism[artifact]{
+		endoutils.BuildFrom([]func(fileJob) En.Endomorphism[artifact]{
 			F.Flow2(F.Bind2nd(artifactKey, fastaSpec), artifactL.Key.Set),
 			F.Flow2(jobFASTA.Get, artifactL.Data.Set),
 		}),
-		F.Bind2nd(build[fileJob, artifact], []func(fileJob) En.Endomorphism[artifact]{
+		endoutils.BuildFrom([]func(fileJob) En.Endomorphism[artifact]{
 			F.Flow2(F.Bind2nd(artifactKey, genBankSpec), artifactL.Key.Set),
 			F.Flow2(jobGenBank.Get, artifactL.Data.Set),
 		}),
-		F.Bind2nd(build[fileJob, artifact], []func(fileJob) En.Endomorphism[artifact]{
+		endoutils.BuildFrom([]func(fileJob) En.Endomorphism[artifact]{
 			F.Flow2(F.Bind2nd(artifactKey, svgSpec), artifactL.Key.Set),
 			F.Flow2(jobSVG.Get, artifactL.Data.Set),
 		}),
 	}
-	writeArtifacts = F.Bind2nd(writeAll, artifactBuilders)
 )
 
 // exportFile reads, parses, encodes, and writes one source. A success is
@@ -133,6 +111,48 @@ func exportFile(job fileJob) IOE.IOEither[error, string] {
 		IOE.Map[error](jobKey.Get),
 		IOE.MapLeft[string](F.Bind1st(wrapExportError, job)),
 		IOE.TapLeft[string](job.logFailure),
+	)
+}
+
+// readObject reads the source key of job from the input bucket.
+func readObject(job fileJob) IOE.IOEither[error, []byte] {
+	return F.Pipe2(job, jobRef, readRef)
+}
+
+// parseJob parses the SnapGene data of job and keeps the result on job.
+func parseJob(job fileJob) E.Either[error, fileJob] {
+	return F.Pipe2(job, E.Of[error, fileJob], E.Bind(jobL.Result.Set, parseSnapGene))
+}
+
+// parseSnapGene parses the SnapGene data of job.
+func parseSnapGene(job fileJob) E.Either[error, snapgene.ParseResult] {
+	return F.Pipe2(job, parseInputOf, snapgene.Parse)
+}
+
+// encodeJob encodes all three artifacts of job before any write.
+func encodeJob(job fileJob) E.Either[error, fileJob] {
+	return F.Pipe5(
+		job,
+		E.Of[error, fileJob],
+		E.Let[error](jobBundleStem.Set, jobStem.Get),
+		E.Bind(jobFASTA.Set, F.Flow2(jobRecord.Get, seqformat.ToFASTABytes)),
+		E.Bind(jobGenBank.Set, F.Flow2(jobRecord.Get, seqformat.ToGenBankBytes)),
+		E.Bind(jobSVG.Set, renderSVG),
+	)
+}
+
+// renderSVG renders the map of the parsed record of job.
+func renderSVG(job fileJob) E.Either[error, []byte] {
+	return F.Pipe2(job, renderInputOf, svgmap.Render)
+}
+
+// writeArtifacts writes the FASTA, GenBank, and SVG artifacts of job in
+// that order.
+func writeArtifacts(job fileJob) IOE.IOEither[error, []struct{}] {
+	return F.Pipe2(
+		artifactBuilders,
+		A.Flap[artifact](job),
+		IOE.TraverseArraySeq(F.Bind1st(writeArtifact, job)),
 	)
 }
 
@@ -193,14 +213,6 @@ func artifactKey(job fileJob, spec PR.Pair[string, string]) string {
 	prefix, folder := jobL.Prefix.Get(job), PR.Head(spec)
 	name := jobStem.Get(job) + PR.Tail(spec)
 	return path.Join(prefix, folder, name)
-}
-
-func writeAll(job fileJob, builders []func(fileJob) artifact) IOE.IOEither[error, []struct{}] {
-	return F.Pipe2(
-		builders,
-		A.Flap[artifact](job),
-		IOE.TraverseArraySeq(F.Bind1st(writeArtifact, job)),
-	)
 }
 
 // writeArtifact replaces the object at the artifact key. fileblob writes
