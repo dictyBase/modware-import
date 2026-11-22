@@ -33,7 +33,6 @@ var (
 	jobKey        = F.Pipe1(jobL.Source, L.Compose[fileJob](sourceL.Key))
 	jobStem       = F.Pipe1(jobL.Source, L.Compose[fileJob](sourceL.Stem))
 	jobMember     = F.Pipe1(jobL.Source, L.Compose[fileJob](sourceL.Member))
-	jobDuplicate  = F.Pipe1(jobL.Source, L.Compose[fileJob](sourceL.Duplicate))
 	jobRecord     = F.Pipe1(jobL.Result, L.Compose[fileJob](parseResultL.Record))
 	jobWarnings   = F.Pipe1(jobL.Result, L.Compose[fileJob](parseResultL.Warnings))
 	jobBundleStem = F.Pipe1(jobL.Bundle, L.Compose[fileJob](bundleL.Stem))
@@ -45,12 +44,8 @@ var (
 	genBankSpec = PR.MakePair(GenBankDir, genBankExt)
 	svgSpec     = PR.MakePair(SVGDir, svgExt)
 
-	isNilError      = P.IsZero[error]()
-	isArchiveMember = F.Flow2(jobMember.Get, P.IsNonZero[*zip.File]())
-	rejectDuplicate = E.FromPredicate(
-		P.Not(jobDuplicate.Get),
-		F.Constant1[fileJob](ErrDuplicateStem),
-	)
+	isNilError         = P.IsZero[error]()
+	isArchiveMember    = F.Flow2(jobMember.Get, P.IsNonZero[*zip.File]())
 	requireLiveContext = E.FromPredicate(
 		F.Flow3(jobL.Ctx.Get, context.Cause, isNilError),
 		F.Flow2(jobL.Ctx.Get, context.Cause),
@@ -97,13 +92,12 @@ var (
 	}
 )
 
-// exportFile reads, parses, encodes, and writes one source. A success is
-// counted only after all three writes succeed.
-func exportFile(job fileJob) IOE.IOEither[error, string] {
-	return F.Pipe11(
+// convertSource reads one source, parses it, encodes the FASTA, GenBank,
+// and SVG artifacts, and writes them. It returns the source key.
+func convertSource(job fileJob) IOE.IOEither[error, string] {
+	return F.Pipe9(
 		job,
 		IOE.Of[error, fileJob],
-		IOE.ChainEitherK(rejectDuplicate),
 		IOE.Bind(jobL.Data.Set, readSource),
 		IOE.ChainEitherK(requireLiveContext),
 		IOE.ChainEitherK(parseJob),
@@ -111,8 +105,7 @@ func exportFile(job fileJob) IOE.IOEither[error, string] {
 		IOE.ChainEitherK(encodeJob),
 		IOE.ChainFirst(writeArtifacts),
 		IOE.Map[error](jobKey.Get),
-		IOE.MapLeft[string](F.Bind1st(wrapExportError, job)),
-		IOE.TapLeft[string](job.logFailure),
+		IOE.MapLeft[string](F.Bind1st(wrapSourceError, job)),
 	)
 }
 
@@ -170,19 +163,9 @@ func (job fileJob) logWarning(warning error) IO.IO[IO.Void] {
 	)
 }
 
-func (job fileJob) logFailure(err error) IOE.IOEither[error, IO.Void] {
-	return F.Pipe1(
-		IO.FromImpure(
-			func() {
-				jobL.Logger.Get(job).Error("export failed", "key", jobKey.Get(job), "error", err)
-			},
-		),
-		IOE.FromIO[error, IO.Void],
-	)
-}
-
-func wrapExportError(job fileJob, err error) error {
-	return fmt.Errorf("export %q: %w", jobKey.Get(job), err)
+// wrapSourceError names the source key of job in err.
+func wrapSourceError(job fileJob, err error) error {
+	return fmt.Errorf("convert %q: %w", jobKey.Get(job), err)
 }
 
 // readArchiveMember reads the archive member of job.

@@ -11,7 +11,6 @@ import (
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/fileblob"
 
-	"github.com/dictyBase/modware-import/internal/goldenbraid/seqmodel"
 	"github.com/dictyBase/modware-import/internal/goldenbraid/snapgene"
 )
 
@@ -44,9 +43,8 @@ const (
 var (
 	// ErrNoDNAFiles identifies an input without selectable .dna files.
 	ErrNoDNAFiles = errors.New("no SnapGene .dna files found")
-	// ErrPartialExportFailure identifies a batch with at least one failed file.
-	ErrPartialExportFailure = errors.New("one or more assemblies failed to export")
-	// ErrDuplicateStem identifies a later source whose stem is already reserved.
+	// ErrDuplicateStem identifies two sources with the same file stem. Their
+	// artifacts would overwrite each other.
 	ErrDuplicateStem = errors.New("duplicate assembly stem")
 	// ErrUnknownInputType identifies an input kind other than dna, zip, or dir.
 	ErrUnknownInputType = errors.New("unknown input type")
@@ -66,13 +64,14 @@ type Params struct {
 	ShowPrimers bool
 }
 
-// State carries the dependencies and the batch summary of one export run.
+// State carries the dependencies of one export run and, after a
+// successful run, the number of exported sources.
 // fp-go:Lens
 type State struct {
-	Ctx     context.Context
-	Logger  *slog.Logger
-	Params  Params
-	Summary seqmodel.ExportSummary
+	Ctx      context.Context
+	Logger   *slog.Logger
+	Params   Params
+	Exported int
 }
 
 // FileBundle holds the three encoded artifacts of one construct.
@@ -96,22 +95,28 @@ type location struct {
 // source is one selected construct: a bucket object or an archive member.
 // fp-go:Lens
 type source struct {
-	Key       string
-	Stem      string
-	Member    *zip.File
-	Duplicate bool
+	Key    string
+	Stem   string
+	Member *zip.File
 }
 
-// runState holds the resolved locations and, inside the resource scopes,
-// the open buckets. Pipeline returns only State, never a bucket handle.
+// runState holds the resolved locations and, while both buckets are
+// open, the buckets and the selected sources. Pipeline returns only
+// State, never a bucket handle.
 // fp-go:Lens
 type runState struct {
-	State        State
-	Input        location
-	Output       location
-	Sources      []source
-	InputBucket  *blob.Bucket
-	OutputBucket *blob.Bucket
+	State   State
+	Input   location
+	Output  location
+	Buckets buckets
+	Sources []source
+}
+
+// buckets holds the open input bucket and the open output bucket.
+// fp-go:Lens
+type buckets struct {
+	In  *blob.Bucket
+	Out *blob.Bucket
 }
 
 // bucketTarget describes how to open one side of the export.

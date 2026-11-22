@@ -110,7 +110,9 @@ func TestS3ArchiveToS3Output(t *testing.T) {
 	requireObjects(t, bucket, "out", allStems...)
 }
 
-func TestS3PrefixPartialFailure(t *testing.T) {
+// The dense stem sorts before prefix/corrupt.dna, so it is written before
+// the run stops.
+func TestS3PrefixStopsAtCorruptFile(t *testing.T) {
 	m := startMinio(t)
 	bucket := m.bucket(t, "dircase")
 	ctx := context.Background()
@@ -126,12 +128,10 @@ func TestS3PrefixPartialFailure(t *testing.T) {
 	}
 	logs := &capture{}
 	_, err := run(ctx, t, logs, m.params("s3://dircase/prefix", "s3://dircase/out"))
-	require.ErrorIs(t, err, gbexport.ErrPartialExportFailure)
-	requireObjects(t, bucket, "out", simpleStem, denseStem)
-	requireSummary(t, logs, 3, 2, 1)
-	failures := logs.withMessage(t, "export failed")
-	require.Len(t, failures, 1)
-	require.Equal(t, "prefix/corrupt.dna", failures[0]["key"])
+	require.Error(t, err)
+	require.Contains(t, err.Error(), `"prefix/corrupt.dna"`)
+	requireObjects(t, bucket, "out", denseStem)
+	requireNoSummary(t, logs)
 }
 
 func TestS3ArchiveToLocalOutput(t *testing.T) {

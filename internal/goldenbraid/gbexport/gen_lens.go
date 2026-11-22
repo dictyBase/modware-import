@@ -6,17 +6,17 @@ package gbexport
 import (
 	zip "archive/zip"
 	context "context"
+	slog "log/slog"
+
 	__iso_option "github.com/IBM/fp-go/v2/optics/iso/option"
 	__lens "github.com/IBM/fp-go/v2/optics/lens"
 	__lens_option "github.com/IBM/fp-go/v2/optics/lens/option"
 	__prism "github.com/IBM/fp-go/v2/optics/prism"
 	__option "github.com/IBM/fp-go/v2/option"
 	s3 "github.com/aws/aws-sdk-go-v2/service/s3"
-	seqmodel "github.com/dictyBase/modware-import/internal/goldenbraid/seqmodel"
 	snapgene "github.com/dictyBase/modware-import/internal/goldenbraid/snapgene"
 	blob "gocloud.dev/blob"
 	fileblob "gocloud.dev/blob/fileblob"
-	slog "log/slog"
 )
 
 // ParamsLenses provides [lenses] for accessing fields of [Params]
@@ -372,14 +372,15 @@ func MakeParamsRefPrisms() ParamsRefPrisms {
 // [lenses]: __lens.Lens
 type StateLenses struct {
 	// mandatory fields
-	Ctx     __lens.Lens[State, context.Context]
-	Logger  __lens.Lens[State, *slog.Logger]
-	Params  __lens.Lens[State, Params]
-	Summary __lens.Lens[State, seqmodel.ExportSummary]
+	Ctx      __lens.Lens[State, context.Context]
+	Logger   __lens.Lens[State, *slog.Logger]
+	Params   __lens.Lens[State, Params]
+	Exported __lens.Lens[State, int]
 	// optional fields
-	CtxO    __lens_option.LensO[State, context.Context]
-	LoggerO __lens_option.LensO[State, *slog.Logger]
-	ParamsO __lens_option.LensO[State, Params]
+	CtxO      __lens_option.LensO[State, context.Context]
+	LoggerO   __lens_option.LensO[State, *slog.Logger]
+	ParamsO   __lens_option.LensO[State, Params]
+	ExportedO __lens_option.LensO[State, int]
 }
 
 // StateRefLenses provides [lenses] for accessing fields of [State] via a reference to [State]
@@ -387,34 +388,35 @@ type StateLenses struct {
 // [lenses]: __lens.Lens
 type StateRefLenses struct {
 	// mandatory fields
-	Ctx     __lens.Lens[*State, context.Context]
-	Logger  __lens.Lens[*State, *slog.Logger]
-	Params  __lens.Lens[*State, Params]
-	Summary __lens.Lens[*State, seqmodel.ExportSummary]
+	Ctx      __lens.Lens[*State, context.Context]
+	Logger   __lens.Lens[*State, *slog.Logger]
+	Params   __lens.Lens[*State, Params]
+	Exported __lens.Lens[*State, int]
 	// optional fields
-	CtxO    __lens_option.LensO[*State, context.Context]
-	LoggerO __lens_option.LensO[*State, *slog.Logger]
-	ParamsO __lens_option.LensO[*State, Params]
+	CtxO      __lens_option.LensO[*State, context.Context]
+	LoggerO   __lens_option.LensO[*State, *slog.Logger]
+	ParamsO   __lens_option.LensO[*State, Params]
+	ExportedO __lens_option.LensO[*State, int]
 }
 
 // StatePrisms provides [prisms] for accessing fields of [State]
 //
 // [prisms]: __prism.Prism
 type StatePrisms struct {
-	Ctx     __prism.Prism[State, context.Context]
-	Logger  __prism.Prism[State, *slog.Logger]
-	Params  __prism.Prism[State, Params]
-	Summary __prism.Prism[State, seqmodel.ExportSummary]
+	Ctx      __prism.Prism[State, context.Context]
+	Logger   __prism.Prism[State, *slog.Logger]
+	Params   __prism.Prism[State, Params]
+	Exported __prism.Prism[State, int]
 }
 
 // StateRefPrisms provides [prisms] for accessing fields of [State] via a reference to [State]
 //
 // [prisms]: __prism.Prism
 type StateRefPrisms struct {
-	Ctx     __prism.Prism[*State, context.Context]
-	Logger  __prism.Prism[*State, *slog.Logger]
-	Params  __prism.Prism[*State, Params]
-	Summary __prism.Prism[*State, seqmodel.ExportSummary]
+	Ctx      __prism.Prism[*State, context.Context]
+	Logger   __prism.Prism[*State, *slog.Logger]
+	Params   __prism.Prism[*State, Params]
+	Exported __prism.Prism[*State, int]
 }
 
 // MakeStateLenses creates a new [StateLenses] with [lenses] for all fields
@@ -437,25 +439,27 @@ func MakeStateLenses() StateLenses {
 		func(s State, v Params) State { s.Params = v; return s },
 		"State.Params",
 	)
-	lensSummary := __lens.MakeLensWithName(
-		func(s State) seqmodel.ExportSummary { return s.Summary },
-		func(s State, v seqmodel.ExportSummary) State { s.Summary = v; return s },
-		"State.Summary",
+	lensExported := __lens.MakeLensWithName(
+		func(s State) int { return s.Exported },
+		func(s State, v int) State { s.Exported = v; return s },
+		"State.Exported",
 	)
 	// optional lenses
 	lensCtxO := __lens_option.FromIso[State](__iso_option.FromZero[context.Context]())(lensCtx)
 	lensLoggerO := __lens_option.FromIso[State](__iso_option.FromZero[*slog.Logger]())(lensLogger)
 	lensParamsO := __lens_option.FromIso[State](__iso_option.FromZero[Params]())(lensParams)
+	lensExportedO := __lens_option.FromIso[State](__iso_option.FromZero[int]())(lensExported)
 	return StateLenses{
 		// mandatory lenses
-		Ctx:     lensCtx,
-		Logger:  lensLogger,
-		Params:  lensParams,
-		Summary: lensSummary,
+		Ctx:      lensCtx,
+		Logger:   lensLogger,
+		Params:   lensParams,
+		Exported: lensExported,
 		// optional lenses
-		CtxO:    lensCtxO,
-		LoggerO: lensLoggerO,
-		ParamsO: lensParamsO,
+		CtxO:      lensCtxO,
+		LoggerO:   lensLoggerO,
+		ParamsO:   lensParamsO,
+		ExportedO: lensExportedO,
 	}
 }
 
@@ -479,25 +483,27 @@ func MakeStateRefLenses() StateRefLenses {
 		func(s *State, v Params) *State { s.Params = v; return s },
 		"(*State).Params",
 	)
-	lensSummary := __lens.MakeLensRefWithName(
-		func(s *State) seqmodel.ExportSummary { return s.Summary },
-		func(s *State, v seqmodel.ExportSummary) *State { s.Summary = v; return s },
-		"(*State).Summary",
+	lensExported := __lens.MakeLensStrictWithName(
+		func(s *State) int { return s.Exported },
+		func(s *State, v int) *State { s.Exported = v; return s },
+		"(*State).Exported",
 	)
 	// optional lenses
 	lensCtxO := __lens_option.FromIso[*State](__iso_option.FromZero[context.Context]())(lensCtx)
 	lensLoggerO := __lens_option.FromIso[*State](__iso_option.FromZero[*slog.Logger]())(lensLogger)
 	lensParamsO := __lens_option.FromIso[*State](__iso_option.FromZero[Params]())(lensParams)
+	lensExportedO := __lens_option.FromIso[*State](__iso_option.FromZero[int]())(lensExported)
 	return StateRefLenses{
 		// mandatory lenses
-		Ctx:     lensCtx,
-		Logger:  lensLogger,
-		Params:  lensParams,
-		Summary: lensSummary,
+		Ctx:      lensCtx,
+		Logger:   lensLogger,
+		Params:   lensParams,
+		Exported: lensExported,
 		// optional lenses
-		CtxO:    lensCtxO,
-		LoggerO: lensLoggerO,
-		ParamsO: lensParamsO,
+		CtxO:      lensCtxO,
+		LoggerO:   lensLoggerO,
+		ParamsO:   lensParamsO,
+		ExportedO: lensExportedO,
 	}
 }
 
@@ -529,18 +535,19 @@ func MakeStatePrisms() StatePrisms {
 		},
 		"State.Params",
 	)
-	_prismSummary := __prism.MakePrismWithName(
-		func(s State) __option.Option[seqmodel.ExportSummary] { return __option.Some(s.Summary) },
-		func(v seqmodel.ExportSummary) State {
-			return State{Summary: v}
+	_fromNonZeroExported := __option.FromNonZero[int]()
+	_prismExported := __prism.MakePrismWithName(
+		func(s State) __option.Option[int] { return _fromNonZeroExported(s.Exported) },
+		func(v int) State {
+			return State{Exported: v}
 		},
-		"State.Summary",
+		"State.Exported",
 	)
 	return StatePrisms{
-		Ctx:     _prismCtx,
-		Logger:  _prismLogger,
-		Params:  _prismParams,
-		Summary: _prismSummary,
+		Ctx:      _prismCtx,
+		Logger:   _prismLogger,
+		Params:   _prismParams,
+		Exported: _prismExported,
 	}
 }
 
@@ -572,18 +579,19 @@ func MakeStateRefPrisms() StateRefPrisms {
 		},
 		"State.Params",
 	)
-	_prismSummary := __prism.MakePrismWithName(
-		func(s *State) __option.Option[seqmodel.ExportSummary] { return __option.Some(s.Summary) },
-		func(v seqmodel.ExportSummary) *State {
-			return &State{Summary: v}
+	_fromNonZeroExported := __option.FromNonZero[int]()
+	_prismExported := __prism.MakePrismWithName(
+		func(s *State) __option.Option[int] { return _fromNonZeroExported(s.Exported) },
+		func(v int) *State {
+			return &State{Exported: v}
 		},
-		"State.Summary",
+		"State.Exported",
 	)
 	return StateRefPrisms{
-		Ctx:     _prismCtx,
-		Logger:  _prismLogger,
-		Params:  _prismParams,
-		Summary: _prismSummary,
+		Ctx:      _prismCtx,
+		Logger:   _prismLogger,
+		Params:   _prismParams,
+		Exported: _prismExported,
 	}
 }
 
@@ -1024,15 +1032,13 @@ func MakelocationRefPrisms() locationRefPrisms {
 // [lenses]: __lens.Lens
 type sourceLenses struct {
 	// mandatory fields
-	Key       __lens.Lens[source, string]
-	Stem      __lens.Lens[source, string]
-	Member    __lens.Lens[source, *zip.File]
-	Duplicate __lens.Lens[source, bool]
+	Key    __lens.Lens[source, string]
+	Stem   __lens.Lens[source, string]
+	Member __lens.Lens[source, *zip.File]
 	// optional fields
-	KeyO       __lens_option.LensO[source, string]
-	StemO      __lens_option.LensO[source, string]
-	MemberO    __lens_option.LensO[source, *zip.File]
-	DuplicateO __lens_option.LensO[source, bool]
+	KeyO    __lens_option.LensO[source, string]
+	StemO   __lens_option.LensO[source, string]
+	MemberO __lens_option.LensO[source, *zip.File]
 }
 
 // sourceRefLenses provides [lenses] for accessing fields of [source] via a reference to [source]
@@ -1040,35 +1046,31 @@ type sourceLenses struct {
 // [lenses]: __lens.Lens
 type sourceRefLenses struct {
 	// mandatory fields
-	Key       __lens.Lens[*source, string]
-	Stem      __lens.Lens[*source, string]
-	Member    __lens.Lens[*source, *zip.File]
-	Duplicate __lens.Lens[*source, bool]
+	Key    __lens.Lens[*source, string]
+	Stem   __lens.Lens[*source, string]
+	Member __lens.Lens[*source, *zip.File]
 	// optional fields
-	KeyO       __lens_option.LensO[*source, string]
-	StemO      __lens_option.LensO[*source, string]
-	MemberO    __lens_option.LensO[*source, *zip.File]
-	DuplicateO __lens_option.LensO[*source, bool]
+	KeyO    __lens_option.LensO[*source, string]
+	StemO   __lens_option.LensO[*source, string]
+	MemberO __lens_option.LensO[*source, *zip.File]
 }
 
 // sourcePrisms provides [prisms] for accessing fields of [source]
 //
 // [prisms]: __prism.Prism
 type sourcePrisms struct {
-	Key       __prism.Prism[source, string]
-	Stem      __prism.Prism[source, string]
-	Member    __prism.Prism[source, *zip.File]
-	Duplicate __prism.Prism[source, bool]
+	Key    __prism.Prism[source, string]
+	Stem   __prism.Prism[source, string]
+	Member __prism.Prism[source, *zip.File]
 }
 
 // sourceRefPrisms provides [prisms] for accessing fields of [source] via a reference to [source]
 //
 // [prisms]: __prism.Prism
 type sourceRefPrisms struct {
-	Key       __prism.Prism[*source, string]
-	Stem      __prism.Prism[*source, string]
-	Member    __prism.Prism[*source, *zip.File]
-	Duplicate __prism.Prism[*source, bool]
+	Key    __prism.Prism[*source, string]
+	Stem   __prism.Prism[*source, string]
+	Member __prism.Prism[*source, *zip.File]
 }
 
 // MakesourceLenses creates a new [sourceLenses] with [lenses] for all fields
@@ -1091,27 +1093,19 @@ func MakesourceLenses() sourceLenses {
 		func(s source, v *zip.File) source { s.Member = v; return s },
 		"source.Member",
 	)
-	lensDuplicate := __lens.MakeLensWithName(
-		func(s source) bool { return s.Duplicate },
-		func(s source, v bool) source { s.Duplicate = v; return s },
-		"source.Duplicate",
-	)
 	// optional lenses
 	lensKeyO := __lens_option.FromIso[source](__iso_option.FromZero[string]())(lensKey)
 	lensStemO := __lens_option.FromIso[source](__iso_option.FromZero[string]())(lensStem)
 	lensMemberO := __lens_option.FromIso[source](__iso_option.FromZero[*zip.File]())(lensMember)
-	lensDuplicateO := __lens_option.FromIso[source](__iso_option.FromZero[bool]())(lensDuplicate)
 	return sourceLenses{
 		// mandatory lenses
-		Key:       lensKey,
-		Stem:      lensStem,
-		Member:    lensMember,
-		Duplicate: lensDuplicate,
+		Key:    lensKey,
+		Stem:   lensStem,
+		Member: lensMember,
 		// optional lenses
-		KeyO:       lensKeyO,
-		StemO:      lensStemO,
-		MemberO:    lensMemberO,
-		DuplicateO: lensDuplicateO,
+		KeyO:    lensKeyO,
+		StemO:   lensStemO,
+		MemberO: lensMemberO,
 	}
 }
 
@@ -1135,27 +1129,19 @@ func MakesourceRefLenses() sourceRefLenses {
 		func(s *source, v *zip.File) *source { s.Member = v; return s },
 		"(*source).Member",
 	)
-	lensDuplicate := __lens.MakeLensStrictWithName(
-		func(s *source) bool { return s.Duplicate },
-		func(s *source, v bool) *source { s.Duplicate = v; return s },
-		"(*source).Duplicate",
-	)
 	// optional lenses
 	lensKeyO := __lens_option.FromIso[*source](__iso_option.FromZero[string]())(lensKey)
 	lensStemO := __lens_option.FromIso[*source](__iso_option.FromZero[string]())(lensStem)
 	lensMemberO := __lens_option.FromIso[*source](__iso_option.FromZero[*zip.File]())(lensMember)
-	lensDuplicateO := __lens_option.FromIso[*source](__iso_option.FromZero[bool]())(lensDuplicate)
 	return sourceRefLenses{
 		// mandatory lenses
-		Key:       lensKey,
-		Stem:      lensStem,
-		Member:    lensMember,
-		Duplicate: lensDuplicate,
+		Key:    lensKey,
+		Stem:   lensStem,
+		Member: lensMember,
 		// optional lenses
-		KeyO:       lensKeyO,
-		StemO:      lensStemO,
-		MemberO:    lensMemberO,
-		DuplicateO: lensDuplicateO,
+		KeyO:    lensKeyO,
+		StemO:   lensStemO,
+		MemberO: lensMemberO,
 	}
 }
 
@@ -1187,19 +1173,10 @@ func MakesourcePrisms() sourcePrisms {
 		},
 		"source.Member",
 	)
-	_fromNonZeroDuplicate := __option.FromNonZero[bool]()
-	_prismDuplicate := __prism.MakePrismWithName(
-		func(s source) __option.Option[bool] { return _fromNonZeroDuplicate(s.Duplicate) },
-		func(v bool) source {
-			return source{Duplicate: v}
-		},
-		"source.Duplicate",
-	)
 	return sourcePrisms{
-		Key:       _prismKey,
-		Stem:      _prismStem,
-		Member:    _prismMember,
-		Duplicate: _prismDuplicate,
+		Key:    _prismKey,
+		Stem:   _prismStem,
+		Member: _prismMember,
 	}
 }
 
@@ -1231,19 +1208,10 @@ func MakesourceRefPrisms() sourceRefPrisms {
 		},
 		"source.Member",
 	)
-	_fromNonZeroDuplicate := __option.FromNonZero[bool]()
-	_prismDuplicate := __prism.MakePrismWithName(
-		func(s *source) __option.Option[bool] { return _fromNonZeroDuplicate(s.Duplicate) },
-		func(v bool) *source {
-			return &source{Duplicate: v}
-		},
-		"source.Duplicate",
-	)
 	return sourceRefPrisms{
-		Key:       _prismKey,
-		Stem:      _prismStem,
-		Member:    _prismMember,
-		Duplicate: _prismDuplicate,
+		Key:    _prismKey,
+		Stem:   _prismStem,
+		Member: _prismMember,
 	}
 }
 
@@ -1252,17 +1220,16 @@ func MakesourceRefPrisms() sourceRefPrisms {
 // [lenses]: __lens.Lens
 type runStateLenses struct {
 	// mandatory fields
-	State        __lens.Lens[runState, State]
-	Input        __lens.Lens[runState, location]
-	Output       __lens.Lens[runState, location]
-	Sources      __lens.Lens[runState, []source]
-	InputBucket  __lens.Lens[runState, *blob.Bucket]
-	OutputBucket __lens.Lens[runState, *blob.Bucket]
+	State   __lens.Lens[runState, State]
+	Input   __lens.Lens[runState, location]
+	Output  __lens.Lens[runState, location]
+	Buckets __lens.Lens[runState, buckets]
+	Sources __lens.Lens[runState, []source]
 	// optional fields
-	InputO        __lens_option.LensO[runState, location]
-	OutputO       __lens_option.LensO[runState, location]
-	InputBucketO  __lens_option.LensO[runState, *blob.Bucket]
-	OutputBucketO __lens_option.LensO[runState, *blob.Bucket]
+	StateO   __lens_option.LensO[runState, State]
+	InputO   __lens_option.LensO[runState, location]
+	OutputO  __lens_option.LensO[runState, location]
+	BucketsO __lens_option.LensO[runState, buckets]
 }
 
 // runStateRefLenses provides [lenses] for accessing fields of [runState] via a reference to [runState]
@@ -1270,41 +1237,38 @@ type runStateLenses struct {
 // [lenses]: __lens.Lens
 type runStateRefLenses struct {
 	// mandatory fields
-	State        __lens.Lens[*runState, State]
-	Input        __lens.Lens[*runState, location]
-	Output       __lens.Lens[*runState, location]
-	Sources      __lens.Lens[*runState, []source]
-	InputBucket  __lens.Lens[*runState, *blob.Bucket]
-	OutputBucket __lens.Lens[*runState, *blob.Bucket]
+	State   __lens.Lens[*runState, State]
+	Input   __lens.Lens[*runState, location]
+	Output  __lens.Lens[*runState, location]
+	Buckets __lens.Lens[*runState, buckets]
+	Sources __lens.Lens[*runState, []source]
 	// optional fields
-	InputO        __lens_option.LensO[*runState, location]
-	OutputO       __lens_option.LensO[*runState, location]
-	InputBucketO  __lens_option.LensO[*runState, *blob.Bucket]
-	OutputBucketO __lens_option.LensO[*runState, *blob.Bucket]
+	StateO   __lens_option.LensO[*runState, State]
+	InputO   __lens_option.LensO[*runState, location]
+	OutputO  __lens_option.LensO[*runState, location]
+	BucketsO __lens_option.LensO[*runState, buckets]
 }
 
 // runStatePrisms provides [prisms] for accessing fields of [runState]
 //
 // [prisms]: __prism.Prism
 type runStatePrisms struct {
-	State        __prism.Prism[runState, State]
-	Input        __prism.Prism[runState, location]
-	Output       __prism.Prism[runState, location]
-	Sources      __prism.Prism[runState, []source]
-	InputBucket  __prism.Prism[runState, *blob.Bucket]
-	OutputBucket __prism.Prism[runState, *blob.Bucket]
+	State   __prism.Prism[runState, State]
+	Input   __prism.Prism[runState, location]
+	Output  __prism.Prism[runState, location]
+	Buckets __prism.Prism[runState, buckets]
+	Sources __prism.Prism[runState, []source]
 }
 
 // runStateRefPrisms provides [prisms] for accessing fields of [runState] via a reference to [runState]
 //
 // [prisms]: __prism.Prism
 type runStateRefPrisms struct {
-	State        __prism.Prism[*runState, State]
-	Input        __prism.Prism[*runState, location]
-	Output       __prism.Prism[*runState, location]
-	Sources      __prism.Prism[*runState, []source]
-	InputBucket  __prism.Prism[*runState, *blob.Bucket]
-	OutputBucket __prism.Prism[*runState, *blob.Bucket]
+	State   __prism.Prism[*runState, State]
+	Input   __prism.Prism[*runState, location]
+	Output  __prism.Prism[*runState, location]
+	Buckets __prism.Prism[*runState, buckets]
+	Sources __prism.Prism[*runState, []source]
 }
 
 // MakerunStateLenses creates a new [runStateLenses] with [lenses] for all fields
@@ -1327,39 +1291,33 @@ func MakerunStateLenses() runStateLenses {
 		func(s runState, v location) runState { s.Output = v; return s },
 		"runState.Output",
 	)
+	lensBuckets := __lens.MakeLensWithName(
+		func(s runState) buckets { return s.Buckets },
+		func(s runState, v buckets) runState { s.Buckets = v; return s },
+		"runState.Buckets",
+	)
 	lensSources := __lens.MakeLensWithName(
 		func(s runState) []source { return s.Sources },
 		func(s runState, v []source) runState { s.Sources = v; return s },
 		"runState.Sources",
 	)
-	lensInputBucket := __lens.MakeLensWithName(
-		func(s runState) *blob.Bucket { return s.InputBucket },
-		func(s runState, v *blob.Bucket) runState { s.InputBucket = v; return s },
-		"runState.InputBucket",
-	)
-	lensOutputBucket := __lens.MakeLensWithName(
-		func(s runState) *blob.Bucket { return s.OutputBucket },
-		func(s runState, v *blob.Bucket) runState { s.OutputBucket = v; return s },
-		"runState.OutputBucket",
-	)
 	// optional lenses
+	lensStateO := __lens_option.FromIso[runState](__iso_option.FromZero[State]())(lensState)
 	lensInputO := __lens_option.FromIso[runState](__iso_option.FromZero[location]())(lensInput)
 	lensOutputO := __lens_option.FromIso[runState](__iso_option.FromZero[location]())(lensOutput)
-	lensInputBucketO := __lens_option.FromIso[runState](__iso_option.FromZero[*blob.Bucket]())(lensInputBucket)
-	lensOutputBucketO := __lens_option.FromIso[runState](__iso_option.FromZero[*blob.Bucket]())(lensOutputBucket)
+	lensBucketsO := __lens_option.FromIso[runState](__iso_option.FromZero[buckets]())(lensBuckets)
 	return runStateLenses{
 		// mandatory lenses
-		State:        lensState,
-		Input:        lensInput,
-		Output:       lensOutput,
-		Sources:      lensSources,
-		InputBucket:  lensInputBucket,
-		OutputBucket: lensOutputBucket,
+		State:   lensState,
+		Input:   lensInput,
+		Output:  lensOutput,
+		Buckets: lensBuckets,
+		Sources: lensSources,
 		// optional lenses
-		InputO:        lensInputO,
-		OutputO:       lensOutputO,
-		InputBucketO:  lensInputBucketO,
-		OutputBucketO: lensOutputBucketO,
+		StateO:   lensStateO,
+		InputO:   lensInputO,
+		OutputO:  lensOutputO,
+		BucketsO: lensBucketsO,
 	}
 }
 
@@ -1383,39 +1341,33 @@ func MakerunStateRefLenses() runStateRefLenses {
 		func(s *runState, v location) *runState { s.Output = v; return s },
 		"(*runState).Output",
 	)
+	lensBuckets := __lens.MakeLensStrictWithName(
+		func(s *runState) buckets { return s.Buckets },
+		func(s *runState, v buckets) *runState { s.Buckets = v; return s },
+		"(*runState).Buckets",
+	)
 	lensSources := __lens.MakeLensRefWithName(
 		func(s *runState) []source { return s.Sources },
 		func(s *runState, v []source) *runState { s.Sources = v; return s },
 		"(*runState).Sources",
 	)
-	lensInputBucket := __lens.MakeLensStrictWithName(
-		func(s *runState) *blob.Bucket { return s.InputBucket },
-		func(s *runState, v *blob.Bucket) *runState { s.InputBucket = v; return s },
-		"(*runState).InputBucket",
-	)
-	lensOutputBucket := __lens.MakeLensStrictWithName(
-		func(s *runState) *blob.Bucket { return s.OutputBucket },
-		func(s *runState, v *blob.Bucket) *runState { s.OutputBucket = v; return s },
-		"(*runState).OutputBucket",
-	)
 	// optional lenses
+	lensStateO := __lens_option.FromIso[*runState](__iso_option.FromZero[State]())(lensState)
 	lensInputO := __lens_option.FromIso[*runState](__iso_option.FromZero[location]())(lensInput)
 	lensOutputO := __lens_option.FromIso[*runState](__iso_option.FromZero[location]())(lensOutput)
-	lensInputBucketO := __lens_option.FromIso[*runState](__iso_option.FromZero[*blob.Bucket]())(lensInputBucket)
-	lensOutputBucketO := __lens_option.FromIso[*runState](__iso_option.FromZero[*blob.Bucket]())(lensOutputBucket)
+	lensBucketsO := __lens_option.FromIso[*runState](__iso_option.FromZero[buckets]())(lensBuckets)
 	return runStateRefLenses{
 		// mandatory lenses
-		State:        lensState,
-		Input:        lensInput,
-		Output:       lensOutput,
-		Sources:      lensSources,
-		InputBucket:  lensInputBucket,
-		OutputBucket: lensOutputBucket,
+		State:   lensState,
+		Input:   lensInput,
+		Output:  lensOutput,
+		Buckets: lensBuckets,
+		Sources: lensSources,
 		// optional lenses
-		InputO:        lensInputO,
-		OutputO:       lensOutputO,
-		InputBucketO:  lensInputBucketO,
-		OutputBucketO: lensOutputBucketO,
+		StateO:   lensStateO,
+		InputO:   lensInputO,
+		OutputO:  lensOutputO,
+		BucketsO: lensBucketsO,
 	}
 }
 
@@ -1423,8 +1375,9 @@ func MakerunStateRefLenses() runStateRefLenses {
 //
 // [prisms]:__prism.Prism
 func MakerunStatePrisms() runStatePrisms {
+	_fromNonZeroState := __option.FromNonZero[State]()
 	_prismState := __prism.MakePrismWithName(
-		func(s runState) __option.Option[State] { return __option.Some(s.State) },
+		func(s runState) __option.Option[State] { return _fromNonZeroState(s.State) },
 		func(v State) runState {
 			return runState{State: v}
 		},
@@ -1446,6 +1399,14 @@ func MakerunStatePrisms() runStatePrisms {
 		},
 		"runState.Output",
 	)
+	_fromNonZeroBuckets := __option.FromNonZero[buckets]()
+	_prismBuckets := __prism.MakePrismWithName(
+		func(s runState) __option.Option[buckets] { return _fromNonZeroBuckets(s.Buckets) },
+		func(v buckets) runState {
+			return runState{Buckets: v}
+		},
+		"runState.Buckets",
+	)
 	_prismSources := __prism.MakePrismWithName(
 		func(s runState) __option.Option[[]source] { return __option.Some(s.Sources) },
 		func(v []source) runState {
@@ -1453,29 +1414,12 @@ func MakerunStatePrisms() runStatePrisms {
 		},
 		"runState.Sources",
 	)
-	_fromNonZeroInputBucket := __option.FromNonZero[*blob.Bucket]()
-	_prismInputBucket := __prism.MakePrismWithName(
-		func(s runState) __option.Option[*blob.Bucket] { return _fromNonZeroInputBucket(s.InputBucket) },
-		func(v *blob.Bucket) runState {
-			return runState{InputBucket: v}
-		},
-		"runState.InputBucket",
-	)
-	_fromNonZeroOutputBucket := __option.FromNonZero[*blob.Bucket]()
-	_prismOutputBucket := __prism.MakePrismWithName(
-		func(s runState) __option.Option[*blob.Bucket] { return _fromNonZeroOutputBucket(s.OutputBucket) },
-		func(v *blob.Bucket) runState {
-			return runState{OutputBucket: v}
-		},
-		"runState.OutputBucket",
-	)
 	return runStatePrisms{
-		State:        _prismState,
-		Input:        _prismInput,
-		Output:       _prismOutput,
-		Sources:      _prismSources,
-		InputBucket:  _prismInputBucket,
-		OutputBucket: _prismOutputBucket,
+		State:   _prismState,
+		Input:   _prismInput,
+		Output:  _prismOutput,
+		Buckets: _prismBuckets,
+		Sources: _prismSources,
 	}
 }
 
@@ -1483,8 +1427,9 @@ func MakerunStatePrisms() runStatePrisms {
 //
 // [prisms]:__prism.Prism
 func MakerunStateRefPrisms() runStateRefPrisms {
+	_fromNonZeroState := __option.FromNonZero[State]()
 	_prismState := __prism.MakePrismWithName(
-		func(s *runState) __option.Option[State] { return __option.Some(s.State) },
+		func(s *runState) __option.Option[State] { return _fromNonZeroState(s.State) },
 		func(v State) *runState {
 			return &runState{State: v}
 		},
@@ -1506,6 +1451,14 @@ func MakerunStateRefPrisms() runStateRefPrisms {
 		},
 		"runState.Output",
 	)
+	_fromNonZeroBuckets := __option.FromNonZero[buckets]()
+	_prismBuckets := __prism.MakePrismWithName(
+		func(s *runState) __option.Option[buckets] { return _fromNonZeroBuckets(s.Buckets) },
+		func(v buckets) *runState {
+			return &runState{Buckets: v}
+		},
+		"runState.Buckets",
+	)
 	_prismSources := __prism.MakePrismWithName(
 		func(s *runState) __option.Option[[]source] { return __option.Some(s.Sources) },
 		func(v []source) *runState {
@@ -1513,29 +1466,160 @@ func MakerunStateRefPrisms() runStateRefPrisms {
 		},
 		"runState.Sources",
 	)
-	_fromNonZeroInputBucket := __option.FromNonZero[*blob.Bucket]()
-	_prismInputBucket := __prism.MakePrismWithName(
-		func(s *runState) __option.Option[*blob.Bucket] { return _fromNonZeroInputBucket(s.InputBucket) },
-		func(v *blob.Bucket) *runState {
-			return &runState{InputBucket: v}
-		},
-		"runState.InputBucket",
-	)
-	_fromNonZeroOutputBucket := __option.FromNonZero[*blob.Bucket]()
-	_prismOutputBucket := __prism.MakePrismWithName(
-		func(s *runState) __option.Option[*blob.Bucket] { return _fromNonZeroOutputBucket(s.OutputBucket) },
-		func(v *blob.Bucket) *runState {
-			return &runState{OutputBucket: v}
-		},
-		"runState.OutputBucket",
-	)
 	return runStateRefPrisms{
-		State:        _prismState,
-		Input:        _prismInput,
-		Output:       _prismOutput,
-		Sources:      _prismSources,
-		InputBucket:  _prismInputBucket,
-		OutputBucket: _prismOutputBucket,
+		State:   _prismState,
+		Input:   _prismInput,
+		Output:  _prismOutput,
+		Buckets: _prismBuckets,
+		Sources: _prismSources,
+	}
+}
+
+// bucketsLenses provides [lenses] for accessing fields of [buckets]
+//
+// [lenses]: __lens.Lens
+type bucketsLenses struct {
+	// mandatory fields
+	In  __lens.Lens[buckets, *blob.Bucket]
+	Out __lens.Lens[buckets, *blob.Bucket]
+	// optional fields
+	InO  __lens_option.LensO[buckets, *blob.Bucket]
+	OutO __lens_option.LensO[buckets, *blob.Bucket]
+}
+
+// bucketsRefLenses provides [lenses] for accessing fields of [buckets] via a reference to [buckets]
+//
+// [lenses]: __lens.Lens
+type bucketsRefLenses struct {
+	// mandatory fields
+	In  __lens.Lens[*buckets, *blob.Bucket]
+	Out __lens.Lens[*buckets, *blob.Bucket]
+	// optional fields
+	InO  __lens_option.LensO[*buckets, *blob.Bucket]
+	OutO __lens_option.LensO[*buckets, *blob.Bucket]
+}
+
+// bucketsPrisms provides [prisms] for accessing fields of [buckets]
+//
+// [prisms]: __prism.Prism
+type bucketsPrisms struct {
+	In  __prism.Prism[buckets, *blob.Bucket]
+	Out __prism.Prism[buckets, *blob.Bucket]
+}
+
+// bucketsRefPrisms provides [prisms] for accessing fields of [buckets] via a reference to [buckets]
+//
+// [prisms]: __prism.Prism
+type bucketsRefPrisms struct {
+	In  __prism.Prism[*buckets, *blob.Bucket]
+	Out __prism.Prism[*buckets, *blob.Bucket]
+}
+
+// MakebucketsLenses creates a new [bucketsLenses] with [lenses] for all fields
+//
+// [lenses]:__lens.Lens
+func MakebucketsLenses() bucketsLenses {
+	// mandatory lenses
+	lensIn := __lens.MakeLensWithName(
+		func(s buckets) *blob.Bucket { return s.In },
+		func(s buckets, v *blob.Bucket) buckets { s.In = v; return s },
+		"buckets.In",
+	)
+	lensOut := __lens.MakeLensWithName(
+		func(s buckets) *blob.Bucket { return s.Out },
+		func(s buckets, v *blob.Bucket) buckets { s.Out = v; return s },
+		"buckets.Out",
+	)
+	// optional lenses
+	lensInO := __lens_option.FromIso[buckets](__iso_option.FromZero[*blob.Bucket]())(lensIn)
+	lensOutO := __lens_option.FromIso[buckets](__iso_option.FromZero[*blob.Bucket]())(lensOut)
+	return bucketsLenses{
+		// mandatory lenses
+		In:  lensIn,
+		Out: lensOut,
+		// optional lenses
+		InO:  lensInO,
+		OutO: lensOutO,
+	}
+}
+
+// MakebucketsRefLenses creates a new [bucketsRefLenses] with [lenses] for all fields
+//
+// [lenses]:__lens.Lens
+func MakebucketsRefLenses() bucketsRefLenses {
+	// mandatory lenses
+	lensIn := __lens.MakeLensStrictWithName(
+		func(s *buckets) *blob.Bucket { return s.In },
+		func(s *buckets, v *blob.Bucket) *buckets { s.In = v; return s },
+		"(*buckets).In",
+	)
+	lensOut := __lens.MakeLensStrictWithName(
+		func(s *buckets) *blob.Bucket { return s.Out },
+		func(s *buckets, v *blob.Bucket) *buckets { s.Out = v; return s },
+		"(*buckets).Out",
+	)
+	// optional lenses
+	lensInO := __lens_option.FromIso[*buckets](__iso_option.FromZero[*blob.Bucket]())(lensIn)
+	lensOutO := __lens_option.FromIso[*buckets](__iso_option.FromZero[*blob.Bucket]())(lensOut)
+	return bucketsRefLenses{
+		// mandatory lenses
+		In:  lensIn,
+		Out: lensOut,
+		// optional lenses
+		InO:  lensInO,
+		OutO: lensOutO,
+	}
+}
+
+// MakebucketsPrisms creates a new [bucketsPrisms] with [prisms] for all fields
+//
+// [prisms]:__prism.Prism
+func MakebucketsPrisms() bucketsPrisms {
+	_fromNonZeroIn := __option.FromNonZero[*blob.Bucket]()
+	_prismIn := __prism.MakePrismWithName(
+		func(s buckets) __option.Option[*blob.Bucket] { return _fromNonZeroIn(s.In) },
+		func(v *blob.Bucket) buckets {
+			return buckets{In: v}
+		},
+		"buckets.In",
+	)
+	_fromNonZeroOut := __option.FromNonZero[*blob.Bucket]()
+	_prismOut := __prism.MakePrismWithName(
+		func(s buckets) __option.Option[*blob.Bucket] { return _fromNonZeroOut(s.Out) },
+		func(v *blob.Bucket) buckets {
+			return buckets{Out: v}
+		},
+		"buckets.Out",
+	)
+	return bucketsPrisms{
+		In:  _prismIn,
+		Out: _prismOut,
+	}
+}
+
+// MakebucketsRefPrisms creates a new [bucketsRefPrisms] with [prisms] for all fields
+//
+// [prisms]:__prism.Prism
+func MakebucketsRefPrisms() bucketsRefPrisms {
+	_fromNonZeroIn := __option.FromNonZero[*blob.Bucket]()
+	_prismIn := __prism.MakePrismWithName(
+		func(s *buckets) __option.Option[*blob.Bucket] { return _fromNonZeroIn(s.In) },
+		func(v *blob.Bucket) *buckets {
+			return &buckets{In: v}
+		},
+		"buckets.In",
+	)
+	_fromNonZeroOut := __option.FromNonZero[*blob.Bucket]()
+	_prismOut := __prism.MakePrismWithName(
+		func(s *buckets) __option.Option[*blob.Bucket] { return _fromNonZeroOut(s.Out) },
+		func(v *blob.Bucket) *buckets {
+			return &buckets{Out: v}
+		},
+		"buckets.Out",
+	)
+	return bucketsRefPrisms{
+		In:  _prismIn,
+		Out: _prismOut,
 	}
 }
 

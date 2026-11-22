@@ -116,13 +116,17 @@ func requireNoArtifacts(t *testing.T, out string, stems ...string) {
 	}
 }
 
-func requireSummary(t *testing.T, logs *capture, total, succeeded, failed float64) {
+func requireSummary(t *testing.T, logs *capture, exported float64) {
 	t.Helper()
 	summaries := logs.withMessage(t, "export summary")
 	require.Len(t, summaries, 1)
-	require.InDelta(t, total, summaries[0]["total"], 0)
-	require.InDelta(t, succeeded, summaries[0]["succeeded"], 0)
-	require.InDelta(t, failed, summaries[0]["failed"], 0)
+	require.InDelta(t, exported, summaries[0]["exported"], 0)
+}
+
+// requireNoSummary checks that a failed run logs no summary.
+func requireNoSummary(t *testing.T, logs *capture) {
+	t.Helper()
+	require.Empty(t, logs.withMessage(t, "export summary"))
 }
 
 func packet(id byte, body []byte) []byte {
@@ -191,8 +195,8 @@ func TestPipelineExportsSingleConstruct(t *testing.T) {
 	require.NoError(t, err)
 	requireArtifacts(t, out, simpleStem)
 	requireNoArtifacts(t, out, denseStem)
-	requireSummary(t, logs, 1, 1, 0)
-	require.Equal(t, 1, state.Summary.Succeeded)
+	requireSummary(t, logs, 1)
+	require.Equal(t, 1, state.Exported)
 	fasta, err := os.ReadFile(artifactPaths(out, simpleStem)[0])
 	require.NoError(t, err)
 	require.True(t, strings.HasPrefix(string(fasta), ">"+simpleStem+"\n"))
@@ -201,21 +205,19 @@ func TestPipelineExportsSingleConstruct(t *testing.T) {
 	require.Contains(t, string(gbk), "primer_bind")
 }
 
-func TestPipelineContinuesAfterCorruptFile(t *testing.T) {
+// corrupt.dna sorts before the pDGB stems, so the run stops before any
+// valid source is converted.
+func TestPipelineStopsAtCorruptFile(t *testing.T) {
 	in, out := t.TempDir(), t.TempDir()
 	writeFile(t, filepath.Join(in, simpleStem+".dna"), fixture(t, simpleStem))
 	writeFile(t, filepath.Join(in, denseStem+".dna"), fixture(t, denseStem))
 	writeFile(t, filepath.Join(in, "corrupt.dna"), []byte("not a snapgene file"))
 	logs := &capture{}
 	_, err := run(context.Background(), t, logs, gbexport.Params{Input: in, Output: out})
-	require.ErrorIs(t, err, gbexport.ErrPartialExportFailure)
-	requireArtifacts(t, out, simpleStem, denseStem)
-	requireNoArtifacts(t, out, "corrupt")
-	requireSummary(t, logs, 3, 2, 1)
-	failures := logs.withMessage(t, "export failed")
-	require.Len(t, failures, 1)
-	require.Equal(t, "corrupt.dna", failures[0]["key"])
-	require.NotEmpty(t, failures[0]["error"])
+	require.Error(t, err)
+	require.Contains(t, err.Error(), `"corrupt.dna"`)
+	requireNoArtifacts(t, out, "corrupt", simpleStem, denseStem)
+	requireNoSummary(t, logs)
 }
 
 func TestPipelineLogsParserWarnings(t *testing.T) {
@@ -227,7 +229,7 @@ func TestPipelineLogsParserWarnings(t *testing.T) {
 	warnings := logs.withMessage(t, "parse warning")
 	require.Len(t, warnings, 1)
 	require.Equal(t, "warned.dna", warnings[0]["key"])
-	requireSummary(t, logs, 1, 1, 0)
+	requireSummary(t, logs, 1)
 	requireArtifacts(t, out, "warned")
 }
 
@@ -238,10 +240,10 @@ func TestPipelineKeepsEarlierArtifactsOnLaterWriteFailure(t *testing.T) {
 	require.NoError(t, os.MkdirAll(artifactPaths(out, simpleStem)[2], 0o750))
 	logs := &capture{}
 	_, err := run(context.Background(), t, logs, gbexport.Params{Input: in, Output: out})
-	require.ErrorIs(t, err, gbexport.ErrPartialExportFailure)
+	require.Error(t, err)
 	_, err = os.Stat(artifactPaths(out, simpleStem)[0])
 	require.NoError(t, err)
-	requireSummary(t, logs, 1, 0, 1)
+	requireNoSummary(t, logs)
 }
 
 func TestPipelineLimitsDirectoryDepth(t *testing.T) {
@@ -259,7 +261,7 @@ func TestPipelineLimitsDirectoryDepth(t *testing.T) {
 	require.NoError(t, err)
 	requireArtifacts(t, out, simpleStem, denseStem)
 	requireNoArtifacts(t, out, gapStem, "._hidden")
-	requireSummary(t, logs, 2, 2, 0)
+	requireSummary(t, logs, 2)
 }
 
 func TestPipelineExportsAssemblyArchive(t *testing.T) {
@@ -273,7 +275,7 @@ func TestPipelineExportsAssemblyArchive(t *testing.T) {
 	require.NoError(t, err)
 	requireArtifacts(t, out, allStems...)
 	requireNoArtifacts(t, out, "nested", "._x")
-	requireSummary(t, logs, 3, 3, 0)
+	requireSummary(t, logs, 3)
 }
 
 func TestPipelineExportsArchiveRootEntry(t *testing.T) {
@@ -305,18 +307,9 @@ func TestPipelineRejectsDuplicateStem(t *testing.T) {
 	writeFile(t, filepath.Join(in, "b", "same.dna"), fixture(t, denseStem))
 	logs := &capture{}
 	_, err := run(context.Background(), t, logs, gbexport.Params{Input: in, Output: out})
-	require.ErrorIs(t, err, gbexport.ErrPartialExportFailure)
 	require.ErrorIs(t, err, gbexport.ErrDuplicateStem)
-	requireSummary(t, logs, 2, 1, 1)
-	fasta, readErr := os.ReadFile(filepath.Join(out, gbexport.FastaDir, "same.fasta"))
-	require.NoError(t, readErr)
-	expected, readErr := os.ReadFile(filepath.Join(in, "a", "same.dna"))
-	require.NoError(t, readErr)
-	require.NotEmpty(t, expected)
-	require.True(t, strings.HasPrefix(string(fasta), ">same\n"))
-	gbk, readErr := os.ReadFile(filepath.Join(out, gbexport.GenBankDir, "same.gbk"))
-	require.NoError(t, readErr)
-	require.NotContains(t, string(gbk), "H2Bv3", "first source must win")
+	requireNoArtifacts(t, out, "same")
+	requireNoSummary(t, logs)
 }
 
 func TestPipelineReplacesStaleOutput(t *testing.T) {
@@ -333,7 +326,7 @@ func TestPipelineReplacesStaleOutput(t *testing.T) {
 	require.Contains(t, string(data), "LOCUS")
 }
 
-func TestPipelineReportsCancellationPerFile(t *testing.T) {
+func TestPipelineStopsOnCancellation(t *testing.T) {
 	in, out := t.TempDir(), t.TempDir()
 	writeFile(t, filepath.Join(in, simpleStem+".dna"), fixture(t, simpleStem))
 	ctx, cancel := context.WithCancel(context.Background())
@@ -343,9 +336,8 @@ func TestPipelineReportsCancellationPerFile(t *testing.T) {
 		Input:  filepath.Join(in, simpleStem+".dna"),
 		Output: out,
 	})
-	require.ErrorIs(t, err, gbexport.ErrPartialExportFailure)
 	require.ErrorIs(t, err, context.Canceled)
-	requireSummary(t, logs, 1, 0, 1)
+	requireNoSummary(t, logs)
 }
 
 func TestPipelineRejectsUnknownScheme(t *testing.T) {

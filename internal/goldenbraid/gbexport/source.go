@@ -19,7 +19,6 @@ import (
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	O "github.com/IBM/fp-go/v2/option"
 	ORD "github.com/IBM/fp-go/v2/ord"
-	PR "github.com/IBM/fp-go/v2/pair"
 	P "github.com/IBM/fp-go/v2/predicate"
 	S "github.com/IBM/fp-go/v2/string"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -214,7 +213,7 @@ var (
 
 	// inputRef points at the input key inside the open input bucket.
 	inputRef = endoutils.BuildFrom([]func(runState) En.Endomorphism[objectRef]{
-		F.Flow2(runL.InputBucket.Get, refL.Bucket.Set),
+		F.Flow2(runInBlob.Get, refL.Bucket.Set),
 		F.Flow2(runCtx.Get, refL.Ctx.Set),
 		F.Flow2(runKey.Get, refL.Key.Set),
 	})
@@ -366,18 +365,6 @@ func dirPrefix(key string) string {
 		key,
 		F.Bind2nd(strings.TrimSuffix, keySeparator),
 		strutils.MapNonEmpty(S.Append(keySeparator)),
-	)
-}
-
-// reserveStems sorts the sources by key and flags every source whose
-// stem appears earlier in that order.
-func reserveStems(sources []source) []source {
-	return F.Pipe4(
-		sources,
-		A.SortByKey(S.Ord, sourceL.Key.Get),
-		PR.Of[[]source],
-		PR.MapTail[[]source](A.MapWithIndex(PR.MakePair[int, source])),
-		PR.Paired(markDuplicates),
 	)
 }
 
@@ -546,24 +533,3 @@ func listOptions(prefix string) blob.ListOptions {
 func objectKey(object *blob.ListObject) string { return object.Key }
 
 func isObjectDir(object *blob.ListObject) bool { return object.IsDir }
-
-// markDuplicates flags each indexed source whose stem appears before its
-// index in sorted.
-func markDuplicates(sorted []source, indexed []PR.Pair[int, source]) []source {
-	return F.Pipe1(indexed, A.Map(F.Bind1st(markDuplicate, sorted)))
-}
-
-// markDuplicate flags the source of item when a source before its index
-// in sorted has the same stem.
-func markDuplicate(sorted []source, item PR.Pair[int, source]) source {
-	return F.Pipe3(
-		sorted[:PR.Head(item)],
-		A.Any(F.Bind1st(sameStem, PR.Tail(item))),
-		sourceL.Duplicate.Set,
-		En.Read(PR.Tail(item)),
-	)
-}
-
-func sameStem(first, second source) bool {
-	return sourceL.Stem.Get(first) == sourceL.Stem.Get(second)
-}

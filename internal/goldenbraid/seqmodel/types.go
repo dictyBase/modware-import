@@ -9,15 +9,6 @@ import "github.com/dictyBase/fp-go-loom/eithererr"
 // fp-go:Lens
 type Color struct{ R, G, B uint8 }
 
-// ExportSummary counts attempted exports and preserves errors in source order.
-// fp-go:Lens
-type ExportSummary struct {
-	Total     int
-	Succeeded int
-	Failed    int
-	Errors    []error
-}
-
 var (
 	invalidColor          = eithererr.ConstErr[string]("invalid color")
 	emptyName             = eithererr.ConstErr[string]("empty name")
