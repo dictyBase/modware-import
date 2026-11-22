@@ -246,6 +246,53 @@ func TestPipelineKeepsEarlierArtifactsOnLaterWriteFailure(t *testing.T) {
 	requireNoSummary(t, logs)
 }
 
+func TestPipelineStopsAtFirstArtifactWriteFailure(t *testing.T) {
+	in, out := t.TempDir(), t.TempDir()
+	writeFile(t, filepath.Join(in, simpleStem+".dna"), fixture(t, simpleStem))
+	// A directory at the FASTA key makes the first write fail.
+	require.NoError(t, os.MkdirAll(artifactPaths(out, simpleStem)[0], 0o750))
+	logs := &capture{}
+	_, err := run(context.Background(), t, logs, gbexport.Params{Input: in, Output: out})
+	require.Error(t, err)
+	_, gbkErr := os.Stat(artifactPaths(out, simpleStem)[1])
+	require.ErrorIs(t, gbkErr, os.ErrNotExist)
+	_, svgErr := os.Stat(artifactPaths(out, simpleStem)[2])
+	require.ErrorIs(t, svgErr, os.ErrNotExist)
+	requireNoSummary(t, logs)
+}
+
+func TestPipelineStopsAtGenBankWriteFailure(t *testing.T) {
+	in, out := t.TempDir(), t.TempDir()
+	writeFile(t, filepath.Join(in, simpleStem+".dna"), fixture(t, simpleStem))
+	// A directory at the GenBank key lets FASTA succeed and fails before SVG.
+	require.NoError(t, os.MkdirAll(artifactPaths(out, simpleStem)[1], 0o750))
+	logs := &capture{}
+	_, err := run(context.Background(), t, logs, gbexport.Params{Input: in, Output: out})
+	require.Error(t, err)
+	_, fastaErr := os.Stat(artifactPaths(out, simpleStem)[0])
+	require.NoError(t, fastaErr)
+	_, svgErr := os.Stat(artifactPaths(out, simpleStem)[2])
+	require.ErrorIs(t, svgErr, os.ErrNotExist)
+	requireNoSummary(t, logs)
+}
+
+func TestPipelineExportsLocalPathWithSpecialChars(t *testing.T) {
+	in := filepath.Join(t.TempDir(), "dir#1?v=2%20")
+	out := filepath.Join(t.TempDir(), "out#1?v=2%20")
+	specialStem := "construct#1"
+	inputFile := filepath.Join(in, specialStem+".dna")
+	writeFile(t, inputFile, fixture(t, simpleStem))
+	logs := &capture{}
+	state, err := run(context.Background(), t, logs, gbexport.Params{
+		Input:  inputFile,
+		Output: out,
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, state.Exported)
+	requireArtifacts(t, out, specialStem)
+	requireSummary(t, logs, 1)
+}
+
 func TestPipelineLimitsDirectoryDepth(t *testing.T) {
 	in, out := t.TempDir(), t.TempDir()
 	writeFile(t, filepath.Join(in, simpleStem+".dna"), fixture(t, simpleStem))

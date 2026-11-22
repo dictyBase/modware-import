@@ -10,32 +10,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// A local projection followed by a returned pipeline escapes the existing gates.
-func TestCLIFunctionsRemainSingleExpression(t *testing.T) {
-	for _, name := range []string{"flags.go", "export.go"} {
-		file, err := parser.ParseFile(token.NewFileSet(), name, nil, 0)
-		require.NoError(t, err)
-		for _, decl := range file.Decls {
-			fn, ok := decl.(*ast.FuncDecl)
-			if ok && splitPipeline(fn) {
-				t.Errorf("%s %s: local derivations before terminal pipeline", name, fn.Name.Name)
-			}
+// TestRunExportRemainsSinglePipeline guards against local derivations
+// splitting the CLI entrypoint before its terminal F.Pipe* expression.
+func TestRunExportRemainsSinglePipeline(t *testing.T) {
+	file, err := parser.ParseFile(token.NewFileSet(), "export.go", nil, 0)
+	require.NoError(t, err)
+	for _, decl := range file.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Name.Name != "RunExport" {
+			continue
 		}
+		require.NotNil(t, fn.Body)
+		require.Len(t, fn.Body.List, 1, "RunExport must stay a single pipeline return")
+		ret, ok := fn.Body.List[0].(*ast.ReturnStmt)
+		require.True(t, ok)
+		require.Len(t, ret.Results, 1)
+		call, ok := ret.Results[0].(*ast.CallExpr)
+		require.True(t, ok)
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		require.True(t, ok && strings.HasPrefix(sel.Sel.Name, "Pipe"))
 	}
-}
-
-func splitPipeline(fn *ast.FuncDecl) bool {
-	if fn.Body == nil || len(fn.Body.List) < 2 {
-		return false
-	}
-	ret, ok := fn.Body.List[len(fn.Body.List)-1].(*ast.ReturnStmt)
-	if !ok || len(ret.Results) != 1 {
-		return false
-	}
-	call, ok := ret.Results[0].(*ast.CallExpr)
-	if !ok {
-		return false
-	}
-	sel, ok := call.Fun.(*ast.SelectorExpr)
-	return ok && strings.HasPrefix(sel.Sel.Name, "Pipe")
 }

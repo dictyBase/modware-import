@@ -7,9 +7,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"gocloud.dev/blob"
-	"gocloud.dev/blob/fileblob"
 
 	"github.com/dictyBase/modware-import/internal/goldenbraid/snapgene"
 )
@@ -34,6 +32,7 @@ const (
 	typeDir           = "dir"
 	schemeFile        = "file"
 	schemeS3          = "s3"
+	schemeSeparator   = "://"
 	keySeparator      = "/"
 	macMetadataDir    = "__MACOSX"
 	appleDoublePrefix = "._"
@@ -74,15 +73,6 @@ type State struct {
 	Exported int
 }
 
-// FileBundle holds the three encoded artifacts of one construct.
-// fp-go:Lens
-type FileBundle struct {
-	Stem    string
-	FASTA   []byte
-	GenBank []byte
-	SVG     []byte
-}
-
 // location is a bucket root (a local directory or an S3 bucket) and a key.
 // fp-go:Lens
 type location struct {
@@ -100,60 +90,26 @@ type source struct {
 	Member *zip.File
 }
 
-// runState holds the resolved locations and, while both buckets are
-// open, the buckets and the selected sources. Pipeline returns only
-// State, never a bucket handle.
+// runState carries resolved locations, open buckets, and selected sources.
+// Pipeline returns only State, never a bucket handle.
 // fp-go:Lens
 type runState struct {
-	State   State
-	Input   location
-	Output  location
-	Buckets buckets
-	Sources []source
+	State        State
+	Input        location
+	Output       location
+	InputBucket  *blob.Bucket
+	OutputBucket *blob.Bucket
+	Sources      []source
 }
 
-// buckets holds the open input bucket and the open output bucket.
-// fp-go:Lens
-type buckets struct {
-	In  *blob.Bucket
-	Out *blob.Bucket
-}
-
-// bucketTarget describes how to open one side of the export.
-// fp-go:Lens
-type bucketTarget struct {
-	Ctx     context.Context
-	Params  Params
-	Scheme  string
-	Name    string
-	Options fileblob.Options
-	Client  *s3.Client
-}
-
-// objectRef addresses one object or one list prefix in an open bucket.
-// fp-go:Lens
-type objectRef struct {
-	Bucket *blob.Bucket
-	Ctx    context.Context
-	Key    string
-}
-
+// fileJob carries one source through read, parse, encode, and write.
 // fp-go:Lens
 type fileJob struct {
-	Ctx         context.Context
-	Logger      *slog.Logger
-	ShowPrimers bool
-	Input       *blob.Bucket
-	Output      *blob.Bucket
-	Prefix      string
-	Source      source
-	Data        []byte
-	Result      snapgene.ParseResult
-	Bundle      FileBundle
-}
-
-// fp-go:Lens
-type artifact struct {
-	Key  string
-	Data []byte
+	Run     runState
+	Source  source
+	Data    []byte
+	Result  snapgene.ParseResult
+	FASTA   []byte
+	GenBank []byte
+	SVG     []byte
 }

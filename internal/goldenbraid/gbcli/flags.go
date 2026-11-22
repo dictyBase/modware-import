@@ -3,8 +3,7 @@ package gbcli
 
 import "github.com/urfave/cli/v2"
 
-// exportFlags holds the export-specific flags. This file has no fp-go
-// import, so the CLI flag literals stay outside the struct literal gate.
+// exportFlags returns the export-specific CLI flags.
 func exportFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{

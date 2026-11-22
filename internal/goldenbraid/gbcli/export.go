@@ -24,6 +24,7 @@ var (
 	stateL     = gbexport.MakeStateLenses()
 	paramsL    = gbexport.MakeParamsLenses()
 	flagString = (*cli.Context).String
+	flagBool   = (*cli.Context).Bool
 	paramEdits = []func(*cli.Context) En.Endomorphism[gbexport.Params]{
 		F.Flow2(F.Bind2nd(flagString, "input"), paramsL.Input.Set),
 		F.Flow2(F.Bind2nd(flagString, "output"), paramsL.Output.Set),
@@ -31,7 +32,7 @@ var (
 		F.Flow2(F.Bind2nd(flagString, "s3-region"), paramsL.S3Region.Set),
 		F.Flow2(F.Bind2nd(flagString, "access-key"), paramsL.AccessKey.Set),
 		F.Flow2(F.Bind2nd(flagString, "secret-key"), paramsL.SecretKey.Set),
-		F.Flow2(F.Bind2nd((*cli.Context).Bool, "show-primers"), paramsL.ShowPrimers.Set),
+		F.Flow2(F.Bind2nd(flagBool, "show-primers"), paramsL.ShowPrimers.Set),
 	}
 	stateEdits = []func(*cli.Context) En.Endomorphism[gbexport.State]{
 		F.Flow2(cliContext, stateL.Ctx.Set),
