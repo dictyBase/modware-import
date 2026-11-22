@@ -28,6 +28,7 @@ func TestFunctionalGates(t *testing.T) {
 	pipelinecheck.RequireNoImperativeLoop(t, cfg)
 	pipelinecheck.RequireNoImperativeBranch(t, cfg)
 	pipelinecheck.RequireNoDirectApply(t, cfg)
+	pipelinecheck.RequireNoNewPipe(t, cfg)
 	pipelinecheck.RequireNoPopulatedStruct(t, cfg)
 	pipelinecheck.RequireNoLocalPipeClosure(t, cfg)
 	loomcheck.Require(t, loomcheck.Config{Roots: []string{"."}})

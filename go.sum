@@ -182,6 +182,8 @@ github.com/dictyBase/fp-go-loom v0.6.0 h1:szNINHeRi+0PnGLccphmha7WQ25k/bp0KmVCcK
 github.com/dictyBase/fp-go-loom v0.6.0/go.mod h1:ahkSc5GGtpyv9eQ8zh1QR4R8mh+uSvUQWewhAh24RLU=
 github.com/dictyBase/fp-go-loom v0.7.0 h1:Uu4aRLL7upKWCYsIa7kNFvrpTbGelOf2cLjm+QAq98E=
 github.com/dictyBase/fp-go-loom v0.7.0/go.mod h1:ahkSc5GGtpyv9eQ8zh1QR4R8mh+uSvUQWewhAh24RLU=
+github.com/dictyBase/fp-go-loom v0.8.0 h1:y+viVVCtDlFE81HrtNgGRC+vI4RbjpxKVExaxiZHlEg=
+github.com/dictyBase/fp-go-loom v0.8.0/go.mod h1:ahkSc5GGtpyv9eQ8zh1QR4R8mh+uSvUQWewhAh24RLU=
 github.com/dictyBase/go-genproto v0.0.0-20250812211349-c01bdbe25058 h1:+tJZbSiQi6XfhbRSHDFT9uue0x37SW4hOh7ypD0OQaM=
 github.com/dictyBase/go-genproto v0.0.0-20250812211349-c01bdbe25058/go.mod h1:rlUPhBs4duDUE73MswuLGW9UzbkcTWqQsbpsp/pGqTg=
 github.com/dictyBase/go-obograph v1.6.1 h1:2qWF1OPVUAV20OeCZxi6bEQyMFzKdV7DNzmG7qT9otE=
