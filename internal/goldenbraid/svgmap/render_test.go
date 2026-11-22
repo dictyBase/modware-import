@@ -298,13 +298,11 @@ func TestRenderRejectsNonCircularEmptyAndInvalidLocations(t *testing.T) {
 	require.ErrorIs(t, E.ToError(svgmap.Render(input)), seqmodel.ErrEmptyName)
 }
 
-// TestWriteVisualFixtures checks all real maps and optionally retains review artifacts.
+// TestWriteVisualFixtures checks all real maps and writes them to the
+// test artifact directory. A normal run removes the directory. Run
+// go test -artifacts -outputdir=<dir> to keep the SVGs for review.
 func TestWriteVisualFixtures(t *testing.T) {
-	output := t.TempDir()
-	if os.Getenv("GOLDENBRAID_SVG_REVIEW") == "1" {
-		output = "../../../.superpowers/sdd/2026-11-20-goldenbraid-export-cli-plan/visual"
-		require.NoError(t, os.MkdirAll(output, 0o750))
-	}
+	output := t.ArtifactDir()
 	files, err := filepath.Glob("../snapgene/testdata/*.dna")
 	require.NoError(t, err)
 	require.Len(t, files, 3)
