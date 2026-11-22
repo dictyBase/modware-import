@@ -46,7 +46,6 @@ var (
 	runParams = F.Pipe1(runL.State, L.Compose[runState](stateL.Params))
 	runCtx    = F.Pipe1(runL.State, L.Compose[runState](stateL.Ctx))
 	runRaw    = F.Pipe1(runParams, L.Compose[runState](paramsL.Input))
-	runType   = F.Pipe1(runParams, L.Compose[runState](paramsL.InputType))
 	runOutRaw = F.Pipe1(runParams, L.Compose[runState](paramsL.Output))
 	runKind   = F.Pipe1(runL.Input, L.Compose[runState](locL.Kind))
 	runKey    = F.Pipe1(runL.Input, L.Compose[runState](locL.Key))
@@ -78,10 +77,6 @@ var (
 	isLocalScheme = F.Pipe1(isFileScheme, P.Or(S.IsEmpty))
 	isLocalURL    = F.Flow2(urlScheme, isLocalScheme)
 	isS3URL       = F.Flow2(urlScheme, isS3Scheme)
-	// isAutoType accepts an empty input type and "auto".
-	isAutoType = F.Pipe1(predord.StrEq(typeAuto), P.Or(S.IsEmpty))
-	// isExplicitType accepts the dna, zip, and dir input types.
-	isExplicitType = F.Pipe2(isDNAKind, P.Or(isZipKind), P.Or(isDirKind))
 
 	isFileLocation = F.Flow2(locL.Scheme.Get, isFileScheme)
 	isDirLocation  = F.Flow2(locL.Kind.Get, isDirKind)
@@ -150,16 +145,6 @@ var (
 		MO.Const(isDNAExt, typeDNA),
 		MO.Const(isZipExt, typeZip),
 	})
-	isAutoInput     = F.Flow2(runType.Get, isAutoType)
-	isExplicitInput = F.Flow2(runType.Get, isExplicitType)
-	// inputKind infers the kind of an auto input and keeps an explicit one.
-	inputKind = MO.Match(
-		E.Left[string](ErrUnknownInputType),
-		[]O.Kleisli[runState, E.Either[error, string]]{
-			MO.Case(isAutoInput, autoInputKind),
-			MO.Case(isExplicitInput, explicitInputKind),
-		},
-	)
 
 	// fitInput roots a local file input at its parent directory.
 	// Other inputs pass through unchanged.
@@ -278,8 +263,9 @@ func s3Location(u *url.URL) E.Either[error, location] {
 	return F.Pipe2(u, s3LocationOf, E.Right[error, location])
 }
 
-// autoKind infers the input kind from the extension of raw.
-func autoKind(raw string) string {
+// inputKind infers the input kind from the extension of raw: .dna is
+// a single file, .zip is an archive, and anything else is a folder.
+func inputKind(raw string) string {
 	return F.Pipe4(
 		raw,
 		F.Bind2nd(strings.TrimSuffix, keySeparator),
@@ -287,16 +273,6 @@ func autoKind(raw string) string {
 		strings.ToLower,
 		kindOfExt,
 	)
-}
-
-// autoInputKind infers the kind from the raw input location of r.
-func autoInputKind(r runState) E.Either[error, string] {
-	return F.Pipe3(r, runRaw.Get, autoKind, E.Right[error, string])
-}
-
-// explicitInputKind returns the input type flag of r.
-func explicitInputKind(r runState) E.Either[error, string] {
-	return F.Pipe2(r, runType.Get, E.Right[error, string])
 }
 
 // splitLocalFile turns the local file path held in Bucket into its
@@ -314,13 +290,13 @@ func splitLocalFile(loc location) location {
 // resolveLocations parses the raw input and output locations of r,
 // infers the input kind, and roots a local file input at its parent
 // directory. It returns r with Input and Output set, or the first
-// parse or input-type error.
+// parse error.
 func resolveLocations(r runState) E.Either[error, runState] {
 	return F.Pipe5(
 		r,
 		E.Of[error, runState],
 		E.Bind(runL.Input.Set, F.Flow2(runRaw.Get, parseLocation)),
-		E.Bind(runKind.Set, inputKind),
+		E.Let[error](runKind.Set, F.Flow2(runRaw.Get, inputKind)),
 		E.Map[error](runL.Input.Modify(fitInput)),
 		E.Bind(runL.Output.Set, F.Flow2(runOutRaw.Get, parseLocation)),
 	)

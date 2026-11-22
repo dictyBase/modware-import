@@ -289,19 +289,6 @@ func TestPipelineExportsArchiveRootEntry(t *testing.T) {
 	requireArtifacts(t, out, simpleStem)
 }
 
-func TestPipelineExplicitInputTypeOverridesExtension(t *testing.T) {
-	in, out := t.TempDir(), t.TempDir()
-	writeFile(t, filepath.Join(in, "bundle.bin"), assemblyArchive(t))
-	logs := &capture{}
-	_, err := run(context.Background(), t, logs, gbexport.Params{
-		Input:     filepath.Join(in, "bundle.bin"),
-		InputType: "zip",
-		Output:    out,
-	})
-	require.NoError(t, err)
-	requireArtifacts(t, out, allStems...)
-}
-
 func TestPipelineRejectsEmptyInput(t *testing.T) {
 	in, out := t.TempDir(), t.TempDir()
 	logs := &capture{}
@@ -361,18 +348,13 @@ func TestPipelineReportsCancellationPerFile(t *testing.T) {
 	requireSummary(t, logs, 1, 0, 1)
 }
 
-func TestPipelineRejectsUnknownTypeAndScheme(t *testing.T) {
+func TestPipelineRejectsUnknownScheme(t *testing.T) {
 	in, out := t.TempDir(), t.TempDir()
 	cases := []struct {
 		name   string
 		params gbexport.Params
 		want   error
 	}{
-		{
-			"type",
-			gbexport.Params{Input: in, InputType: "tarball", Output: out},
-			gbexport.ErrUnknownInputType,
-		},
 		{
 			"input scheme",
 			gbexport.Params{Input: "https://example.org/a.dna", Output: out},

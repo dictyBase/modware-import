@@ -26,7 +26,6 @@ var (
 	flagString = (*cli.Context).String
 	paramEdits = []func(*cli.Context) En.Endomorphism[gbexport.Params]{
 		F.Flow2(F.Bind2nd(flagString, "input"), paramsL.Input.Set),
-		F.Flow2(F.Bind2nd(flagString, "input-type"), paramsL.InputType.Set),
 		F.Flow2(F.Bind2nd(flagString, "output"), paramsL.Output.Set),
 		F.Flow2(s3Endpoint, paramsL.S3Endpoint.Set),
 		F.Flow2(F.Bind2nd(flagString, "s3-region"), paramsL.S3Region.Set),

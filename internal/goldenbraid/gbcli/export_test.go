@@ -29,13 +29,12 @@ func TestExportFlagsMatchesExpectedFlagSet(t *testing.T) {
 		names = append(names, name)
 	}
 	require.ElementsMatch(t, []string{
-		"input", "input-type", "output", "show-primers", "s3-region",
+		"input", "output", "show-primers", "s3-region",
 		"s3-server", "s3-server-port", "access-key", "secret-key",
 		"log-level", "log-format",
 	}, names)
 	require.True(t, flags["input"].(*cli.StringFlag).Required)
 	require.True(t, flags["output"].(*cli.StringFlag).Required)
-	require.Equal(t, "auto", flags["input-type"].(*cli.StringFlag).Value)
 	require.Equal(t, "us-east-1", flags["s3-region"].(*cli.StringFlag).Value)
 	require.False(t, flags["show-primers"].(*cli.BoolFlag).Value)
 }

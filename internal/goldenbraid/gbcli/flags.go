@@ -9,13 +9,8 @@ func exportFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:     "input",
-			Usage:    "Local path or s3://bucket/key of a .dna file, a .zip archive, or a folder",
+			Usage:    "Local path or s3://bucket/key of a .dna file, a .zip archive, or a folder (chosen by extension)",
 			Required: true,
-		},
-		&cli.StringFlag{
-			Name:  "input-type",
-			Usage: "Input type: auto, dna, zip, or dir. An explicit type overrides the extension",
-			Value: "auto",
 		},
 		&cli.StringFlag{
 			Name:     "output",

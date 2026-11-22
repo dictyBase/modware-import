@@ -25,7 +25,6 @@ import (
 type ParamsLenses struct {
 	// mandatory fields
 	Input       __lens.Lens[Params, string]
-	InputType   __lens.Lens[Params, string]
 	Output      __lens.Lens[Params, string]
 	S3Endpoint  __lens.Lens[Params, string]
 	S3Region    __lens.Lens[Params, string]
@@ -34,7 +33,6 @@ type ParamsLenses struct {
 	ShowPrimers __lens.Lens[Params, bool]
 	// optional fields
 	InputO       __lens_option.LensO[Params, string]
-	InputTypeO   __lens_option.LensO[Params, string]
 	OutputO      __lens_option.LensO[Params, string]
 	S3EndpointO  __lens_option.LensO[Params, string]
 	S3RegionO    __lens_option.LensO[Params, string]
@@ -49,7 +47,6 @@ type ParamsLenses struct {
 type ParamsRefLenses struct {
 	// mandatory fields
 	Input       __lens.Lens[*Params, string]
-	InputType   __lens.Lens[*Params, string]
 	Output      __lens.Lens[*Params, string]
 	S3Endpoint  __lens.Lens[*Params, string]
 	S3Region    __lens.Lens[*Params, string]
@@ -58,7 +55,6 @@ type ParamsRefLenses struct {
 	ShowPrimers __lens.Lens[*Params, bool]
 	// optional fields
 	InputO       __lens_option.LensO[*Params, string]
-	InputTypeO   __lens_option.LensO[*Params, string]
 	OutputO      __lens_option.LensO[*Params, string]
 	S3EndpointO  __lens_option.LensO[*Params, string]
 	S3RegionO    __lens_option.LensO[*Params, string]
@@ -72,7 +68,6 @@ type ParamsRefLenses struct {
 // [prisms]: __prism.Prism
 type ParamsPrisms struct {
 	Input       __prism.Prism[Params, string]
-	InputType   __prism.Prism[Params, string]
 	Output      __prism.Prism[Params, string]
 	S3Endpoint  __prism.Prism[Params, string]
 	S3Region    __prism.Prism[Params, string]
@@ -86,7 +81,6 @@ type ParamsPrisms struct {
 // [prisms]: __prism.Prism
 type ParamsRefPrisms struct {
 	Input       __prism.Prism[*Params, string]
-	InputType   __prism.Prism[*Params, string]
 	Output      __prism.Prism[*Params, string]
 	S3Endpoint  __prism.Prism[*Params, string]
 	S3Region    __prism.Prism[*Params, string]
@@ -104,11 +98,6 @@ func MakeParamsLenses() ParamsLenses {
 		func(s Params) string { return s.Input },
 		func(s Params, v string) Params { s.Input = v; return s },
 		"Params.Input",
-	)
-	lensInputType := __lens.MakeLensWithName(
-		func(s Params) string { return s.InputType },
-		func(s Params, v string) Params { s.InputType = v; return s },
-		"Params.InputType",
 	)
 	lensOutput := __lens.MakeLensWithName(
 		func(s Params) string { return s.Output },
@@ -142,7 +131,6 @@ func MakeParamsLenses() ParamsLenses {
 	)
 	// optional lenses
 	lensInputO := __lens_option.FromIso[Params](__iso_option.FromZero[string]())(lensInput)
-	lensInputTypeO := __lens_option.FromIso[Params](__iso_option.FromZero[string]())(lensInputType)
 	lensOutputO := __lens_option.FromIso[Params](__iso_option.FromZero[string]())(lensOutput)
 	lensS3EndpointO := __lens_option.FromIso[Params](__iso_option.FromZero[string]())(lensS3Endpoint)
 	lensS3RegionO := __lens_option.FromIso[Params](__iso_option.FromZero[string]())(lensS3Region)
@@ -152,7 +140,6 @@ func MakeParamsLenses() ParamsLenses {
 	return ParamsLenses{
 		// mandatory lenses
 		Input:       lensInput,
-		InputType:   lensInputType,
 		Output:      lensOutput,
 		S3Endpoint:  lensS3Endpoint,
 		S3Region:    lensS3Region,
@@ -161,7 +148,6 @@ func MakeParamsLenses() ParamsLenses {
 		ShowPrimers: lensShowPrimers,
 		// optional lenses
 		InputO:       lensInputO,
-		InputTypeO:   lensInputTypeO,
 		OutputO:      lensOutputO,
 		S3EndpointO:  lensS3EndpointO,
 		S3RegionO:    lensS3RegionO,
@@ -180,11 +166,6 @@ func MakeParamsRefLenses() ParamsRefLenses {
 		func(s *Params) string { return s.Input },
 		func(s *Params, v string) *Params { s.Input = v; return s },
 		"(*Params).Input",
-	)
-	lensInputType := __lens.MakeLensStrictWithName(
-		func(s *Params) string { return s.InputType },
-		func(s *Params, v string) *Params { s.InputType = v; return s },
-		"(*Params).InputType",
 	)
 	lensOutput := __lens.MakeLensStrictWithName(
 		func(s *Params) string { return s.Output },
@@ -218,7 +199,6 @@ func MakeParamsRefLenses() ParamsRefLenses {
 	)
 	// optional lenses
 	lensInputO := __lens_option.FromIso[*Params](__iso_option.FromZero[string]())(lensInput)
-	lensInputTypeO := __lens_option.FromIso[*Params](__iso_option.FromZero[string]())(lensInputType)
 	lensOutputO := __lens_option.FromIso[*Params](__iso_option.FromZero[string]())(lensOutput)
 	lensS3EndpointO := __lens_option.FromIso[*Params](__iso_option.FromZero[string]())(lensS3Endpoint)
 	lensS3RegionO := __lens_option.FromIso[*Params](__iso_option.FromZero[string]())(lensS3Region)
@@ -228,7 +208,6 @@ func MakeParamsRefLenses() ParamsRefLenses {
 	return ParamsRefLenses{
 		// mandatory lenses
 		Input:       lensInput,
-		InputType:   lensInputType,
 		Output:      lensOutput,
 		S3Endpoint:  lensS3Endpoint,
 		S3Region:    lensS3Region,
@@ -237,7 +216,6 @@ func MakeParamsRefLenses() ParamsRefLenses {
 		ShowPrimers: lensShowPrimers,
 		// optional lenses
 		InputO:       lensInputO,
-		InputTypeO:   lensInputTypeO,
 		OutputO:      lensOutputO,
 		S3EndpointO:  lensS3EndpointO,
 		S3RegionO:    lensS3RegionO,
@@ -258,14 +236,6 @@ func MakeParamsPrisms() ParamsPrisms {
 			return Params{Input: v}
 		},
 		"Params.Input",
-	)
-	_fromNonZeroInputType := __option.FromNonZero[string]()
-	_prismInputType := __prism.MakePrismWithName(
-		func(s Params) __option.Option[string] { return _fromNonZeroInputType(s.InputType) },
-		func(v string) Params {
-			return Params{InputType: v}
-		},
-		"Params.InputType",
 	)
 	_fromNonZeroOutput := __option.FromNonZero[string]()
 	_prismOutput := __prism.MakePrismWithName(
@@ -317,7 +287,6 @@ func MakeParamsPrisms() ParamsPrisms {
 	)
 	return ParamsPrisms{
 		Input:       _prismInput,
-		InputType:   _prismInputType,
 		Output:      _prismOutput,
 		S3Endpoint:  _prismS3Endpoint,
 		S3Region:    _prismS3Region,
@@ -338,14 +307,6 @@ func MakeParamsRefPrisms() ParamsRefPrisms {
 			return &Params{Input: v}
 		},
 		"Params.Input",
-	)
-	_fromNonZeroInputType := __option.FromNonZero[string]()
-	_prismInputType := __prism.MakePrismWithName(
-		func(s *Params) __option.Option[string] { return _fromNonZeroInputType(s.InputType) },
-		func(v string) *Params {
-			return &Params{InputType: v}
-		},
-		"Params.InputType",
 	)
 	_fromNonZeroOutput := __option.FromNonZero[string]()
 	_prismOutput := __prism.MakePrismWithName(
@@ -397,7 +358,6 @@ func MakeParamsRefPrisms() ParamsRefPrisms {
 	)
 	return ParamsRefPrisms{
 		Input:       _prismInput,
-		InputType:   _prismInputType,
 		Output:      _prismOutput,
 		S3Endpoint:  _prismS3Endpoint,
 		S3Region:    _prismS3Region,

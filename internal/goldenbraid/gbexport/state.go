@@ -30,7 +30,6 @@ const (
 	svgExt            = ".svg"
 	dnaExt            = ".dna"
 	zipExt            = ".zip"
-	typeAuto          = "auto"
 	typeDNA           = "dna"
 	typeZip           = "zip"
 	typeDir           = "dir"
@@ -49,7 +48,7 @@ var (
 	ErrPartialExportFailure = errors.New("one or more assemblies failed to export")
 	// ErrDuplicateStem identifies a later source whose stem is already reserved.
 	ErrDuplicateStem = errors.New("duplicate assembly stem")
-	// ErrUnknownInputType identifies an input type other than auto, dna, zip, or dir.
+	// ErrUnknownInputType identifies an input kind other than dna, zip, or dir.
 	ErrUnknownInputType = errors.New("unknown input type")
 	// ErrUnsupportedScheme identifies a location scheme without a bucket driver.
 	ErrUnsupportedScheme = errors.New("unsupported location scheme")
@@ -59,7 +58,6 @@ var (
 // fp-go:Lens
 type Params struct {
 	Input       string
-	InputType   string
 	Output      string
 	S3Endpoint  string
 	S3Region    string
