@@ -14,6 +14,7 @@ CLI application suite for importing and managing dictyBase data, including featu
   - [Feature Annotation CLI](#feature-annotation-cli)
   - [Import CLI](#import-cli)
   - [Kubernetes Deployment CLI](#kubernetes-deployment-cli)
+  - [Phenotype Annotation CLI](#phenotype-annotation-cli)
   - [Mock gRPC Server](#mock-grpc-server)
     - [Features](#features)
     - [Quick Start](#quick-start)
@@ -69,6 +70,31 @@ A command-line tool for deploying and running import commands in Kubernetes clus
 - **Log Management** - Centralized logging with S3 backup
 
 For deployment guides and configuration details, see the [Kubernetes Deployment](docs/k8s.md).
+
+### Phenotype Annotation CLI
+
+The `phenoannotation` binary turns create workbooks into reviewable CSV files. The `normalize` subcommand uses no service credentials, no ontology download, and no cluster access. It does not change a stock or an annotation.
+
+```sh
+phenoannotation normalize --folder ./kosher-files --out ./batch-01
+phenoannotation normalize --input ./kosher-files/Phenotype_annotation_APR_06_2023.xlsx --out ./sample
+```
+
+Give only one of `--input` and `--folder`. Give a new directory with `--out`. Use `--sheet NAME` for a workbook with more than one worksheet.
+
+The command writes three files to `--out`:
+
+- `phenotype.csv`: valid rows with a DBS strain ID.
+- `new-strain.csv`: valid rows without a DBS strain ID. Each row requests one new strain.
+- `rejects.csv`: errors and warnings with `source_file` and `source_row`.
+
+Exit codes:
+
+- `0`: all nonblank rows are valid. Warnings can occur.
+- `2`: one or more rows are not valid. Examine `rejects.csv` before you use the batch.
+- `1`: the command failed and wrote no output directory.
+
+The `create-strains` and `load-phenotypes` subcommands will read these files later. Examine `rejects.csv` before the next step.
 
 ### Mock gRPC Server
 
