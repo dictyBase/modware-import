@@ -11,6 +11,7 @@ linters:
     - cyclop
     - decorder
     - dogsled
+    - forbidigo
     - funlen
     - funcorder
     - goconst
@@ -37,6 +38,18 @@ linters:
     - unused
     - whitespace
   settings:
+    forbidigo:
+      analyze-types: true
+      forbid:
+        # Point-free Flap and Flip hide a plain call f(x) or a plain
+        # argument order. Write a named function. An endomorphism
+        # builder uses endoutils.BuildFrom, which is not flagged.
+        - pattern: ^(array|identity|option|either|io|ioeither|function)\.(Flap|MonadFlap)$
+          pkg: ^github\.com/IBM/fp-go/v2/
+          msg: "point-free Flap: write a named plain function that calls f(x)"
+        - pattern: ^function\.Flip$
+          pkg: ^github\.com/IBM/fp-go/v2/function$
+          msg: "F.Flip: write a named plain function with the argument order you need"
     goconst:
       ignore-tests: true
     govet:
