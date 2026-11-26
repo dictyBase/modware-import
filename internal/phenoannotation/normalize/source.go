@@ -7,6 +7,7 @@ import (
 
 	A "github.com/IBM/fp-go/v2/array"
 	E "github.com/IBM/fp-go/v2/either"
+	En "github.com/IBM/fp-go/v2/endomorphism"
 	FILE "github.com/IBM/fp-go/v2/file"
 	F "github.com/IBM/fp-go/v2/function"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
@@ -51,20 +52,27 @@ func noWorkbooks(dir string, _ []string) error {
 	return fmt.Errorf("no create workbooks in %s", dir)
 }
 
+// workbookPaths keeps regular files and joins their names with dir.
+func workbookPaths(dir string, infos []fs.FileInfo) []string {
+	return F.Pipe2(
+		infos,
+		A.Filter(predfs.IsRegularInfo),
+		A.Map(F.Flow3(fs.FileInfo.Name, FILE.Join, En.Read(dir))),
+	)
+}
+
 // folderFiles lists create workbooks directly under the folder. ReadDir
 // sorts by name. DirEntry.Info returns Lstat data, so a symbolic link is
 // not a regular file.
 func folderFiles(s State) IOE.IOEither[error, []string] {
 	dir := stateFolder.Get(s)
 
-	return F.Pipe7(
+	return F.Pipe5(
 		dir,
 		IOE.Eitherize1(os.ReadDir),
 		IOE.Map[error](A.Filter(createEntry)),
 		IOE.Chain(IOE.TraverseArraySeq(IOE.Eitherize1(fs.DirEntry.Info))),
-		IOE.Map[error](A.Filter(predfs.IsRegularInfo)),
-		IOE.Map[error](A.Map(F.Flow2(fs.FileInfo.Name, FILE.Join))),
-		IOE.Map[error](A.Ap[string](A.Of(dir))),
+		IOE.Map[error](F.Bind1st(workbookPaths, dir)),
 		IOE.ChainEitherK(E.FromPredicate(
 			predarrays.IsNonEmpty[string](),
 			F.Bind1st(noWorkbooks, dir),
