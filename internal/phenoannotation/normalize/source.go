@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"strings"
 
 	A "github.com/IBM/fp-go/v2/array"
 	E "github.com/IBM/fp-go/v2/either"
@@ -12,20 +11,24 @@ import (
 	F "github.com/IBM/fp-go/v2/function"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 	P "github.com/IBM/fp-go/v2/predicate"
+	Str "github.com/IBM/fp-go/v2/string"
 	predarrays "github.com/dictyBase/fp-go-loom/predicate/array"
 	predfs "github.com/dictyBase/fp-go-loom/predicate/fs"
-	predstrings "github.com/dictyBase/fp-go-loom/predicate/strings"
 )
 
-var (
-	hasCreatePrefix = F.Bind2nd(strings.HasPrefix, "Phenotype_annotation_")
-	hasXlsxSuffix   = predstrings.HasSuffix(".xlsx")
-	createName      = F.Pipe1(hasCreatePrefix, P.And(hasXlsxSuffix))
-	createEntry     = F.Pipe1(createName, P.ContraMap(fs.DirEntry.Name))
+// liveState fails when the run context is done.
+var liveState = E.FromError(contextError)
 
-	// liveState fails when the run context is done.
-	liveState = E.FromError(contextError)
-)
+func createEntry(e fs.DirEntry) bool {
+	return F.Pipe2(
+		e,
+		fs.DirEntry.Name,
+		F.Pipe1(
+			Str.HasPrefix("Phenotype_annotation_"),
+			P.And(Str.HasSuffix(".xlsx")),
+		),
+	)
+}
 
 // Valid checks the options before any file access. A folder or an output
 // path of only spaces is not a path.
