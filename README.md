@@ -76,13 +76,13 @@ For deployment guides and configuration details, see the [Kubernetes Deployment]
 The `phenoannotation` binary turns create workbooks into reviewable CSV files. The `normalize` subcommand uses no service credentials, no ontology download, and no cluster access. It does not change a stock or an annotation.
 
 ```sh
-phenoannotation normalize --folder ./kosher-files --out ./batch-01
-phenoannotation normalize --input ./kosher-files/Phenotype_annotation_APR_06_2023.xlsx --out ./sample
+phenoannotation normalize --folder ./kosher-files
+phenoannotation normalize --folder ./kosher-files --out ./batch-01 --sheet "Sheet 1"
 ```
 
-Give only one of `--input` and `--folder`. Give a new directory with `--out`. Use `--sheet NAME` for a workbook with more than one worksheet.
+The `--folder` flag is required. A blank value stops the command. The `--out` flag is optional. Its default is `pheno_normalize` in the current directory, and the directory must not exist. Without `--sheet`, the command reads the first worksheet of each workbook.
 
-The command writes three files to `--out`:
+The command writes three files to the output directory:
 
 - `phenotype.csv`: valid rows with a DBS strain ID.
 - `new-strain.csv`: valid rows without a DBS strain ID. Each row requests one new strain.
