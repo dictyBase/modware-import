@@ -8,15 +8,17 @@ import (
 	pc "github.com/dictyBase/fp-go-loom/pipelinecheck"
 )
 
-// roots lists every package of the phenoannotation command.
-var roots = []string{".", "../normalize", "../../../cmd/phenoannotation"}
+// roots lists the fp-go packages of the phenoannotation command. The
+// cmd/phenoannotation main package is a plain urfave/cli definition and
+// is not checked.
+var roots = []string{".", "../normalize"}
 
 func isEntrypoint(name string) bool {
 	return strings.HasPrefix(name, "run") || strings.HasPrefix(name, "Run")
 }
 
 // TestFunctionalGates runs every pipelinecheck rule and loomcheck on the
-// three packages. The checks are syntax only. A pass is not a proof.
+// two packages. The checks are syntax only. A pass is not a proof.
 func TestFunctionalGates(t *testing.T) {
 	var cfg pc.Config
 	cfg.Roots = roots

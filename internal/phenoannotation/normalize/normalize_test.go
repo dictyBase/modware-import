@@ -470,7 +470,7 @@ func TestProcess(t *testing.T) {
 	invoke(t, bin, 1, "normalize", "--folder", src, "--sheet", "absent", "--out", unused)
 	invoke(t, bin, 1, "normalize", "--input", a, "--folder", src, "--out", unused)
 	invoke(t, bin, 1, "normalize", "--typo")
-	invoke(t, bin, 1)
+	invoke(t, bin, 0) // no subcommand prints help
 	if _, err := os.Stat(unused); !errors.Is(err, os.ErrNotExist) {
 		t.Fatal(err)
 	}

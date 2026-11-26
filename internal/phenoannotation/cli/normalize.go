@@ -3,28 +3,32 @@ package cli
 import (
 	"context"
 	"errors"
-	"io"
 
 	E "github.com/IBM/fp-go/v2/either"
 	En "github.com/IBM/fp-go/v2/endomorphism"
 	F "github.com/IBM/fp-go/v2/function"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
 	L "github.com/IBM/fp-go/v2/optics/lens"
+	O "github.com/IBM/fp-go/v2/option"
 	P "github.com/IBM/fp-go/v2/predicate"
 	endoutils "github.com/dictyBase/fp-go-loom/endomorphism"
 	ioeutils "github.com/dictyBase/fp-go-loom/ioeitherutils"
+	MO "github.com/dictyBase/fp-go-loom/matchopt"
 	cli "github.com/urfave/cli/v3"
 
 	norm "github.com/dictyBase/modware-import/internal/phenoannotation/normalize"
 )
 
+// Exit codes of the process.
+const (
+	exitOK     = 0
+	exitFailed = 1
+	exitReview = 2
+)
+
 var (
 	// ErrReview marks a complete batch that contains rejected rows.
 	ErrReview = errors.New("batch contains rejected rows: review rejects.csv")
-	errNoSub  = errors.New("expected normalize subcommand")
-
-	// defaultOut is the output directory when --out is not given.
-	defaultOut = "pheno_normalize"
 
 	argsL    = MakeargumentsLenses()
 	stateL   = norm.MakeStateLenses()
@@ -33,17 +37,14 @@ var (
 
 	stateRejected = F.Pipe1(stateL.Batch, L.Compose[norm.State](batchL.Rejected))
 
-	cmdName     = L.MakeLensRef(getCmdName, setCmdName)
-	cmdUsage    = L.MakeLensRef(getCmdUsage, setCmdUsage)
-	cmdAction   = L.MakeLensRef(getCmdAction, setCmdAction)
-	cmdFlags    = L.MakeLensRef(getCmdFlags, setCmdFlags)
-	cmdWriter   = L.MakeLensRef(getCmdWriter, setCmdWriter)
-	cmdCommands = L.MakeLensRef(getCmdCommands, setCmdCommands)
+	isReview = F.Bind2nd(errors.Is, ErrReview)
 
-	flagName     = L.MakeLensRef(getFlagName, setFlagName)
-	flagUsage    = L.MakeLensRef(getFlagUsage, setFlagUsage)
-	flagRequired = L.MakeLensRef(getFlagRequired, setFlagRequired)
-	flagValue    = L.MakeLensRef(getFlagValue, setFlagValue)
+	// ExitCode maps a command error to the process exit code: 0 for no
+	// error, 2 for a published batch with rejected rows, and 1 otherwise.
+	ExitCode = MO.Match(exitFailed, []O.Kleisli[error, int]{
+		MO.Const(P.IsZero[error](), exitOK),
+		MO.Const(isReview, exitReview),
+	})
 
 	// requireNoRejects turns a batch with rejected rows into ErrReview.
 	// The batch is already published when this step runs.
@@ -68,47 +69,11 @@ var (
 	})
 )
 
-func getCmdName(c *cli.Command) string                 { return c.Name }
-func setCmdName(c *cli.Command, v string) *cli.Command { c.Name = v; return c }
-
-func getCmdUsage(c *cli.Command) string                 { return c.Usage }
-func setCmdUsage(c *cli.Command, v string) *cli.Command { c.Usage = v; return c }
-
-func getCmdAction(c *cli.Command) cli.ActionFunc { return c.Action }
-
-func setCmdAction(c *cli.Command, v cli.ActionFunc) *cli.Command { c.Action = v; return c }
-
-func getCmdFlags(c *cli.Command) []cli.Flag                 { return c.Flags }
-func setCmdFlags(c *cli.Command, v []cli.Flag) *cli.Command { c.Flags = v; return c }
-
-func getCmdWriter(c *cli.Command) io.Writer                 { return c.Writer }
-func setCmdWriter(c *cli.Command, v io.Writer) *cli.Command { c.Writer = v; return c }
-
-func getCmdCommands(c *cli.Command) []*cli.Command { return c.Commands }
-
-func setCmdCommands(c *cli.Command, v []*cli.Command) *cli.Command {
-	c.Commands = v
-	return c
-}
-
-func getFlagName(f *cli.StringFlag) string                     { return f.Name }
-func setFlagName(f *cli.StringFlag, v string) *cli.StringFlag  { f.Name = v; return f }
-func getFlagUsage(f *cli.StringFlag) string                    { return f.Usage }
-func setFlagUsage(f *cli.StringFlag, v string) *cli.StringFlag { f.Usage = v; return f }
-func getFlagRequired(f *cli.StringFlag) bool                   { return f.Required }
-
-func setFlagRequired(f *cli.StringFlag, v bool) *cli.StringFlag {
-	f.Required = v
-	return f
-}
-
-func getFlagValue(f *cli.StringFlag) string                    { return f.Value }
-func setFlagValue(f *cli.StringFlag, v string) *cli.StringFlag { f.Value = v; return f }
-
-// runNormalize validates the flags, selects files, reads and classifies
-// every row, publishes it, prints the summary, and returns the
-// review status. It forces the effect once.
-func runNormalize(ctx context.Context, c *cli.Command) error {
+// RunNormalize is the action of the normalize subcommand. It validates the
+// flags, selects files, reads and classifies every row, publishes the
+// batch, prints the summary, and returns the review status. It forces the
+// effect once.
+func RunNormalize(ctx context.Context, c *cli.Command) error {
 	return F.Pipe12(
 		arguments{},
 		argsL.Ctx.Set(ctx),
@@ -123,43 +88,5 @@ func runNormalize(ctx context.Context, c *cli.Command) error {
 		IOE.ChainEitherK(requireNoRejects),
 		ioeutils.ToEither[error, norm.State],
 		E.ToError[norm.State],
-	)
-}
-
-func needCommand(context.Context, *cli.Command) error { return errNoSub }
-
-// textFlag describes one string flag with its default value.
-func textFlag(name, usage string, required bool, value string) cli.Flag {
-	return F.Pipe4(
-		&cli.StringFlag{},
-		flagName.Set(name),
-		flagUsage.Set(usage),
-		flagRequired.Set(required),
-		flagValue.Set(value),
-	)
-}
-
-func normalizeCommand() *cli.Command {
-	return F.Pipe4(
-		&cli.Command{},
-		cmdName.Set("normalize"),
-		cmdUsage.Set("convert create workbooks into reviewable CSV files"),
-		cmdAction.Set(runNormalize),
-		cmdFlags.Set([]cli.Flag{
-			textFlag("folder", "folder of create workbooks", true, ""),
-			textFlag("out", "new output directory", false, defaultOut),
-			textFlag("sheet", "worksheet name (default: first worksheet)", false, ""),
-		}),
-	)
-}
-
-// Command returns the root command. It writes the summary to w.
-func Command(w io.Writer) *cli.Command {
-	return F.Pipe4(
-		&cli.Command{},
-		cmdName.Set("phenoannotation"),
-		cmdAction.Set(needCommand),
-		cmdWriter.Set(w),
-		cmdCommands.Set([]*cli.Command{normalizeCommand()}),
 	)
 }
