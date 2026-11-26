@@ -12,7 +12,6 @@ import (
 	L "github.com/IBM/fp-go/v2/optics/lens"
 	O "github.com/IBM/fp-go/v2/option"
 	P "github.com/IBM/fp-go/v2/predicate"
-	endoutils "github.com/dictyBase/fp-go-loom/endomorphism"
 	ioeutils "github.com/dictyBase/fp-go-loom/ioeitherutils"
 	MO "github.com/dictyBase/fp-go-loom/matchopt"
 	cli "github.com/urfave/cli/v3"
@@ -52,16 +51,16 @@ var (
 		F.Flow2(stateRejected.Get, P.IsZero[int]()),
 		F.Constant1[norm.State](ErrReview),
 	)
-
-	flagText = (*cli.Command).String
-
-	// toOptions copies the flag values into the options.
-	toOptions = endoutils.BuildFrom([]func(*cli.Command) En.Endomorphism[norm.Options]{
-		F.Flow2(F.Bind2nd(flagText, "folder"), optionsL.Folder.Set),
-		F.Flow2(F.Bind2nd(flagText, "sheet"), optionsL.Sheet.Set),
-		F.Flow2(F.Bind2nd(flagText, "out"), optionsL.Out.Set),
-	})
 )
+
+// toOptions copies the flag values into the options.
+func toOptions(c *cli.Command) norm.Options {
+	return En.Reduce([]En.Endomorphism[norm.Options]{
+		optionsL.Folder.Set(c.String("folder")),
+		optionsL.Sheet.Set(c.String("sheet")),
+		optionsL.Out.Set(c.String("out")),
+	})
+}
 
 // RunNormalize is the action of the normalize subcommand. It validates the
 // flags, selects files, reads and classifies every row, publishes the
@@ -72,7 +71,7 @@ func RunNormalize(ctx context.Context, c *cli.Command) error {
 		norm.State{},
 		IOE.Of[error, norm.State],
 		IOE.LetTo[error](stateL.Context.Set, ctx),
-		IOE.ApS(stateL.Options.Set, F.Pipe2(c, toOptions, IOE.Of[error, norm.Options])),
+		IOE.LetTo[error](stateL.Options.Set, toOptions(c)),
 		IOE.ChainEitherK(norm.Valid),
 		IOE.Bind(stateL.Files.Set, norm.SelectFiles),
 		IOE.Bind(stateL.Batch.Set, norm.ReadFiles),
