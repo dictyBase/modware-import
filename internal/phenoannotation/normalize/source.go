@@ -17,8 +17,13 @@ import (
 	predfs "github.com/dictyBase/fp-go-loom/predicate/fs"
 )
 
-// liveState fails when the run context is done.
-var liveState = E.FromError(contextError)
+var (
+	// liveState fails when the run context is done.
+	liveState = E.FromError(contextError)
+
+	readDir   = IOE.Eitherize1(os.ReadDir)
+	entryInfo = IOE.Eitherize1(fs.DirEntry.Info)
+)
 
 func createEntry(e fs.DirEntry) bool {
 	return F.Pipe2(
@@ -69,9 +74,9 @@ func folderFiles(s State) IOE.IOEither[error, []string] {
 
 	return F.Pipe5(
 		dir,
-		IOE.Eitherize1(os.ReadDir),
+		readDir,
 		IOE.Map[error](A.Filter(createEntry)),
-		IOE.Chain(IOE.TraverseArraySeq(IOE.Eitherize1(fs.DirEntry.Info))),
+		IOE.Chain(IOE.TraverseArraySeq(entryInfo)),
 		IOE.Map[error](F.Bind1st(workbookPaths, dir)),
 		IOE.ChainEitherK(E.FromPredicate(
 			predarrays.IsNonEmpty[string](),

@@ -40,6 +40,7 @@ var (
 		P.Fold(F.Identity[string], F.Constant1[string]("")),
 	)
 
+	parseAddress   = E.Eitherize1(mail.ParseAddress)
 	unnamedAddress = F.Flow2(addressName, Str.IsEmpty)
 	// isBareEmail accepts one address with no display name.
 	isBareEmail = F.Flow2(bareAddress, O.IsSome[string])
@@ -139,7 +140,7 @@ func addressValue(a *mail.Address) string { return a.Address }
 func bareAddress(s string) O.Option[string] {
 	return F.Pipe5(
 		s,
-		E.Eitherize1(mail.ParseAddress),
+		parseAddress,
 		E.ToOption[error, *mail.Address],
 		O.Filter(unnamedAddress),
 		O.Map(addressValue),

@@ -17,6 +17,11 @@ const (
 	stagingPattern = ".pheno-*"
 )
 
+var (
+	mkdirTemp  = IOE.Eitherize2(os.MkdirTemp)
+	renamePath = IOE.Eitherize2(renameNew)
+)
+
 // batchFiles returns the three output files of a batch in dir.
 func batchFiles(dir string, b Batch) []Output {
 	return []Output{
@@ -74,7 +79,7 @@ func stagingDir(s State) IOE.IOEither[error, string] {
 		IOE.Of[error, State],
 		IOE.ChainEitherK(liveState),
 		IOE.Map[error](F.Flow3(stateOut.Get, filepath.Clean, filepath.Dir)),
-		IOE.Chain(F.Bind2nd(IOE.Eitherize2(os.MkdirTemp), stagingPattern)),
+		IOE.Chain(F.Bind2nd(mkdirTemp, stagingPattern)),
 	)
 }
 
@@ -97,7 +102,7 @@ func renameInto(dir string, s State) IOE.IOEither[error, State] {
 		IOE.Of[error, State],
 		IOE.ChainEitherK(liveState),
 		IOE.Map[error](F.Flow2(stateOut.Get, filepath.Clean)),
-		IOE.Chain(F.Bind1st(IOE.Eitherize2(renameNew), dir)),
+		IOE.Chain(F.Bind1st(renamePath, dir)),
 		IOE.MapTo[error, string](s),
 	)
 }

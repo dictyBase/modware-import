@@ -13,6 +13,7 @@ import (
 	En "github.com/IBM/fp-go/v2/endomorphism"
 	F "github.com/IBM/fp-go/v2/function"
 	IOE "github.com/IBM/fp-go/v2/ioeither"
+	IOEF "github.com/IBM/fp-go/v2/ioeither/file"
 	P "github.com/IBM/fp-go/v2/predicate"
 	Str "github.com/IBM/fp-go/v2/string"
 	endoutils "github.com/dictyBase/fp-go-loom/endomorphism"
@@ -39,6 +40,10 @@ var (
 	wantsSheet = F.Pipe1(Str.IsNonEmpty, P.ContraMap(requestL.Want.Get))
 	// chooseSheet uses the first worksheet when the option is empty.
 	chooseSheet = F.Pipe1(wantsSheet, P.Fold(firstSheet, namedSheet))
+
+	openBook  = IOE.Eitherize1(openWorkbook)
+	sheetRows = IOE.Eitherize2((*excelize.File).Rows)
+	readSheet = F.Bind12of3(IOE.Eitherize3(State.readSheet))
 )
 
 // expandCells puts the cells of one line in internal column order.
@@ -145,11 +150,6 @@ func (s State) readSheet(file string, rows *excelize.Rows) (Batch, error) {
 	return batch, rows.Error()
 }
 
-// closeEffect closes a workbook, a row iterator, or a file.
-func closeEffect[R io.Closer](r R) IOE.IOEither[error, struct{}] {
-	return IOE.TryCatchError(func() (struct{}, error) { return struct{}{}, r.Close() })
-}
-
 // joinUseError joins the error of the use step, if any, with a release
 // error. IOE.Bracket otherwise returns only the release error.
 func joinUseError[A any](used E.Either[error, A], releaseErr error) error {
@@ -161,7 +161,7 @@ func joinUseError[A any](used E.Either[error, A], releaseErr error) error {
 func closeJoined[R io.Closer, A any](r R, used E.Either[error, A]) IOE.IOEither[error, struct{}] {
 	return F.Pipe2(
 		r,
-		closeEffect[R],
+		IOEF.Close[R],
 		IOE.MapLeft[struct{}](F.Bind1st(joinUseError[A], used)),
 	)
 }
@@ -185,8 +185,8 @@ func pickSheet(want string, names []string) E.Either[error, string] {
 // keeps the workbook path in book.Path.
 func (s State) scanSheet(book *excelize.File, name string) IOE.IOEither[error, Batch] {
 	return IOE.Bracket(
-		F.Pipe1(name, IOE.Eitherize1(book.Rows)),
-		F.Bind1st(IOE.Eitherize2(s.readSheet), filepath.Base(book.Path)),
+		sheetRows(book, name),
+		readSheet(s, filepath.Base(book.Path)),
 		closeJoined[*excelize.Rows, Batch],
 	)
 }
@@ -205,7 +205,7 @@ func (s State) readBook(book *excelize.File) IOE.IOEither[error, Batch] {
 // path.
 func (s State) bookBatch(path string) IOE.IOEither[error, Batch] {
 	return IOE.Bracket(
-		F.Pipe1(path, IOE.Eitherize1(openWorkbook)),
+		openBook(path),
 		s.readBook,
 		closeJoined[*excelize.File, Batch],
 	)
