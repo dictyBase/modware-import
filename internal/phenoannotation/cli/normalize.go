@@ -1,3 +1,4 @@
+// Package cli holds the actions of the phenoannotation commands.
 package cli
 
 import (
@@ -30,7 +31,6 @@ var (
 	// ErrReview marks a complete batch that contains rejected rows.
 	ErrReview = errors.New("batch contains rejected rows: review rejects.csv")
 
-	argsL    = MakeargumentsLenses()
 	stateL   = norm.MakeStateLenses()
 	optionsL = norm.MakeOptionsLenses()
 	batchL   = norm.MakeBatchLenses()
@@ -61,12 +61,6 @@ var (
 		F.Flow2(F.Bind2nd(flagText, "sheet"), optionsL.Sheet.Set),
 		F.Flow2(F.Bind2nd(flagText, "out"), optionsL.Out.Set),
 	})
-
-	// toState builds a new normalize state from one invocation.
-	toState = endoutils.BuildFrom([]func(arguments) En.Endomorphism[norm.State]{
-		F.Flow2(argsL.Ctx.Get, stateL.Context.Set),
-		F.Flow3(argsL.Cmd.Get, toOptions, stateL.Options.Set),
-	})
 )
 
 // RunNormalize is the action of the normalize subcommand. It validates the
@@ -74,12 +68,11 @@ var (
 // batch, prints the summary, and returns the review status. It forces the
 // effect once.
 func RunNormalize(ctx context.Context, c *cli.Command) error {
-	return F.Pipe12(
-		arguments{},
-		argsL.Ctx.Set(ctx),
-		argsL.Cmd.Set(c),
-		IOE.Of[error, arguments],
-		IOE.Map[error](F.Flow2(toState, stateL.Writer.Set(norm.WriteFile))),
+	return F.Pipe11(
+		norm.State{},
+		IOE.Of[error, norm.State],
+		IOE.LetTo[error](stateL.Context.Set, ctx),
+		IOE.ApS(stateL.Options.Set, F.Pipe2(c, toOptions, IOE.Of[error, norm.Options])),
 		IOE.ChainEitherK(norm.Valid),
 		IOE.Bind(stateL.Files.Set, norm.SelectFiles),
 		IOE.Bind(stateL.Batch.Set, norm.ReadFiles),

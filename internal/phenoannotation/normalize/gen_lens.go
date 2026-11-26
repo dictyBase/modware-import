@@ -2292,7 +2292,6 @@ type StateLenses struct {
 	// mandatory fields
 	Context __lens.Lens[State, context.Context]
 	Options __lens.Lens[State, Options]
-	Writer  __lens.Lens[State, FileWriter]
 	Files   __lens.Lens[State, []string]
 	Batch   __lens.Lens[State, Batch]
 	// optional fields
@@ -2307,7 +2306,6 @@ type StateRefLenses struct {
 	// mandatory fields
 	Context __lens.Lens[*State, context.Context]
 	Options __lens.Lens[*State, Options]
-	Writer  __lens.Lens[*State, FileWriter]
 	Files   __lens.Lens[*State, []string]
 	Batch   __lens.Lens[*State, Batch]
 	// optional fields
@@ -2321,7 +2319,6 @@ type StateRefLenses struct {
 type StatePrisms struct {
 	Context __prism.Prism[State, context.Context]
 	Options __prism.Prism[State, Options]
-	Writer  __prism.Prism[State, FileWriter]
 	Files   __prism.Prism[State, []string]
 	Batch   __prism.Prism[State, Batch]
 }
@@ -2332,7 +2329,6 @@ type StatePrisms struct {
 type StateRefPrisms struct {
 	Context __prism.Prism[*State, context.Context]
 	Options __prism.Prism[*State, Options]
-	Writer  __prism.Prism[*State, FileWriter]
 	Files   __prism.Prism[*State, []string]
 	Batch   __prism.Prism[*State, Batch]
 }
@@ -2352,11 +2348,6 @@ func MakeStateLenses() StateLenses {
 		func(s State, v Options) State { s.Options = v; return s },
 		"State.Options",
 	)
-	lensWriter := __lens.MakeLensWithName(
-		func(s State) FileWriter { return s.Writer },
-		func(s State, v FileWriter) State { s.Writer = v; return s },
-		"State.Writer",
-	)
 	lensFiles := __lens.MakeLensWithName(
 		func(s State) []string { return s.Files },
 		func(s State, v []string) State { s.Files = v; return s },
@@ -2374,7 +2365,6 @@ func MakeStateLenses() StateLenses {
 		// mandatory lenses
 		Context: lensContext,
 		Options: lensOptions,
-		Writer:  lensWriter,
 		Files:   lensFiles,
 		Batch:   lensBatch,
 		// optional lenses
@@ -2398,11 +2388,6 @@ func MakeStateRefLenses() StateRefLenses {
 		func(s *State, v Options) *State { s.Options = v; return s },
 		"(*State).Options",
 	)
-	lensWriter := __lens.MakeLensRefWithName(
-		func(s *State) FileWriter { return s.Writer },
-		func(s *State, v FileWriter) *State { s.Writer = v; return s },
-		"(*State).Writer",
-	)
 	lensFiles := __lens.MakeLensRefWithName(
 		func(s *State) []string { return s.Files },
 		func(s *State, v []string) *State { s.Files = v; return s },
@@ -2420,7 +2405,6 @@ func MakeStateRefLenses() StateRefLenses {
 		// mandatory lenses
 		Context: lensContext,
 		Options: lensOptions,
-		Writer:  lensWriter,
 		Files:   lensFiles,
 		Batch:   lensBatch,
 		// optional lenses
@@ -2449,13 +2433,6 @@ func MakeStatePrisms() StatePrisms {
 		},
 		"State.Options",
 	)
-	_prismWriter := __prism.MakePrismWithName(
-		func(s State) __option.Option[FileWriter] { return __option.Some(s.Writer) },
-		func(v FileWriter) State {
-			return State{Writer: v}
-		},
-		"State.Writer",
-	)
 	_prismFiles := __prism.MakePrismWithName(
 		func(s State) __option.Option[[]string] { return __option.Some(s.Files) },
 		func(v []string) State {
@@ -2473,7 +2450,6 @@ func MakeStatePrisms() StatePrisms {
 	return StatePrisms{
 		Context: _prismContext,
 		Options: _prismOptions,
-		Writer:  _prismWriter,
 		Files:   _prismFiles,
 		Batch:   _prismBatch,
 	}
@@ -2499,13 +2475,6 @@ func MakeStateRefPrisms() StateRefPrisms {
 		},
 		"State.Options",
 	)
-	_prismWriter := __prism.MakePrismWithName(
-		func(s *State) __option.Option[FileWriter] { return __option.Some(s.Writer) },
-		func(v FileWriter) *State {
-			return &State{Writer: v}
-		},
-		"State.Writer",
-	)
 	_prismFiles := __prism.MakePrismWithName(
 		func(s *State) __option.Option[[]string] { return __option.Some(s.Files) },
 		func(v []string) *State {
@@ -2523,7 +2492,6 @@ func MakeStateRefPrisms() StateRefPrisms {
 	return StateRefPrisms{
 		Context: _prismContext,
 		Options: _prismOptions,
-		Writer:  _prismWriter,
 		Files:   _prismFiles,
 		Batch:   _prismBatch,
 	}

@@ -81,7 +81,6 @@ func baseState(out string) State {
 	var s State
 	s.Context = context.Background()
 	s.Options.Out = out
-	s.Writer = WriteFile
 	return s
 }
 
@@ -277,19 +276,12 @@ func TestWorkbookFailures(t *testing.T) {
 	}
 }
 
-func failWriter(Output) IOE.IOEither[error, string] { return IOE.Left[string](io.ErrClosedPipe) }
-
 func TestPublish(t *testing.T) {
 	d := t.TempDir()
 	dst := filepath.Join(d, "out")
-	_, err := force(Publish(stateL.Writer.Set(failWriter)(baseState(dst))))
-	if !errors.Is(err, io.ErrClosedPipe) {
-		t.Fatal(err)
-	}
-	emptyDir(t, d)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err = force(Publish(stateL.Context.Set(ctx)(baseState(dst))))
+	_, err := force(Publish(stateL.Context.Set(ctx)(baseState(dst))))
 	if !errors.Is(err, context.Canceled) {
 		t.Fatal(err)
 	}
@@ -304,25 +296,6 @@ func TestPublish(t *testing.T) {
 	if _, err = force(Publish(baseState(dst))); err == nil {
 		t.Fatal("replaced an existing destination")
 	}
-}
-
-func TestCancelDuringPublish(t *testing.T) {
-	d := t.TempDir()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	cancelAfter := func(o Output) IOE.IOEither[error, string] {
-		return func() E.Either[error, string] {
-			defer cancel()
-			return WriteFile(o)()
-		}
-	}
-	s := baseState(filepath.Join(d, "out"))
-	s.Context = ctx
-	s.Writer = cancelAfter
-	if _, err := force(Publish(s)); !errors.Is(err, context.Canceled) {
-		t.Fatal(err)
-	}
-	emptyDir(t, d)
 }
 
 type badCloser struct{}

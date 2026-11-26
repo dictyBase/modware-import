@@ -78,14 +78,13 @@ func stagingDir(s State) IOE.IOEither[error, string] {
 	)
 }
 
-// writeOutput checks the context, then writes one file with the writer of
-// the state.
+// writeOutput checks the context, then writes one file.
 func (s State) writeOutput(out Output) IOE.IOEither[error, string] {
 	return F.Pipe3(
 		s,
 		IOE.Of[error, State],
 		IOE.ChainEitherK(liveState),
-		IOE.Chain(F.Constant1[State](F.Pipe1(out, stateL.Writer.Get(s)))),
+		IOE.Chain(F.Constant1[State](WriteFile(out))),
 	)
 }
 

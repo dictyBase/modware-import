@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 
-	IOE "github.com/IBM/fp-go/v2/ioeither"
 	PR "github.com/IBM/fp-go/v2/pair"
 	P "github.com/IBM/fp-go/v2/predicate"
 )
@@ -185,18 +184,12 @@ type Options struct {
 // Output pairs the path of one CSV file with its rows, header first.
 type Output = PR.Pair[string, [][]string]
 
-// FileWriter returns an effect that creates the file at the path of out,
-// writes the rows as CSV, and returns the path. Tests replace it with a
-// writer that fails.
-type FileWriter = func(out Output) IOE.IOEither[error, string]
-
 // State carries the options, the dependencies, and the results of one run.
 // Batch grows row by row while the workbooks are read.
 // fp-go:Lens
 type State struct {
 	Context context.Context
 	Options Options
-	Writer  FileWriter
 	Files   []string
 	Batch   Batch
 }
