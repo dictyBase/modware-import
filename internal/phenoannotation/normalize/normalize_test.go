@@ -87,7 +87,14 @@ func baseState(out string) State {
 
 func invoke(t *testing.T, bin string, want int, args ...string) string {
 	t.Helper()
-	buf, err := exec.Command(bin, args...).CombinedOutput()
+	return invokeIn(t, "", bin, want, args...)
+}
+
+func invokeIn(t *testing.T, dir, bin string, want int, args ...string) string {
+	t.Helper()
+	cmd := exec.Command(bin, args...)
+	cmd.Dir = dir
+	buf, err := cmd.CombinedOutput()
 	code := 0
 	if exit, ok := errors.AsType[*exec.ExitError](err); ok {
 		code = exit.ExitCode()
@@ -215,16 +222,25 @@ func TestSelectFiles(t *testing.T) {
 	if !slices.Equal(files, []string{good}) {
 		t.Fatal(files)
 	}
-	files, err = force(SelectFiles(stateInput.Set(good)(baseState(""))))
-	check(t, err)
-	if !slices.Equal(files, []string{good}) {
-		t.Fatal(files)
+}
+
+func TestValidOptions(t *testing.T) {
+	if E.IsLeft(Valid(stateFolder.Set("src")(baseState("out")))) {
+		t.Fatal("valid options rejected")
 	}
-	for _, input := range []string{link, update} {
-		if _, err := force(SelectFiles(stateInput.Set(input)(baseState("")))); err == nil {
-			t.Fatalf("accepted %s", input)
+	for _, folder := range []string{"", "   ", "\t\u00a0"} {
+		if !errors.Is(leftOf(Valid(stateFolder.Set(folder)(baseState("out")))), errSpec) {
+			t.Fatalf("blank folder %q accepted", folder)
 		}
 	}
+	if !errors.Is(leftOf(Valid(stateFolder.Set("src")(baseState(" ")))), errSpec) {
+		t.Fatal("blank out accepted")
+	}
+}
+
+func leftOf(e E.Either[error, State]) error {
+	_, err := E.UnwrapError(e)
+	return err
 }
 
 func TestWorkbookFailures(t *testing.T) {
@@ -247,8 +263,9 @@ func TestWorkbookFailures(t *testing.T) {
 	check(t, f.SetSheetRow("Curated", "A4", &row))
 	check(t, f.SaveAs(path))
 	check(t, f.Close())
-	if _, err = force(s.readWorkbook(path)); err == nil {
-		t.Fatal("ambiguous sheet accepted")
+	// Without --sheet the first worksheet (the empty Sheet1) is read.
+	if _, err = force(s.readWorkbook(path)); !errors.Is(err, errNoHeader) {
+		t.Fatal("first worksheet not used", err)
 	}
 	if _, err = force(stateSheet.Set("absent")(s).readWorkbook(path)); err == nil {
 		t.Fatal("missing sheet accepted")
@@ -423,9 +440,19 @@ func TestProcess(t *testing.T) {
 	bin := buildBinary(t, d)
 	a, z := writeSources(t, src)
 
+	only := filepath.Join(d, "only")
+	check(t, os.Mkdir(only, 0o700))
+	check(t, os.Rename(z, filepath.Join(only, filepath.Base(z))))
 	clean := filepath.Join(d, "clean")
-	invoke(t, bin, 0, "normalize", "--input", z, "--out", clean)
+	invoke(t, bin, 0, "normalize", "--folder", only, "--out", clean)
 	checkClean(t, clean)
+	check(t, os.Rename(filepath.Join(only, filepath.Base(z)), z))
+
+	// Without --out the batch goes to pheno_normalize in the work dir.
+	work := filepath.Join(d, "work")
+	check(t, os.Mkdir(work, 0o700))
+	invokeIn(t, work, bin, 2, "normalize", "--folder", src)
+	checkFolder(t, filepath.Join(work, "pheno_normalize"), filepath.Join(work, "pheno_normalize"))
 
 	first, second := filepath.Join(d, "first"), filepath.Join(d, "second")
 	for _, dest := range []string{first, second} {
@@ -437,9 +464,11 @@ func TestProcess(t *testing.T) {
 	checkFolder(t, first, second)
 
 	unused := filepath.Join(d, "unused")
-	invoke(t, bin, 1, "normalize", "--input", a, "--out", first)
+	invoke(t, bin, 1, "normalize", "--folder", src, "--out", first)
+	invoke(t, bin, 1, "normalize", "--out", unused)
+	invoke(t, bin, 1, "normalize", "--folder", "  ", "--out", unused)
+	invoke(t, bin, 1, "normalize", "--folder", src, "--sheet", "absent", "--out", unused)
 	invoke(t, bin, 1, "normalize", "--input", a, "--folder", src, "--out", unused)
-	invoke(t, bin, 1, "normalize", "--input", z, "--sheet", "absent", "--out", unused)
 	invoke(t, bin, 1, "normalize", "--typo")
 	invoke(t, bin, 1)
 	if _, err := os.Stat(unused); !errors.Is(err, os.ErrNotExist) {

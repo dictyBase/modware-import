@@ -16,13 +16,10 @@ import (
 	P "github.com/IBM/fp-go/v2/predicate"
 	Str "github.com/IBM/fp-go/v2/string"
 	endoutils "github.com/dictyBase/fp-go-loom/endomorphism"
-	predarrays "github.com/dictyBase/fp-go-loom/predicate/array"
 	"github.com/xuri/excelize/v2"
 )
 
 var (
-	oneSheet = predarrays.LenEq[string](1)
-
 	// lineOrigin is the source file and the row number of a line.
 	lineOrigin = endoutils.BuildFrom([]func(line) En.Endomorphism[Origin]{
 		F.Flow2(lineL.File.Get, originL.File.Set),
@@ -40,8 +37,8 @@ var (
 	})
 
 	wantsSheet = F.Pipe1(Str.IsNonEmpty, P.ContraMap(requestL.Want.Get))
-	// chooseSheet uses the sole worksheet when the option is empty.
-	chooseSheet = F.Pipe1(wantsSheet, P.Fold(onlySheet, namedSheet))
+	// chooseSheet uses the first worksheet when the option is empty.
+	chooseSheet = F.Pipe1(wantsSheet, P.Fold(firstSheet, namedSheet))
 )
 
 // expandCells puts the cells of one line in internal column order.
@@ -73,18 +70,15 @@ func newLine(file string, layout Layout, row int, cells []string) line {
 	)
 }
 
-func sheetCountError(names []string) error {
-	return fmt.Errorf("%d worksheets: specify --sheet", len(names))
-}
-
 func missingSheet(want string) error { return fmt.Errorf("missing worksheet %q", want) }
 
-func onlySheet(r sheetRequest) E.Either[error, string] {
+// firstSheet returns the first worksheet in workbook order.
+func firstSheet(r sheetRequest) E.Either[error, string] {
 	return F.Pipe3(
 		r,
 		requestL.Names.Get,
-		E.FromPredicate(oneSheet, sheetCountError),
-		E.Map[error](F.Bind2nd(cellAt, 0)),
+		A.Head[string],
+		E.FromOption[string](F.Constant(errNoSheet)),
 	)
 }
 

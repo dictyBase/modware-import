@@ -90,9 +90,8 @@ const (
 var (
 	errBadLayout = errors.New("unknown or duplicate worksheet header")
 	errNoHeader  = errors.New("missing worksheet header")
-	errSpec      = errors.New(
-		"specify exactly one of --input and --folder and a new --out directory",
-	)
+	errNoSheet   = errors.New("workbook has no worksheet")
+	errSpec      = errors.New("--folder and --out must not be blank")
 )
 
 // Origin identifies one physical source row: the workbook base name and
@@ -178,7 +177,6 @@ type Batch struct {
 // Options holds the command options of one run.
 // fp-go:Lens
 type Options struct {
-	Input  string
 	Folder string
 	Sheet  string
 	Out    string

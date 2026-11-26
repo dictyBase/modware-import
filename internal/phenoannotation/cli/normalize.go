@@ -21,8 +21,11 @@ import (
 var (
 	// ErrReview marks a complete batch that contains rejected rows.
 	ErrReview = errors.New("batch contains rejected rows: review rejects.csv")
-	errFlags  = errors.New("use one input flag and no positional arguments")
+	errFlags  = errors.New("normalize takes no positional arguments")
 	errNoSub  = errors.New("expected normalize subcommand")
+
+	// defaultOut is the output directory when --out is not given.
+	defaultOut = "pheno_normalize"
 
 	argsL    = MakeargumentsLenses()
 	stateL   = norm.MakeStateLenses()
@@ -41,16 +44,13 @@ var (
 	flagName     = L.MakeLensRef(getFlagName, setFlagName)
 	flagUsage    = L.MakeLensRef(getFlagUsage, setFlagUsage)
 	flagRequired = L.MakeLensRef(getFlagRequired, setFlagRequired)
+	flagValue    = L.MakeLensRef(getFlagValue, setFlagValue)
 
-	// Flag shape: no positional argument and not both input flags. An
-	// explicit empty value still counts as a set flag.
-	flagSet      = (*cli.Command).IsSet
+	// Flag shape: no positional argument.
 	noPositional = F.Flow2((*cli.Command).NArg, P.IsZero[int]())
-	bothSources  = F.Pipe1(F.Bind2nd(flagSet, "folder"), P.And(F.Bind2nd(flagSet, "input")))
-	plainCall    = F.Pipe1(noPositional, P.And(P.Not(bothSources)))
 
 	requireFlagShape = E.FromPredicate(
-		F.Pipe1(plainCall, P.ContraMap(argsL.Cmd.Get)),
+		F.Pipe1(noPositional, P.ContraMap(argsL.Cmd.Get)),
 		F.Constant1[arguments](errFlags),
 	)
 
@@ -65,7 +65,6 @@ var (
 
 	// toOptions copies the flag values into the options.
 	toOptions = endoutils.BuildFrom([]func(*cli.Command) En.Endomorphism[norm.Options]{
-		F.Flow2(F.Bind2nd(flagText, "input"), optionsL.Input.Set),
 		F.Flow2(F.Bind2nd(flagText, "folder"), optionsL.Folder.Set),
 		F.Flow2(F.Bind2nd(flagText, "sheet"), optionsL.Sheet.Set),
 		F.Flow2(F.Bind2nd(flagText, "out"), optionsL.Out.Set),
@@ -112,6 +111,9 @@ func setFlagRequired(f *cli.StringFlag, v bool) *cli.StringFlag {
 	return f
 }
 
+func getFlagValue(f *cli.StringFlag) string                    { return f.Value }
+func setFlagValue(f *cli.StringFlag, v string) *cli.StringFlag { f.Value = v; return f }
+
 // runNormalize validates the flags, selects files, reads and classifies
 // every row, publishes it, prints the summary, and returns the
 // review status. It forces the effect once.
@@ -136,12 +138,14 @@ func runNormalize(ctx context.Context, c *cli.Command) error {
 
 func needCommand(context.Context, *cli.Command) error { return errNoSub }
 
-func textFlag(name, usage string, required bool) cli.Flag {
-	return F.Pipe3(
+// textFlag describes one string flag with its default value.
+func textFlag(name, usage string, required bool, value string) cli.Flag {
+	return F.Pipe4(
 		&cli.StringFlag{},
 		flagName.Set(name),
 		flagUsage.Set(usage),
 		flagRequired.Set(required),
+		flagValue.Set(value),
 	)
 }
 
@@ -152,10 +156,9 @@ func normalizeCommand() *cli.Command {
 		cmdUsage.Set("convert create workbooks into reviewable CSV files"),
 		cmdAction.Set(runNormalize),
 		cmdFlags.Set([]cli.Flag{
-			textFlag("input", "one create workbook", false),
-			textFlag("folder", "folder of create workbooks", false),
-			textFlag("out", "new output directory", true),
-			textFlag("sheet", "exact worksheet name", false),
+			textFlag("folder", "folder of create workbooks", true, ""),
+			textFlag("out", "new output directory", false, defaultOut),
+			textFlag("sheet", "worksheet name (default: first worksheet)", false, ""),
 		}),
 	)
 }

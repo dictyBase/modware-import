@@ -2102,12 +2102,10 @@ func MakeBatchRefPrisms() BatchRefPrisms {
 // [lenses]: __lens.Lens
 type OptionsLenses struct {
 	// mandatory fields
-	Input  __lens.Lens[Options, string]
 	Folder __lens.Lens[Options, string]
 	Sheet  __lens.Lens[Options, string]
 	Out    __lens.Lens[Options, string]
 	// optional fields
-	InputO  __lens_option.LensO[Options, string]
 	FolderO __lens_option.LensO[Options, string]
 	SheetO  __lens_option.LensO[Options, string]
 	OutO    __lens_option.LensO[Options, string]
@@ -2118,12 +2116,10 @@ type OptionsLenses struct {
 // [lenses]: __lens.Lens
 type OptionsRefLenses struct {
 	// mandatory fields
-	Input  __lens.Lens[*Options, string]
 	Folder __lens.Lens[*Options, string]
 	Sheet  __lens.Lens[*Options, string]
 	Out    __lens.Lens[*Options, string]
 	// optional fields
-	InputO  __lens_option.LensO[*Options, string]
 	FolderO __lens_option.LensO[*Options, string]
 	SheetO  __lens_option.LensO[*Options, string]
 	OutO    __lens_option.LensO[*Options, string]
@@ -2133,7 +2129,6 @@ type OptionsRefLenses struct {
 //
 // [prisms]: __prism.Prism
 type OptionsPrisms struct {
-	Input  __prism.Prism[Options, string]
 	Folder __prism.Prism[Options, string]
 	Sheet  __prism.Prism[Options, string]
 	Out    __prism.Prism[Options, string]
@@ -2143,7 +2138,6 @@ type OptionsPrisms struct {
 //
 // [prisms]: __prism.Prism
 type OptionsRefPrisms struct {
-	Input  __prism.Prism[*Options, string]
 	Folder __prism.Prism[*Options, string]
 	Sheet  __prism.Prism[*Options, string]
 	Out    __prism.Prism[*Options, string]
@@ -2154,11 +2148,6 @@ type OptionsRefPrisms struct {
 // [lenses]:__lens.Lens
 func MakeOptionsLenses() OptionsLenses {
 	// mandatory lenses
-	lensInput := __lens.MakeLensWithName(
-		func(s Options) string { return s.Input },
-		func(s Options, v string) Options { s.Input = v; return s },
-		"Options.Input",
-	)
 	lensFolder := __lens.MakeLensWithName(
 		func(s Options) string { return s.Folder },
 		func(s Options, v string) Options { s.Folder = v; return s },
@@ -2175,18 +2164,15 @@ func MakeOptionsLenses() OptionsLenses {
 		"Options.Out",
 	)
 	// optional lenses
-	lensInputO := __lens_option.FromIso[Options](__iso_option.FromZero[string]())(lensInput)
 	lensFolderO := __lens_option.FromIso[Options](__iso_option.FromZero[string]())(lensFolder)
 	lensSheetO := __lens_option.FromIso[Options](__iso_option.FromZero[string]())(lensSheet)
 	lensOutO := __lens_option.FromIso[Options](__iso_option.FromZero[string]())(lensOut)
 	return OptionsLenses{
 		// mandatory lenses
-		Input:  lensInput,
 		Folder: lensFolder,
 		Sheet:  lensSheet,
 		Out:    lensOut,
 		// optional lenses
-		InputO:  lensInputO,
 		FolderO: lensFolderO,
 		SheetO:  lensSheetO,
 		OutO:    lensOutO,
@@ -2198,11 +2184,6 @@ func MakeOptionsLenses() OptionsLenses {
 // [lenses]:__lens.Lens
 func MakeOptionsRefLenses() OptionsRefLenses {
 	// mandatory lenses
-	lensInput := __lens.MakeLensStrictWithName(
-		func(s *Options) string { return s.Input },
-		func(s *Options, v string) *Options { s.Input = v; return s },
-		"(*Options).Input",
-	)
 	lensFolder := __lens.MakeLensStrictWithName(
 		func(s *Options) string { return s.Folder },
 		func(s *Options, v string) *Options { s.Folder = v; return s },
@@ -2219,18 +2200,15 @@ func MakeOptionsRefLenses() OptionsRefLenses {
 		"(*Options).Out",
 	)
 	// optional lenses
-	lensInputO := __lens_option.FromIso[*Options](__iso_option.FromZero[string]())(lensInput)
 	lensFolderO := __lens_option.FromIso[*Options](__iso_option.FromZero[string]())(lensFolder)
 	lensSheetO := __lens_option.FromIso[*Options](__iso_option.FromZero[string]())(lensSheet)
 	lensOutO := __lens_option.FromIso[*Options](__iso_option.FromZero[string]())(lensOut)
 	return OptionsRefLenses{
 		// mandatory lenses
-		Input:  lensInput,
 		Folder: lensFolder,
 		Sheet:  lensSheet,
 		Out:    lensOut,
 		// optional lenses
-		InputO:  lensInputO,
 		FolderO: lensFolderO,
 		SheetO:  lensSheetO,
 		OutO:    lensOutO,
@@ -2241,14 +2219,6 @@ func MakeOptionsRefLenses() OptionsRefLenses {
 //
 // [prisms]:__prism.Prism
 func MakeOptionsPrisms() OptionsPrisms {
-	_fromNonZeroInput := __option.FromNonZero[string]()
-	_prismInput := __prism.MakePrismWithName(
-		func(s Options) __option.Option[string] { return _fromNonZeroInput(s.Input) },
-		func(v string) Options {
-			return Options{Input: v}
-		},
-		"Options.Input",
-	)
 	_fromNonZeroFolder := __option.FromNonZero[string]()
 	_prismFolder := __prism.MakePrismWithName(
 		func(s Options) __option.Option[string] { return _fromNonZeroFolder(s.Folder) },
@@ -2274,7 +2244,6 @@ func MakeOptionsPrisms() OptionsPrisms {
 		"Options.Out",
 	)
 	return OptionsPrisms{
-		Input:  _prismInput,
 		Folder: _prismFolder,
 		Sheet:  _prismSheet,
 		Out:    _prismOut,
@@ -2285,14 +2254,6 @@ func MakeOptionsPrisms() OptionsPrisms {
 //
 // [prisms]:__prism.Prism
 func MakeOptionsRefPrisms() OptionsRefPrisms {
-	_fromNonZeroInput := __option.FromNonZero[string]()
-	_prismInput := __prism.MakePrismWithName(
-		func(s *Options) __option.Option[string] { return _fromNonZeroInput(s.Input) },
-		func(v string) *Options {
-			return &Options{Input: v}
-		},
-		"Options.Input",
-	)
 	_fromNonZeroFolder := __option.FromNonZero[string]()
 	_prismFolder := __prism.MakePrismWithName(
 		func(s *Options) __option.Option[string] { return _fromNonZeroFolder(s.Folder) },
@@ -2318,7 +2279,6 @@ func MakeOptionsRefPrisms() OptionsRefPrisms {
 		"Options.Out",
 	)
 	return OptionsRefPrisms{
-		Input:  _prismInput,
 		Folder: _prismFolder,
 		Sheet:  _prismSheet,
 		Out:    _prismOut,

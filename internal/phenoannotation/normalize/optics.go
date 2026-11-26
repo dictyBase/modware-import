@@ -22,7 +22,6 @@ var (
 	requestL = MakesheetRequestLenses()
 
 	// State to options.
-	stateInput  = F.Pipe1(stateL.Options, L.Compose[State](optionsL.Input))
 	stateFolder = F.Pipe1(stateL.Options, L.Compose[State](optionsL.Folder))
 	stateSheet  = F.Pipe1(stateL.Options, L.Compose[State](optionsL.Sheet))
 	stateOut    = F.Pipe1(stateL.Options, L.Compose[State](optionsL.Out))
