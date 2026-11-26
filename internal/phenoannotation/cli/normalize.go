@@ -21,7 +21,6 @@ import (
 var (
 	// ErrReview marks a complete batch that contains rejected rows.
 	ErrReview = errors.New("batch contains rejected rows: review rejects.csv")
-	errFlags  = errors.New("normalize takes no positional arguments")
 	errNoSub  = errors.New("expected normalize subcommand")
 
 	// defaultOut is the output directory when --out is not given.
@@ -45,14 +44,6 @@ var (
 	flagUsage    = L.MakeLensRef(getFlagUsage, setFlagUsage)
 	flagRequired = L.MakeLensRef(getFlagRequired, setFlagRequired)
 	flagValue    = L.MakeLensRef(getFlagValue, setFlagValue)
-
-	// Flag shape: no positional argument.
-	noPositional = F.Flow2((*cli.Command).NArg, P.IsZero[int]())
-
-	requireFlagShape = E.FromPredicate(
-		F.Pipe1(noPositional, P.ContraMap(argsL.Cmd.Get)),
-		F.Constant1[arguments](errFlags),
-	)
 
 	// requireNoRejects turns a batch with rejected rows into ErrReview.
 	// The batch is already published when this step runs.
@@ -118,12 +109,11 @@ func setFlagValue(f *cli.StringFlag, v string) *cli.StringFlag { f.Value = v; re
 // every row, publishes it, prints the summary, and returns the
 // review status. It forces the effect once.
 func runNormalize(ctx context.Context, c *cli.Command) error {
-	return F.Pipe13(
+	return F.Pipe12(
 		arguments{},
 		argsL.Ctx.Set(ctx),
 		argsL.Cmd.Set(c),
 		IOE.Of[error, arguments],
-		IOE.ChainEitherK(requireFlagShape),
 		IOE.Map[error](F.Flow2(toState, stateL.Writer.Set(norm.WriteFile))),
 		IOE.ChainEitherK(norm.Valid),
 		IOE.Bind(stateL.Files.Set, norm.SelectFiles),
