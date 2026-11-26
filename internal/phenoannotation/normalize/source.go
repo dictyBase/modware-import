@@ -23,17 +23,24 @@ var (
 	createName      = F.Pipe1(hasCreatePrefix, P.And(hasXlsxSuffix))
 	createEntry     = F.Pipe1(createName, P.ContraMap(fs.DirEntry.Name))
 
-	// A folder or an output path of only spaces is not a path.
-	hasFolder = F.Flow2(stateFolder.Get, nonblank)
-	hasOut    = F.Flow2(stateOut.Get, nonblank)
-	validSpec = F.Pipe1(hasFolder, P.And(hasOut))
-
-	// Valid checks the options before any file access.
-	Valid = E.FromPredicate(validSpec, F.Constant1[State](errSpec))
-
 	// liveState fails when the run context is done.
 	liveState = E.FromError(contextError)
 )
+
+// Valid checks the options before any file access. A folder or an output
+// path of only spaces is not a path.
+func Valid(s State) E.Either[error, State] {
+	return F.Pipe1(
+		s,
+		E.FromPredicate(
+			F.Pipe1(
+				F.Flow2(stateFolder.Get, nonblank),
+				P.And(F.Flow2(stateOut.Get, nonblank)),
+			),
+			F.Constant1[State](errSpec),
+		),
+	)
+}
 
 func contextError(s State) error { return stateL.Context.Get(s).Err() }
 
